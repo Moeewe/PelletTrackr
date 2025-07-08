@@ -517,62 +517,124 @@ body {
   background: #fafafa;
 }
 
-/* Responsive Tables - CSS-Tricks Style */
+/* Responsive Tables - Dribbble-inspired Card Layout im Fraenk-Style */
 @media (max-width: 768px) {
   /* Verstecke die normalen Tabellen-Header */
   .data-table thead {
     display: none;
   }
   
-  /* Jede Zeile wird zu einem Block */
+  /* Jede Zeile wird zu einer eleganten Karte */
   .data-table tr {
     display: block;
-    border: 1px solid #ddd;
-    margin-bottom: 16px;
-    padding: 16px;
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: all 0.2s ease;
+    position: relative;
   }
   
-  /* Jede Zelle wird zu einer Zeile mit Label */
+  .data-table tr:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+  }
+  
+  /* Hauptinhalt der Karte */
   .data-table td {
     display: block;
-    text-align: right;
     border: none;
-    border-bottom: 1px solid #eee;
-    padding: 12px 0;
+    padding: 8px 0;
     position: relative;
-    padding-left: 45%;
-    white-space: normal;
-    word-wrap: break-word;
-  }
-  
-  .data-table td:last-child {
-    border-bottom: none;
-  }
-  
-  /* Labels für jede Zelle */
-  .data-table td:before {
-    content: attr(data-label) ":";
-    position: absolute;
-    left: 0;
-    width: 40%;
     text-align: left;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+  
+  /* Erstes Element (meist Datum) als Header */
+  .data-table td:first-child {
+    font-size: 18px;
+    font-weight: 700;
+    color: #000000;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f0f0f0;
+  }
+  
+  .data-table td:first-child:before {
+    display: none;
+  }
+  
+  /* Labels für die anderen Felder */
+  .data-table td:not(:first-child):before {
+    content: attr(data-label) ": ";
     font-weight: 600;
-    font-size: 14px;
-    color: #333;
-    text-transform: none;
-    padding-right: 10px;
+    color: #666666;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+    min-width: 100px;
+    margin-right: 8px;
   }
   
-  /* Spezielle Behandlung für Aktionen */
+  /* Kosten-Feld hervorheben */
+  .data-table td[data-label="Kosten"],
+  .data-table td[data-label="Preis pro kg"] {
+    font-size: 20px;
+    font-weight: 700;
+    color: #000000;
+    margin: 12px 0;
+    padding: 12px 0;
+    background: #FFFF00;
+    margin-left: -20px;
+    margin-right: -20px;
+    padding-left: 20px;
+    padding-right: 20px;
+    border-radius: 8px;
+  }
+  
+  .data-table td[data-label="Kosten"]:before,
+  .data-table td[data-label="Preis pro kg"]:before {
+    color: #000000;
+    font-weight: 600;
+  }
+  
+  /* Status-Badges */
+  .data-table td[data-label="Status"] {
+    margin: 12px 0;
+  }
+  
+  .status-paid,
+  .status-unpaid {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .status-paid {
+    background: #28a745;
+    color: white;
+  }
+  
+  .status-unpaid {
+    background: #dc3545;
+    color: white;
+  }
+  
+  /* Aktionen als Sticky Footer */
   .data-table td.actions {
-    text-align: left;
-    padding-left: 0;
-    border-top: 2px solid #f0f0f0;
-    margin-top: 8px;
-    padding-top: 12px;
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    padding: 0;
+    margin: 0;
   }
   
   .data-table td.actions:before {
@@ -581,7 +643,60 @@ body {
   
   .data-table td.actions .btn {
     display: inline-block;
-    margin: 2px 4px 2px 0;
+    margin: 0 2px;
+    padding: 6px 12px;
+    font-size: 11px;
+    border-radius: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  
+  /* Material/Masterbatch als Subtitle */
+  .data-table td[data-label="Material"],
+  .data-table td[data-label="Name"] {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333333;
+    margin-bottom: 8px;
+  }
+  
+  .data-table td[data-label="Material"]:before,
+  .data-table td[data-label="Name"]:before {
+    display: none;
+  }
+  
+  /* Kennung als Badge */
+  .data-table td[data-label="Kennung"] {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: #f8f9fa;
+    color: #666666;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .data-table td[data-label="Kennung"]:before {
+    display: none;
+  }
+  
+  /* Mengen-Felder gruppieren */
+  .data-table td[data-label="Menge"],
+  .data-table td[data-label="Mat. Menge"],
+  .data-table td[data-label="MB Menge"] {
+    display: inline-block;
+    width: 48%;
+    margin-right: 2%;
+    background: #f8f9fa;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-size: 13px;
   }
   
   /* Tabellen-Container */
@@ -608,24 +723,54 @@ body {
     width: 100%;
   }
   
-  /* Status-Badges responsive */
-  .status-paid,
-  .status-unpaid {
-    display: inline-block;
-    font-size: 12px;
+  /* Platz für Action-Buttons reservieren */
+  .data-table tr {
+    padding-bottom: 60px;
+  }
+}
+
+/* Weitere Optimierungen für sehr kleine Screens */
+@media (max-width: 375px) {
+  .data-table tr {
+    padding: 16px;
+    margin-bottom: 16px;
+    padding-bottom: 55px;
+  }
+  
+  .data-table td[data-label="Kosten"],
+  .data-table td[data-label="Preis pro kg"] {
+    font-size: 18px;
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  
+  .data-table td[data-label="Kennung"] {
+    top: 16px;
+    right: 16px;
+    font-size: 10px;
+    padding: 3px 6px;
+  }
+  
+  .data-table td.actions {
+    bottom: 16px;
+    right: 16px;
+  }
+  
+  .data-table td.actions .btn {
     padding: 4px 8px;
-    border-radius: 4px;
-    font-weight: 500;
+    font-size: 10px;
+    margin: 0 1px;
   }
   
-  .status-paid {
-    background: #d4edda;
-    color: #155724;
-  }
-  
-  .status-unpaid {
-    background: #f8d7da;
-    color: #721c24;
+  .data-table td[data-label="Menge"],
+  .data-table td[data-label="Mat. Menge"],
+  .data-table td[data-label="MB Menge"] {
+    width: 100%;
+    margin-right: 0;
+    font-size: 12px;
+    padding: 6px 10px;
   }
 }
 
