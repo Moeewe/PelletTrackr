@@ -1,169 +1,272 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <base target="_top">
+<html lang="de">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FGF 3D-Druck Abrechnung</title>
-    
-    <!-- CSS -->
+    <title>PelletTrackr - FGF 3D-Druck Verwaltung</title>
     <link rel="stylesheet" href="styles.css">
-  </head>
-  <body>
-    <div class="app-container">
-      <!-- Header -->
-      <div class="header">
-        <div class="logo">FGF</div>
-        <div class="tagline">3D-Druck Abrechnung</div>
-      </div>
-      
-      <!-- Main Content -->
-      <div class="content">
-        <!-- Welcome Section -->
-        <div class="section">
-          <div class="welcome-text">
-            <span class="highlight">Super schnell</span> zum<br>
-            3D-Druck Eintrag
-          </div>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="screen active">
+        <div class="login-container">
+            <div class="header">
+                <h1 class="logo">
+                    <span class="highlight">Pellet</span>Trackr
+                </h1>
+                <p class="tagline">FGF 3D-Druck Verwaltung</p>
+            </div>
+            
+            <div class="login-form">
+                <div class="form-group">
+                    <label class="form-label">Name</label>
+                    <input type="text" id="loginName" class="form-input" placeholder="Max Mustermann">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">FH Kennung</label>
+                    <input type="text" id="loginKennung" class="form-input" placeholder="mm123289">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Passwort (nur für Admin)</label>
+                    <input type="password" id="adminPassword" class="form-input" placeholder="Optional - für Admin-Bereich">
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="loginAsUser()">
+                        Als Nutzer anmelden
+                    </button>
+                    <button class="btn btn-secondary" onclick="loginAsAdmin()">
+                        Als Admin anmelden
+                    </button>
+                </div>
+            </div>
         </div>
-        
-        <!-- Form Section -->
-        <div class="section">
-          <div class="form-group">
-            <label class="form-label">Dein Name</label>
-            <input type="text" id="name" class="form-input" placeholder="Max Mustermann" />
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">FH Kennung</label>
-            <input type="text" id="kennung" class="form-input" placeholder="mm123289" />
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">Material</label>
-            <select id="material" class="form-select">
-              <option value="">Material auswählen...</option>
-            </select>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">Material Menge (kg)</label>
-            <input type="text" id="materialMenge" class="form-input" placeholder="0,00 oder 0.00" />
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">Masterbatch</label>
-            <select id="masterbatch" class="form-select">
-              <option value="">Masterbatch auswählen...</option>
-            </select>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">Masterbatch Menge (kg)</label>
-            <input type="text" id="masterbatchMenge" class="form-input" placeholder="0,00 oder 0.00" />
-          </div>
-          
-          <!-- Cost Preview -->
-          <div id="costPreview" class="cost-preview">
-            <div class="cost-amount">0,00 €</div>
-            <div class="cost-label">Voraussichtliche Kosten</div>
-          </div>
-          
-          <!-- Action Buttons -->
-          <button class="btn btn-primary" onclick="addEntry()">
-            Eintrag hinzufügen
-          </button>
-        </div>
-        
-        <!-- Status Messages -->
-        <div id="confirmation"></div>
-        
-        <!-- Navigation/Action Buttons -->
-        <div class="section">
-          <div class="section-title"><span class="highlight">Aktionen</span><br>& Übersicht</div>
-          
-          <!-- User Actions -->
-          <div class="button-grid">
-            <button onclick="showUserOverviewSimple()" class="btn btn-secondary">
-              Meine Übersicht
-            </button>
-            <button onclick="showUserStatistics()" class="btn btn-secondary">
-              Meine Statistiken
-            </button>
-          </div>
-          
-          <!-- Admin Actions -->
-          <div class="button-grid">
-            <button onclick="showAdminView()" class="btn btn-danger">
-              Admin: Alle Einträge
-            </button>
-            <button onclick="showAdminStatistics()" class="btn btn-danger">
-              Admin: Statistiken
-            </button>
-          </div>
-          
-          <!-- Debug Actions -->
-          <div class="button-grid">
-            <button onclick="testFirebaseConnection()" class="btn btn-outline">
-              Verbindung testen
-            </button>
-            <button onclick="debugMaterialsAndMasterbatches()" class="btn btn-outline">
-              Debug Materialien
-            </button>
-          </div>
-          
-          <!-- Erweiterte Debug-Buttons -->
-          <div class="button-grid">
-            <button onclick="debugAllEntries()" class="btn btn-outline">
-              Debug Einträge
-            </button>
-            <button onclick="addTestData()" class="btn btn-warning">
-              Testdaten hinzufügen
-            </button>
-          </div>
-        </div>
-        
-        <!-- Overview Section -->
-        <div class="overview-section">
-          <div class="section-title"><span class="highlight">Deine</span><br>Einträge</div>
-          <div id="overviewTable" class="data-table"></div>
-        </div>
-      </div>
     </div>
-    
-    <!-- Firebase SDKs (CDN) -->
+
+    <!-- User Dashboard -->
+    <div id="userDashboard" class="screen">
+        <div class="dashboard-container">
+            <!-- Header with logout -->
+            <div class="dashboard-header">
+                <h1 class="logo">
+                    <span class="highlight">Pellet</span>Trackr
+                </h1>
+                <div class="user-info">
+                    <span id="userWelcome">Willkommen!</span>
+                    <button class="btn btn-link" onclick="logout()">Abmelden</button>
+                </div>
+            </div>
+
+            <!-- User Stats -->
+            <div class="stats-section">
+                <h2 class="section-title">Deine Statistiken</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="userTotalEntries">0</div>
+                        <div class="stat-label">Einträge</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="userTotalCost">0,00 €</div>
+                        <div class="stat-label">Gesamtkosten</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="userPaidAmount">0,00 €</div>
+                        <div class="stat-label">Bezahlt</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="userUnpaidAmount">0,00 €</div>
+                        <div class="stat-label">Offen</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Entry Form -->
+            <div class="form-section">
+                <h2 class="section-title">Neuen Eintrag hinzufügen</h2>
+                <form class="entry-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Material</label>
+                            <select id="material" class="form-select">
+                                <option value="">Material auswählen...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Menge (kg)</label>
+                            <input type="text" id="materialMenge" class="form-input" placeholder="0,00">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Masterbatch</label>
+                            <select id="masterbatch" class="form-select">
+                                <option value="">Masterbatch auswählen...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Menge (kg)</label>
+                            <input type="text" id="masterbatchMenge" class="form-input" placeholder="0,00">
+                        </div>
+                    </div>
+                    
+                    <div class="cost-preview">
+                        <div class="cost-amount" id="costPreview">0,00 €</div>
+                        <div class="cost-label">Voraussichtliche Kosten</div>
+                    </div>
+                    
+                    <button type="button" class="btn btn-primary" onclick="addEntry()">
+                        Eintrag hinzufügen
+                    </button>
+                </form>
+            </div>
+
+            <!-- User Entries -->
+            <div class="entries-section">
+                <h2 class="section-title">Deine Einträge</h2>
+                <div id="userEntriesTable" class="data-table"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="adminDashboard" class="screen">
+        <div class="admin-container">
+            <!-- Header with logout -->
+            <div class="dashboard-header">
+                <h1 class="logo">
+                    <span class="highlight">Pellet</span>Trackr
+                    <span class="admin-badge">Admin</span>
+                </h1>
+                <div class="user-info">
+                    <span id="adminWelcome">Admin Dashboard</span>
+                    <button class="btn btn-link" onclick="logout()">Abmelden</button>
+                </div>
+            </div>
+
+            <!-- Admin Stats -->
+            <div class="stats-section">
+                <h2 class="section-title">Gesamtstatistiken</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="adminTotalEntries">0</div>
+                        <div class="stat-label">Alle Einträge</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="adminTotalUsers">0</div>
+                        <div class="stat-label">Nutzer</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="adminTotalRevenue">0,00 €</div>
+                        <div class="stat-label">Gesamtumsatz</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="adminPendingAmount">0,00 €</div>
+                        <div class="stat-label">Ausstehend</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Controls -->
+            <div class="admin-controls">
+                <div class="control-section">
+                    <h3 class="control-title">Material-Verwaltung</h3>
+                    <div class="control-buttons">
+                        <button class="btn btn-secondary" onclick="showMaterialManager()">
+                            Materialien verwalten
+                        </button>
+                        <button class="btn btn-secondary" onclick="showMasterbatchManager()">
+                            Masterbatches verwalten
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- All Entries Table -->
+            <div class="entries-section">
+                <h2 class="section-title">Alle Einträge</h2>
+                <div id="adminEntriesTable" class="data-table"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Material Manager Modal -->
+    <div id="materialManager" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Materialien verwalten</h3>
+                <button class="btn btn-link" onclick="closeMaterialManager()">Schließen</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Neues Material hinzufügen</label>
+                    <div class="form-row">
+                        <input type="text" id="newMaterialName" class="form-input" placeholder="Material Name">
+                        <input type="number" id="newMaterialPrice" class="form-input" placeholder="Preis pro kg" step="0.01">
+                        <button class="btn btn-primary" onclick="addMaterial()">Hinzufügen</button>
+                    </div>
+                </div>
+                <div id="materialsTable" class="data-table"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Masterbatch Manager Modal -->
+    <div id="masterbatchManager" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Masterbatches verwalten</h3>
+                <button class="btn btn-link" onclick="closeMasterbatchManager()">Schließen</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Neuen Masterbatch hinzufügen</label>
+                    <div class="form-row">
+                        <input type="text" id="newMasterbatchName" class="form-input" placeholder="Masterbatch Name">
+                        <input type="number" id="newMasterbatchPrice" class="form-input" placeholder="Preis pro kg" step="0.01">
+                        <button class="btn btn-primary" onclick="addMasterbatch()">Hinzufügen</button>
+                    </div>
+                </div>
+                <div id="masterbatchesTable" class="data-table"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-    <!-- Deine App-Skripte -->
+    <!-- App Scripts -->
     <script src="config.js"></script>
     <script src="core-functions.js"></script>
     <script src="user-functions.js"></script>
     <script src="admin-functions.js"></script>
-    <script src="debug-functions.js"></script>
     <script src="web-app.js"></script>
 
-    <!-- Firebase Initialisierung und App-Start -->
+    <!-- App Initialization -->
     <script>
-      const firebaseConfig = {
-        apiKey: "AIzaSyBaaMwmjxyytxHLinmigccF30-1Wl0tzD0",
-        authDomain: "fgf-3d-druck.firebaseapp.com",
-        databaseURL: "https://fgf-3d-druck-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "fgf-3d-druck",
-        storageBucket: "fgf-3d-druck.firebasestorage.app",
-        messagingSenderId: "37190466890",
-        appId: "1:37190466890:web:cfb25f3c2f6bb62006d5b3"
-      };
-      
-      // Firebase initialisieren
-      firebase.initializeApp(firebaseConfig);
-      const db = firebase.firestore();
-      
-      // App initialisieren sobald DOM und Firebase bereit sind
-      document.addEventListener('DOMContentLoaded', function() {
-        console.log("🚀 FGF 3D-Druck App wird initialisiert...");
-        initializeApp();
-      });
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyBaaMwmjxyytxHLinmigccF30-1Wl0tzD0",
+            authDomain: "fgf-3d-druck.firebaseapp.com",
+            databaseURL: "https://fgf-3d-druck-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "fgf-3d-druck",
+            storageBucket: "fgf-3d-druck.firebasestorage.app",
+            messagingSenderId: "37190466890",
+            appId: "1:37190466890:web:cfb25f3c2f6bb62006d5b3"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        // Initialize app when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("🚀 PelletTrackr wird initialisiert...");
+            initializeApp();
+        });
     </script>
-  </body>
+</body>
 </html>
