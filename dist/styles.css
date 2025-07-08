@@ -216,16 +216,18 @@ body {
 }
 
 .btn {
-  padding: 16px 24px;
+  padding: 8px 12px;
   border: none;
-  border-radius: 6px;
-  font-size: 16px;
+  border-radius: 4px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
   text-decoration: none;
   display: inline-block;
   text-align: center;
+  white-space: nowrap;
+  min-width: 60px;
 }
 
 .btn-primary {
@@ -349,20 +351,23 @@ body {
   font-weight: 400;
 }
 
-/* Buttons - Fraenk Style */
+/* Buttons - Fraenk Style - kompakter */
 .btn {
-  width: 100%;
-  padding: 20px 24px;
-  border: 2px solid #000000;
-  border-radius: 0;
-  font-size: 18px;
-  font-weight: 600;
+  width: auto;
+  padding: 8px 12px;
+  border: 1px solid #000000;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
-  margin-bottom: 16px;
+  margin: 0 4px 4px 0;
   text-align: center;
   background: white;
   color: #000000;
+  white-space: nowrap;
+  min-width: 60px;
+  display: inline-block;
 }
 
 .btn-primary {
@@ -512,134 +517,74 @@ body {
   background: #fafafa;
 }
 
-/* Mobile responsive tables - Verbessertes System */
+/* Responsive Tables - CSS-Tricks Style */
 @media (max-width: 768px) {
-  .data-table {
-    border: none;
-    margin: 20px 0;
-    overflow: visible;
+  /* Verstecke die normalen Tabellen-Header */
+  .data-table thead {
+    display: none;
   }
   
-  .data-table table {
-    min-width: 100%;
-    font-size: 12px;
-  }
-  
-  .data-table th,
-  .data-table td {
-    padding: 8px 4px;
-    font-size: 11px;
-    vertical-align: middle;
-    word-break: break-word;
-  }
-  
-  .data-table th {
-    font-size: 10px;
-    font-weight: 700;
-    background: #f8f9fa;
-  }
-  
-  /* Spalten kompakter machen */
-  .data-table th:nth-child(1),
-  .data-table td:nth-child(1) { width: 15%; } /* Datum */
-  .data-table th:nth-child(2),
-  .data-table td:nth-child(2) { width: 20%; } /* Material/Name */
-  .data-table th:nth-child(3),
-  .data-table td:nth-child(3) { width: 12%; } /* Mat. Menge/Kennung */
-  .data-table th:nth-child(4),
-  .data-table td:nth-child(4) { width: 20%; } /* Masterbatch/Material */
-  .data-table th:nth-child(5),
-  .data-table td:nth-child(5) { width: 12%; } /* MB Menge */
-  .data-table th:nth-child(6),
-  .data-table td:nth-child(6) { width: 15%; } /* Kosten */
-  .data-table th:nth-child(7),
-  .data-table td:nth-child(7) { width: 15%; } /* Status */
-  .data-table th:nth-child(8),
-  .data-table td:nth-child(8) { width: 15%; } /* Zusätzliche Spalten */
-  .data-table th:nth-child(9),
-  .data-table td:nth-child(9) { width: 15%; }
-  .data-table th:nth-child(10),
-  .data-table td:nth-child(10) { width: 25%; } /* Aktionen */
-  
-  .data-table .actions {
-    min-width: 100px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  
-  .data-table .btn {
-    padding: 4px 6px;
-    font-size: 10px;
-    margin: 0;
-    white-space: nowrap;
-  }
-  
-  /* Horizontaler Scroll für sehr breite Tabellen */
-  .admin-entries-container,
-  .user-entries-container,
-  .materials-container,
-  .masterbatches-container {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
+  /* Jede Zeile wird zu einem Block */
+  .data-table tr {
+    display: block;
+    border: 1px solid #ddd;
+    margin-bottom: 16px;
+    padding: 16px;
     background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
   
-  /* Admin-spezifische Anpassungen für viele Spalten */
-  .admin-entries-container .data-table table {
-    min-width: 900px; /* Mindestbreite für Admin-Tabelle erhöht */
-  }
-  
-  .user-entries-container .data-table table {
-    min-width: 650px; /* Mindestbreite für User-Tabelle erhöht */
-  }
-  
-  .materials-container .data-table table,
-  .masterbatches-container .data-table table {
-    min-width: 450px; /* Mindestbreite für Management-Tabellen */
-  }
-}
-
-/* Mittlere Bildschirme - optimierte Tabellen-Ansicht */
-@media (max-width: 600px) and (min-width: 481px) {
-  .data-table table {
-    font-size: 11px;
-  }
-  
-  .data-table th,
+  /* Jede Zelle wird zu einer Zeile mit Label */
   .data-table td {
-    padding: 6px 3px;
-    font-size: 10px;
+    display: block;
+    text-align: right;
+    border: none;
+    border-bottom: 1px solid #eee;
+    padding: 12px 0;
+    position: relative;
+    padding-left: 45%;
+    white-space: normal;
+    word-wrap: break-word;
   }
   
-  /* Verstecke weniger wichtige Spalten bei mittleren Bildschirmen */
-  .admin-entries-container .data-table th:nth-child(3),
-  .admin-entries-container .data-table td:nth-child(3),
-  .admin-entries-container .data-table th:nth-child(5),
-  .admin-entries-container .data-table td:nth-child(5),
-  .admin-entries-container .data-table th:nth-child(7),
-  .admin-entries-container .data-table td:nth-child(7) {
-    display: none; /* Verstecke Kennung, MB Menge, MB Spalte */
+  .data-table td:last-child {
+    border-bottom: none;
   }
   
-  .user-entries-container .data-table th:nth-child(5),
-  .user-entries-container .data-table td:nth-child(5) {
-    display: none; /* Verstecke MB Menge bei User-Tabelle */
-  }
-}
-
-/* Alternative: Card Layout for very small screens */
-@media (max-width: 600px) {
-  .data-table-responsive {
-    display: none !important;
-  }
-  
-  .data-table-cards {
-    display: block !important;
+  /* Labels für jede Zelle */
+  .data-table td:before {
+    content: attr(data-label) ":";
+    position: absolute;
+    left: 0;
+    width: 40%;
+    text-align: left;
+    font-weight: 600;
+    font-size: 14px;
+    color: #333;
+    text-transform: none;
+    padding-right: 10px;
   }
   
+  /* Spezielle Behandlung für Aktionen */
+  .data-table td.actions {
+    text-align: left;
+    padding-left: 0;
+    border-top: 2px solid #f0f0f0;
+    margin-top: 8px;
+    padding-top: 12px;
+  }
+  
+  .data-table td.actions:before {
+    display: none;
+  }
+  
+  .data-table td.actions .btn {
+    display: inline-block;
+    margin: 2px 4px 2px 0;
+  }
+  
+  /* Tabellen-Container */
   .admin-entries-container,
   .user-entries-container,
   .materials-container,
@@ -647,70 +592,45 @@ body {
     border: none;
     background: transparent;
     overflow: visible;
+    padding: 0;
   }
   
-  .data-card {
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    margin-bottom: 16px;
-    padding: 16px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  .data-table {
+    border: none;
+    margin: 20px 0;
+    overflow: visible;
+    width: 100%;
   }
   
-  .data-card-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 8px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #f0f0f0;
-    gap: 12px;
+  .data-table table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
   }
   
-  .data-card-row:last-child {
-    margin-bottom: 0;
-    padding-bottom: 0;
-    border-bottom: none;
-  }
-  
-  .data-card-label {
-    font-weight: 600;
+  /* Status-Badges responsive */
+  .status-paid,
+  .status-unpaid {
+    display: inline-block;
     font-size: 12px;
-    color: #666;
-    text-transform: uppercase;
-    min-width: 80px;
-    flex-shrink: 0;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
   }
   
-  .data-card-value {
-    font-size: 14px;
-    color: #000;
-    text-align: right;
-    flex: 1;
-    word-break: break-word;
+  .status-paid {
+    background: #d4edda;
+    color: #155724;
   }
   
-  .data-card-actions {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid #f0f0f0;
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-  }
-  
-  .data-card-actions .btn {
-    padding: 8px 12px;
-    font-size: 12px;
-    min-width: 80px;
-    flex: 1;
-    max-width: 120px;
+  .status-unpaid {
+    background: #f8d7da;
+    color: #721c24;
   }
 }
 
-@media (min-width: 601px) {
+/* Desktop-Ansicht - Tabellen bleiben normal */
+@media (min-width: 769px) {
   .data-table-cards {
     display: none !important;
   }
@@ -1076,14 +996,18 @@ body {
 
 .data-table .actions {
   display: flex;
-  gap: 8px;
+  gap: 4px;
   align-items: center;
+  flex-wrap: wrap;
+  min-width: 120px;
 }
 
 .data-table .btn {
-  padding: 6px 12px;
-  font-size: 12px;
-  min-width: auto;
+  padding: 4px 8px;
+  font-size: 11px;
+  min-width: 50px;
+  margin: 0;
+  border-radius: 3px;
 }
 
 /* Status indicators */
@@ -1156,40 +1080,30 @@ body {
   .sort-select {
     width: 100%;
   }
-  
-  .data-card-value {
-    font-size: 13px;
-    max-width: 60%;
-    word-wrap: break-word;
-  }
-  
-  .data-card-label {
-    font-size: 11px;
-    max-width: 35%;
-  }
 }
 
-/* Weitere Optimierungen für iPhone SE und ähnliche */
+/* Weitere Optimierungen für sehr kleine Screens */
 @media (max-width: 375px) {
-  .data-card {
+  .data-table td {
+    font-size: 13px;
+    padding: 10px 0;
+  }
+  
+  .data-table td:before {
+    font-size: 12px;
+    width: 35%;
+  }
+  
+  .data-table tr {
     padding: 12px;
     margin-bottom: 12px;
   }
   
-  .data-card-row {
-    margin-bottom: 6px;
-    padding-bottom: 6px;
-  }
-  
-  .data-card-actions {
-    margin-top: 8px;
-    padding-top: 8px;
-  }
-  
-  .data-card-actions .btn {
-    padding: 6px 8px;
-    font-size: 11px;
-    min-width: 70px;
+  .data-table td.actions .btn {
+    padding: 3px 6px;
+    font-size: 10px;
+    min-width: 45px;
+    margin: 1px;
   }
 }
 
@@ -1200,4 +1114,59 @@ body {
 
 .spacer-small {
   height: 40px;
+}
+
+/* Login Buttons - bleiben größer für bessere UX */
+.login-form .btn {
+  width: 100%;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  min-width: auto;
+}
+
+.login-form .btn-primary {
+  background: #000000;
+  color: white;
+  border: 2px solid #000000;
+}
+
+.login-form .btn-secondary {
+  background: white;
+  color: #000000;
+  border: 2px solid #000000;
+}
+
+/* Management Modal Buttons */
+.modal .btn {
+  padding: 10px 16px;
+  font-size: 14px;
+  min-width: 80px;
+}
+
+/* Aktions-Buttons in Tabellen - sehr kompakt */
+.data-table .actions .btn {
+  padding: 4px 8px;
+  font-size: 11px;
+  min-width: 50px;
+  margin: 0 2px;
+}
+
+.data-table .actions .btn-primary {
+  background: #28a745;
+  color: white;
+  border: 1px solid #28a745;
+}
+
+.data-table .actions .btn-secondary {
+  background: #6c757d;
+  color: white;
+  border: 1px solid #6c757d;
+}
+
+.data-table .actions .btn-danger {
+  background: #dc3545;
+  color: white;
+  border: 1px solid #dc3545;
 }

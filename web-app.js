@@ -156,9 +156,11 @@ function showScreen(screenId) {
 // ==================== DASHBOARD INITIALISIERUNG ====================
 
 function initializeUserDashboard() {
-  loadMaterials();
-  loadMasterbatches();
-  setupEventListeners();
+  loadMaterials().then(() => {
+    loadMasterbatches().then(() => {
+      setupEventListeners();
+    });
+  });
   loadUserStats();
   loadUserEntries();
 }
@@ -170,22 +172,39 @@ function initializeAdminDashboard() {
 
 // Event Listeners einrichten
 function setupEventListeners() {
+  console.log("🔧 Event Listeners werden eingerichtet...");
+  
   // Live-Kostenberechnung
   const materialMenge = document.getElementById("materialMenge");
   const masterbatchMenge = document.getElementById("masterbatchMenge");
   const material = document.getElementById("material");
   const masterbatch = document.getElementById("masterbatch");
   
+  console.log("📊 Elemente gefunden:", {
+    materialMenge: !!materialMenge,
+    masterbatchMenge: !!masterbatchMenge,
+    material: !!material,
+    masterbatch: !!masterbatch
+  });
+  
   if (materialMenge) {
     materialMenge.addEventListener("input", throttledCalculateCost);
     materialMenge.addEventListener("keyup", throttledCalculateCost);
+    console.log("✅ Material Menge Event Listeners gesetzt");
   }
   if (masterbatchMenge) {
     masterbatchMenge.addEventListener("input", throttledCalculateCost);
     masterbatchMenge.addEventListener("keyup", throttledCalculateCost);
+    console.log("✅ Masterbatch Menge Event Listeners gesetzt");
   }
-  if (material) material.addEventListener("change", calculateCostPreview);
-  if (masterbatch) masterbatch.addEventListener("change", calculateCostPreview);
+  if (material) {
+    material.addEventListener("change", calculateCostPreview);
+    console.log("✅ Material Change Event Listener gesetzt");
+  }
+  if (masterbatch) {
+    masterbatch.addEventListener("change", calculateCostPreview);
+    console.log("✅ Masterbatch Change Event Listener gesetzt");
+  }
   
   // Eingabevalidierung für deutsche Zahlenformate
   if (materialMenge) {
@@ -213,6 +232,11 @@ function setupEventListeners() {
       }
     });
   }
+  
+  // Initialer Aufruf um sicherzustellen, dass alles funktioniert
+  setTimeout(() => {
+    calculateCostPreview();
+  }, 1000);
 }
 
 // ==================== MATERIAL & MASTERBATCH LOADING ====================
@@ -461,12 +485,10 @@ async function loadUserEntries() {
 // User-Einträge rendern
 function renderUserEntries(entries) {
   const tableDiv = document.getElementById("userEntriesTable");
-  const cardsDiv = document.getElementById("userEntriesCards");
   
   if (entries.length === 0) {
     const message = '<p>Noch keine Einträge vorhanden. Füge deinen ersten 3D-Druck hinzu!</p>';
     tableDiv.innerHTML = message;
-    cardsDiv.innerHTML = message;
     return;
   }
 
@@ -496,51 +518,17 @@ function renderUserEntries(entries) {
       '<span class="status-paid">✅ Bezahlt</span>' : 
       '<span class="status-unpaid">⏳ Offen</span>';
     
-    // Tabellen-Zeile
+    // Responsive Tabellen-Zeile mit data-label Attributen
     tableHtml += `
       <tr>
-        <td>${date}</td>
-        <td>${entry.material}</td>
-        <td>${entry.materialMenge.toFixed(2)} kg</td>
-        <td>${entry.masterbatch}</td>
-        <td>${entry.masterbatchMenge.toFixed(2)} kg</td>
-        <td><strong>${formatCurrency(entry.totalCost)}</strong></td>
-        <td>${status}</td>
+        <td data-label="Datum">${date}</td>
+        <td data-label="Material">${entry.material}</td>
+        <td data-label="Menge">${entry.materialMenge.toFixed(2)} kg</td>
+        <td data-label="Masterbatch">${entry.masterbatch}</td>
+        <td data-label="MB Menge">${entry.masterbatchMenge.toFixed(2)} kg</td>
+        <td data-label="Kosten"><strong>${formatCurrency(entry.totalCost)}</strong></td>
+        <td data-label="Status">${status}</td>
       </tr>
-    `;
-
-    // Card
-    cardsHtml += `
-      <div class="data-card">
-        <div class="data-card-row">
-          <span class="data-card-label">Datum:</span>
-          <span class="data-card-value">${date}</span>
-        </div>
-        <div class="data-card-row">
-          <span class="data-card-label">Material:</span>
-          <span class="data-card-value">${entry.material}</span>
-        </div>
-        <div class="data-card-row">
-          <span class="data-card-label">Menge:</span>
-          <span class="data-card-value">${entry.materialMenge.toFixed(2)} kg</span>
-        </div>
-        <div class="data-card-row">
-          <span class="data-card-label">Masterbatch:</span>
-          <span class="data-card-value">${entry.masterbatch}</span>
-        </div>
-        <div class="data-card-row">
-          <span class="data-card-label">MB Menge:</span>
-          <span class="data-card-value">${entry.masterbatchMenge.toFixed(2)} kg</span>
-        </div>
-        <div class="data-card-row">
-          <span class="data-card-label">Kosten:</span>
-          <span class="data-card-value"><strong>${formatCurrency(entry.totalCost)}</strong></span>
-        </div>
-        <div class="data-card-row">
-          <span class="data-card-label">Status:</span>
-          <span class="data-card-value">${status}</span>
-        </div>
-      </div>
     `;
   });
 
@@ -550,7 +538,6 @@ function renderUserEntries(entries) {
   `;
   
   tableDiv.innerHTML = tableHtml;
-  cardsDiv.innerHTML = cardsHtml;
 }
 
 // ==================== ADMIN DASHBOARD FUNKTIONEN ====================
@@ -621,12 +608,10 @@ async function loadAllEntries() {
 // Admin-Einträge rendern
 function renderAdminEntries(entries) {
   const tableDiv = document.getElementById("adminEntriesTable");
-  const cardsDiv = document.getElementById("adminEntriesCards");
   
   if (entries.length === 0) {
     const message = '<p>Noch keine Einträge vorhanden.</p>';
     tableDiv.innerHTML = message;
-    cardsDiv.innerHTML = message;
     return;
   }
 
@@ -650,9 +635,6 @@ function renderAdminEntries(entries) {
       <tbody>
   `;
 
-  // Cards HTML
-  let cardsHtml = '';
-
   entries.forEach(entry => {
     const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
     const isPaid = entry.paid || entry.isPaid;
@@ -670,69 +652,20 @@ function renderAdminEntries(entries) {
       </div>
     `;
     
-    // Tabellen-Zeile
+    // Responsive Tabellen-Zeile mit data-label Attributen
     tableHtml += `
       <tr id="entry-${entry.id}">
-        <td>${date}</td>
-        <td>${entry.name}</td>
-        <td>${entry.kennung}</td>
-        <td>${entry.material}</td>
-        <td>${(entry.materialMenge || 0).toFixed(2)} kg</td>
-        <td>${entry.masterbatch}</td>
-        <td>${(entry.masterbatchMenge || 0).toFixed(2)} kg</td>
-        <td><strong>${formatCurrency(entry.totalCost)}</strong></td>
-        <td>${status}</td>
-        <td>${actions}</td>
+        <td data-label="Datum">${date}</td>
+        <td data-label="Name">${entry.name}</td>
+        <td data-label="Kennung">${entry.kennung}</td>
+        <td data-label="Material">${entry.material}</td>
+        <td data-label="Mat. Menge">${(entry.materialMenge || 0).toFixed(2)} kg</td>
+        <td data-label="Masterbatch">${entry.masterbatch}</td>
+        <td data-label="MB Menge">${(entry.masterbatchMenge || 0).toFixed(2)} kg</td>
+        <td data-label="Kosten"><strong>${formatCurrency(entry.totalCost)}</strong></td>
+        <td data-label="Status">${status}</td>
+        <td class="actions" data-label="Aktionen">${actions}</td>
       </tr>
-    `;
-
-    // Card
-    cardsHtml += `
-      <div class="data-card" id="card-entry-${entry.id}">
-        <div class="data-card-row">
-          <span class="data-card-label">Datum:</span>
-          <span class="data-card-value">${date}</span>
-        </div>
-        <div class="data-card-row">
-          <span class="data-card-label">Name:</span>
-          <span class="data-card-value">${entry.name}</span>
-        </div>
-        <div class="data-card-row">
-          <span class="data-card-label">Kennung:</span>
-          <span class="data-card-value">${entry.kennung}</span>
-        </div>
-        <div class="data-card-row">
-          <span class="data-card-label">Material:</span>
-          <span class="data-card-value">${entry.material}</span>
-        </div>
-        <div class="data-card-row">
-          <span class="data-card-label">Mat. Menge:</span>
-          <span class="data-card-value">${(entry.materialMenge || 0).toFixed(2)} kg</span>
-        </div>
-        <div class="data-card-row">
-          <span class="data-card-label">Masterbatch:</span>
-          <span class="data-card-value">${entry.masterbatch}</span>
-        </div>
-        <div class="data-card-row">
-          <span class="data-card-label">MB Menge:</span>
-          <span class="data-card-value">${(entry.masterbatchMenge || 0).toFixed(2)} kg</span>
-        </div>
-        <div class="data-card-row">
-          <span class="data-card-label">Kosten:</span>
-          <span class="data-card-value"><strong>${formatCurrency(entry.totalCost)}</strong></span>
-        </div>
-        <div class="data-card-row">
-          <span class="data-card-label">Status:</span>
-          <span class="data-card-value">${status}</span>
-        </div>
-        <div class="data-card-actions">
-          ${!isPaid ? 
-            `<button class="btn btn-primary" onclick="markEntryAsPaid('${entry.id}')">Bezahlt</button>` :
-            `<button class="btn btn-secondary" onclick="markEntryAsUnpaid('${entry.id}')">Rückgängig</button>`
-          }
-          <button class="btn btn-danger" onclick="deleteEntry('${entry.id}')">Löschen</button>
-        </div>
-      </div>
     `;
   });
 
@@ -742,7 +675,6 @@ function renderAdminEntries(entries) {
   `;
   
   tableDiv.innerHTML = tableHtml;
-  cardsDiv.innerHTML = cardsHtml;
 }
 
 // Eintrag als bezahlt markieren
@@ -833,12 +765,10 @@ async function loadMaterialsForManagement() {
     const snapshot = await db.collection("materials").get();
     
     const tableDiv = document.getElementById("materialsTable");
-    const cardsDiv = document.getElementById("materialsCards");
     
     if (snapshot.empty) {
       const message = '<p>Keine Materialien vorhanden.</p>';
       tableDiv.innerHTML = message;
-      cardsDiv.innerHTML = message;
       return;
     }
 
@@ -854,39 +784,19 @@ async function loadMaterialsForManagement() {
         <tbody>
     `;
 
-    let cardsHtml = '';
-
     snapshot.forEach(doc => {
       const material = doc.data();
       
-      // Tabellen-Zeile
+      // Responsive Tabellen-Zeile mit data-label Attributen
       tableHtml += `
         <tr id="material-row-${doc.id}">
-          <td id="material-name-${doc.id}">${material.name}</td>
-          <td id="material-price-${doc.id}">${formatCurrency(material.price)}</td>
-          <td>
+          <td data-label="Name" id="material-name-${doc.id}">${material.name}</td>
+          <td data-label="Preis pro kg" id="material-price-${doc.id}">${formatCurrency(material.price)}</td>
+          <td class="actions" data-label="Aktionen">
             <button class="btn btn-secondary" onclick="editMaterial('${doc.id}', '${material.name}', ${material.price})">Bearbeiten</button>
             <button class="btn btn-danger" onclick="deleteMaterial('${doc.id}')">Löschen</button>
           </td>
         </tr>
-      `;
-
-      // Card
-      cardsHtml += `
-        <div class="data-card" id="card-material-${doc.id}">
-          <div class="data-card-row">
-            <span class="data-card-label">Name:</span>
-            <span class="data-card-value">${material.name}</span>
-          </div>
-          <div class="data-card-row">
-            <span class="data-card-label">Preis:</span>
-            <span class="data-card-value">${formatCurrency(material.price)}</span>
-          </div>
-          <div class="data-card-actions">
-            <button class="btn btn-secondary" onclick="editMaterial('${doc.id}', '${material.name}', ${material.price})">Bearbeiten</button>
-            <button class="btn btn-danger" onclick="deleteMaterial('${doc.id}')">Löschen</button>
-          </div>
-        </div>
       `;
     });
 
@@ -896,7 +806,6 @@ async function loadMaterialsForManagement() {
     `;
     
     tableDiv.innerHTML = tableHtml;
-    cardsDiv.innerHTML = cardsHtml;
     
   } catch (error) {
     console.error("Fehler beim Laden der Materialien:", error);
@@ -934,34 +843,16 @@ async function loadMasterbatchesForManagement() {
     snapshot.forEach(doc => {
       const masterbatch = doc.data();
       
-      // Tabellen-Zeile
+      // Responsive Tabellen-Zeile mit data-label Attributen
       tableHtml += `
         <tr id="masterbatch-row-${doc.id}">
-          <td id="masterbatch-name-${doc.id}">${masterbatch.name}</td>
-          <td id="masterbatch-price-${doc.id}">${formatCurrency(masterbatch.price)}</td>
-          <td>
+          <td data-label="Name" id="masterbatch-name-${doc.id}">${masterbatch.name}</td>
+          <td data-label="Preis pro kg" id="masterbatch-price-${doc.id}">${formatCurrency(masterbatch.price)}</td>
+          <td class="actions" data-label="Aktionen">
             <button class="btn btn-secondary" onclick="editMasterbatch('${doc.id}', '${masterbatch.name}', ${masterbatch.price})">Bearbeiten</button>
             <button class="btn btn-danger" onclick="deleteMasterbatch('${doc.id}')">Löschen</button>
           </td>
         </tr>
-      `;
-
-      // Card
-      cardsHtml += `
-        <div class="data-card" id="card-masterbatch-${doc.id}">
-          <div class="data-card-row">
-            <span class="data-card-label">Name:</span>
-            <span class="data-card-value">${masterbatch.name}</span>
-          </div>
-          <div class="data-card-row">
-            <span class="data-card-label">Preis:</span>
-            <span class="data-card-value">${formatCurrency(masterbatch.price)}</span>
-          </div>
-          <div class="data-card-actions">
-            <button class="btn btn-secondary" onclick="editMasterbatch('${doc.id}', '${masterbatch.name}', ${masterbatch.price})">Bearbeiten</button>
-            <button class="btn btn-danger" onclick="deleteMasterbatch('${doc.id}')">Löschen</button>
-          </div>
-        </div>
       `;
     });
 
@@ -971,7 +862,6 @@ async function loadMasterbatchesForManagement() {
     `;
     
     tableDiv.innerHTML = tableHtml;
-    cardsDiv.innerHTML = cardsHtml;
     
   } catch (error) {
     console.error("Fehler beim Laden der Masterbatches:", error);
@@ -1164,6 +1054,8 @@ function parseGermanNumber(str) {
 
 // Kostenvorschau berechnen
 async function calculateCostPreview() {
+  console.log("💰 Kostenvorschau wird berechnet...");
+  
   const material = document.getElementById("material");
   const materialMenge = document.getElementById("materialMenge");
   const masterbatch = document.getElementById("masterbatch");
@@ -1171,6 +1063,7 @@ async function calculateCostPreview() {
   const costPreview = document.getElementById("costPreview");
   
   if (!material || !materialMenge || !masterbatch || !masterbatchMenge || !costPreview) {
+    console.log("❌ Nicht alle Elemente gefunden");
     return;
   }
   
@@ -1179,12 +1072,21 @@ async function calculateCostPreview() {
   const masterbatchValue = masterbatch.value.trim();
   const masterbatchMengeValue = masterbatchMenge.value.trim();
   
+  console.log("📊 Eingabewerte:", {
+    material: materialValue,
+    materialMenge: materialMengeValue,
+    masterbatch: masterbatchValue,
+    masterbatchMenge: masterbatchMengeValue
+  });
+  
   if (!materialValue || !materialMengeValue || !masterbatchValue || !masterbatchMengeValue) {
+    console.log("⚠️ Nicht alle Felder ausgefüllt");
     costPreview.textContent = '0,00 €';
     return;
   }
   
   try {
+    console.log("🔍 Suche Preise in Firestore...");
     const materialSnapshot = await db.collection("materials").where("name", "==", materialValue).get();
     const masterbatchSnapshot = await db.collection("masterbatches").where("name", "==", masterbatchValue).get();
     
@@ -1192,20 +1094,35 @@ async function calculateCostPreview() {
       const materialPrice = materialSnapshot.docs[0].data().price;
       const masterbatchPrice = masterbatchSnapshot.docs[0].data().price;
       
+      console.log("💰 Preise gefunden:", {
+        materialPrice: materialPrice,
+        masterbatchPrice: masterbatchPrice
+      });
+      
       const materialCost = parseGermanNumber(materialMengeValue) * materialPrice;
       const masterbatchCost = parseGermanNumber(masterbatchMengeValue) * masterbatchPrice;
       const totalCost = materialCost + masterbatchCost;
       
+      console.log("🧮 Berechnung:", {
+        materialCost: materialCost,
+        masterbatchCost: masterbatchCost,
+        totalCost: totalCost
+      });
+      
       if (!isNaN(totalCost) && totalCost > 0) {
-        costPreview.textContent = formatCurrency(totalCost);
+        const formattedCost = formatCurrency(totalCost);
+        costPreview.textContent = formattedCost;
+        console.log("✅ Kostenvorschau aktualisiert:", formattedCost);
       } else {
         costPreview.textContent = '0,00 €';
+        console.log("⚠️ Ungültige Berechnung");
       }
     } else {
       costPreview.textContent = '0,00 €';
+      console.log("❌ Material oder Masterbatch nicht gefunden");
     }
   } catch (error) {
-    console.error("Fehler bei der Kostenberechnung:", error);
+    console.error("❌ Fehler bei der Kostenberechnung:", error);
     costPreview.textContent = '0,00 €';
   }
 }
