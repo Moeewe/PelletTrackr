@@ -7,26 +7,27 @@ set -e
 rm -rf dist
 mkdir -p dist/assets
 
-# Web-App Dateien kopieren
-cp web/web-app.html dist/
-cp web/web-app.js dist/
-cp web/styles.css dist/
-cp web/index.html dist/
+
+# Web-App Dateien kopieren (angepasst für aktuelle Struktur)
+cp web-app.html dist/
+cp web-app.js dist/
+cp styles.css dist/
+cp index.html dist/
 
 # Scripte und Konfiguration
-cp scripts/firebase-data-manager.js dist/
-cp config/config.js dist/
+cp firebase-data-manager.js dist/
+cp config.js dist/
 
 # Assets kopieren
 cp -r assets/* dist/assets/
 
 # Sonstige benötigte Dateien
 cp netlify.toml dist/
-cp scripts/admin-functions.js dist/
-cp scripts/app-init.js dist/
-cp scripts/core-functions.js dist/
-cp scripts/debug-functions.js dist/
-cp scripts/user-functions.js dist/
+cp admin-functions.js dist/
+cp app-init.js dist/
+cp core-functions.js dist/
+cp debug-functions.js dist/
+cp user-functions.js dist/
 
 # Optional: Test-Tools
 cp tests/csv-import-tool.html dist/
