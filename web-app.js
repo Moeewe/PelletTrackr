@@ -23,7 +23,7 @@ function initializeApp() {
 
 // ==================== LOGIN FUNKTIONEN ====================
 
-function loginAsUser() {
+async function loginAsUser() {
   const name = document.getElementById('loginName').value.trim();
   const kennung = document.getElementById('loginKennung').value.trim();
   
@@ -32,14 +32,38 @@ function loginAsUser() {
     return;
   }
   
-  currentUser = {
-    name: name,
-    kennung: kennung.toLowerCase(),
-    isAdmin: false
-  };
-  
-  // User Dashboard anzeigen
-  document.getElementById('userWelcome').textContent = `Willkommen, ${name}!`;
+  // Prüfen ob Kennung bereits von jemand anderem verwendet wird
+  const existingUser = await checkExistingKennung(kennung.toLowerCase(), name);
+  if (existingUser) {
+    const userChoice = confirm(
+      `⚠️ FH-Kennung bereits registriert!\n\n` +
+      `Die Kennung "${kennung}" ist bereits für "${existingUser.name}" registriert.\n\n` +
+      `Möchtest du:\n` +
+      `✅ OK = Als "${existingUser.name}" anmelden\n` +
+      `❌ Abbrechen = Andere Kennung verwenden`
+    );
+    
+    if (userChoice) {
+      // Als existierender User anmelden
+      currentUser = {
+        name: existingUser.name,
+        kennung: kennung.toLowerCase(),
+        isAdmin: false
+      };
+      document.getElementById('userWelcome').textContent = `Willkommen zurück, ${existingUser.name}!`;
+    } else {
+      alert('Bitte verwende eine andere FH-Kennung oder wende dich an den Administrator.');
+      return;
+    }
+  } else {
+    // Neue Kombination - normal fortfahren
+    currentUser = {
+      name: name,
+      kennung: kennung.toLowerCase(),
+      isAdmin: false
+    };
+    document.getElementById('userWelcome').textContent = `Willkommen, ${name}!`;
+  }
   showScreen('userDashboard');
   
   // User Dashboard initialisieren
@@ -83,6 +107,38 @@ function logout() {
   document.getElementById('loginName').value = '';
   document.getElementById('loginKennung').value = '';
   document.getElementById('adminPassword').value = '';
+}
+
+// ==================== USER VALIDATION ====================
+
+async function checkExistingKennung(kennung, currentName) {
+  try {
+    // Alle Einträge mit dieser Kennung abrufen
+    const snapshot = await db.collection('entries').where('kennung', '==', kennung).get();
+    
+    if (!snapshot.empty) {
+      // Erste Einträge prüfen um zu sehen ob ein anderer Name verwendet wird
+      const existingNames = new Set();
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.name && data.name.toLowerCase() !== currentName.toLowerCase()) {
+          existingNames.add(data.name);
+        }
+      });
+      
+      if (existingNames.size > 0) {
+        // Ersten anderen Namen zurückgeben
+        return {
+          name: Array.from(existingNames)[0]
+        };
+      }
+    }
+    
+    return null; // Keine Konflikte gefunden
+  } catch (error) {
+    console.error('Fehler beim Prüfen der FH-Kennung:', error);
+    return null;
+  }
 }
 
 // ==================== SCREEN MANAGEMENT ====================
@@ -405,14 +461,17 @@ async function loadUserEntries() {
 // User-Einträge rendern
 function renderUserEntries(entries) {
   const tableDiv = document.getElementById("userEntriesTable");
+  const cardsDiv = document.getElementById("userEntriesCards");
   
   if (entries.length === 0) {
-    tableDiv.innerHTML = '<p>Noch keine Einträge vorhanden. Füge deinen ersten 3D-Druck hinzu!</p>';
+    const message = '<p>Noch keine Einträge vorhanden. Füge deinen ersten 3D-Druck hinzu!</p>';
+    tableDiv.innerHTML = message;
+    cardsDiv.innerHTML = message;
     return;
   }
 
   // Tabelle erstellen
-  let html = `
+  let tableHtml = `
     <table class="data-table">
       <thead>
         <tr>
@@ -428,13 +487,17 @@ function renderUserEntries(entries) {
       <tbody>
   `;
 
+  // Cards HTML
+  let cardsHtml = '';
+
   entries.forEach(entry => {
     const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
     const status = entry.paid || entry.isPaid ? 
       '<span class="status-paid">✅ Bezahlt</span>' : 
       '<span class="status-unpaid">⏳ Offen</span>';
     
-    html += `
+    // Tabellen-Zeile
+    tableHtml += `
       <tr>
         <td>${date}</td>
         <td>${entry.material}</td>
@@ -445,14 +508,49 @@ function renderUserEntries(entries) {
         <td>${status}</td>
       </tr>
     `;
+
+    // Card
+    cardsHtml += `
+      <div class="data-card">
+        <div class="data-card-row">
+          <span class="data-card-label">Datum:</span>
+          <span class="data-card-value">${date}</span>
+        </div>
+        <div class="data-card-row">
+          <span class="data-card-label">Material:</span>
+          <span class="data-card-value">${entry.material}</span>
+        </div>
+        <div class="data-card-row">
+          <span class="data-card-label">Menge:</span>
+          <span class="data-card-value">${entry.materialMenge.toFixed(2)} kg</span>
+        </div>
+        <div class="data-card-row">
+          <span class="data-card-label">Masterbatch:</span>
+          <span class="data-card-value">${entry.masterbatch}</span>
+        </div>
+        <div class="data-card-row">
+          <span class="data-card-label">MB Menge:</span>
+          <span class="data-card-value">${entry.masterbatchMenge.toFixed(2)} kg</span>
+        </div>
+        <div class="data-card-row">
+          <span class="data-card-label">Kosten:</span>
+          <span class="data-card-value"><strong>${formatCurrency(entry.totalCost)}</strong></span>
+        </div>
+        <div class="data-card-row">
+          <span class="data-card-label">Status:</span>
+          <span class="data-card-value">${status}</span>
+        </div>
+      </div>
+    `;
   });
 
-  html += `
+  tableHtml += `
       </tbody>
     </table>
   `;
   
-  tableDiv.innerHTML = html;
+  tableDiv.innerHTML = tableHtml;
+  cardsDiv.innerHTML = cardsHtml;
 }
 
 // ==================== ADMIN DASHBOARD FUNKTIONEN ====================
@@ -523,14 +621,17 @@ async function loadAllEntries() {
 // Admin-Einträge rendern
 function renderAdminEntries(entries) {
   const tableDiv = document.getElementById("adminEntriesTable");
+  const cardsDiv = document.getElementById("adminEntriesCards");
   
   if (entries.length === 0) {
-    tableDiv.innerHTML = '<p>Noch keine Einträge vorhanden.</p>';
+    const message = '<p>Noch keine Einträge vorhanden.</p>';
+    tableDiv.innerHTML = message;
+    cardsDiv.innerHTML = message;
     return;
   }
 
   // Admin-Tabelle erstellen
-  let html = `
+  let tableHtml = `
     <table class="data-table">
       <thead>
         <tr>
@@ -549,6 +650,9 @@ function renderAdminEntries(entries) {
       <tbody>
   `;
 
+  // Cards HTML
+  let cardsHtml = '';
+
   entries.forEach(entry => {
     const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
     const isPaid = entry.paid || entry.isPaid;
@@ -566,7 +670,8 @@ function renderAdminEntries(entries) {
       </div>
     `;
     
-    html += `
+    // Tabellen-Zeile
+    tableHtml += `
       <tr id="entry-${entry.id}">
         <td>${date}</td>
         <td>${entry.name}</td>
@@ -580,14 +685,64 @@ function renderAdminEntries(entries) {
         <td>${actions}</td>
       </tr>
     `;
+
+    // Card
+    cardsHtml += `
+      <div class="data-card" id="card-entry-${entry.id}">
+        <div class="data-card-row">
+          <span class="data-card-label">Datum:</span>
+          <span class="data-card-value">${date}</span>
+        </div>
+        <div class="data-card-row">
+          <span class="data-card-label">Name:</span>
+          <span class="data-card-value">${entry.name}</span>
+        </div>
+        <div class="data-card-row">
+          <span class="data-card-label">Kennung:</span>
+          <span class="data-card-value">${entry.kennung}</span>
+        </div>
+        <div class="data-card-row">
+          <span class="data-card-label">Material:</span>
+          <span class="data-card-value">${entry.material}</span>
+        </div>
+        <div class="data-card-row">
+          <span class="data-card-label">Mat. Menge:</span>
+          <span class="data-card-value">${(entry.materialMenge || 0).toFixed(2)} kg</span>
+        </div>
+        <div class="data-card-row">
+          <span class="data-card-label">Masterbatch:</span>
+          <span class="data-card-value">${entry.masterbatch}</span>
+        </div>
+        <div class="data-card-row">
+          <span class="data-card-label">MB Menge:</span>
+          <span class="data-card-value">${(entry.masterbatchMenge || 0).toFixed(2)} kg</span>
+        </div>
+        <div class="data-card-row">
+          <span class="data-card-label">Kosten:</span>
+          <span class="data-card-value"><strong>${formatCurrency(entry.totalCost)}</strong></span>
+        </div>
+        <div class="data-card-row">
+          <span class="data-card-label">Status:</span>
+          <span class="data-card-value">${status}</span>
+        </div>
+        <div class="data-card-actions">
+          ${!isPaid ? 
+            `<button class="btn btn-primary" onclick="markEntryAsPaid('${entry.id}')">Bezahlt</button>` :
+            `<button class="btn btn-secondary" onclick="markEntryAsUnpaid('${entry.id}')">Rückgängig</button>`
+          }
+          <button class="btn btn-danger" onclick="deleteEntry('${entry.id}')">Löschen</button>
+        </div>
+      </div>
+    `;
   });
 
-  html += `
+  tableHtml += `
       </tbody>
     </table>
   `;
   
-  tableDiv.innerHTML = html;
+  tableDiv.innerHTML = tableHtml;
+  cardsDiv.innerHTML = cardsHtml;
 }
 
 // Eintrag als bezahlt markieren
@@ -678,13 +833,16 @@ async function loadMaterialsForManagement() {
     const snapshot = await db.collection("materials").get();
     
     const tableDiv = document.getElementById("materialsTable");
+    const cardsDiv = document.getElementById("materialsCards");
     
     if (snapshot.empty) {
-      tableDiv.innerHTML = '<p>Keine Materialien vorhanden.</p>';
+      const message = '<p>Keine Materialien vorhanden.</p>';
+      tableDiv.innerHTML = message;
+      cardsDiv.innerHTML = message;
       return;
     }
 
-    let html = `
+    let tableHtml = `
       <table class="data-table">
         <thead>
           <tr>
@@ -696,9 +854,13 @@ async function loadMaterialsForManagement() {
         <tbody>
     `;
 
+    let cardsHtml = '';
+
     snapshot.forEach(doc => {
       const material = doc.data();
-      html += `
+      
+      // Tabellen-Zeile
+      tableHtml += `
         <tr id="material-row-${doc.id}">
           <td id="material-name-${doc.id}">${material.name}</td>
           <td id="material-price-${doc.id}">${formatCurrency(material.price)}</td>
@@ -708,14 +870,33 @@ async function loadMaterialsForManagement() {
           </td>
         </tr>
       `;
+
+      // Card
+      cardsHtml += `
+        <div class="data-card" id="card-material-${doc.id}">
+          <div class="data-card-row">
+            <span class="data-card-label">Name:</span>
+            <span class="data-card-value">${material.name}</span>
+          </div>
+          <div class="data-card-row">
+            <span class="data-card-label">Preis:</span>
+            <span class="data-card-value">${formatCurrency(material.price)}</span>
+          </div>
+          <div class="data-card-actions">
+            <button class="btn btn-secondary" onclick="editMaterial('${doc.id}', '${material.name}', ${material.price})">Bearbeiten</button>
+            <button class="btn btn-danger" onclick="deleteMaterial('${doc.id}')">Löschen</button>
+          </div>
+        </div>
+      `;
     });
 
-    html += `
+    tableHtml += `
         </tbody>
       </table>
     `;
     
-    tableDiv.innerHTML = html;
+    tableDiv.innerHTML = tableHtml;
+    cardsDiv.innerHTML = cardsHtml;
     
   } catch (error) {
     console.error("Fehler beim Laden der Materialien:", error);
@@ -727,13 +908,16 @@ async function loadMasterbatchesForManagement() {
     const snapshot = await db.collection("masterbatches").get();
     
     const tableDiv = document.getElementById("masterbatchesTable");
+    const cardsDiv = document.getElementById("masterbatchesCards");
     
     if (snapshot.empty) {
-      tableDiv.innerHTML = '<p>Keine Masterbatches vorhanden.</p>';
+      const message = '<p>Keine Masterbatches vorhanden.</p>';
+      tableDiv.innerHTML = message;
+      cardsDiv.innerHTML = message;
       return;
     }
 
-    let html = `
+    let tableHtml = `
       <table class="data-table">
         <thead>
           <tr>
@@ -745,9 +929,13 @@ async function loadMasterbatchesForManagement() {
         <tbody>
     `;
 
+    let cardsHtml = '';
+
     snapshot.forEach(doc => {
       const masterbatch = doc.data();
-      html += `
+      
+      // Tabellen-Zeile
+      tableHtml += `
         <tr id="masterbatch-row-${doc.id}">
           <td id="masterbatch-name-${doc.id}">${masterbatch.name}</td>
           <td id="masterbatch-price-${doc.id}">${formatCurrency(masterbatch.price)}</td>
@@ -757,14 +945,33 @@ async function loadMasterbatchesForManagement() {
           </td>
         </tr>
       `;
+
+      // Card
+      cardsHtml += `
+        <div class="data-card" id="card-masterbatch-${doc.id}">
+          <div class="data-card-row">
+            <span class="data-card-label">Name:</span>
+            <span class="data-card-value">${masterbatch.name}</span>
+          </div>
+          <div class="data-card-row">
+            <span class="data-card-label">Preis:</span>
+            <span class="data-card-value">${formatCurrency(masterbatch.price)}</span>
+          </div>
+          <div class="data-card-actions">
+            <button class="btn btn-secondary" onclick="editMasterbatch('${doc.id}', '${masterbatch.name}', ${masterbatch.price})">Bearbeiten</button>
+            <button class="btn btn-danger" onclick="deleteMasterbatch('${doc.id}')">Löschen</button>
+          </div>
+        </div>
+      `;
     });
 
-    html += `
+    tableHtml += `
         </tbody>
       </table>
     `;
     
-    tableDiv.innerHTML = html;
+    tableDiv.innerHTML = tableHtml;
+    cardsDiv.innerHTML = cardsHtml;
     
   } catch (error) {
     console.error("Fehler beim Laden der Masterbatches:", error);
