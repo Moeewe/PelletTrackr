@@ -322,7 +322,7 @@ body {
 
 /* Cost Preview - Gelbes Fraenk-Highlight - immer sichtbar */
 .cost-preview {
-  background: #FFFF00;
+  background: #FFEB00;
   color: #000000;
   padding: 24px;
   border-radius: 0;
@@ -345,7 +345,7 @@ body {
 }
 
 .cost-preview.show {
-  background: #FFFF00;
+  background: #FFEB00;
   color: #000000;
   border-color: #000000;
   animation: pulse 0.3s ease;
@@ -414,7 +414,7 @@ body {
 }
 
 .btn-secondary:hover {
-  background: #FFFF00;
+  background: #FFEB00;
   border-color: #000000;
 }
 
@@ -440,7 +440,7 @@ body {
 }
 
 .status-success {
-  background: #FFFF00;
+  background: #FFEB00;
   color: #000000;
   border-color: #000000;
 }
@@ -552,21 +552,30 @@ body {
     display: none;
   }
   
+  /* Container für bessere Zentrierung */
+  .data-table {
+    max-width: 100%;
+    margin: 20px auto;
+    padding: 0 16px;
+  }
+  
   /* Jede Zeile wird zu einer minimalistischen Karte */
   .data-table tr {
     display: block;
-    background: #ffffff;
-    border: 1px solid #f0f0f0;
-    border-radius: 4px;
-    margin-bottom: 24px;
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    margin: 0 auto 24px auto;
     padding: 24px;
     position: relative;
     transition: all 0.15s ease;
+    max-width: 500px;
+    width: 100%;
   }
   
   .data-table tr:hover {
-    border-color: #e0e0e0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border-color: #d0d0d0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   }
   
   /* Hauptinhalt - cleaner Fraenk-Look */
@@ -626,7 +635,20 @@ body {
     display: none;
   }
   
-  /* Kosten - Fraenk-gelbes Highlight, aber dezenter */
+  /* Job Name als sekundärer Titel */
+  .data-table td[data-label="Job"] {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333333;
+    margin: 4px 0 12px 0;
+  }
+  
+  .data-table td[data-label="Job"]:before {
+    color: #999999;
+    font-size: 11px;
+  }
+  
+  /* Kosten - fett aber ohne gelben Hintergrund */
   .data-table td[data-label="Kosten"],
   .data-table td[data-label="Preis pro kg"] {
     font-size: 24px;
@@ -634,12 +656,8 @@ body {
     color: #000000;
     margin: 16px 0;
     padding: 16px 0;
-    background: linear-gradient(90deg, #FFFF00 0%, #FFFF00 100%);
-    margin-left: -24px;
-    margin-right: -24px;
-    padding-left: 24px;
-    padding-right: 24px;
-    border-left: 4px solid #000000;
+    border-left: 4px solid #FFEB00;
+    padding-left: 16px;
   }
   
   .data-table td[data-label="Kosten"]:before,
@@ -658,7 +676,7 @@ body {
   .status-unpaid {
     display: inline-block;
     padding: 6px 12px;
-    border-radius: 2px;
+    border-radius: 3px;
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
@@ -668,7 +686,7 @@ body {
   
   .status-paid {
     background: #000000;
-    color: #FFFF00;
+    color: #FFEB00;
   }
   
   .status-unpaid {
@@ -681,10 +699,10 @@ body {
     position: absolute;
     top: 24px;
     right: 24px;
-    background: #f8f8f8;
+    background: #f0f0f0;
     color: #666666;
-    padding: 2px 6px;
-    border-radius: 2px;
+    padding: 4px 8px;
+    border-radius: 3px;
     font-size: 10px;
     font-weight: 500;
     text-transform: uppercase;
@@ -726,6 +744,38 @@ body {
     color: #999999;
   }
   
+  /* Notizen-Feld */
+  .data-table td[data-label="Notizen"] {
+    font-size: 14px;
+    color: #666666;
+    margin: 12px 0;
+    padding: 8px 0;
+    border-top: 1px solid #e0e0e0;
+  }
+  
+  .data-table td[data-label="Notizen"]:before {
+    color: #999999;
+    font-size: 11px;
+  }
+  
+  /* Notiz-Bearbeitung Button */
+  .btn-edit-note {
+    background: none;
+    border: none;
+    color: #666666;
+    font-size: 12px;
+    margin-left: 8px;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 2px;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-edit-note:hover {
+    background: #f0f0f0;
+    color: #000000;
+  }
+  
   /* Aktionen - minimalistisch am unteren Rand */
   .data-table td.actions {
     position: absolute;
@@ -744,7 +794,7 @@ body {
     margin: 0 0 0 4px;
     padding: 4px 8px;
     font-size: 10px;
-    border-radius: 2px;
+    border-radius: 3px;
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.3px;
@@ -761,7 +811,7 @@ body {
   
   .data-table td.actions .btn-primary {
     background: #000000;
-    color: #FFFF00;
+    color: #FFEB00;
     border-color: #000000;
   }
   
@@ -792,7 +842,6 @@ body {
   
   .data-table {
     border: none;
-    margin: 20px 0;
     overflow: visible;
     width: 100%;
   }
@@ -811,9 +860,14 @@ body {
 
 /* Sehr kleine Screens - noch kompakter */
 @media (max-width: 375px) {
+  .data-table {
+    padding: 0 12px;
+  }
+  
   .data-table tr {
     padding: 20px 16px 55px 16px;
-    margin-bottom: 20px;
+    margin: 0 auto 20px auto;
+    max-width: 100%;
   }
   
   .data-table td[data-label="Material"],
@@ -824,17 +878,15 @@ body {
   .data-table td[data-label="Kosten"],
   .data-table td[data-label="Preis pro kg"] {
     font-size: 20px;
-    margin-left: -16px;
-    margin-right: -16px;
-    padding-left: 16px;
-    padding-right: 16px;
+    margin: 16px 0;
+    padding: 12px 0 12px 12px;
   }
   
   .data-table td[data-label="Kennung"] {
     top: 20px;
     right: 16px;
     font-size: 9px;
-    padding: 2px 4px;
+    padding: 3px 6px;
   }
   
   .data-table td.actions {
@@ -1389,4 +1441,27 @@ body {
   background: #dc3545;
   color: white;
   border: 1px solid #dc3545;
+}
+
+/* Notizen-Bearbeitung */
+.notes-cell {
+  position: relative;
+  max-width: 200px;
+}
+
+.btn-edit-note {
+  background: none;
+  border: none;
+  color: #666666;
+  font-size: 12px;
+  margin-left: 8px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+.btn-edit-note:hover {
+  background: #f0f0f0;
+  color: #000000;
 }

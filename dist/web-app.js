@@ -1195,6 +1195,8 @@ function searchUserEntries() {
   const filteredEntries = allUserEntries.filter(entry => {
     return entry.material.toLowerCase().includes(searchTerm) ||
            entry.masterbatch.toLowerCase().includes(searchTerm) ||
+           (entry.jobName && entry.jobName.toLowerCase().includes(searchTerm)) ||
+           (entry.jobNotes && entry.jobNotes.toLowerCase().includes(searchTerm)) ||
            (entry.timestamp && new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE').includes(searchTerm));
   });
   
@@ -1215,6 +1217,8 @@ function searchAdminEntries() {
            entry.kennung.toLowerCase().includes(searchTerm) ||
            entry.material.toLowerCase().includes(searchTerm) ||
            entry.masterbatch.toLowerCase().includes(searchTerm) ||
+           (entry.jobName && entry.jobName.toLowerCase().includes(searchTerm)) ||
+           (entry.jobNotes && entry.jobNotes.toLowerCase().includes(searchTerm)) ||
            (entry.timestamp && new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE').includes(searchTerm));
   });
   
