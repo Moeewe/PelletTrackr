@@ -187,6 +187,15 @@
                         </button>
                     </div>
                 </div>
+                
+                <div class="control-section">
+                    <h3 class="control-title">Nutzer-Verwaltung</h3>
+                    <div class="control-buttons">
+                        <button class="btn btn-secondary" onclick="showUserManager()">
+                            Nutzer verwalten
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- All Entries Table -->
@@ -253,6 +262,34 @@
                 </div>
                 <div class="masterbatches-container">
                     <div id="masterbatchesTable" class="data-table data-table-responsive"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Manager Modal -->
+    <div id="userManager" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nutzer verwalten</h3>
+                <button class="btn btn-link" onclick="closeUserManager()">Schließen</button>
+            </div>
+            <div class="modal-body">
+                <div class="table-controls">
+                    <input type="text" id="userManagerSearchInput" placeholder="Suchen nach Name oder Kennung..." class="search-input" onkeyup="searchUsers()">
+                    <select id="userManagerSortSelect" class="sort-select" onchange="sortUsers()">
+                        <option value="name-asc">Name (A-Z)</option>
+                        <option value="name-desc">Name (Z-A)</option>
+                        <option value="kennung-asc">Kennung (A-Z)</option>
+                        <option value="kennung-desc">Kennung (Z-A)</option>
+                        <option value="entries-desc">Meiste Einträge</option>
+                        <option value="entries-asc">Wenigste Einträge</option>
+                        <option value="revenue-desc">Höchster Umsatz</option>
+                        <option value="revenue-asc">Niedrigster Umsatz</option>
+                    </select>
+                </div>
+                <div class="users-container">
+                    <div id="usersTable" class="data-table data-table-responsive"></div>
                 </div>
             </div>
         </div>

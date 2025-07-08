@@ -301,7 +301,7 @@ body {
   padding-right: 30px;
 }
 
-/* Cost Preview - Gelbes Fraenk-Highlight */
+/* Cost Preview - Gelbes Fraenk-Highlight - immer sichtbar */
 .cost-preview {
   background: #FFFF00;
   color: #000000;
@@ -309,19 +309,27 @@ body {
   border-radius: 0;
   text-align: center;
   margin: 40px 0;
-  display: none;
-  border: 2px solid #000000;
-  transition: all 0.3s ease;
-}
-
-.cost-preview.show {
   display: block;
-  animation: fadeIn 0.2s ease;
+  border: 2px solid #000000;
+  transition: all 0.2s ease;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .cost-preview.calculating {
-  background: #f0f0f0;
+  background: #f8f8f8;
   color: #666666;
+  border-color: #e0e0e0;
+}
+
+.cost-preview.show {
+  background: #FFFF00;
+  color: #000000;
+  border-color: #000000;
+  animation: pulse 0.3s ease;
 }
 
 @keyframes fadeIn {
@@ -517,122 +525,192 @@ body {
   background: #fafafa;
 }
 
-/* Responsive Tables - Dribbble-inspired Card Layout im Fraenk-Style */
+/* Responsive Tables - Minimalistischer Fraenk-Style */
 @media (max-width: 768px) {
   /* Verstecke die normalen Tabellen-Header */
   .data-table thead {
     display: none;
   }
   
-  /* Jede Zeile wird zu einer eleganten Karte */
+  /* Jede Zeile wird zu einer minimalistischen Karte */
   .data-table tr {
     display: block;
-    background: white;
-    border: 1px solid #e8e8e8;
-    border-radius: 12px;
-    margin-bottom: 20px;
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    transition: all 0.2s ease;
+    background: #ffffff;
+    border: 1px solid #f0f0f0;
+    border-radius: 4px;
+    margin-bottom: 24px;
+    padding: 24px;
     position: relative;
+    transition: all 0.15s ease;
   }
   
   .data-table tr:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    transform: translateY(-2px);
+    border-color: #e0e0e0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   }
   
-  /* Hauptinhalt der Karte */
+  /* Hauptinhalt - cleaner Fraenk-Look */
   .data-table td {
     display: block;
     border: none;
-    padding: 8px 0;
+    padding: 0;
+    margin: 0 0 16px 0;
     position: relative;
     text-align: left;
-    font-size: 15px;
-    line-height: 1.4;
+    font-size: 16px;
+    line-height: 1.3;
   }
   
-  /* Erstes Element (meist Datum) als Header */
+  .data-table td:last-child {
+    margin-bottom: 0;
+  }
+  
+  /* Erstes Element (Datum) als Header - minimalistisch */
   .data-table td:first-child {
-    font-size: 18px;
-    font-weight: 700;
-    color: #000000;
-    margin-bottom: 12px;
-    padding-bottom: 12px;
-    border-bottom: 2px solid #f0f0f0;
+    font-size: 14px;
+    font-weight: 400;
+    color: #666666;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
   
   .data-table td:first-child:before {
     display: none;
   }
   
-  /* Labels für die anderen Felder */
+  /* Labels für die anderen Felder - sehr minimal */
   .data-table td:not(:first-child):before {
-    content: attr(data-label) ": ";
-    font-weight: 600;
-    color: #666666;
-    font-size: 13px;
+    content: attr(data-label);
+    display: block;
+    font-weight: 400;
+    color: #999999;
+    font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    display: inline-block;
-    min-width: 100px;
-    margin-right: 8px;
+    margin-bottom: 4px;
   }
   
-  /* Kosten-Feld hervorheben */
-  .data-table td[data-label="Kosten"],
-  .data-table td[data-label="Preis pro kg"] {
+  /* Material/Name als primärer Titel */
+  .data-table td[data-label="Material"],
+  .data-table td[data-label="Name"] {
     font-size: 20px;
     font-weight: 700;
     color: #000000;
-    margin: 12px 0;
-    padding: 12px 0;
-    background: #FFFF00;
-    margin-left: -20px;
-    margin-right: -20px;
-    padding-left: 20px;
-    padding-right: 20px;
-    border-radius: 8px;
+    margin: 8px 0 16px 0;
+    line-height: 1.2;
+  }
+  
+  .data-table td[data-label="Material"]:before,
+  .data-table td[data-label="Name"]:before {
+    display: none;
+  }
+  
+  /* Kosten - Fraenk-gelbes Highlight, aber dezenter */
+  .data-table td[data-label="Kosten"],
+  .data-table td[data-label="Preis pro kg"] {
+    font-size: 24px;
+    font-weight: 700;
+    color: #000000;
+    margin: 16px 0;
+    padding: 16px 0;
+    background: linear-gradient(90deg, #FFFF00 0%, #FFFF00 100%);
+    margin-left: -24px;
+    margin-right: -24px;
+    padding-left: 24px;
+    padding-right: 24px;
+    border-left: 4px solid #000000;
   }
   
   .data-table td[data-label="Kosten"]:before,
   .data-table td[data-label="Preis pro kg"]:before {
     color: #000000;
-    font-weight: 600;
+    font-weight: 500;
+    font-size: 11px;
   }
   
-  /* Status-Badges */
+  /* Status - clean badges */
   .data-table td[data-label="Status"] {
-    margin: 12px 0;
+    margin: 16px 0;
   }
   
   .status-paid,
   .status-unpaid {
     display: inline-block;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 2px;
+    font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    border: none;
   }
   
   .status-paid {
-    background: #28a745;
-    color: white;
+    background: #000000;
+    color: #FFFF00;
   }
   
   .status-unpaid {
-    background: #dc3545;
-    color: white;
+    background: #f0f0f0;
+    color: #666666;
   }
   
-  /* Aktionen als Sticky Footer */
+  /* Kennung als dezenter Badge oben rechts */
+  .data-table td[data-label="Kennung"] {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    background: #f8f8f8;
+    color: #666666;
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0;
+  }
+  
+  .data-table td[data-label="Kennung"]:before {
+    display: none;
+  }
+  
+  /* Mengen-Felder - sehr clean */
+  .data-table td[data-label="Menge"],
+  .data-table td[data-label="Mat. Menge"],
+  .data-table td[data-label="MB Menge"] {
+    background: none;
+    padding: 0;
+    margin: 8px 0;
+    font-size: 14px;
+    color: #666666;
+  }
+  
+  .data-table td[data-label="Menge"]:before,
+  .data-table td[data-label="Mat. Menge"]:before,
+  .data-table td[data-label="MB Menge"]:before {
+    color: #999999;
+    font-size: 11px;
+  }
+  
+  /* Masterbatch als sekundärer Text */
+  .data-table td[data-label="Masterbatch"] {
+    font-size: 14px;
+    font-weight: 400;
+    color: #666666;
+    margin: 4px 0 12px 0;
+  }
+  
+  .data-table td[data-label="Masterbatch"]:before {
+    color: #999999;
+  }
+  
+  /* Aktionen - minimalistisch am unteren Rand */
   .data-table td.actions {
     position: absolute;
-    bottom: 20px;
-    right: 20px;
+    bottom: 24px;
+    right: 24px;
     padding: 0;
     margin: 0;
   }
@@ -643,63 +721,45 @@ body {
   
   .data-table td.actions .btn {
     display: inline-block;
-    margin: 0 2px;
-    padding: 6px 12px;
-    font-size: 11px;
-    border-radius: 20px;
-    font-weight: 600;
+    margin: 0 0 0 4px;
+    padding: 4px 8px;
+    font-size: 10px;
+    border-radius: 2px;
+    font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.3px;
-  }
-  
-  /* Material/Masterbatch als Subtitle */
-  .data-table td[data-label="Material"],
-  .data-table td[data-label="Name"] {
-    font-size: 16px;
-    font-weight: 600;
-    color: #333333;
-    margin-bottom: 8px;
-  }
-  
-  .data-table td[data-label="Material"]:before,
-  .data-table td[data-label="Name"]:before {
-    display: none;
-  }
-  
-  /* Kennung als Badge */
-  .data-table td[data-label="Kennung"] {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    background: #ffffff;
     color: #666666;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    transition: all 0.15s ease;
   }
   
-  .data-table td[data-label="Kennung"]:before {
-    display: none;
+  .data-table td.actions .btn:hover {
+    background: #f8f8f8;
+    border-color: #cccccc;
   }
   
-  /* Mengen-Felder gruppieren */
-  .data-table td[data-label="Menge"],
-  .data-table td[data-label="Mat. Menge"],
-  .data-table td[data-label="MB Menge"] {
-    display: inline-block;
-    width: 48%;
-    margin-right: 2%;
-    background: #f8f9fa;
-    padding: 8px 12px;
-    border-radius: 6px;
-    margin-bottom: 8px;
-    font-size: 13px;
+  .data-table td.actions .btn-primary {
+    background: #000000;
+    color: #FFFF00;
+    border-color: #000000;
   }
   
-  /* Tabellen-Container */
+  .data-table td.actions .btn-primary:hover {
+    background: #333333;
+  }
+  
+  .data-table td.actions .btn-danger {
+    color: #dc3545;
+    border-color: #dc3545;
+  }
+  
+  .data-table td.actions .btn-danger:hover {
+    background: #dc3545;
+    color: white;
+  }
+  
+  /* Container-Optimierungen */
   .admin-entries-container,
   .user-entries-container,
   .materials-container,
@@ -729,17 +789,21 @@ body {
   }
 }
 
-/* Weitere Optimierungen für sehr kleine Screens */
+/* Sehr kleine Screens - noch kompakter */
 @media (max-width: 375px) {
   .data-table tr {
-    padding: 16px;
-    margin-bottom: 16px;
-    padding-bottom: 55px;
+    padding: 20px 16px 55px 16px;
+    margin-bottom: 20px;
+  }
+  
+  .data-table td[data-label="Material"],
+  .data-table td[data-label="Name"] {
+    font-size: 18px;
   }
   
   .data-table td[data-label="Kosten"],
   .data-table td[data-label="Preis pro kg"] {
-    font-size: 18px;
+    font-size: 20px;
     margin-left: -16px;
     margin-right: -16px;
     padding-left: 16px;
@@ -747,10 +811,10 @@ body {
   }
   
   .data-table td[data-label="Kennung"] {
-    top: 16px;
+    top: 20px;
     right: 16px;
-    font-size: 10px;
-    padding: 3px 6px;
+    font-size: 9px;
+    padding: 2px 4px;
   }
   
   .data-table td.actions {
@@ -759,18 +823,9 @@ body {
   }
   
   .data-table td.actions .btn {
-    padding: 4px 8px;
-    font-size: 10px;
-    margin: 0 1px;
-  }
-  
-  .data-table td[data-label="Menge"],
-  .data-table td[data-label="Mat. Menge"],
-  .data-table td[data-label="MB Menge"] {
-    width: 100%;
-    margin-right: 0;
-    font-size: 12px;
-    padding: 6px 10px;
+    padding: 3px 6px;
+    font-size: 9px;
+    margin: 0 0 0 2px;
   }
 }
 

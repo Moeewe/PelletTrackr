@@ -1351,3 +1351,263 @@ function applyAdminFiltersAndSort() {
   
   renderAdminEntries(filteredEntries);
 }
+
+// ==================== NUTZERVERWALTUNG ====================
+
+// Globale Arrays für Nutzer-Daten
+let allUsers = [];
+let currentUsers = [];
+
+// Nutzer-Manager anzeigen
+function showUserManager() {
+  if (!checkAdminAccess()) return;
+  
+  console.log("👥 Nutzer-Manager wird geöffnet...");
+  document.getElementById("userManager").style.display = "flex";
+  loadUsersForManagement();
+}
+
+// Nutzer-Manager schließen
+function closeUserManager() {
+  document.getElementById("userManager").style.display = "none";
+}
+
+// Nutzer für Verwaltung laden
+async function loadUsersForManagement() {
+  try {
+    console.log("👥 Lade alle Nutzer...");
+    
+    // Alle Einträge laden, um Nutzer zu extrahieren
+    const entriesSnapshot = await db.collection("entries").get();
+    const usersMap = new Map();
+    
+    entriesSnapshot.docs.forEach(doc => {
+      const entry = { id: doc.id, ...doc.data() };
+      const userKey = `${entry.name}_${entry.kennung}`;
+      
+      if (!usersMap.has(userKey)) {
+        usersMap.set(userKey, {
+          name: entry.name,
+          kennung: entry.kennung,
+          entries: [],
+          totalRevenue: 0,
+          paidAmount: 0,
+          unpaidAmount: 0
+        });
+      }
+      
+      const user = usersMap.get(userKey);
+      user.entries.push(entry);
+      user.totalRevenue += (entry.totalCost || 0);
+      
+      if (entry.paid || entry.isPaid) {
+        user.paidAmount += (entry.totalCost || 0);
+      } else {
+        user.unpaidAmount += (entry.totalCost || 0);
+      }
+    });
+    
+    allUsers = Array.from(usersMap.values());
+    currentUsers = [...allUsers];
+    
+    console.log(`✅ ${allUsers.length} Nutzer geladen`);
+    renderUsers(currentUsers);
+    
+  } catch (error) {
+    console.error("❌ Fehler beim Laden der Nutzer:", error);
+    document.getElementById("usersTable").innerHTML = '<p>Fehler beim Laden der Nutzer.</p>';
+  }
+}
+
+// Nutzer rendern
+function renderUsers(users) {
+  const tableDiv = document.getElementById("usersTable");
+  
+  if (users.length === 0) {
+    const message = '<p>Keine Nutzer vorhanden.</p>';
+    tableDiv.innerHTML = message;
+    return;
+  }
+
+  let tableHtml = `
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th onclick="sortUsersBy('name')">Name ↕</th>
+          <th onclick="sortUsersBy('kennung')">Kennung ↕</th>
+          <th onclick="sortUsersBy('entries')">Einträge ↕</th>
+          <th onclick="sortUsersBy('revenue')">Gesamtumsatz ↕</th>
+          <th onclick="sortUsersBy('paid')">Bezahlt ↕</th>
+          <th onclick="sortUsersBy('unpaid')">Offen ↕</th>
+          <th>Aktionen</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  users.forEach(user => {
+    const actions = `
+      <div class="actions">
+        <button class="btn btn-secondary" onclick="viewUserDetails('${user.kennung}')">Details</button>
+        <button class="btn btn-danger" onclick="deleteUser('${user.kennung}')">Löschen</button>
+      </div>
+    `;
+    
+    // Responsive Tabellen-Zeile mit data-label Attributen
+    tableHtml += `
+      <tr id="user-row-${user.kennung}">
+        <td data-label="Name">${user.name}</td>
+        <td data-label="Kennung">${user.kennung}</td>
+        <td data-label="Einträge">${user.entries.length}</td>
+        <td data-label="Gesamtumsatz"><strong>${formatCurrency(user.totalRevenue)}</strong></td>
+        <td data-label="Bezahlt">${formatCurrency(user.paidAmount)}</td>
+        <td data-label="Offen">${formatCurrency(user.unpaidAmount)}</td>
+        <td class="actions" data-label="Aktionen">${actions}</td>
+      </tr>
+    `;
+  });
+
+  tableHtml += `
+      </tbody>
+    </table>
+  `;
+  
+  tableDiv.innerHTML = tableHtml;
+}
+
+// Nutzer suchen
+function searchUsers() {
+  const searchTerm = document.getElementById("userManagerSearchInput").value.toLowerCase().trim();
+  
+  if (searchTerm === "") {
+    currentUsers = [...allUsers];
+  } else {
+    currentUsers = allUsers.filter(user => 
+      user.name.toLowerCase().includes(searchTerm) ||
+      user.kennung.toLowerCase().includes(searchTerm)
+    );
+  }
+  
+  renderUsers(currentUsers);
+}
+
+// Nutzer sortieren
+function sortUsers() {
+  const sortValue = document.getElementById("userManagerSortSelect").value;
+  const [field, direction] = sortValue.split('-');
+  
+  currentUsers.sort((a, b) => {
+    let valueA, valueB;
+    
+    switch(field) {
+      case 'name':
+        valueA = a.name.toLowerCase();
+        valueB = b.name.toLowerCase();
+        break;
+      case 'kennung':
+        valueA = a.kennung.toLowerCase();
+        valueB = b.kennung.toLowerCase();
+        break;
+      case 'entries':
+        valueA = a.entries.length;
+        valueB = b.entries.length;
+        break;
+      case 'revenue':
+        valueA = a.totalRevenue;
+        valueB = b.totalRevenue;
+        break;
+      case 'paid':
+        valueA = a.paidAmount;
+        valueB = b.paidAmount;
+        break;
+      case 'unpaid':
+        valueA = a.unpaidAmount;
+        valueB = b.unpaidAmount;
+        break;
+      default:
+        return 0;
+    }
+    
+    if (direction === 'asc') {
+      return valueA > valueB ? 1 : valueA < valueB ? -1 : 0;
+    } else {
+      return valueA < valueB ? 1 : valueA > valueB ? -1 : 0;
+    }
+  });
+  
+  renderUsers(currentUsers);
+}
+
+// Nutzer-Details anzeigen
+function viewUserDetails(kennung) {
+  const user = allUsers.find(u => u.kennung === kennung);
+  if (!user) return;
+  
+  alert(`👤 Nutzer-Details:
+  
+Name: ${user.name}
+Kennung: ${user.kennung}
+Anzahl Einträge: ${user.entries.length}
+Gesamtumsatz: ${formatCurrency(user.totalRevenue)}
+Bezahlt: ${formatCurrency(user.paidAmount)}
+Offen: ${formatCurrency(user.unpaidAmount)}
+
+Letzte Aktivität: ${user.entries.length > 0 ? 
+  new Date(Math.max(...user.entries.map(e => e.timestamp?.toDate?.() || new Date(e.timestamp)))).toLocaleDateString('de-DE') : 
+  'Keine Einträge'}`);
+}
+
+// Nutzer löschen (alle Einträge des Nutzers)
+async function deleteUser(kennung) {
+  if (!checkAdminAccess()) return;
+  
+  const user = allUsers.find(u => u.kennung === kennung);
+  if (!user) return;
+  
+  const confirmMessage = `⚠️ ACHTUNG: Alle ${user.entries.length} Einträge von "${user.name}" (${kennung}) werden unwiderruflich gelöscht!
+  
+Gesamtumsatz: ${formatCurrency(user.totalRevenue)}
+
+Möchten Sie wirklich fortfahren?`;
+  
+  if (!confirm(confirmMessage)) return;
+  
+  try {
+    console.log(`🗑️ Lösche alle Einträge von Nutzer: ${user.name} (${kennung})`);
+    
+    // Alle Einträge des Nutzers löschen
+    const batch = db.batch();
+    user.entries.forEach(entry => {
+      const entryRef = db.collection("entries").doc(entry.id);
+      batch.delete(entryRef);
+    });
+    
+    await batch.commit();
+    
+    console.log(`✅ ${user.entries.length} Einträge von ${user.name} gelöscht`);
+    alert(`✅ Nutzer "${user.name}" und alle ${user.entries.length} Einträge wurden gelöscht.`);
+    
+    // Listen neu laden
+    loadUsersForManagement();
+    loadAdminEntries();
+    loadAdminStats();
+    
+  } catch (error) {
+    console.error("❌ Fehler beim Löschen des Nutzers:", error);
+    alert("❌ Fehler beim Löschen des Nutzers. Bitte versuchen Sie es erneut.");
+  }
+}
+
+// Nutzer nach Feld sortieren
+function sortUsersBy(field) {
+  const currentSort = document.getElementById("userManagerSortSelect").value;
+  const [currentField, currentDirection] = currentSort.split('-');
+  
+  let newDirection = 'asc';
+  if (currentField === field && currentDirection === 'asc') {
+    newDirection = 'desc';
+  }
+  
+  document.getElementById("userManagerSortSelect").value = `${field}-${newDirection}`;
+  sortUsers();
+}
