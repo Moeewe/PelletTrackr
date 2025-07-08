@@ -56,12 +56,27 @@ async function loginAsUser() {
       return;
     }
   } else {
-    // Neue Kombination - normal fortfahren
+    // Neue Kombination - User in Firestore speichern
     currentUser = {
       name: name,
       kennung: kennung.toLowerCase(),
       isAdmin: false
     };
+    
+    try {
+      // User-Dokument in Firestore erstellen
+      await db.collection('users').add({
+        name: name,
+        kennung: kennung.toLowerCase(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      console.log('Neuer User in Firestore erstellt:', kennung.toLowerCase());
+    } catch (error) {
+      console.warn('Fehler beim Erstellen des User-Dokuments:', error);
+      // Trotzdem fortfahren - nicht kritisch für User-Login
+    }
+    
     document.getElementById('userWelcome').textContent = `Willkommen, ${name}!`;
   }
   showScreen('userDashboard');

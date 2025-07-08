@@ -2010,6 +2010,25 @@ body {
   text-align: justify;
 }
 
+.legal-content ul {
+  margin: 10px 0 15px 20px;
+  color: #444444;
+}
+
+.legal-content li {
+  margin-bottom: 5px;
+}
+
+.legal-content a {
+  color: #000000;
+  text-decoration: underline;
+}
+
+.legal-content a:hover {
+  background: #FFEB00;
+  color: #000000;
+}
+
 .back-link {
   margin-top: 40px;
   padding-top: 20px;
