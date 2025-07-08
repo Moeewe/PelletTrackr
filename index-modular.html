@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FGF 3D-Druck Abrechnung</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- Header -->
+      <div class="header">
+        <div class="logo">FGF</div>
+        <div class="tagline">3D-Druck Abrechnung</div>
+      </div>
+      
+      <!-- Main Content -->
+      <div class="content">
+        <!-- Welcome Section -->
+        <div class="section">
+          <div class="welcome-text">
+            <span class="highlight">Super schnell</span> zum<br>
+            3D-Druck Eintrag
+          </div>
+        </div>
+        
+        <!-- Form Section -->
+        <div class="section">
+          <div class="form-group">
+            <label class="form-label">Dein Name</label>
+            <input type="text" id="name" class="form-input" placeholder="Max Mustermann" />
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">FH Kennung</label>
+            <input type="text" id="kennung" class="form-input" placeholder="mm123289" />
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Material</label>
+            <select id="material" class="form-select">
+              <option value="">Material auswählen...</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Material Menge (kg)</label>
+            <input type="text" id="materialMenge" class="form-input" placeholder="0,00 oder 0.00" />
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Masterbatch</label>
+            <select id="masterbatch" class="form-select">
+              <option value="">Masterbatch auswählen...</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Masterbatch Menge (kg)</label>
+            <input type="text" id="masterbatchMenge" class="form-input" placeholder="0,00 oder 0.00" />
+          </div>
+          
+          <!-- Cost Preview -->
+          <div id="costPreview" class="cost-preview">
+            <div class="cost-amount">0,00 €</div>
+            <div class="cost-label">Voraussichtliche Kosten</div>
+          </div>
+          
+          <!-- Action Buttons -->
+          <button class="btn btn-primary" onclick="AddRow()">
+            Eintrag hinzufügen
+          </button>
+        </div>
+        
+        <!-- Status Messages -->
+        <div id="confirmation"></div>
+        
+        <!-- Navigation/Action Buttons -->
+        <div class="section">
+          <div class="section-title"><span class="highlight">Aktionen</span><br>& Übersicht</div>
+          
+          <!-- User Actions -->
+          <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;">
+            <button onclick="showUserOverview()" style="flex: 1; min-width: 200px; background: #000000; color: white; border: none; padding: 16px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500;">
+              📊 Meine Übersicht
+            </button>
+            <button onclick="showUserStatistics()" style="flex: 1; min-width: 200px; background: #000000; color: white; border: none; padding: 16px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500;">
+              📈 Meine Statistiken
+            </button>
+          </div>
+          
+          <!-- Admin Actions -->
+          <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;">
+            <button onclick="showAdminView()" style="flex: 1; min-width: 200px; background: #dc3545; color: white; border: none; padding: 16px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500;">
+              🔧 Admin: Alle Einträge
+            </button>
+            <button onclick="showAdminStatistics()" style="flex: 1; min-width: 200px; background: #dc3545; color: white; border: none; padding: 16px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500;">
+              📊 Admin: Statistiken
+            </button>
+          </div>
+          
+          <!-- Debug Actions -->
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <button onclick="testWithUserData()" style="flex: 1; min-width: 200px; background: #666666; color: white; border: none; padding: 16px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500;">
+              🔧 Verbindung testen
+            </button>
+            <button onclick="debugPrices()" style="flex: 1; min-width: 200px; background: #666666; color: white; border: none; padding: 16px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500;">
+              🔧 Debug Preise
+            </button>
+          </div>
+        </div>
+        
+        <!-- Overview Section -->
+        <div class="overview-section">
+          <div class="section-title"><span class="highlight">Deine</span><br>Einträge</div>
+          <div id="overviewTable" class="data-table"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- JavaScript Module -->
+    <script src="config.js"></script>
+    <script src="core-functions.js"></script>
+    <script src="user-functions.js"></script>
+    <script src="admin-functions.js"></script>
+    <script src="debug-functions.js"></script>
+    <script src="app-init.js"></script>
+  </body>
+</html>
