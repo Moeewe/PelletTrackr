@@ -546,24 +546,32 @@ function renderUserEntries(entries) {
     const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
     const isPaid = entry.paid || entry.isPaid;
     const status = isPaid ? 
-      '<span class="status-paid">✅ Bezahlt</span>' : 
-      '<span class="status-unpaid">⏳ Offen</span>';
+      '<span class="status-paid">Bezahlt</span>' : 
+      '<span class="status-unpaid">Offen</span>';
     const jobName = entry.jobName || "3D-Druck Auftrag";
     const jobNotes = entry.jobNotes || "";
     const truncatedNotes = jobNotes.length > 30 ? jobNotes.substring(0, 30) + "..." : jobNotes;
     
-    // Aktionen für User (Details, Bearbeiten, und Zahlungsnachweis bei bezahlten Drucken)
-    const actions = isPaid ? 
-      `<button class="btn btn-success" onclick="showPaymentProof('${entry.id}')">Nachweis</button>
-       <button class="btn btn-tertiary" onclick="viewEntryDetails('${entry.id}')">Details</button>
-       <button class="btn btn-secondary" onclick="editUserEntry('${entry.id}')">Bearbeiten</button>` :
-      `<button class="btn btn-tertiary" onclick="viewEntryDetails('${entry.id}')">Details</button>
-       <button class="btn btn-secondary" onclick="editUserEntry('${entry.id}')">Bearbeiten</button>
-       <span style="font-size: 12px; color: #666;">Nachweis nach Zahlung</span>`;
+    // Aktionen für User (Zahlungsnachweis, Details und Bearbeiten gruppiert)
+    const nachweisBtnClass = isPaid ? 'btn-nachweis' : 'btn-nachweis disabled';
+    const nachweisBtn = isPaid ? 
+      `<button class="${nachweisBtnClass}" onclick="showPaymentProof('${entry.id}')">Nachweis</button>` :
+      `<button class="${nachweisBtnClass}" disabled title="Nachweis nach Zahlung verfügbar">Nachweis</button>`;
+      
+    const actions = `
+      <div class="action-group">
+        <div class="payment-actions">
+          ${nachweisBtn}
+        </div>
+        <div class="entry-actions">
+          <button class="btn btn-tertiary" onclick="viewEntryDetails('${entry.id}')">Details</button>
+          <button class="btn btn-secondary" onclick="editUserEntry('${entry.id}')">Bearbeiten</button>
+        </div>
+      </div>`;
     
-    // Responsive Tabellen-Zeile mit data-label Attributen
+    // Responsive Tabellen-Zeile mit Zwei-Zeilen-Layout
     tableHtml += `
-      <tr>
+      <tr class="entry-row">
         <td data-label="Datum">${date}</td>
         <td data-label="Job">${jobName}</td>
         <td data-label="Material">${entry.material}</td>
@@ -571,12 +579,12 @@ function renderUserEntries(entries) {
         <td data-label="Masterbatch">${entry.masterbatch}</td>
         <td data-label="MB Menge">${entry.masterbatchMenge.toFixed(2)} kg</td>
         <td data-label="Kosten"><strong>${formatCurrency(entry.totalCost)}</strong></td>
-        <td data-label="Status">${status}</td>
+        <td data-label="Status" class="status-cell">${status}</td>
         <td data-label="Notizen" class="notes-cell" title="${jobNotes}">
           ${truncatedNotes}
           ${jobNotes.length > 0 ? `<button class="btn-edit-note" onclick="editNote('${entry.id}', '${escapeQuotes(jobNotes)}')">✏️</button>` : ''}
         </td>
-        <td data-label="Aktionen" class="actions">${actions}</td>
+        <td data-label="Aktionen" class="actions-cell">${actions}</td>
       </tr>
     `;
   });
@@ -1045,26 +1053,6 @@ async function addMasterbatch() {
     alert('Fehler beim Hinzufügen: ' + error.message);
   }
 }
-  
-  try {
-    await db.collection('masterbatches').add({
-      name: name,
-      price: price,
-      currency: '€'
-    });
-    
-    alert('Masterbatch erfolgreich hinzugefügt!');
-    document.getElementById('newMasterbatchName').value = '';
-    document.getElementById('newMasterbatchPrice').value = '';
-    
-    loadMasterbatchesForManagement();
-    loadMasterbatches(); // Dropdown aktualisieren
-    
-  } catch (error) {
-    console.error('Fehler beim Hinzufügen:', error);
-    alert('Fehler beim Hinzufügen: ' + error.message);
-  }
-}
 
 async function deleteMaterial(materialId) {
   if (!confirm('Material wirklich löschen?')) return;
@@ -1271,18 +1259,6 @@ async function updateMasterbatch(masterbatchId) {
     closeModal();
     loadMasterbatchesForManagement();
     loadMasterbatches(); // Dropdown aktualisieren
-    
-  } catch (error) {
-    console.error('Fehler beim Aktualisieren:', error);
-    alert('Fehler beim Aktualisieren: ' + error.message);
-  }
-}
-    
-    alert('Material erfolgreich aktualisiert!');
-    
-    // Tabelle aktualisieren
-    loadMaterialsForManagement();
-    loadMaterials(); // Dropdown aktualisieren
     
   } catch (error) {
     console.error('Fehler beim Aktualisieren:', error);
@@ -2475,14 +2451,12 @@ async function editUser(kennung) {
   }
   
   try {
-    // Update user document
-    const usersRef = collection(db, 'users');
-    const userQuery = query(usersRef, where('kennung', '==', kennung));
-    const userSnapshot = await getDocs(userQuery);
+    // Update user document using compat syntax
+    const userSnapshot = await db.collection('users').where('kennung', '==', kennung).get();
     
     if (!userSnapshot.empty) {
       const userDoc = userSnapshot.docs[0];
-      await updateDoc(userDoc.ref, {
+      await userDoc.ref.update({
         name: newName.trim(),
         updatedAt: new Date()
       });

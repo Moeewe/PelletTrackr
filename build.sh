@@ -12,6 +12,8 @@ mkdir -p dist/assets
 cp index.html dist/
 cp web-app.js dist/
 cp styles.css dist/
+cp impressum.html dist/
+cp datenschutz.html dist/
 
 # Scripte und Konfiguration
 cp firebase-data-manager.js dist/

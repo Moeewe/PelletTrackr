@@ -532,241 +532,119 @@ body {
   border-color: #28a745;
 }
 
-.btn-link {
-  background: none;
-  color: #000000;
-  border: none;
-  text-decoration: underline;
-  padding: 16px 24px;
-}
-
-.btn-link:hover {
-  color: #666666;
-  text-decoration: none;
-}
-
-/* Large Buttons für wichtige Aktionen */
-.btn-large {
-  padding: 24px 40px;
-  font-size: 18px;
-  font-weight: 600;
-  min-width: 200px;
-}
-
-/* Small Buttons für kompakte Areas */
-.btn-small {
-  padding: 12px 20px;
+.btn-nachweis {
+  background: #28a745;
+  color: white;
+  border: 2px solid #28a745;
+  padding: 8px 16px;
   font-size: 14px;
-  min-width: 100px;
-}
-
-/* Status Messages */
-.status-message {
-  padding: 20px;
-  border: 2px solid #000000;
-  margin: 24px 0;
-  font-size: 16px;
-  text-align: center;
-  background: white;
-}
-
-.status-success {
-  background: #FFEB00;
-  color: #000000;
-  border-color: #000000;
-}
-
-.status-error {
-  background: white;
-  color: #000000;
-  border-color: #ff0000;
-}
-
-.status-info {
-  background: white;
-  color: #000000;
-  border-color: #000000;
-}
-
-/* Overview Section */
-.overview-section {
-  margin-top: 80px;
-  padding-top: 60px;
-  border-top: 2px solid #f0f0f0;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 24px;
-  margin: 40px 0;
-}
-
-.stat-card {
-  background: white;
-  padding: 32px 24px;
-  border: 2px solid #f0f0f0;
-  text-align: center;
-}
-
-.stat-number {
-  font-size: 32px;
-  font-weight: 700;
-  color: #000000;
-  margin-bottom: 8px;
-  letter-spacing: -1px;
-}
-
-.stat-label {
-  font-size: 14px;
-  color: #666666;
-  font-weight: 400;
-}
-
-/* Table - Desktop Version - Fraenk Style */
-.data-table {
-  background: white;
-  margin: 40px 0;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.data-table table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 800px;
-}
-
-.data-table th {
-  background: #f8f8f8;
-  padding: 20px 16px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #000000;
-  text-align: left;
-  border-bottom: 2px solid #000000;
-  white-space: nowrap;
+  font-weight: 500;
+  border-radius: 0;
   cursor: pointer;
-  user-select: none;
-  transition: background-color 0.2s ease;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.data-table th:hover {
-  background: #FFEB00;
-}
-
-.data-table th:last-child {
-  cursor: default;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
   text-align: center;
+  min-width: 80px;
 }
 
-.data-table th:last-child:hover {
-  background: #f8f8f8;
+.btn-nachweis:hover:not(.disabled) {
+  background: #218838;
+  border-color: #218838;
 }
 
-.data-table td {
-  padding: 20px 16px;
-  font-size: 16px;
-  border-bottom: 1px solid #e0e0e0;
-  color: #000000;
-  white-space: nowrap;
+.btn-nachweis.disabled {
+  background: #e9ecef;
+  color: #6c757d;
+  border-color: #dee2e6;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Action Button Groups */
+.action-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.payment-actions {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.entry-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+/* Status Cells with centered alignment */
+.status-cell {
+  text-align: center !important;
   vertical-align: middle;
 }
 
-.data-table tr:hover {
-  background: #fafafa;
-}
-
-.data-table tr:nth-child(even) {
-  background: #fafafa;
-}
-
-.data-table tr:nth-child(even):hover {
-  background: #f0f0f0;
-}
-
-/* Status Badges für Desktop */
-.status-paid,
-.status-unpaid {
-  display: inline-block;
-  padding: 8px 16px;
-  border-radius: 0;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  border: 2px solid #000000;
-}
-
 .status-paid {
-  background: #28a745;
-  color: white;
-  border-color: #28a745;
+  background: #d4edda;
+  color: #155724;
+  border: 2px solid #28a745;
+  padding: 4px 12px;
+  border-radius: 0;
+  font-weight: 500;
+  font-size: 14px;
+  display: inline-block;
 }
 
 .status-unpaid {
-  background: white;
-  color: #000000;
-}
-
-/* Action Buttons in Desktop Tables */
-.data-table .actions {
-  text-align: center;
-  white-space: nowrap;
-}
-
-.data-table .actions .btn {
-  padding: 10px 16px;
-  font-size: 12px;
-  margin: 2px 4px;
-  border: 2px solid #000000;
-  background: white;
-  color: #000000;
+  background: #fff3cd;
+  color: #856404;
+  border: 2px solid #ffc107;
+  padding: 4px 12px;
   border-radius: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  min-width: 85px;
+  font-weight: 500;
+  font-size: 14px;
   display: inline-block;
-  vertical-align: top;
 }
 
-.data-table .actions .btn:hover {
-  background: #FFEB00;
-  color: #000000;
+/* Two-row layout for better readability */
+.entry-row {
+  border-bottom: 3px solid #e9ecef;
 }
 
-.data-table .actions .btn-primary {
-  background: #000000;
-  color: #FFEB00;
+.entry-row:last-child {
+  border-bottom: 2px solid #000000;
 }
 
-.data-table .actions .btn-primary:hover {
-  background: #FFEB00;
-  color: #000000;
+/* Actions Cell improvements */
+.actions-cell {
+  min-width: 180px;
+  padding: 12px 8px !important;
 }
 
-.data-table .actions .btn-danger {
-  color: #dc3545;
-  border-color: #dc3545;
-}
-
-.data-table .actions .btn-danger:hover {
-  background: #dc3545;
-  color: white;
-}
-
-.data-table .actions .btn-success {
-  color: #28a745;
-  border-color: #28a745;
-}
-
-.data-table .actions .btn-success:hover {
-  background: #28a745;
-  color: white;
+/* Desktop: Action buttons side by side */
+@media (min-width: 1024px) {
+  .action-group {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  
+  .payment-actions {
+    margin-bottom: 0;
+    min-width: 80px;
+  }
+  
+  .entry-actions {
+    gap: 6px;
+  }
+  
+  .actions-cell {
+    min-width: 220px;
+  }
 }
 
 /* Responsive Tables - Komplett überarbeitet nach Fraenk-Prinzipien */
@@ -1945,4 +1823,243 @@ body {
   }
 }
 
-/* ...existing code... */
+/* Enhanced Mobile Responsive Tables */
+@media (max-width: 768px) {
+  .data-table {
+    font-size: 14px;
+  }
+  
+  .data-table thead {
+    display: none;
+  }
+  
+  .data-table tbody tr {
+    display: block;
+    background: white;
+    border: 2px solid #000000;
+    border-radius: 0;
+    margin-bottom: 16px;
+    padding: 16px;
+    position: relative;
+  }
+  
+  .data-table tbody tr.entry-row {
+    border-bottom: 2px solid #000000;
+  }
+  
+  .data-table td {
+    display: block;
+    border: none;
+    padding: 8px 0;
+    text-align: left !important;
+    position: relative;
+    padding-left: 120px;
+    min-height: 24px;
+  }
+  
+  .data-table td:before {
+    content: attr(data-label) ": ";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    font-weight: 600;
+    color: #000000;
+    width: 110px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .data-table .actions-cell,
+  .data-table .status-cell {
+    padding-left: 0;
+    margin-top: 12px;
+    border-top: 1px solid #e9ecef;
+    padding-top: 12px;
+  }
+  
+  .data-table .actions-cell:before,
+  .data-table .status-cell:before {
+    display: none;
+  }
+  
+  .data-table .status-cell {
+    text-align: center !important;
+  }
+  
+  /* Mobile Action Groups */
+  .action-group {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+  
+  .payment-actions {
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+  
+  .entry-actions {
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-start;
+  }
+  
+  .entry-actions .btn {
+    flex: 1;
+    min-width: 80px;
+  }
+  
+  /* Notes cell improvements */
+  .data-table .notes-cell {
+    padding-left: 0;
+    margin-top: 8px;
+  }
+  
+  .data-table .notes-cell:before {
+    display: block;
+    position: static;
+    margin-bottom: 4px;
+  }
+}
+
+/* Tablet responsive improvements */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .admin-container .data-table {
+    font-size: 13px;
+  }
+  
+  .admin-container .data-table td,
+  .admin-container .data-table th {
+    padding: 8px 6px;
+  }
+  
+  .actions-cell {
+    min-width: 200px;
+  }
+  
+  .action-group {
+    gap: 6px;
+  }
+  
+  .entry-actions {
+    gap: 4px;
+  }
+  
+  .entry-actions .btn {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+}
+
+/* Large desktop improvements */
+@media (min-width: 1400px) {
+  .admin-container {
+    max-width: 1600px;
+  }
+  
+  .admin-container .data-table {
+    font-size: 15px;
+  }
+  
+  .actions-cell {
+    min-width: 280px;
+  }
+  
+  .action-group {
+    gap: 8px;
+  }
+}
+
+/* Legal Content Styles */
+.legal-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  line-height: 1.6;
+}
+
+.legal-content h2 {
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 30px;
+  color: #000000;
+  border-bottom: 2px solid #FFEB00;
+  padding-bottom: 10px;
+}
+
+.legal-content h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-top: 30px;
+  margin-bottom: 15px;
+  color: #000000;
+}
+
+.legal-content h4 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  color: #333333;
+}
+
+.legal-content p {
+  margin-bottom: 15px;
+  color: #444444;
+  text-align: justify;
+}
+
+.back-link {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+/* Footer Links */
+.footer-links {
+  text-align: center;
+  padding: 20px;
+  margin-top: 30px;
+  border-top: 1px solid #e9ecef;
+}
+
+.footer-links a {
+  color: #666666;
+  text-decoration: none;
+  font-size: 12px;
+  margin: 0 10px;
+  transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+  color: #000000;
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .legal-content {
+    padding: 15px;
+  }
+  
+  .legal-content h2 {
+    font-size: 24px;
+  }
+  
+  .back-link {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .footer-links {
+    padding: 15px 10px;
+  }
+  
+  .footer-links a {
+    display: block;
+    margin: 5px 0;
+  }
+}

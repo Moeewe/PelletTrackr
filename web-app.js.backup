@@ -1053,6 +1053,26 @@ async function addMasterbatch() {
     alert('Fehler beim Hinzufügen: ' + error.message);
   }
 }
+  
+  try {
+    await db.collection('masterbatches').add({
+      name: name,
+      price: price,
+      currency: '€'
+    });
+    
+    alert('Masterbatch erfolgreich hinzugefügt!');
+    document.getElementById('newMasterbatchName').value = '';
+    document.getElementById('newMasterbatchPrice').value = '';
+    
+    loadMasterbatchesForManagement();
+    loadMasterbatches(); // Dropdown aktualisieren
+    
+  } catch (error) {
+    console.error('Fehler beim Hinzufügen:', error);
+    alert('Fehler beim Hinzufügen: ' + error.message);
+  }
+}
 
 async function deleteMaterial(materialId) {
   if (!confirm('Material wirklich löschen?')) return;
