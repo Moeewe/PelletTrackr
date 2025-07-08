@@ -23,7 +23,6 @@ cp -r assets/* dist/assets/
 # Sonstige benötigte Dateien
 cp netlify.toml dist/
 cp admin-functions.js dist/
-cp app-init.js dist/
 cp core-functions.js dist/
 cp debug-functions.js dist/
 cp user-functions.js dist/

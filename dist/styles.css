@@ -1,0 +1,505 @@
+/* Echtes Fraenk-Design System */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body { 
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: white;
+  color: #000000;
+  line-height: 1.4;
+  font-size: 16px;
+}
+
+.app-container {
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Header - Fraenk minimalistisch */
+.header {
+  padding: 60px 32px 80px;
+  text-align: left;
+  background: white;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.logo {
+  font-size: 32px;
+  font-weight: 400;
+  margin-bottom: 8px;
+  color: #000000;
+  letter-spacing: -1px;
+}
+
+.tagline {
+  font-size: 14px;
+  color: #666666;
+  font-weight: 400;
+}
+
+/* Main Content */
+.content {
+  padding: 60px 32px;
+}
+
+.section {
+  margin-bottom: 80px;
+}
+
+.section-title {
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 40px;
+  color: #000000;
+  letter-spacing: -2px;
+}
+
+/* Fraenk-typische große Headlines mit gelbem Highlight */
+.welcome-text {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 60px;
+  color: #000000;
+  letter-spacing: -1px;
+}
+
+.highlight {
+  background: #FFFF00;
+  padding: 4px 8px;
+  display: inline-block;
+}
+
+/* Form Styles - Fraenk minimalistisch */
+.form-group {
+  margin-bottom: 32px;
+}
+
+.form-label {
+  display: block;
+  font-size: 16px;
+  font-weight: 400;
+  color: #000000;
+  margin-bottom: 12px;
+}
+
+.form-input,
+.form-select {
+  width: 100%;
+  padding: 16px 0;
+  border: none;
+  border-bottom: 2px solid #e0e0e0;
+  border-radius: 0;
+  font-size: 18px;
+  background: transparent;
+  transition: border-color 0.2s ease;
+  appearance: none;
+  color: #000000;
+}
+
+.form-input:focus,
+.form-select:focus {
+  outline: none;
+  border-bottom-color: #000000;
+}
+
+.form-input::placeholder {
+  color: #999999;
+}
+
+.form-select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23000000' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0 center;
+  background-repeat: no-repeat;
+  background-size: 20px;
+  padding-right: 30px;
+}
+
+/* Cost Preview - Gelbes Fraenk-Highlight */
+.cost-preview {
+  background: #FFFF00;
+  color: #000000;
+  padding: 24px;
+  border-radius: 0;
+  text-align: center;
+  margin: 40px 0;
+  display: none;
+  border: 2px solid #000000;
+  transition: all 0.3s ease;
+}
+
+.cost-preview.show {
+  display: block;
+  animation: fadeIn 0.2s ease;
+}
+
+.cost-preview.calculating {
+  background: #f0f0f0;
+  color: #666666;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+.cost-preview.show.calculating {
+  animation: pulse 1.5s infinite;
+}
+
+.cost-amount {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: -1px;
+}
+
+.cost-label {
+  font-size: 16px;
+  font-weight: 400;
+}
+
+/* Buttons - Fraenk Style */
+.btn {
+  width: 100%;
+  padding: 20px 24px;
+  border: 2px solid #000000;
+  border-radius: 0;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-bottom: 16px;
+  text-align: center;
+  background: white;
+  color: #000000;
+}
+
+.btn-primary {
+  background: #000000;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #333333;
+}
+
+.btn-secondary {
+  background: white;
+  color: #000000;
+  border: 2px solid #000000;
+}
+
+.btn-secondary:hover {
+  background: #FFFF00;
+  border-color: #000000;
+}
+
+.btn-tertiary {
+  background: white;
+  color: #666666;
+  border: 2px solid #e0e0e0;
+}
+
+.btn-tertiary:hover {
+  border-color: #000000;
+  color: #000000;
+}
+
+/* Status Messages */
+.status-message {
+  padding: 20px;
+  border: 2px solid #000000;
+  margin: 24px 0;
+  font-size: 16px;
+  text-align: center;
+  background: white;
+}
+
+.status-success {
+  background: #FFFF00;
+  color: #000000;
+  border-color: #000000;
+}
+
+.status-error {
+  background: white;
+  color: #000000;
+  border-color: #ff0000;
+}
+
+.status-info {
+  background: white;
+  color: #000000;
+  border-color: #000000;
+}
+
+/* Overview Section */
+.overview-section {
+  margin-top: 80px;
+  padding-top: 60px;
+  border-top: 2px solid #f0f0f0;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 24px;
+  margin: 40px 0;
+}
+
+.stat-card {
+  background: white;
+  padding: 32px 24px;
+  border: 2px solid #f0f0f0;
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 32px;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 8px;
+  letter-spacing: -1px;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #666666;
+  font-weight: 400;
+}
+
+/* Table - minimalistisch */
+.data-table {
+  background: white;
+  border: 2px solid #f0f0f0;
+  margin: 40px 0;
+  overflow-x: auto;
+}
+
+.data-table table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+}
+
+.data-table th {
+  background: white;
+  padding: 20px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #000000;
+  text-align: left;
+  border-bottom: 1px solid #f0f0f0;
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 20px 16px;
+  font-size: 16px;
+  border-bottom: 1px solid #f8f8f8;
+  color: #000000;
+  white-space: nowrap;
+}
+
+.data-table tr:hover {
+  background: #fafafa;
+}
+
+/* Loading State */
+.loading {
+  text-align: center;
+  padding: 80px 20px;
+  color: #666666;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #f0f0f0;
+  border-top: 2px solid #000000;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 12px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  color: #666666;
+}
+
+.empty-state-icon {
+  font-size: 64px;
+  margin-bottom: 24px;
+  opacity: 0.3;
+}
+
+/* Responsive für größere Bildschirme */
+@media (min-width: 801px) {
+  .app-container {
+    max-width: 800px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 32px;
+  }
+  
+  .form-group {
+    margin-bottom: 40px;
+  }
+  
+  .section {
+    margin-bottom: 100px;
+  }
+  
+  .overview-section {
+    margin-top: 100px;
+    padding-top: 80px;
+  }
+}
+
+/* Responsive Table */
+@media (max-width: 800px) {
+  .app-container {
+    max-width: 90%;
+    margin: 0 auto;
+  }
+  
+  .header {
+    padding: 50px 32px 70px;
+  }
+  
+  .content {
+    padding: 50px 32px;
+  }
+  
+  .welcome-text {
+    font-size: 36px;
+  }
+  
+  .section-title {
+    font-size: 42px;
+  }
+  
+  .data-table {
+    font-size: 14px;
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: 12px 8px;
+    font-size: 12px;
+  }
+  
+  .data-table table {
+    min-width: 500px;
+  }
+}
+
+@media (max-width: 600px) {
+  .app-container {
+    max-width: 100%;
+    margin: 0;
+  }
+  
+  .header {
+    padding: 40px 24px 60px;
+  }
+  
+  .content {
+    padding: 40px 24px;
+  }
+  
+  .welcome-text {
+    font-size: 32px;
+  }
+  
+  .section-title {
+    font-size: 36px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-group {
+    margin-bottom: 24px;
+  }
+  
+  .section {
+    margin-bottom: 60px;
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: 10px 6px;
+    font-size: 11px;
+  }
+  
+  .data-table table {
+    min-width: 450px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 32px 20px 50px;
+  }
+  
+  .content {
+    padding: 32px 20px;
+  }
+  
+  .welcome-text {
+    font-size: 28px;
+  }
+  
+  .section-title {
+    font-size: 32px;
+  }
+  
+  .cost-preview {
+    padding: 20px;
+    margin: 32px 0;
+  }
+  
+  .cost-amount {
+    font-size: 28px;
+  }
+  
+  .btn {
+    padding: 18px 20px;
+    font-size: 16px;
+  }
+}
+
+/* Fraenk-typische große Abstände */
+.spacer {
+  height: 80px;
+}
+
+.spacer-small {
+  height: 40px;
+}
