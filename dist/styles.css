@@ -512,7 +512,7 @@ body {
   background: #fafafa;
 }
 
-/* Mobile responsive tables */
+/* Mobile responsive tables - Verbessertes System */
 @media (max-width: 768px) {
   .data-table {
     border: none;
@@ -522,63 +522,131 @@ body {
   
   .data-table table {
     min-width: 100%;
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-  
-  .data-table thead {
-    display: block;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background: white;
-  }
-  
-  .data-table tbody {
-    display: block;
-    max-height: 60vh;
-    overflow-y: auto;
-  }
-  
-  .data-table tr {
-    display: table;
-    width: 100%;
-    table-layout: fixed;
+    font-size: 12px;
   }
   
   .data-table th,
   .data-table td {
-    display: table-cell;
-    padding: 12px 8px;
-    font-size: 14px;
+    padding: 8px 4px;
+    font-size: 11px;
     vertical-align: middle;
+    word-break: break-word;
   }
   
   .data-table th {
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 700;
+    background: #f8f9fa;
   }
   
+  /* Spalten kompakter machen */
+  .data-table th:nth-child(1),
+  .data-table td:nth-child(1) { width: 15%; } /* Datum */
+  .data-table th:nth-child(2),
+  .data-table td:nth-child(2) { width: 20%; } /* Material/Name */
+  .data-table th:nth-child(3),
+  .data-table td:nth-child(3) { width: 12%; } /* Mat. Menge/Kennung */
+  .data-table th:nth-child(4),
+  .data-table td:nth-child(4) { width: 20%; } /* Masterbatch/Material */
+  .data-table th:nth-child(5),
+  .data-table td:nth-child(5) { width: 12%; } /* MB Menge */
+  .data-table th:nth-child(6),
+  .data-table td:nth-child(6) { width: 15%; } /* Kosten */
+  .data-table th:nth-child(7),
+  .data-table td:nth-child(7) { width: 15%; } /* Status */
+  .data-table th:nth-child(8),
+  .data-table td:nth-child(8) { width: 15%; } /* Zusätzliche Spalten */
+  .data-table th:nth-child(9),
+  .data-table td:nth-child(9) { width: 15%; }
+  .data-table th:nth-child(10),
+  .data-table td:nth-child(10) { width: 25%; } /* Aktionen */
+  
   .data-table .actions {
-    min-width: 120px;
+    min-width: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
   
   .data-table .btn {
-    padding: 4px 8px;
+    padding: 4px 6px;
+    font-size: 10px;
+    margin: 0;
+    white-space: nowrap;
+  }
+  
+  /* Horizontaler Scroll für sehr breite Tabellen */
+  .admin-entries-container,
+  .user-entries-container,
+  .materials-container,
+  .masterbatches-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: white;
+  }
+  
+  /* Admin-spezifische Anpassungen für viele Spalten */
+  .admin-entries-container .data-table table {
+    min-width: 900px; /* Mindestbreite für Admin-Tabelle erhöht */
+  }
+  
+  .user-entries-container .data-table table {
+    min-width: 650px; /* Mindestbreite für User-Tabelle erhöht */
+  }
+  
+  .materials-container .data-table table,
+  .masterbatches-container .data-table table {
+    min-width: 450px; /* Mindestbreite für Management-Tabellen */
+  }
+}
+
+/* Mittlere Bildschirme - optimierte Tabellen-Ansicht */
+@media (max-width: 600px) and (min-width: 481px) {
+  .data-table table {
     font-size: 11px;
-    margin: 0 2px;
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: 6px 3px;
+    font-size: 10px;
+  }
+  
+  /* Verstecke weniger wichtige Spalten bei mittleren Bildschirmen */
+  .admin-entries-container .data-table th:nth-child(3),
+  .admin-entries-container .data-table td:nth-child(3),
+  .admin-entries-container .data-table th:nth-child(5),
+  .admin-entries-container .data-table td:nth-child(5),
+  .admin-entries-container .data-table th:nth-child(7),
+  .admin-entries-container .data-table td:nth-child(7) {
+    display: none; /* Verstecke Kennung, MB Menge, MB Spalte */
+  }
+  
+  .user-entries-container .data-table th:nth-child(5),
+  .user-entries-container .data-table td:nth-child(5) {
+    display: none; /* Verstecke MB Menge bei User-Tabelle */
   }
 }
 
 /* Alternative: Card Layout for very small screens */
-@media (max-width: 480px) {
+@media (max-width: 600px) {
   .data-table-responsive {
     display: none !important;
   }
   
   .data-table-cards {
     display: block !important;
+  }
+  
+  .admin-entries-container,
+  .user-entries-container,
+  .materials-container,
+  .masterbatches-container {
+    border: none;
+    background: transparent;
+    overflow: visible;
   }
   
   .data-card {
@@ -593,10 +661,11 @@ body {
   .data-card-row {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     margin-bottom: 8px;
     padding-bottom: 8px;
     border-bottom: 1px solid #f0f0f0;
+    gap: 12px;
   }
   
   .data-card-row:last-child {
@@ -619,7 +688,7 @@ body {
     color: #000;
     text-align: right;
     flex: 1;
-    margin-left: 12px;
+    word-break: break-word;
   }
   
   .data-card-actions {
@@ -636,10 +705,12 @@ body {
     padding: 8px 12px;
     font-size: 12px;
     min-width: 80px;
+    flex: 1;
+    max-width: 120px;
   }
 }
 
-@media (min-width: 481px) {
+@media (min-width: 601px) {
   .data-table-cards {
     display: none !important;
   }
@@ -1062,17 +1133,63 @@ body {
 }
 
 @media (max-width: 480px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .login-container {
-    padding: 40px 20px;
-  }
-  
-  .dashboard-container,
   .admin-container {
-    padding: 20px;
+    padding: 16px;
+  }
+  
+  .stats-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .stat-box {
+    width: 100%;
+  }
+  
+  .table-controls {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .search-input,
+  .sort-select {
+    width: 100%;
+  }
+  
+  .data-card-value {
+    font-size: 13px;
+    max-width: 60%;
+    word-wrap: break-word;
+  }
+  
+  .data-card-label {
+    font-size: 11px;
+    max-width: 35%;
+  }
+}
+
+/* Weitere Optimierungen für iPhone SE und ähnliche */
+@media (max-width: 375px) {
+  .data-card {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .data-card-row {
+    margin-bottom: 6px;
+    padding-bottom: 6px;
+  }
+  
+  .data-card-actions {
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+  
+  .data-card-actions .btn {
+    padding: 6px 8px;
+    font-size: 11px;
+    min-width: 70px;
   }
 }
 

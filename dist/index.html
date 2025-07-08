@@ -129,8 +129,10 @@
                 <div class="table-controls">
                     <input type="text" id="userSearchInput" placeholder="Suchen..." class="search-input" onkeyup="searchUserEntries()">
                 </div>
-                <div id="userEntriesTable" class="data-table data-table-responsive"></div>
-                <div id="userEntriesCards" class="data-table-cards"></div>
+                <div class="user-entries-container">
+                    <div id="userEntriesTable" class="data-table data-table-responsive"></div>
+                    <div id="userEntriesCards" class="data-table-cards"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -204,8 +206,10 @@
                         <option value="status-unpaid">Nur unbezahlt</option>
                     </select>
                 </div>
-                <div id="adminEntriesTable" class="data-table data-table-responsive"></div>
-                <div id="adminEntriesCards" class="data-table-cards"></div>
+                <div class="admin-entries-container">
+                    <div id="adminEntriesTable" class="data-table data-table-responsive"></div>
+                    <div id="adminEntriesCards" class="data-table-cards"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -226,8 +230,10 @@
                         <button class="btn btn-primary" onclick="addMaterial()">Hinzufügen</button>
                     </div>
                 </div>
-                <div id="materialsTable" class="data-table data-table-responsive"></div>
-                <div id="materialsCards" class="data-table-cards"></div>
+                <div class="materials-container">
+                    <div id="materialsTable" class="data-table data-table-responsive"></div>
+                    <div id="materialsCards" class="data-table-cards"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -248,8 +254,10 @@
                         <button class="btn btn-primary" onclick="addMasterbatch()">Hinzufügen</button>
                     </div>
                 </div>
-                <div id="masterbatchesTable" class="data-table data-table-responsive"></div>
-                <div id="masterbatchesCards" class="data-table-cards"></div>
+                <div class="masterbatches-container">
+                    <div id="masterbatchesTable" class="data-table data-table-responsive"></div>
+                    <div id="masterbatchesCards" class="data-table-cards"></div>
+                </div>
             </div>
         </div>
     </div>
