@@ -305,6 +305,26 @@
         </div>
     </div>
 
+    <!-- Payment Proof Modal -->
+    <div id="paymentProofModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Zahlungsnachweis</h2>
+                <button class="close-btn" onclick="closePaymentProofModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="paymentProofContent">
+                    <!-- Content wird dynamisch geladen -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="printPaymentProof()">Drucken</button>
+                <button class="btn btn-secondary" onclick="emailPaymentProof()">Per E-Mail senden</button>
+                <button class="btn btn-tertiary" onclick="closePaymentProofModal()">Schließen</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>

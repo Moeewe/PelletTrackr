@@ -287,6 +287,15 @@ body {
   background: #cc3333;
 }
 
+.btn-success {
+  background: #28a745;
+  color: white;
+}
+
+.btn-success:hover {
+  background: #218838;
+}
+
 /* Cost Preview */
 .cost-preview {
   background: #FFEB00;
@@ -829,6 +838,16 @@ body {
     color: white;
   }
   
+  .data-table td.actions .btn-success {
+    color: #28a745;
+    border-color: #28a745;
+  }
+  
+  .data-table td.actions .btn-success:hover {
+    background: #28a745;
+    color: white;
+  }
+  
   /* Container-Optimierungen */
   .admin-entries-container,
   .user-entries-container,
@@ -855,6 +874,11 @@ body {
   /* Platz für Action-Buttons reservieren */
   .data-table tr {
     padding-bottom: 60px;
+  }
+  
+  /* User-Tabellen haben weniger Aktionen - weniger Platz nötig */
+  .user-entries-container .data-table tr {
+    padding-bottom: 50px;
   }
 }
 
@@ -1184,7 +1208,7 @@ body {
   min-height: 400px;
 }
 
-/* Modals */
+/* Modal Styles */
 .modal {
   display: none;
   position: fixed;
@@ -1194,6 +1218,7 @@ body {
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
+  animation: fadeIn 0.3s ease;
 }
 
 .modal.active {
@@ -1204,13 +1229,12 @@ body {
 
 .modal-content {
   background: white;
-  margin: auto;
-  padding: 0;
   border-radius: 8px;
+  max-width: 600px;
   width: 90%;
-  max-width: 800px;
-  max-height: 90vh;
-  overflow: hidden;
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: slideIn 0.3s ease;
 }
 
 .modal-header {
@@ -1221,247 +1245,170 @@ body {
   border-bottom: 1px solid #e0e0e0;
 }
 
-.modal-header h3 {
+.modal-header h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  color: #000;
 }
 
 .modal-body {
   padding: 24px;
-  max-height: 60vh;
-  overflow-y: auto;
 }
 
-/* Data Tables */
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.data-table th,
-.data-table td {
-  padding: 12px 16px;
-  text-align: left;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.data-table th {
-  background: #f8f9fa;
-  font-weight: 600;
-  font-size: 14px;
-  color: #000000;
-}
-
-.data-table td {
-  font-size: 14px;
-  color: #333333;
-}
-
-.data-table tr:hover {
-  background: #f8f9fa;
-}
-
-.data-table .actions {
+.modal-footer {
+  padding: 24px;
+  border-top: 1px solid #e0e0e0;
   display: flex;
-  gap: 4px;
-  align-items: center;
-  flex-wrap: wrap;
-  min-width: 120px;
+  gap: 12px;
+  justify-content: flex-end;
 }
 
-.data-table .btn {
-  padding: 4px 8px;
-  font-size: 11px;
-  min-width: 50px;
-  margin: 0;
-  border-radius: 3px;
+/* Payment Proof Styles */
+.payment-proof {
+  font-family: 'Arial', sans-serif;
+  line-height: 1.6;
 }
 
-/* Status indicators */
-.status-paid {
-  color: #28a745;
-  font-weight: 500;
+.proof-header {
+  text-align: center;
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #FFEB00;
 }
 
-.status-unpaid {
-  color: #dc3545;
-  font-weight: 500;
+.proof-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .dashboard-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-  
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-  
-  .control-buttons {
-    flex-direction: column;
-  }
-  
-  .data-table {
-    font-size: 12px;
-  }
-  
-  .data-table th,
-  .data-table td {
-    padding: 8px 12px;
-  }
-  
-  .modal-content {
-    width: 95%;
-    margin: 20px auto;
-  }
+.proof-subtitle {
+  font-size: 16px;
+  color: #666;
 }
 
-@media (max-width: 480px) {
-  .admin-container {
-    padding: 16px;
-  }
-  
-  .stats-row {
-    flex-direction: column;
-    gap: 12px;
-  }
-  
-  .stat-box {
-    width: 100%;
-  }
-  
-  .table-controls {
-    flex-direction: column;
-    gap: 12px;
-    align-items: stretch;
-  }
-  
-  .search-input,
-  .sort-select {
-    width: 100%;
-  }
+.proof-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 32px;
 }
 
-/* Weitere Optimierungen für sehr kleine Screens */
-@media (max-width: 375px) {
-  .data-table td {
-    font-size: 13px;
-    padding: 10px 0;
-  }
-  
-  .data-table td:before {
-    font-size: 12px;
-    width: 35%;
-  }
-  
-  .data-table tr {
-    padding: 12px;
-    margin-bottom: 12px;
-  }
-  
-  .data-table td.actions .btn {
-    padding: 3px 6px;
-    font-size: 10px;
-    min-width: 45px;
-    margin: 1px;
-  }
+.proof-section {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 6px;
 }
 
-/* Fraenk-typische große Abstände */
-.spacer {
-  height: 80px;
-}
-
-.spacer-small {
-  height: 40px;
-}
-
-/* Login Buttons - bleiben größer für bessere UX */
-.login-form .btn {
-  width: 100%;
-  padding: 16px 24px;
+.proof-section h3 {
   font-size: 16px;
   font-weight: 600;
   margin-bottom: 12px;
-  min-width: auto;
+  color: #000;
 }
 
-.login-form .btn-primary {
-  background: #000000;
-  color: white;
-  border: 2px solid #000000;
+.proof-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
 }
 
-.login-form .btn-secondary {
-  background: white;
-  color: #000000;
-  border: 2px solid #000000;
+.proof-item:last-child {
+  margin-bottom: 0;
 }
 
-/* Management Modal Buttons */
-.modal .btn {
-  padding: 10px 16px;
+.proof-label {
+  font-weight: 500;
+  color: #666;
+}
+
+.proof-value {
+  font-weight: 600;
+  color: #000;
+}
+
+.proof-total {
+  background: #FFEB00;
+  padding: 16px;
+  border-radius: 6px;
+  text-align: center;
+  margin: 24px 0;
+}
+
+.proof-total-amount {
+  font-size: 32px;
+  font-weight: 700;
+  color: #000;
+}
+
+.proof-footer {
+  text-align: center;
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
   font-size: 14px;
-  min-width: 80px;
+  color: #666;
 }
 
-/* Aktions-Buttons in Tabellen - sehr kompakt */
-.data-table .actions .btn {
-  padding: 4px 8px;
-  font-size: 11px;
-  min-width: 50px;
-  margin: 0 2px;
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.data-table .actions .btn-primary {
-  background: #28a745;
-  color: white;
-  border: 1px solid #28a745;
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.data-table .actions .btn-secondary {
-  background: #6c757d;
-  color: white;
-  border: 1px solid #6c757d;
+/* Print Styles */
+@media print {
+  .modal {
+    position: static !important;
+    background: none !important;
+    width: auto !important;
+    height: auto !important;
+  }
+  
+  .modal-content {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    max-width: none !important;
+    width: auto !important;
+    max-height: none !important;
+  }
+  
+  .modal-header,
+  .modal-footer {
+    display: none !important;
+  }
+  
+  .modal-body {
+    padding: 0 !important;
+  }
 }
 
-.data-table .actions .btn-danger {
-  background: #dc3545;
-  color: white;
-  border: 1px solid #dc3545;
-}
-
-/* Notizen-Bearbeitung */
-.notes-cell {
-  position: relative;
-  max-width: 200px;
-}
-
-.btn-edit-note {
-  background: none;
-  border: none;
-  color: #666666;
-  font-size: 12px;
-  margin-left: 8px;
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 2px;
-  transition: all 0.2s ease;
-}
-
-.btn-edit-note:hover {
-  background: #f0f0f0;
-  color: #000000;
-}
+/* ...existing code... */
