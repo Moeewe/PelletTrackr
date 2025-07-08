@@ -4,7 +4,7 @@
 
 [[redirects]]
   from = "/*"
-  to = "/index-modular.html"
+  to = "/web-app.html"
   status = 200
 
 [context.production.environment]
