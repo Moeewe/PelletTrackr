@@ -207,6 +207,25 @@ body {
   padding-right: 40px;
 }
 
+.form-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 16px;
+  background: white;
+  transition: border-color 0.2s ease;
+  color: #000000;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: #FFEB00;
+}
+
 /* Buttons */
 .button-group {
   display: flex;
@@ -270,7 +289,7 @@ body {
 
 /* Cost Preview */
 .cost-preview {
-  background: #f0f0f0;
+  background: #FFEB00;
   padding: 20px;
   border-radius: 6px;
   text-align: center;
@@ -352,6 +371,7 @@ body {
   font-weight: 700;
   margin-bottom: 8px;
   letter-spacing: -1px;
+  color: #000000;
 }
 
 .cost-label {

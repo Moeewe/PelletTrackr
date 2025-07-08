@@ -328,6 +328,8 @@ async function addEntry() {
   const materialMenge = document.getElementById("materialMenge").value.trim();
   const masterbatch = document.getElementById("masterbatch").value.trim();
   const masterbatchMenge = document.getElementById("masterbatchMenge").value.trim();
+  const jobName = document.getElementById("jobName").value.trim();
+  const jobNotes = document.getElementById("jobNotes").value.trim();
 
   // Validierung
   if (!material || !materialMenge || !masterbatch || !masterbatchMenge) {
@@ -381,6 +383,8 @@ async function addEntry() {
       masterbatchPrice: masterbatchData.price,
       masterbatchCost: masterbatchCost,
       totalCost: totalCost,
+      jobName: jobName || "3D-Druck Auftrag", // Default if empty
+      jobNotes: jobNotes || "",
       timestamp: firebase.firestore.FieldValue.serverTimestamp(),
       paid: false
     };
@@ -411,12 +415,16 @@ function clearForm() {
   const materialMenge = document.getElementById("materialMenge");
   const masterbatch = document.getElementById("masterbatch");
   const masterbatchMenge = document.getElementById("masterbatchMenge");
+  const jobName = document.getElementById("jobName");
+  const jobNotes = document.getElementById("jobNotes");
   const costPreview = document.getElementById("costPreview");
   
   if (material) material.value = '';
   if (materialMenge) materialMenge.value = '';
   if (masterbatch) masterbatch.value = '';
   if (masterbatchMenge) masterbatchMenge.value = '';
+  if (jobName) jobName.value = '';
+  if (jobNotes) jobNotes.value = '';
   if (costPreview) costPreview.textContent = '0,00 €';
 }
 
@@ -498,12 +506,14 @@ function renderUserEntries(entries) {
       <thead>
         <tr>
           <th onclick="sortUserEntries('date')">Datum ↕</th>
+          <th onclick="sortUserEntries('jobName')">Job ↕</th>
           <th onclick="sortUserEntries('material')">Material ↕</th>
           <th onclick="sortUserEntries('materialMenge')">Menge ↕</th>
           <th onclick="sortUserEntries('masterbatch')">Masterbatch ↕</th>
           <th onclick="sortUserEntries('masterbatchMenge')">Menge ↕</th>
           <th onclick="sortUserEntries('cost')">Kosten ↕</th>
           <th onclick="sortUserEntries('status')">Status ↕</th>
+          <th>Notizen</th>
         </tr>
       </thead>
       <tbody>
@@ -517,17 +527,25 @@ function renderUserEntries(entries) {
     const status = entry.paid || entry.isPaid ? 
       '<span class="status-paid">✅ Bezahlt</span>' : 
       '<span class="status-unpaid">⏳ Offen</span>';
+    const jobName = entry.jobName || "3D-Druck Auftrag";
+    const jobNotes = entry.jobNotes || "";
+    const truncatedNotes = jobNotes.length > 30 ? jobNotes.substring(0, 30) + "..." : jobNotes;
     
     // Responsive Tabellen-Zeile mit data-label Attributen
     tableHtml += `
       <tr>
         <td data-label="Datum">${date}</td>
+        <td data-label="Job">${jobName}</td>
         <td data-label="Material">${entry.material}</td>
         <td data-label="Menge">${entry.materialMenge.toFixed(2)} kg</td>
         <td data-label="Masterbatch">${entry.masterbatch}</td>
         <td data-label="MB Menge">${entry.masterbatchMenge.toFixed(2)} kg</td>
         <td data-label="Kosten"><strong>${formatCurrency(entry.totalCost)}</strong></td>
         <td data-label="Status">${status}</td>
+        <td data-label="Notizen" class="notes-cell" title="${jobNotes}">
+          ${truncatedNotes}
+          ${jobNotes.length > 0 ? `<button class="btn-edit-note" onclick="editNote('${entry.id}', '${escapeQuotes(jobNotes)}')">✏️</button>` : ''}
+        </td>
       </tr>
     `;
   });
@@ -623,12 +641,14 @@ function renderAdminEntries(entries) {
           <th onclick="sortAdminEntriesBy('date')">Datum ↕</th>
           <th onclick="sortAdminEntriesBy('name')">Name ↕</th>
           <th onclick="sortAdminEntriesBy('kennung')">Kennung ↕</th>
+          <th onclick="sortAdminEntriesBy('jobName')">Job ↕</th>
           <th onclick="sortAdminEntriesBy('material')">Material ↕</th>
           <th onclick="sortAdminEntriesBy('materialMenge')">Mat. Menge ↕</th>
           <th onclick="sortAdminEntriesBy('masterbatch')">Masterbatch ↕</th>
           <th onclick="sortAdminEntriesBy('masterbatchMenge')">MB Menge ↕</th>
           <th onclick="sortAdminEntriesBy('cost')">Kosten ↕</th>
           <th onclick="sortAdminEntriesBy('status')">Status ↕</th>
+          <th>Notizen</th>
           <th>Aktionen</th>
         </tr>
       </thead>
@@ -641,6 +661,9 @@ function renderAdminEntries(entries) {
     const status = isPaid ? 
       '<span class="status-paid">✅ Bezahlt</span>' : 
       '<span class="status-unpaid">❌ Offen</span>';
+    const jobName = entry.jobName || "3D-Druck Auftrag";
+    const jobNotes = entry.jobNotes || "";
+    const truncatedNotes = jobNotes.length > 20 ? jobNotes.substring(0, 20) + "..." : jobNotes;
     
     const actions = `
       <div class="actions">
@@ -658,12 +681,17 @@ function renderAdminEntries(entries) {
         <td data-label="Datum">${date}</td>
         <td data-label="Name">${entry.name}</td>
         <td data-label="Kennung">${entry.kennung}</td>
+        <td data-label="Job">${jobName}</td>
         <td data-label="Material">${entry.material}</td>
         <td data-label="Mat. Menge">${(entry.materialMenge || 0).toFixed(2)} kg</td>
         <td data-label="Masterbatch">${entry.masterbatch}</td>
         <td data-label="MB Menge">${(entry.masterbatchMenge || 0).toFixed(2)} kg</td>
         <td data-label="Kosten"><strong>${formatCurrency(entry.totalCost)}</strong></td>
         <td data-label="Status">${status}</td>
+        <td data-label="Notizen" class="notes-cell" title="${jobNotes}">
+          ${truncatedNotes}
+          ${jobNotes.length > 0 ? `<button class="btn-edit-note" onclick="editNote('${entry.id}', '${escapeQuotes(jobNotes)}')">✏️</button>` : ''}
+        </td>
         <td class="actions" data-label="Aktionen">${actions}</td>
       </tr>
     `;
@@ -1210,6 +1238,10 @@ function sortUserEntries(column) {
         valueA = a.timestamp ? a.timestamp.toDate() : new Date(0);
         valueB = b.timestamp ? b.timestamp.toDate() : new Date(0);
         break;
+      case 'jobName':
+        valueA = (a.jobName || "3D-Druck Auftrag").toLowerCase();
+        valueB = (b.jobName || "3D-Druck Auftrag").toLowerCase();
+        break;
       case 'material':
         valueA = a.material.toLowerCase();
         valueB = b.material.toLowerCase();
@@ -1270,6 +1302,10 @@ function sortAdminEntriesBy(column) {
       case 'kennung':
         valueA = a.kennung.toLowerCase();
         valueB = b.kennung.toLowerCase();
+        break;
+      case 'jobName':
+        valueA = (a.jobName || "3D-Druck Auftrag").toLowerCase();
+        valueB = (b.jobName || "3D-Druck Auftrag").toLowerCase();
         break;
       case 'material':
         valueA = a.material.toLowerCase();
@@ -1610,4 +1646,59 @@ function sortUsersBy(field) {
   
   document.getElementById("userManagerSortSelect").value = `${field}-${newDirection}`;
   sortUsers();
+}
+
+// ==================== NOTIZ-BEARBEITUNG ====================
+
+// Notiz bearbeiten
+function editNote(entryId, currentNote) {
+  const newNote = prompt('Notiz bearbeiten:', currentNote);
+  if (newNote === null) return; // User cancelled
+  
+  updateEntryNote(entryId, newNote.trim());
+}
+
+// Notiz in Firestore aktualisieren
+async function updateEntryNote(entryId, newNote) {
+  try {
+    await db.collection('entries').doc(entryId).update({
+      jobNotes: newNote
+    });
+    
+    console.log(`✅ Notiz für Eintrag ${entryId} aktualisiert`);
+    
+    // Tabellen aktualisieren
+    if (currentUser.isAdmin) {
+      loadAllEntries();
+    } else {
+      loadUserEntries();
+    }
+    
+  } catch (error) {
+    console.error('Fehler beim Aktualisieren der Notiz:', error);
+    alert('Fehler beim Speichern der Notiz: ' + error.message);
+  }
+}
+
+// Anführungszeichen escapen für HTML-Attribute
+function escapeQuotes(str) {
+  return str.replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+}
+
+// ==================== LOGIN FUNKTIONEN ====================
+
+// Admin Login anzeigen
+function showAdminLogin() {
+  const passwordGroup = document.getElementById('passwordGroup');
+  const adminBtn = document.querySelector('.btn-secondary');
+  
+  if (passwordGroup.style.display === 'none') {
+    passwordGroup.style.display = 'block';
+    adminBtn.textContent = 'Admin Login';
+    adminBtn.onclick = loginAsAdmin;
+  } else {
+    passwordGroup.style.display = 'none';
+    adminBtn.textContent = 'Als Admin anmelden';
+    adminBtn.onclick = showAdminLogin;
+  }
 }

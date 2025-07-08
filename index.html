@@ -14,30 +14,26 @@
                 <h1 class="logo">
                     <span class="highlight">Pellet</span>Trackr
                 </h1>
-                <p class="tagline">FGF 3D-Druck Verwaltung</p>
             </div>
             
             <div class="login-form">
                 <div class="form-group">
-                    <label class="form-label">Name</label>
-                    <input type="text" id="loginName" class="form-input" placeholder="Max Mustermann">
+                    <input type="text" id="loginName" class="form-input" placeholder="Ayleen Müller">
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">FH Kennung</label>
-                    <input type="text" id="loginKennung" class="form-input" placeholder="mm123289">
+                    <input type="text" id="loginKennung" class="form-input" placeholder="AM291384">
                 </div>
                 
-                <div class="form-group">
-                    <label class="form-label">Passwort (nur für Admin)</label>
-                    <input type="password" id="adminPassword" class="form-input" placeholder="Optional - für Admin-Bereich">
+                <div class="form-group" id="passwordGroup" style="display: none;">
+                    <input type="password" id="adminPassword" class="form-input" placeholder="Admin Passwort">
                 </div>
                 
                 <div class="button-group">
                     <button class="btn btn-primary" onclick="loginAsUser()">
-                        Als Nutzer anmelden
+                        Login
                     </button>
-                    <button class="btn btn-secondary" onclick="loginAsAdmin()">
+                    <button class="btn btn-secondary" onclick="showAdminLogin()">
                         Als Admin anmelden
                     </button>
                 </div>
@@ -88,6 +84,13 @@
                 <form class="entry-form">
                     <div class="form-row">
                         <div class="form-group">
+                            <label class="form-label">Job-Name</label>
+                            <input type="text" id="jobName" class="form-input" placeholder="z.B. Prototyp Gehäuse, Ersatzteil, etc. (optional)">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
                             <label class="form-label">Material</label>
                             <select id="material" class="form-select">
                                 <option value="">Material auswählen...</option>
@@ -109,6 +112,13 @@
                         <div class="form-group">
                             <label class="form-label">Menge (kg)</label>
                             <input type="text" id="masterbatchMenge" class="form-input" placeholder="0,00">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Notizen</label>
+                            <textarea id="jobNotes" class="form-textarea" placeholder="Zusätzliche Informationen, Farbe, Größe, etc. (optional)" rows="3"></textarea>
                         </div>
                     </div>
                     

@@ -207,6 +207,25 @@ body {
   padding-right: 40px;
 }
 
+.form-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 16px;
+  background: white;
+  transition: border-color 0.2s ease;
+  color: #000000;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: #FFEB00;
+}
+
 /* Buttons */
 .button-group {
   display: flex;
@@ -270,7 +289,7 @@ body {
 
 /* Cost Preview */
 .cost-preview {
-  background: #f0f0f0;
+  background: #FFEB00;
   padding: 20px;
   border-radius: 6px;
   text-align: center;
@@ -303,7 +322,7 @@ body {
 
 /* Cost Preview - Gelbes Fraenk-Highlight - immer sichtbar */
 .cost-preview {
-  background: #FFFF00;
+  background: #FFEB00;
   color: #000000;
   padding: 24px;
   border-radius: 0;
@@ -326,7 +345,7 @@ body {
 }
 
 .cost-preview.show {
-  background: #FFFF00;
+  background: #FFEB00;
   color: #000000;
   border-color: #000000;
   animation: pulse 0.3s ease;
@@ -352,6 +371,7 @@ body {
   font-weight: 700;
   margin-bottom: 8px;
   letter-spacing: -1px;
+  color: #000000;
 }
 
 .cost-label {
@@ -394,7 +414,7 @@ body {
 }
 
 .btn-secondary:hover {
-  background: #FFFF00;
+  background: #FFEB00;
   border-color: #000000;
 }
 
@@ -420,7 +440,7 @@ body {
 }
 
 .status-success {
-  background: #FFFF00;
+  background: #FFEB00;
   color: #000000;
   border-color: #000000;
 }
@@ -1369,4 +1389,27 @@ body {
   background: #dc3545;
   color: white;
   border: 1px solid #dc3545;
+}
+
+/* Notizen-Bearbeitung */
+.notes-cell {
+  position: relative;
+  max-width: 200px;
+}
+
+.btn-edit-note {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 12px;
+  margin-left: 8px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+}
+
+.btn-edit-note:hover {
+  background: #FFEB00;
+  color: #000;
 }
