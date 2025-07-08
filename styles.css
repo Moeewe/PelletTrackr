@@ -647,77 +647,202 @@ body {
   }
 }
 
-/* Responsive Tables - Komplett überarbeitet nach Fraenk-Prinzipien */
+/* Tables */
+.data-table {
+  width: 100%;
+  margin: 20px 0;
+  background: white;
+  border: 2px solid #000000;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.data-table table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.data-table th {
+  background: #f8f9fa;
+  color: #000000;
+  font-weight: 600;
+  font-size: 14px;
+  text-align: left;
+  padding: 16px 12px;
+  border-bottom: 2px solid #000000;
+  border-right: 1px solid #e9ecef;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.data-table th:last-child {
+  border-right: none;
+}
+
+.data-table th:hover {
+  background: #e9ecef;
+}
+
+.data-table tr {
+  border-bottom: 1px solid #e9ecef;
+  transition: background-color 0.2s ease;
+}
+
+.data-table tr:last-child {
+  border-bottom: none;
+}
+
+.data-table tr:hover {
+  background: #f8f9fa;
+}
+
+.data-table td {
+  padding: 16px 12px;
+  border-right: 1px solid #e9ecef;
+  vertical-align: middle;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.data-table td:last-child {
+  border-right: none;
+}
+
+/* Status Badges */
+.status-paid {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #28a745;
+  padding: 4px 8px;
+  border-radius: 0;
+  font-weight: 500;
+  font-size: 12px;
+  display: inline-block;
+}
+
+.status-unpaid {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffc107;
+  padding: 4px 8px;
+  border-radius: 0;
+  font-weight: 500;
+  font-size: 12px;
+  display: inline-block;
+}
+
+/* Action Buttons in Tables */
+.data-table .actions {
+  white-space: nowrap;
+}
+
+.data-table .btn {
+  margin: 0 4px 0 0;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.data-table .btn:last-child {
+  margin-right: 0;
+}
+
+/* Cost highlighting */
+.data-table td strong {
+  font-weight: 600;
+  color: #000000;
+}
+
+/* Notes cell */
+.notes-cell {
+  max-width: 150px;
+  position: relative;
+}
+
+.btn-edit-note {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  margin-left: 4px;
+  font-size: 12px;
+}
+
+/* Mobile Responsive - Clean Cards */
 @media (max-width: 768px) {
-  /* Verstecke die normalen Tabellen-Header */
+  .data-table {
+    border: none;
+    background: transparent;
+  }
+  
+  .data-table table {
+    border-collapse: separate;
+    border-spacing: 0 16px;
+  }
+  
   .data-table thead {
     display: none;
   }
   
-  /* Container-Optimierung */
-  .data-table {
-    width: 100%;
-    max-width: 100%;
-    margin: 24px 0;
-    padding: 0;
-    border: none;
-    background: transparent;
-    overflow: visible;
-  }
-  
-  .data-table table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-  }
-  
-  /* Jede Zeile wird zu einer Fraenk-Karte */
   .data-table tr {
     display: block;
     background: white;
-    border: 1px solid #000000;
+    border: 2px solid #000000;
     border-radius: 0;
+    padding: 20px;
     margin: 0 0 16px 0;
-    padding: 16px;
-    position: relative;
-    transition: all 0.2s ease;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    overflow: hidden;
-    word-wrap: break-word;
+    box-shadow: none;
   }
   
   .data-table tr:hover {
-    background: #fafafa;
+    background: white;
   }
   
-  /* Zellen-Styling */
   .data-table td {
     display: block;
     border: none;
-    padding: 0;
-    margin: 0 0 16px 0;
-    position: relative;
+    padding: 8px 0;
     text-align: left;
-    font-size: 16px;
-    line-height: 1.4;
-    width: 100%;
-    box-sizing: border-box;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
+    position: relative;
+    padding-left: 120px;
+    min-height: 24px;
   }
   
-  .data-table td:last-child {
-    margin-bottom: 0;
-  }
-  
-  /* Datum als Header mit minimaler Styling */
-  .data-table td:first-child {
-    background: #f8f8f8;
-    color: #000000;
-    font-size: 12px;
+  .data-table td:before {
+    content: attr(data-label) ": ";
+    position: absolute;
+    left: 0;
+    top: 8px;
     font-weight: 600;
+    color: #000000;
+    width: 110px;
+    font-size: 12px;
+    text-transform: uppercase;
+  }
+  
+  .data-table td[data-label="Aktionen"] {
+    padding-left: 0;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e9ecef;
+  }
+  
+  .data-table td[data-label="Aktionen"]:before {
+    display: none;
+  }
+  
+  .data-table .actions {
+    white-space: normal;
+  }
+  
+  .data-table .btn {
+    display: inline-block;
+    margin: 4px 8px 4px 0;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+}
     margin: -16px -16px 16px -16px;
     padding: 12px 16px;
     text-transform: uppercase;
