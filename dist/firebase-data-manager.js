@@ -27,7 +27,7 @@ class FirebaseDataManager {
     this.entriesCollection = 'entries';
   }
 
-  // Neuen Eintrag hinzufügen
+  // Neuen Druck hinzufügen
   async addEntry(name, kennung, material, materialMenge, masterbatch, masterbatchMenge) {
     try {
       // Preise abrufen
@@ -38,7 +38,7 @@ class FirebaseDataManager {
       const masterbatchCost = masterbatchData ? masterbatchData.price * masterbatchMenge : 0;
       const totalCost = materialCost + masterbatchCost;
       
-      // Eintrag in Firestore speichern
+      // Druck in Firestore speichern
       const docRef = await addDoc(collection(this.db, this.entriesCollection), {
         timestamp: new Date(),
         name: name,
@@ -71,7 +71,7 @@ class FirebaseDataManager {
     }
   }
 
-  // Nutzer-Einträge abrufen
+  // Nutzer-Drucke abrufen
   async getUserEntries(name, kennung) {
     try {
       const q = query(
@@ -105,7 +105,7 @@ class FirebaseDataManager {
     }
   }
 
-  // Alle Einträge abrufen (Admin)
+  // Alle Drucke abrufen (Admin)
   async getAllEntries() {
     try {
       const q = query(

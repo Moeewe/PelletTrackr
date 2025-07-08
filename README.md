@@ -5,10 +5,10 @@ Eine Google Apps Script Web-Anwendung zur Abrechnung von 3D-Druckaufträgen an d
 ## ✅ Features
 
 ### Implementierte Funktionen:
-- **Einträge hinzufügen**: Benutzer können Material- und Masterbatch-Verbrauch erfassen
+- **Drucke hinzufügen**: Benutzer können Material- und Masterbatch-Verbrauch erfassen
 - **Dropdown-Auswahl**: Materialien und Masterbatches werden dynamisch aus der Tabelle geladen
 - **Live-Kostenvorschau**: Kosten werden in Echtzeit während der Eingabe berechnet
-- **Persönliche Übersicht**: Benutzer sehen nur ihre eigenen Einträge gefiltert nach Name und FH-Kennung
+- **Persönliche Übersicht**: Benutzer sehen nur ihre eigenen Drucke gefiltert nach Name und FH-Kennung
 - **Statistiken**: Verbrauchsstatistiken und Kostenübersicht pro Benutzer
 - **Verbindungstest**: Überprüfung der Datenbankverbindung
 - **Fehlerbehandlung**: Robuste Validierung und Fehlerbehandlung
@@ -73,13 +73,13 @@ Eine Google Apps Script Web-Anwendung zur Abrechnung von 3D-Druckaufträgen an d
 3. Wählen Sie Material und Masterbatch aus den Dropdowns
 4. Geben Sie die Verbrauchsmengen ein
 5. Sehen Sie die Live-Kostenvorschau
-6. Klicken Sie "Eintrag hinzufügen"
-7. Nutzen Sie "Meine Übersicht" für Ihre bisherigen Einträge
+6. Klicken Sie "Druck hinzufügen"
+7. Nutzen Sie "Meine Übersicht" für Ihre bisherigen Drucke
 8. Nutzen Sie "Meine Statistiken" für eine Verbrauchsübersicht
 
 ### Für Administratoren:
 1. Pflegen Sie die Materialliste und Preise direkt in der Google Sheets-Datei
-2. Überwachen Sie alle Einträge in der Tabelle
+2. Überwachen Sie alle Drucke in der Tabelle
 3. Nutzen Sie die Test-Funktionen zur Fehlerdiagnose
 
 ## 📋 Original Setup-Checkliste
@@ -168,7 +168,7 @@ Wenn Sie bereits eine v1.0 Installation haben:
 
 ## 🔧 Fehlerbehebung
 
-### Problem: "Einträge werden nicht gespeichert"
+### Problem: "Drucke werden nicht gespeichert"
 1. Apps Script öffnen → Ausführungen prüfen
 2. Console-Log checken
 3. Debug-Funktion ausführen:
@@ -197,14 +197,14 @@ Wenn Sie bereits eine v1.0 Installation haben:
 2. Tab "Druckübersicht" 
 3. Spalte L (Bezahlt): "Ja" oder "Nein" eintragen
 
-### Alle Einträge einsehen
+### Alle Drucke einsehen
 - Direkt im Google Sheet unter "Druckübersicht"
 - Filtern nach Datum, Name, FH-Kennung möglich
 
 ### Preise anpassen
 - Tab "Material" oder "Masterbatch" öffnen
 - Spalte E (Verkaufspreis) anpassen
-- Änderungen gelten sofort für neue Einträge
+- Änderungen gelten sofort für neue Drucke
 
 ## 📊 Datenstruktur
 
@@ -225,7 +225,7 @@ Wenn Sie bereits eine v1.0 Installation haben:
 
 ## 🔒 Sicherheit
 
-- Studierende sehen nur ihre eigenen Einträge
+- Studierende sehen nur ihre eigenen Drucke
 - Nur Admin hat Zugriff auf das Google Sheet
 - Web-App ist öffentlich, aber Daten sind geschützt
 - FH-Kennung als eindeutiger Identifier
@@ -240,6 +240,6 @@ Wenn Sie bereits eine v1.0 Installation haben:
 
 ### Für Admin:
 1. Google Sheet öffnen
-2. Alle Einträge in "Druckübersicht" einsehen
+2. Alle Drucke in "Druckübersicht" einsehen
 3. Zahlungsstatus in Spalte L ändern
 4. Bei Bedarf Preise in "Material"/"Masterbatch" anpassen

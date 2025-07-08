@@ -28,7 +28,7 @@ async function loginAsUser() {
   const kennung = document.getElementById('loginKennung').value.trim();
   
   if (!name || !kennung) {
-    alert('Bitte Name und Kennung eingeben!');
+    alert('Bitte Name und FH-Kennung eingeben!');
     return;
   }
   
@@ -76,7 +76,7 @@ function loginAsAdmin() {
   const password = document.getElementById('adminPassword').value;
   
   if (!name || !kennung) {
-    alert('Bitte Name und Kennung eingeben!');
+    alert('Bitte Name und FH-Kennung eingeben!');
     return;
   }
   
@@ -113,11 +113,11 @@ function logout() {
 
 async function checkExistingKennung(kennung, currentName) {
   try {
-    // Alle Einträge mit dieser Kennung abrufen
+    // Alle Drucke mit dieser Kennung abrufen
     const snapshot = await db.collection('entries').where('kennung', '==', kennung).get();
     
     if (!snapshot.empty) {
-      // Erste Einträge prüfen um zu sehen ob ein anderer Name verwendet wird
+      // Erste Drucke prüfen um zu sehen ob ein anderer Name verwendet wird
       const existingNames = new Set();
       snapshot.forEach(doc => {
         const data = doc.data();
@@ -319,7 +319,7 @@ async function loadMasterbatches() {
 
 // ==================== ENTRY MANAGEMENT ====================
 
-// Neuen Eintrag hinzufügen
+// Neuen Druck hinzufügen
 async function addEntry() {
   // Verwende die aktuellen User-Daten
   const name = currentUser.name;
@@ -370,7 +370,7 @@ async function addEntry() {
     const masterbatchCost = masterbatchMengeNum * masterbatchData.price;
     const totalCost = materialCost + masterbatchCost;
 
-    // Eintrag in Firestore speichern
+    // Druck in Firestore speichern
     const entry = {
       name: name,
       kennung: kennung,
@@ -391,7 +391,7 @@ async function addEntry() {
 
     await db.collection("entries").add(entry);
 
-    alert("✅ Eintrag erfolgreich gespeichert!");
+    alert("✅ Druck erfolgreich gespeichert!");
     clearForm();
     
     // Dashboard aktualisieren
@@ -460,7 +460,7 @@ async function loadUserStats() {
   }
 }
 
-// User-Einträge laden
+// User-Drucke laden
 async function loadUserEntries() {
   try {
     const snapshot = await db.collection("entries")
@@ -485,17 +485,17 @@ async function loadUserEntries() {
     renderUserEntries(entries);
     
   } catch (error) {
-    console.error("Fehler beim Laden der User-Einträge:", error);
-    document.getElementById("userEntriesTable").innerHTML = '<p>Fehler beim Laden der Einträge.</p>';
+    console.error("Fehler beim Laden der User-Drucke:", error);
+    document.getElementById("userEntriesTable").innerHTML = '<p>Fehler beim Laden der Drucke.</p>';
   }
 }
 
-// User-Einträge rendern
+// User-Drucke rendern
 function renderUserEntries(entries) {
   const tableDiv = document.getElementById("userEntriesTable");
   
   if (entries.length === 0) {
-    const message = '<p>Noch keine Einträge vorhanden. Füge deinen ersten 3D-Druck hinzu!</p>';
+    const message = '<p>Noch keine Drucke vorhanden. Füge deinen ersten 3D-Druck hinzu!</p>';
     tableDiv.innerHTML = message;
     return;
   }
@@ -533,7 +533,7 @@ function renderUserEntries(entries) {
     const jobNotes = entry.jobNotes || "";
     const truncatedNotes = jobNotes.length > 30 ? jobNotes.substring(0, 30) + "..." : jobNotes;
     
-    // Aktionen für User (Details, Bearbeiten, und Zahlungsnachweis bei bezahlten Einträgen)
+    // Aktionen für User (Details, Bearbeiten, und Zahlungsnachweis bei bezahlten Drucken)
     const actions = isPaid ? 
       `<button class="btn btn-success" onclick="showPaymentProof('${entry.id}')">Nachweis</button>
        <button class="btn btn-tertiary" onclick="viewEntryDetails('${entry.id}')">Details</button>
@@ -608,7 +608,7 @@ async function loadAdminStats() {
   }
 }
 
-// Alle Einträge für Admin laden
+// Alle Drucke für Admin laden
 async function loadAllEntries() {
   try {
     const snapshot = await db.collection("entries").get();
@@ -630,17 +630,17 @@ async function loadAllEntries() {
     renderAdminEntries(entries);
     
   } catch (error) {
-    console.error("Fehler beim Laden der Admin-Einträge:", error);
-    document.getElementById("adminEntriesTable").innerHTML = '<p>Fehler beim Laden der Einträge.</p>';
+    console.error("Fehler beim Laden der Admin-Drucke:", error);
+    document.getElementById("adminEntriesTable").innerHTML = '<p>Fehler beim Laden der Drucke.</p>';
   }
 }
 
-// Admin-Einträge rendern
+// Admin-Drucke rendern
 function renderAdminEntries(entries) {
   const tableDiv = document.getElementById("adminEntriesTable");
   
   if (entries.length === 0) {
-    const message = '<p>Noch keine Einträge vorhanden.</p>';
+    const message = '<p>Noch keine Drucke vorhanden.</p>';
     tableDiv.innerHTML = message;
     return;
   }
@@ -720,10 +720,10 @@ function renderAdminEntries(entries) {
   tableDiv.innerHTML = tableHtml;
 }
 
-// Eintrag als bezahlt markieren
+// Druck als bezahlt markieren
 async function markEntryAsPaid(entryId) {
   if (!checkAdminAccess()) return;
-  if (!confirm("Eintrag als bezahlt markieren?")) return;
+  if (!confirm("Druck als bezahlt markieren?")) return;
   
   try {
     await db.collection('entries').doc(entryId).update({
@@ -732,7 +732,7 @@ async function markEntryAsPaid(entryId) {
       paidAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     
-    alert("✅ Eintrag als bezahlt markiert!");
+    alert("✅ Druck als bezahlt markiert!");
     loadAdminStats();
     loadAllEntries(); // Lädt alle Daten neu und wendet aktuelle Filter an
     
@@ -742,10 +742,10 @@ async function markEntryAsPaid(entryId) {
   }
 }
 
-// Eintrag als unbezahlt markieren
+// Druck als unbezahlt markieren
 async function markEntryAsUnpaid(entryId) {
   if (!checkAdminAccess()) return;
-  if (!confirm("Eintrag als unbezahlt markieren?")) return;
+  if (!confirm("Druck als unbezahlt markieren?")) return;
   
   try {
     await db.collection('entries').doc(entryId).update({
@@ -754,7 +754,7 @@ async function markEntryAsUnpaid(entryId) {
       paidAt: null
     });
     
-    alert("⚠️ Eintrag als unbezahlt markiert!");
+    alert("⚠️ Druck als unbezahlt markiert!");
     loadAdminStats();
     loadAllEntries(); // Lädt alle Daten neu und wendet aktuelle Filter an
     
@@ -764,19 +764,19 @@ async function markEntryAsUnpaid(entryId) {
   }
 }
 
-// Eintrag löschen
+// Druck löschen
 async function deleteEntry(entryId) {
   if (!checkAdminAccess()) return;
-  if (!confirm("Eintrag wirklich unwiderruflich löschen?")) return;
+  if (!confirm("Druck wirklich unwiderruflich löschen?")) return;
   
   try {
     await db.collection('entries').doc(entryId).delete();
-    alert("🗑️ Eintrag erfolgreich gelöscht!");
+    alert("🗑️ Druck erfolgreich gelöscht!");
     loadAdminStats();
     loadAllEntries(); // Lädt alle Daten neu und wendet aktuelle Filter an
     
   } catch (error) {
-    console.error('Fehler beim Löschen des Eintrags:', error);
+    console.error('Fehler beim Löschen des Drucks:', error);
     alert("❌ Fehler beim Löschen: " + error.message);
   }
 }
@@ -1198,7 +1198,7 @@ async function testFirebaseConnection() {
 
 // ==================== SUCH- UND SORTIERFUNKTIONEN ====================
 
-// User-Einträge suchen
+// User-Drucke suchen
 function searchUserEntries() {
   const searchTerm = document.getElementById('userSearchInput').value.toLowerCase();
   
@@ -1218,7 +1218,7 @@ function searchUserEntries() {
   renderUserEntries(filteredEntries);
 }
 
-// Admin-Einträge suchen
+// Admin-Drucke suchen
 function searchAdminEntries() {
   const searchTerm = document.getElementById('adminSearchInput').value.toLowerCase();
   
@@ -1240,7 +1240,7 @@ function searchAdminEntries() {
   renderAdminEntries(filteredEntries);
 }
 
-// User-Einträge sortieren
+// User-Drucke sortieren
 let userSortDirection = {};
 function sortUserEntries(column) {
   // Toggle sort direction
@@ -1297,7 +1297,7 @@ function sortUserEntries(column) {
   renderUserEntries(sortedEntries);
 }
 
-// Admin-Einträge sortieren (Header-Klicks)
+// Admin-Drucke sortieren (Header-Klicks)
 let adminSortDirection = {};
 function sortAdminEntriesBy(column) {
   // Toggle sort direction
@@ -1362,7 +1362,7 @@ function sortAdminEntriesBy(column) {
   renderAdminEntries(sortedEntries);
 }
 
-// Admin-Einträge sortieren (Dropdown)
+// Admin-Drucke sortieren (Dropdown)
 function sortAdminEntries() {
   applyAdminFiltersAndSort();
 }
@@ -1432,7 +1432,7 @@ async function loadUsersForManagement() {
   try {
     console.log("👥 Lade alle Nutzer...");
     
-    // Alle Einträge laden, um Nutzer zu extrahieren
+    // Alle Drucke laden, um Nutzer zu extrahieren
     const entriesSnapshot = await db.collection("entries").get();
     const usersMap = new Map();
     
@@ -1490,7 +1490,7 @@ function renderUsers(users) {
         <tr>
           <th onclick="sortUsersBy('name')">Name ↕</th>
           <th onclick="sortUsersBy('kennung')">Kennung ↕</th>
-          <th onclick="sortUsersBy('entries')">Einträge ↕</th>
+          <th onclick="sortUsersBy('entries')">Drucke ↕</th>
           <th onclick="sortUsersBy('revenue')">Gesamtumsatz ↕</th>
           <th onclick="sortUsersBy('paid')">Bezahlt ↕</th>
           <th onclick="sortUsersBy('unpaid')">Offen ↕</th>
@@ -1514,7 +1514,7 @@ function renderUsers(users) {
       <tr id="user-row-${user.kennung}">
         <td data-label="Name">${user.name}</td>
         <td data-label="Kennung">${user.kennung}</td>
-        <td data-label="Einträge">${user.entries.length}</td>
+        <td data-label="Drucke">${user.entries.length}</td>
         <td data-label="Gesamtumsatz"><strong>${formatCurrency(user.totalRevenue)}</strong></td>
         <td data-label="Bezahlt">${formatCurrency(user.paidAmount)}</td>
         <td data-label="Offen">${formatCurrency(user.unpaidAmount)}</td>
@@ -1685,7 +1685,7 @@ async function updateEntryNote(entryId, newNote) {
       jobNotes: newNote
     });
     
-    console.log(`✅ Notiz für Eintrag ${entryId} aktualisiert`);
+    console.log(`✅ Notiz für Druck ${entryId} aktualisiert`);
     
     // Tabellen aktualisieren
     if (currentUser.isAdmin) {
@@ -1731,7 +1731,7 @@ async function showPaymentProof(entryId) {
     const entryDoc = await db.collection('entries').doc(entryId).get();
     
     if (!entryDoc.exists) {
-      alert('Eintrag nicht gefunden!');
+      alert('Druck nicht gefunden!');
       return;
     }
     
@@ -1739,7 +1739,7 @@ async function showPaymentProof(entryId) {
     
     // Prüfen ob bezahlt
     if (!(entry.paid || entry.isPaid)) {
-      alert('Dieser Eintrag ist noch nicht als bezahlt markiert!');
+      alert('Dieser Druck ist noch nicht als bezahlt markiert!');
       return;
     }
     
@@ -1798,7 +1798,7 @@ async function showPaymentProof(entryId) {
               <span class="proof-value">${entry.name}</span>
             </div>
             <div class="proof-item">
-              <span class="proof-label">FH Kennung:</span>
+              <span class="proof-label">FH-Kennung:</span>
               <span class="proof-value">${entry.kennung}</span>
             </div>
             <div class="proof-item">
@@ -1850,7 +1850,7 @@ function printPaymentProof() {
 // Zahlungsnachweis per E-Mail
 function emailPaymentProof() {
   if (!window.currentProofEntry) {
-    alert('Fehler: Kein Eintrag geladen!');
+    alert('Fehler: Kein Druck geladen!');
     return;
   }
   
@@ -1873,7 +1873,7 @@ ${entry.jobNotes ? `- Notizen: ${entry.jobNotes}` : ''}
 
 ZAHLUNGSINFORMATIONEN:
 - Name: ${entry.name}
-- FH Kennung: ${entry.kennung}
+- FH-Kennung: ${entry.kennung}
 - Bezahlt am: ${paidDate}
 - Gesamtbetrag: ${formatCurrency(entry.totalCost)}
 - Status: ✅ BEZAHLT
@@ -1900,7 +1900,7 @@ document.addEventListener('click', function(event) {
 
 // ==================== ENTRY DETAILS & EDIT FUNKTIONEN ====================
 
-// Eintrag-Details anzeigen
+// Druck-Details anzeigen
 async function viewEntryDetails(entryId) {
   try {
     const doc = await db.collection('entries').doc(entryId).get();
@@ -1919,7 +1919,7 @@ async function viewEntryDetails(entryId) {
     
     const modalHtml = `
       <div class="modal-header">
-        <h2>Eintrag Details</h2>
+        <h2>Druck Details</h2>
         <button class="close-btn" onclick="closeModal()">&times;</button>
       </div>
       <div class="modal-body">
@@ -1990,7 +1990,7 @@ async function viewEntryDetails(entryId) {
     showModalWithContent(modalHtml);
     
   } catch (error) {
-    console.error("Fehler beim Laden der Eintrag-Details:", error);
+    console.error("Fehler beim Laden der Druck-Details:", error);
     alert("Fehler beim Laden der Details!");
   }
 }
@@ -2002,7 +2002,7 @@ async function editEntry(entryId) {
   try {
     const doc = await db.collection('entries').doc(entryId).get();
     if (!doc.exists) {
-      alert('Eintrag nicht gefunden!');
+      alert('Druck nicht gefunden!');
       return;
     }
     
@@ -2053,20 +2053,20 @@ async function editEntry(entryId) {
   }
 }
 
-// User-Eintrag bearbeiten (limitiert)
+// User-Druck bearbeiten (limitiert)
 async function editUserEntry(entryId) {
   try {
     const doc = await db.collection('entries').doc(entryId).get();
     if (!doc.exists) {
-      alert('Eintrag nicht gefunden!');
+      alert('Druck nicht gefunden!');
       return;
     }
     
     const entry = doc.data();
     
-    // Prüfen ob User berechtigt ist (nur eigene Einträge bearbeiten)
+    // Prüfen ob User berechtigt ist (nur eigene Drucke bearbeiten)
     if (entry.kennung !== currentUser.kennung) {
-      alert('Du kannst nur deine eigenen Einträge bearbeiten!');
+      alert('Du kannst nur deine eigenen Drucke bearbeiten!');
       return;
     }
     

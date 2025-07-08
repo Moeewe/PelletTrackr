@@ -175,7 +175,7 @@ function testWithUserData() {
           </div>
           <div class="stat-card">
             <div class="stat-number">${data.entries ? data.entries.length : 0}</div>
-            <div class="stat-label">Einträge</div>
+            <div class="stat-label">Drucke</div>
           </div>
           <div class="stat-card">
             <div class="stat-number">${data.headers ? data.headers.length : 0}</div>
@@ -188,7 +188,7 @@ function testWithUserData() {
       if (data.entries && data.entries.length > 0) {
         html += `
           <div style="margin-top: 24px;">
-            <div style="font-weight: 600; margin-bottom: 12px; color: #333;">📋 Beispiel-Einträge:</div>
+            <div style="font-weight: 600; margin-bottom: 12px; color: #333;">📋 Beispiel-Drucke:</div>
             <div class="data-table">
               <table>
                 <thead>
@@ -203,7 +203,7 @@ function testWithUserData() {
                 <tbody>
         `;
         
-        // Zeige nur die ersten 3 Einträge
+        // Zeige nur die ersten 3 Drucke
         var maxEntries = Math.min(3, data.entries.length);
         for (var i = 0; i < maxEntries; i++) {
           var entry = data.entries[i];

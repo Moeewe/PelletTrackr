@@ -176,7 +176,7 @@ function calculateCostPreview() {
 
 // Throttled Version wird jetzt in web-app.js definiert
 
-// ==================== NEUEN EINTRAG HINZUFÜGEN ====================
+// ==================== NEUEN DRUCK HINZUFÜGEN ====================
 
 function AddRow() {
   // Eingabe-Validierung
@@ -208,7 +208,7 @@ function AddRow() {
   }
 
   // Bestätigungsnachricht anzeigen
-  showStatusMessage("⏳ Speichere Eintrag...", "info");
+  showStatusMessage("⏳ Speichere Druck...", "info");
 
   // Apps Script-Funktion aufrufen
   google.script.run
@@ -217,16 +217,16 @@ function AddRow() {
         // Deutsche Formatierung für Kostenausgabe
         var formattedCost = result.totalCost ? result.totalCost.toFixed(2).replace('.', ',') + ' €' : "N/A";
         showStatusMessage(
-          "✅ Eintrag gespeichert! Gesamtkosten: " + formattedCost, 
+          "✅ Druck gespeichert! Gesamtkosten: " + formattedCost, 
           "success"
         );
         
-        // Speichere Name und Kennung vor dem Löschen
+        // Speichere Name und FH-Kennung vor dem Löschen
         var savedName = name;
         var savedKennung = kennung;
         clearForm();
         
-        // Setze Name und Kennung für die Übersicht wieder ein
+        // Setze Name und FH-Kennung für die Übersicht wieder ein
         document.getElementById("name").value = savedName;
         document.getElementById("kennung").value = savedKennung;
         

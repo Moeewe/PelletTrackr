@@ -6,12 +6,12 @@ function showOverview() {
   var kennung = document.getElementById("kennung").value.trim();
 
   if (!name || !kennung) {
-    alert("Bitte Name und FH Kennung eingeben!");
+    alert("Bitte Name und FH-Kennung eingeben!");
     return;
   }
 
   // Lade-Anzeige
-  showLoading("overviewTable", "Lade deine Einträge...");
+  showLoading("overviewTable", "Lade deine Drucke...");
 
   console.log("Rufe getUserEntries auf mit:", name, kennung);
   
@@ -47,12 +47,12 @@ function showOverview() {
         console.log("Debug Info:", data.debug);
       }
       
-      // Prüfe ob Einträge vorhanden sind
+      // Prüfe ob Drucke vorhanden sind
       if (!data.entries || data.entries.length === 0) {
         tableDiv.innerHTML = `
           <div class="empty-state">
             <div class="empty-state-icon">📄</div>
-            <div>Noch keine Einträge vorhanden</div>
+            <div>Noch keine Drucke vorhanden</div>
             <div style="font-size: 14px; margin-top: 8px; opacity: 0.7;">
               Füge deinen ersten 3D-Druck hinzu!
             </div>
@@ -128,7 +128,7 @@ function showOverview() {
             📊 Zusammenfassung
           </div>
           <div style="font-size: 14px; color: #666;">
-            ✅ ${data.entries.length} Eintrag${data.entries.length !== 1 ? 'e' : ''} gefunden
+            ✅ ${data.entries.length} Druck${data.entries.length !== 1 ? 'e' : ''} gefunden
           </div>
         </div>
       `;
@@ -156,7 +156,7 @@ function showStatistics() {
   var kennung = document.getElementById("kennung").value.trim();
 
   if (!name || !kennung) {
-    alert("Bitte Name und FH Kennung eingeben!");
+    alert("Bitte Name und FH-Kennung eingeben!");
     return;
   }
 
@@ -181,7 +181,7 @@ function showStatistics() {
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-number">${stats.totalEntries}</div>
-            <div class="stat-label">Einträge</div>
+            <div class="stat-label">Drucke</div>
           </div>
           <div class="stat-card">
             <div class="stat-number">${stats.totalMaterialUsage.toFixed(1)}</div>

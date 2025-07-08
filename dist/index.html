@@ -61,7 +61,7 @@
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-value" id="userTotalEntries">0</div>
-                        <div class="stat-label">Einträge</div>
+                        <div class="stat-label">Drucke</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value" id="userTotalCost">0,00 €</div>
@@ -80,7 +80,7 @@
 
             <!-- Entry Form -->
             <div class="form-section">
-                <h2 class="section-title">Neuen Eintrag hinzufügen</h2>
+                <h2 class="section-title">Neuen Druck hinzufügen</h2>
                 <form class="entry-form">
                     <div class="form-row">
                         <div class="form-group">
@@ -128,16 +128,16 @@
                     </div>
                     
                     <button type="button" class="btn btn-primary" onclick="addEntry()">
-                        Eintrag hinzufügen
+                        Druck hinzufügen
                     </button>
                 </form>
             </div>
 
             <!-- User Entries -->
             <div class="entries-section">
-                <h2 class="section-title">Deine Einträge</h2>
+                <h2 class="section-title">Deine Drucke</h2>
                 <div class="table-controls">
-                    <input type="text" id="userSearchInput" placeholder="Suchen nach Material, Kennung, Status..." class="search-input" onkeyup="searchUserEntries()">
+                    <input type="text" id="userSearchInput" placeholder="Suchen nach Material, FH-Kennung, Status..." class="search-input" onkeyup="searchUserEntries()">
                 </div>
                 <div class="user-entries-container">
                     <div id="userEntriesTable" class="data-table data-table-responsive"></div>
@@ -167,7 +167,7 @@
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-value" id="adminTotalEntries">0</div>
-                        <div class="stat-label">Alle Einträge</div>
+                        <div class="stat-label">Alle Drucke</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value" id="adminTotalUsers">0</div>
@@ -210,9 +210,9 @@
 
             <!-- All Entries Table -->
             <div class="entries-section">
-                <h2 class="section-title">Alle Einträge</h2>
+                <h2 class="section-title">Alle Drucke</h2>
                 <div class="table-controls">
-                    <input type="text" id="adminSearchInput" placeholder="Suchen nach Name, Kennung, Material..." class="search-input" onkeyup="searchAdminEntries()">
+                    <input type="text" id="adminSearchInput" placeholder="Suchen nach Name, FH-Kennung, Material..." class="search-input" onkeyup="searchAdminEntries()">
                     <select id="adminSortSelect" class="sort-select" onchange="sortAdminEntries()">
                         <option value="date-desc">Datum (neueste zuerst)</option>
                         <option value="date-asc">Datum (älteste zuerst)</option>
@@ -286,14 +286,14 @@
             </div>
             <div class="modal-body">
                 <div class="table-controls">
-                    <input type="text" id="userManagerSearchInput" placeholder="Suchen nach Name oder Kennung..." class="search-input" onkeyup="searchUsers()">
+                    <input type="text" id="userManagerSearchInput" placeholder="Suchen nach Name oder FH-Kennung..." class="search-input" onkeyup="searchUsers()">
                     <select id="userManagerSortSelect" class="sort-select" onchange="sortUsers()">
                         <option value="name-asc">Name (A-Z)</option>
                         <option value="name-desc">Name (Z-A)</option>
                         <option value="kennung-asc">Kennung (A-Z)</option>
                         <option value="kennung-desc">Kennung (Z-A)</option>
-                        <option value="entries-desc">Meiste Einträge</option>
-                        <option value="entries-asc">Wenigste Einträge</option>
+                        <option value="entries-desc">Meiste Drucke</option>
+                        <option value="entries-asc">Wenigste Drucke</option>
                         <option value="revenue-desc">Höchster Umsatz</option>
                         <option value="revenue-asc">Niedrigster Umsatz</option>
                     </select>
