@@ -121,7 +121,11 @@
     
     <!-- Scripts -->
     <script src="config.js"></script>
-    <script src="local-data-manager.js"></script>
+    <script src="firebase-data-manager.js"></script>
     <script src="web-app.js"></script>
+    <script>
+      // Verwende Firebase statt LocalStorage
+      window.dataManager = window.firebaseDataManager;
+    </script>
   </body>
 </html>
