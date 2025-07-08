@@ -29,8 +29,11 @@ cp core-functions.js dist/
 cp debug-functions.js dist/
 cp user-functions.js dist/
 
-# Optional: Test-Tools
-cp tests/csv-import-tool.html dist/
+
+# Optional: Test-Tools (kopiere nur, wenn Datei existiert)
+if [ -f tests/csv-import-tool.html ]; then
+  cp tests/csv-import-tool.html dist/
+fi
 
 # Info
 echo "✅ Build abgeschlossen. Alle Dateien liegen in dist/ bereit für Netlify."
