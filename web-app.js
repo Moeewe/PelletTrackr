@@ -722,7 +722,7 @@ function renderAdminEntries(entries) {
     const actions = `
       <div class="actions">
         ${!isPaid ? 
-          `<button class="btn btn-primary" onclick="markEntryAsPaid('${entry.id}')">Als bezahlt</button>` :
+          `<button class="btn btn-primary" onclick="markEntryAsPaid('${entry.id}')">Zahlung registrieren</button>` :
           `<button class="btn btn-secondary" onclick="markEntryAsUnpaid('${entry.id}')">Rückgängig</button>
            <button class="btn btn-success" onclick="showPaymentProof('${entry.id}')">Nachweis</button>`
         }
@@ -762,10 +762,10 @@ function renderAdminEntries(entries) {
   tableDiv.innerHTML = tableHtml;
 }
 
-// Druck als bezahlt markieren
+// Zahlung registrieren
 async function markEntryAsPaid(entryId) {
   if (!checkAdminAccess()) return;
-  if (!confirm("Druck als bezahlt markieren?")) return;
+  if (!confirm("Zahlung für diesen Druck registrieren?")) return;
   
   try {
     await db.collection('entries').doc(entryId).update({
@@ -774,20 +774,20 @@ async function markEntryAsPaid(entryId) {
       paidAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     
-    alert("✅ Druck als bezahlt markiert!");
+    alert("✅ Zahlung wurde registriert!");
     loadAdminStats();
     loadAllEntries(); // Lädt alle Daten neu und wendet aktuelle Filter an
     
   } catch (error) {
-    console.error('Fehler beim Markieren als bezahlt:', error);
+    console.error('Fehler beim Registrieren der Zahlung:', error);
     alert("❌ Fehler beim Markieren: " + error.message);
   }
 }
 
-// Druck als unbezahlt markieren
+// Zahlung rückgängig machen
 async function markEntryAsUnpaid(entryId) {
   if (!checkAdminAccess()) return;
-  if (!confirm("Druck als unbezahlt markieren?")) return;
+  if (!confirm("Zahlung rückgängig machen?")) return;
   
   try {
     await db.collection('entries').doc(entryId).update({
@@ -796,12 +796,12 @@ async function markEntryAsUnpaid(entryId) {
       paidAt: null
     });
     
-    alert("⚠️ Druck als unbezahlt markiert!");
+    alert("⚠️ Zahlung wurde rückgängig gemacht!");
     loadAdminStats();
     loadAllEntries(); // Lädt alle Daten neu und wendet aktuelle Filter an
     
   } catch (error) {
-    console.error('Fehler beim Markieren als unbezahlt:', error);
+    console.error('Fehler beim Rückgängigmachen der Zahlung:', error);
     alert("❌ Fehler beim Markieren: " + error.message);
   }
 }
@@ -1635,13 +1635,13 @@ function showUserManager() {
   if (!checkAdminAccess()) return;
   
   console.log("👥 Nutzer-Manager wird geöffnet...");
-  document.getElementById("userManager").style.display = "flex";
+  document.getElementById("userManager").classList.add("active");
   loadUsersForManagement();
 }
 
 // Nutzer-Manager schließen
 function closeUserManager() {
-  document.getElementById("userManager").style.display = "none";
+  document.getElementById("userManager").classList.remove("active");
 }
 
 // Nutzer für Verwaltung laden
@@ -1956,7 +1956,7 @@ async function showPaymentProof(entryId) {
     
     // Prüfen ob bezahlt
     if (!(entry.paid || entry.isPaid)) {
-      alert('Dieser Druck ist noch nicht als bezahlt markiert!');
+      alert('Für diesen Druck wurde noch keine Zahlung registriert!');
       return;
     }
     

@@ -654,13 +654,15 @@ body {
   background: white;
   border: 2px solid #000000;
   border-radius: 0;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: visible;
 }
 
 .data-table table {
   width: 100%;
   border-collapse: collapse;
   border-spacing: 0;
+  min-width: 800px; /* Mindestbreite für horizontales Scrolling */
 }
 
 .data-table th {
@@ -767,6 +769,38 @@ body {
   padding: 2px 4px;
   margin-left: 4px;
   font-size: 12px;
+}
+
+/* Desktop Scrollable Tables */
+@media (min-width: 769px) {
+  .data-table {
+    overflow-x: auto;
+    overflow-y: visible;
+    max-width: 100%;
+  }
+  
+  .data-table table {
+    min-width: 1000px; /* Erweiterte Mindestbreite für Desktop */
+  }
+  
+  /* Scrollbar Styling für bessere UX */
+  .data-table::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  .data-table::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 0;
+  }
+  
+  .data-table::-webkit-scrollbar-thumb {
+    background: #000000;
+    border-radius: 0;
+  }
+  
+  .data-table::-webkit-scrollbar-thumb:hover {
+    background: #333333;
+  }
 }
 
 /* Mobile Responsive - Clean Cards */
