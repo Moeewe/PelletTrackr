@@ -9,10 +9,9 @@ mkdir -p dist/assets
 
 
 # Web-App Dateien kopieren (angepasst für aktuelle Struktur)
-cp web-app.html dist/
+cp index.html dist/
 cp web-app.js dist/
 cp styles.css dist/
-cp index.html dist/
 
 # Scripte und Konfiguration
 cp firebase-data-manager.js dist/
