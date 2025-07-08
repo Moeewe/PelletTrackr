@@ -32,6 +32,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  background: transparent;
 }
 
 /* Dashboard Containers */
@@ -55,11 +56,12 @@ body {
 
 .dashboard-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   margin-bottom: 40px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 20px 32px;
+  background: transparent;
+  position: relative;
 }
 
 .logo {
@@ -95,6 +97,8 @@ body {
 }
 
 .user-info {
+  position: absolute;
+  right: 32px;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -185,8 +189,8 @@ body {
 .form-select {
   width: 100%;
   padding: 12px 16px;
-  border: 2px solid #e0e0e0;
-  border-radius: 6px;
+  border: 2px solid #000000;
+  border-radius: 0;
   font-size: 16px;
   background: white;
   transition: border-color 0.2s ease;
@@ -196,7 +200,8 @@ body {
 .form-input:focus,
 .form-select:focus {
   outline: none;
-  border-color: #FFEB00;
+  border-color: #000000;
+  background: #f8f8f8;
 }
 
 .form-select {
@@ -210,8 +215,8 @@ body {
 .form-textarea {
   width: 100%;
   padding: 12px 16px;
-  border: 2px solid #e0e0e0;
-  border-radius: 6px;
+  border: 2px solid #000000;
+  border-radius: 0;
   font-size: 16px;
   background: white;
   transition: border-color 0.2s ease;
@@ -223,7 +228,8 @@ body {
 
 .form-textarea:focus {
   outline: none;
-  border-color: #FFEB00;
+  border-color: #000000;
+  background: #f8f8f8;
 }
 
 /* Fraenk-Style Button System - Nach echten Fraenk-Screenshots */
@@ -620,7 +626,6 @@ body {
 /* Table - Desktop Version - Fraenk Style */
 .data-table {
   background: white;
-  border: 2px solid #000000;
   margin: 40px 0;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -696,8 +701,9 @@ body {
 }
 
 .status-paid {
-  background: #000000;
-  color: #FFEB00;
+  background: #28a745;
+  color: white;
+  border-color: #28a745;
 }
 
 .status-unpaid {
@@ -714,7 +720,7 @@ body {
 .data-table .actions .btn {
   padding: 10px 16px;
   font-size: 12px;
-  margin: 0 4px;
+  margin: 2px 4px;
   border: 2px solid #000000;
   background: white;
   color: #000000;
@@ -723,7 +729,9 @@ body {
   letter-spacing: 0.5px;
   font-weight: 600;
   transition: all 0.2s ease;
-  min-width: 80px;
+  min-width: 85px;
+  display: inline-block;
+  vertical-align: top;
 }
 
 .data-table .actions .btn:hover {
@@ -924,8 +932,9 @@ body {
   }
   
   .status-paid {
-    background: #000000;
-    color: #FFEB00;
+    background: #28a745;
+    color: white;
+    border-color: #28a745;
   }
   
   .status-unpaid {
@@ -1044,9 +1053,9 @@ body {
   
   .data-table td.actions .btn {
     display: inline-block;
-    margin: 6px 4px;
-    padding: 14px 18px;
-    font-size: 12px;
+    margin: 4px 3px;
+    padding: 12px 16px;
+    font-size: 11px;
     border-radius: 0;
     font-weight: 600;
     text-transform: uppercase;
@@ -1055,8 +1064,9 @@ body {
     background: white;
     color: #000000;
     transition: all 0.2s ease;
-    min-width: 100px;
+    min-width: 90px;
     white-space: nowrap;
+    vertical-align: top;
   }
   
   .data-table td.actions .btn:hover {
@@ -1180,9 +1190,12 @@ body {
     gap: 20px;
     text-align: center;
     margin-bottom: 40px;
+    padding: 20px;
+    position: relative;
   }
   
   .user-info {
+    position: static;
     justify-content: center;
   }
   
@@ -1302,10 +1315,8 @@ body {
   gap: 16px;
   margin-bottom: 24px;
   align-items: center;
-  padding: 20px;
-  background: white;
-  border: 2px solid #000000;
-  border-radius: 0;
+  padding: 20px 0;
+  background: transparent;
 }
 
 .search-input {
@@ -1449,10 +1460,8 @@ body {
   max-width: 500px;
   width: 100%;
   text-align: center;
-  background: white;
-  border: 2px solid #000000;
+  background: transparent;
   padding: 60px 40px;
-  border-radius: 0;
 }
 
 .login-form {
@@ -1474,10 +1483,8 @@ body {
 }
 
 .form-container {
-  background: white;
-  border: 2px solid #000000;
-  border-radius: 0;
-  padding: 40px;
+  background: transparent;
+  padding: 40px 0;
 }
 
 .form-row {
@@ -1904,19 +1911,31 @@ body {
 
 /* Print Styles */
 @media print {
+  /* Alles außer dem Nachweis-Modal verstecken */
+  body * {
+    visibility: hidden;
+  }
+  
+  .modal.active,
+  .modal.active * {
+    visibility: visible;
+  }
+  
   .modal {
     position: static !important;
     background: none !important;
     width: auto !important;
     height: auto !important;
+    display: block !important;
   }
   
   .modal-content {
     box-shadow: none !important;
-    border-radius: 0 !important;
+    border: none !important;
     max-width: none !important;
     width: auto !important;
     max-height: none !important;
+    position: static !important;
   }
   
   .modal-header,
@@ -1925,7 +1944,13 @@ body {
   }
   
   .modal-body {
-    padding: 0 !important;
+    padding: 20px !important;
+  }
+  
+  /* Nur das Payment Proof Modal drucken */
+  .payment-proof {
+    font-size: 12px;
+    line-height: 1.4;
   }
 }
 

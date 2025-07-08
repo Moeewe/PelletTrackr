@@ -1504,6 +1504,7 @@ function renderUsers(users) {
     const actions = `
       <div class="actions">
         <button class="btn btn-secondary" onclick="viewUserDetails('${user.kennung}')">Details</button>
+        <button class="btn btn-primary" onclick="editUser('${user.kennung}')">Bearbeiten</button>
         <button class="btn btn-danger" onclick="deleteUser('${user.kennung}')">Löschen</button>
       </div>
     `;
@@ -2225,4 +2226,48 @@ function showModalWithContent(htmlContent) {
   const modalContent = modal.querySelector('.modal-content');
   modalContent.innerHTML = htmlContent;
   modal.classList.add('active');
+}
+
+// ==================== USER MANAGEMENT ====================
+
+// Nutzer bearbeiten
+async function editUser(kennung) {
+  if (!checkAdminAccess()) return;
+  
+  const user = allUsers.find(u => u.kennung === kennung);
+  if (!user) {
+    alert('Nutzer nicht gefunden!');
+    return;
+  }
+  
+  const newName = prompt(`Name des Nutzers bearbeiten:\n\nAktueller Name: ${user.name}`, user.name);
+  if (newName === null) return; // Abbruch
+  
+  if (!newName.trim()) {
+    alert('Name darf nicht leer sein!');
+    return;
+  }
+  
+  try {
+    // Update user document
+    const usersRef = collection(db, 'users');
+    const userQuery = query(usersRef, where('kennung', '==', kennung));
+    const userSnapshot = await getDocs(userQuery);
+    
+    if (!userSnapshot.empty) {
+      const userDoc = userSnapshot.docs[0];
+      await updateDoc(userDoc.ref, {
+        name: newName.trim(),
+        updatedAt: new Date()
+      });
+      
+      alert('Nutzer erfolgreich aktualisiert!');
+      loadUsers(); // Reload users list
+    } else {
+      alert('Nutzer-Dokument nicht gefunden!');
+    }
+  } catch (error) {
+    console.error('Fehler beim Bearbeiten des Nutzers:', error);
+    alert('Fehler beim Bearbeiten des Nutzers: ' + error.message);
+  }
 }
