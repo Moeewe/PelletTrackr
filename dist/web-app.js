@@ -4,6 +4,10 @@
 let currentUser = { name: '', kennung: '', isAdmin: false };
 const ADMIN_PASSWORD = 'fgf2024admin'; // In production sollte das in einer sicheren Konfiguration stehen
 
+// Globale Daten für Suche und Sortierung
+let allUserEntries = [];
+let allAdminEntries = [];
+
 // App initialisieren
 function initializeApp() {
   console.log("🚀 PelletTrackr wird initialisiert...");
@@ -116,8 +120,14 @@ function setupEventListeners() {
   const material = document.getElementById("material");
   const masterbatch = document.getElementById("masterbatch");
   
-  if (materialMenge) materialMenge.addEventListener("input", throttledCalculateCost);
-  if (masterbatchMenge) masterbatchMenge.addEventListener("input", throttledCalculateCost);
+  if (materialMenge) {
+    materialMenge.addEventListener("input", throttledCalculateCost);
+    materialMenge.addEventListener("keyup", throttledCalculateCost);
+  }
+  if (masterbatchMenge) {
+    masterbatchMenge.addEventListener("input", throttledCalculateCost);
+    masterbatchMenge.addEventListener("keyup", throttledCalculateCost);
+  }
   if (material) material.addEventListener("change", calculateCostPreview);
   if (masterbatch) masterbatch.addEventListener("change", calculateCostPreview);
   
@@ -129,6 +139,7 @@ function setupEventListeners() {
         var parsed = parseGermanNumber(value);
         if (parsed > 0) {
           this.value = parsed.toFixed(2).replace('.', ',');
+          calculateCostPreview(); // Preisberechnung nach Formatierung
         }
       }
     });
@@ -141,6 +152,7 @@ function setupEventListeners() {
         var parsed = parseGermanNumber(value);
         if (parsed > 0) {
           this.value = parsed.toFixed(2).replace('.', ',');
+          calculateCostPreview(); // Preisberechnung nach Formatierung
         }
       }
     });
@@ -379,60 +391,68 @@ async function loadUserEntries() {
       return b.timestamp.toDate() - a.timestamp.toDate();
     });
 
-    const tableDiv = document.getElementById("userEntriesTable");
+    // Global speichern für Suche
+    allUserEntries = entries;
     
-    if (entries.length === 0) {
-      tableDiv.innerHTML = '<p>Noch keine Einträge vorhanden. Füge deinen ersten 3D-Druck hinzu!</p>';
-      return;
-    }
-
-    // Tabelle erstellen
-    let html = `
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Datum</th>
-            <th>Material</th>
-            <th>Menge</th>
-            <th>Masterbatch</th>
-            <th>Menge</th>
-            <th>Kosten</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-
-    entries.forEach(entry => {
-      const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
-      const status = entry.paid || entry.isPaid ? 
-        '<span class="status-paid">✅ Bezahlt</span>' : 
-        '<span class="status-unpaid">⏳ Offen</span>';
-      
-      html += `
-        <tr>
-          <td>${date}</td>
-          <td>${entry.material}</td>
-          <td>${entry.materialMenge.toFixed(2)} kg</td>
-          <td>${entry.masterbatch}</td>
-          <td>${entry.masterbatchMenge.toFixed(2)} kg</td>
-          <td><strong>${formatCurrency(entry.totalCost)}</strong></td>
-          <td>${status}</td>
-        </tr>
-      `;
-    });
-
-    html += `
-        </tbody>
-      </table>
-    `;
-    
-    tableDiv.innerHTML = html;
+    renderUserEntries(entries);
     
   } catch (error) {
     console.error("Fehler beim Laden der User-Einträge:", error);
     document.getElementById("userEntriesTable").innerHTML = '<p>Fehler beim Laden der Einträge.</p>';
   }
+}
+
+// User-Einträge rendern
+function renderUserEntries(entries) {
+  const tableDiv = document.getElementById("userEntriesTable");
+  
+  if (entries.length === 0) {
+    tableDiv.innerHTML = '<p>Noch keine Einträge vorhanden. Füge deinen ersten 3D-Druck hinzu!</p>';
+    return;
+  }
+
+  // Tabelle erstellen
+  let html = `
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th onclick="sortUserEntries('date')">Datum ↕</th>
+          <th onclick="sortUserEntries('material')">Material ↕</th>
+          <th onclick="sortUserEntries('materialMenge')">Menge ↕</th>
+          <th onclick="sortUserEntries('masterbatch')">Masterbatch ↕</th>
+          <th onclick="sortUserEntries('masterbatchMenge')">Menge ↕</th>
+          <th onclick="sortUserEntries('cost')">Kosten ↕</th>
+          <th onclick="sortUserEntries('status')">Status ↕</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  entries.forEach(entry => {
+    const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
+    const status = entry.paid || entry.isPaid ? 
+      '<span class="status-paid">✅ Bezahlt</span>' : 
+      '<span class="status-unpaid">⏳ Offen</span>';
+    
+    html += `
+      <tr>
+        <td>${date}</td>
+        <td>${entry.material}</td>
+        <td>${entry.materialMenge.toFixed(2)} kg</td>
+        <td>${entry.masterbatch}</td>
+        <td>${entry.masterbatchMenge.toFixed(2)} kg</td>
+        <td><strong>${formatCurrency(entry.totalCost)}</strong></td>
+        <td>${status}</td>
+      </tr>
+    `;
+  });
+
+  html += `
+      </tbody>
+    </table>
+  `;
+  
+  tableDiv.innerHTML = html;
 }
 
 // ==================== ADMIN DASHBOARD FUNKTIONEN ====================
@@ -489,77 +509,85 @@ async function loadAllEntries() {
       return b.timestamp.toDate() - a.timestamp.toDate();
     });
     
-    const tableDiv = document.getElementById("adminEntriesTable");
+    // Global speichern für Suche und Sortierung
+    allAdminEntries = entries;
     
-    if (entries.length === 0) {
-      tableDiv.innerHTML = '<p>Noch keine Einträge vorhanden.</p>';
-      return;
-    }
-
-    // Admin-Tabelle erstellen
-    let html = `
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Datum</th>
-            <th>Name</th>
-            <th>Kennung</th>
-            <th>Material</th>
-            <th>Mat. Menge</th>
-            <th>Masterbatch</th>
-            <th>MB Menge</th>
-            <th>Kosten</th>
-            <th>Status</th>
-            <th>Aktionen</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-
-    entries.forEach(entry => {
-      const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
-      const isPaid = entry.paid || entry.isPaid;
-      const status = isPaid ? 
-        '<span class="status-paid">✅ Bezahlt</span>' : 
-        '<span class="status-unpaid">❌ Offen</span>';
-      
-      const actions = `
-        <div class="actions">
-          ${!isPaid ? 
-            `<button class="btn btn-primary" onclick="markEntryAsPaid('${entry.id}')">Als bezahlt</button>` :
-            `<button class="btn btn-secondary" onclick="markEntryAsUnpaid('${entry.id}')">Rückgängig</button>`
-          }
-          <button class="btn btn-danger" onclick="deleteEntry('${entry.id}')">Löschen</button>
-        </div>
-      `;
-      
-      html += `
-        <tr id="entry-${entry.id}">
-          <td>${date}</td>
-          <td>${entry.name}</td>
-          <td>${entry.kennung}</td>
-          <td>${entry.material}</td>
-          <td>${(entry.materialMenge || 0).toFixed(2)} kg</td>
-          <td>${entry.masterbatch}</td>
-          <td>${(entry.masterbatchMenge || 0).toFixed(2)} kg</td>
-          <td><strong>${formatCurrency(entry.totalCost)}</strong></td>
-          <td>${status}</td>
-          <td>${actions}</td>
-        </tr>
-      `;
-    });
-
-    html += `
-        </tbody>
-      </table>
-    `;
-    
-    tableDiv.innerHTML = html;
+    renderAdminEntries(entries);
     
   } catch (error) {
     console.error("Fehler beim Laden der Admin-Einträge:", error);
     document.getElementById("adminEntriesTable").innerHTML = '<p>Fehler beim Laden der Einträge.</p>';
   }
+}
+
+// Admin-Einträge rendern
+function renderAdminEntries(entries) {
+  const tableDiv = document.getElementById("adminEntriesTable");
+  
+  if (entries.length === 0) {
+    tableDiv.innerHTML = '<p>Noch keine Einträge vorhanden.</p>';
+    return;
+  }
+
+  // Admin-Tabelle erstellen
+  let html = `
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th onclick="sortAdminEntriesBy('date')">Datum ↕</th>
+          <th onclick="sortAdminEntriesBy('name')">Name ↕</th>
+          <th onclick="sortAdminEntriesBy('kennung')">Kennung ↕</th>
+          <th onclick="sortAdminEntriesBy('material')">Material ↕</th>
+          <th onclick="sortAdminEntriesBy('materialMenge')">Mat. Menge ↕</th>
+          <th onclick="sortAdminEntriesBy('masterbatch')">Masterbatch ↕</th>
+          <th onclick="sortAdminEntriesBy('masterbatchMenge')">MB Menge ↕</th>
+          <th onclick="sortAdminEntriesBy('cost')">Kosten ↕</th>
+          <th onclick="sortAdminEntriesBy('status')">Status ↕</th>
+          <th>Aktionen</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  entries.forEach(entry => {
+    const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
+    const isPaid = entry.paid || entry.isPaid;
+    const status = isPaid ? 
+      '<span class="status-paid">✅ Bezahlt</span>' : 
+      '<span class="status-unpaid">❌ Offen</span>';
+    
+    const actions = `
+      <div class="actions">
+        ${!isPaid ? 
+          `<button class="btn btn-primary" onclick="markEntryAsPaid('${entry.id}')">Als bezahlt</button>` :
+          `<button class="btn btn-secondary" onclick="markEntryAsUnpaid('${entry.id}')">Rückgängig</button>`
+        }
+        <button class="btn btn-danger" onclick="deleteEntry('${entry.id}')">Löschen</button>
+      </div>
+    `;
+    
+    html += `
+      <tr id="entry-${entry.id}">
+        <td>${date}</td>
+        <td>${entry.name}</td>
+        <td>${entry.kennung}</td>
+        <td>${entry.material}</td>
+        <td>${(entry.materialMenge || 0).toFixed(2)} kg</td>
+        <td>${entry.masterbatch}</td>
+        <td>${(entry.masterbatchMenge || 0).toFixed(2)} kg</td>
+        <td><strong>${formatCurrency(entry.totalCost)}</strong></td>
+        <td>${status}</td>
+        <td>${actions}</td>
+      </tr>
+    `;
+  });
+
+  html += `
+      </tbody>
+    </table>
+  `;
+  
+  tableDiv.innerHTML = html;
 }
 
 // Eintrag als bezahlt markieren
@@ -576,7 +604,7 @@ async function markEntryAsPaid(entryId) {
     
     alert("✅ Eintrag als bezahlt markiert!");
     loadAdminStats();
-    loadAllEntries();
+    loadAllEntries(); // Lädt alle Daten neu und wendet aktuelle Filter an
     
   } catch (error) {
     console.error('Fehler beim Markieren als bezahlt:', error);
@@ -598,7 +626,7 @@ async function markEntryAsUnpaid(entryId) {
     
     alert("⚠️ Eintrag als unbezahlt markiert!");
     loadAdminStats();
-    loadAllEntries();
+    loadAllEntries(); // Lädt alle Daten neu und wendet aktuelle Filter an
     
   } catch (error) {
     console.error('Fehler beim Markieren als unbezahlt:', error);
@@ -615,7 +643,7 @@ async function deleteEntry(entryId) {
     await db.collection('entries').doc(entryId).delete();
     alert("🗑️ Eintrag erfolgreich gelöscht!");
     loadAdminStats();
-    loadAllEntries();
+    loadAllEntries(); // Lädt alle Daten neu und wendet aktuelle Filter an
     
   } catch (error) {
     console.error('Fehler beim Löschen des Eintrags:', error);
@@ -671,10 +699,11 @@ async function loadMaterialsForManagement() {
     snapshot.forEach(doc => {
       const material = doc.data();
       html += `
-        <tr>
-          <td>${material.name}</td>
-          <td>${formatCurrency(material.price)}</td>
+        <tr id="material-row-${doc.id}">
+          <td id="material-name-${doc.id}">${material.name}</td>
+          <td id="material-price-${doc.id}">${formatCurrency(material.price)}</td>
           <td>
+            <button class="btn btn-secondary" onclick="editMaterial('${doc.id}', '${material.name}', ${material.price})">Bearbeiten</button>
             <button class="btn btn-danger" onclick="deleteMaterial('${doc.id}')">Löschen</button>
           </td>
         </tr>
@@ -719,10 +748,11 @@ async function loadMasterbatchesForManagement() {
     snapshot.forEach(doc => {
       const masterbatch = doc.data();
       html += `
-        <tr>
-          <td>${masterbatch.name}</td>
-          <td>${formatCurrency(masterbatch.price)}</td>
+        <tr id="masterbatch-row-${doc.id}">
+          <td id="masterbatch-name-${doc.id}">${masterbatch.name}</td>
+          <td id="masterbatch-price-${doc.id}">${formatCurrency(masterbatch.price)}</td>
           <td>
+            <button class="btn btn-secondary" onclick="editMasterbatch('${doc.id}', '${masterbatch.name}', ${masterbatch.price})">Bearbeiten</button>
             <button class="btn btn-danger" onclick="deleteMasterbatch('${doc.id}')">Löschen</button>
           </td>
         </tr>
@@ -827,6 +857,82 @@ async function deleteMasterbatch(masterbatchId) {
   }
 }
 
+// ==================== EDIT FUNKTIONEN ====================
+
+function editMaterial(materialId, currentName, currentPrice) {
+  const newName = prompt('Neuer Material-Name:', currentName);
+  if (newName === null) return; // User cancelled
+  
+  const newPriceStr = prompt('Neuer Preis pro kg (€):', currentPrice.toFixed(2));
+  if (newPriceStr === null) return; // User cancelled
+  
+  const newPrice = parseFloat(newPriceStr);
+  
+  if (!newName.trim() || isNaN(newPrice) || newPrice <= 0) {
+    alert('Bitte gültigen Namen und Preis eingeben!');
+    return;
+  }
+  
+  updateMaterial(materialId, newName.trim(), newPrice);
+}
+
+function editMasterbatch(masterbatchId, currentName, currentPrice) {
+  const newName = prompt('Neuer Masterbatch-Name:', currentName);
+  if (newName === null) return; // User cancelled
+  
+  const newPriceStr = prompt('Neuer Preis pro kg (€):', currentPrice.toFixed(2));
+  if (newPriceStr === null) return; // User cancelled
+  
+  const newPrice = parseFloat(newPriceStr);
+  
+  if (!newName.trim() || isNaN(newPrice) || newPrice <= 0) {
+    alert('Bitte gültigen Namen und Preis eingeben!');
+    return;
+  }
+  
+  updateMasterbatch(masterbatchId, newName.trim(), newPrice);
+}
+
+async function updateMaterial(materialId, newName, newPrice) {
+  try {
+    await db.collection('materials').doc(materialId).update({
+      name: newName,
+      price: newPrice,
+      currency: '€'
+    });
+    
+    alert('Material erfolgreich aktualisiert!');
+    
+    // Tabelle aktualisieren
+    loadMaterialsForManagement();
+    loadMaterials(); // Dropdown aktualisieren
+    
+  } catch (error) {
+    console.error('Fehler beim Aktualisieren:', error);
+    alert('Fehler beim Aktualisieren: ' + error.message);
+  }
+}
+
+async function updateMasterbatch(masterbatchId, newName, newPrice) {
+  try {
+    await db.collection('masterbatches').doc(masterbatchId).update({
+      name: newName,
+      price: newPrice,
+      currency: '€'
+    });
+    
+    alert('Masterbatch erfolgreich aktualisiert!');
+    
+    // Tabelle aktualisieren
+    loadMasterbatchesForManagement();
+    loadMasterbatches(); // Dropdown aktualisieren
+    
+  } catch (error) {
+    console.error('Fehler beim Aktualisieren:', error);
+    alert('Fehler beim Aktualisieren: ' + error.message);
+  }
+}
+
 // ==================== HILFSFUNKTIONEN ====================
 
 // Währung formatieren
@@ -851,34 +957,49 @@ function parseGermanNumber(str) {
 
 // Kostenvorschau berechnen
 async function calculateCostPreview() {
-  const material = document.getElementById("material").value;
-  const materialMenge = document.getElementById("materialMenge").value;
-  const masterbatch = document.getElementById("masterbatch").value;
-  const masterbatchMenge = document.getElementById("masterbatchMenge").value;
+  const material = document.getElementById("material");
+  const materialMenge = document.getElementById("materialMenge");
+  const masterbatch = document.getElementById("masterbatch");
+  const masterbatchMenge = document.getElementById("masterbatchMenge");
+  const costPreview = document.getElementById("costPreview");
   
-  if (!material || !materialMenge || !masterbatch || !masterbatchMenge) {
+  if (!material || !materialMenge || !masterbatch || !masterbatchMenge || !costPreview) {
+    return;
+  }
+  
+  const materialValue = material.value.trim();
+  const materialMengeValue = materialMenge.value.trim();
+  const masterbatchValue = masterbatch.value.trim();
+  const masterbatchMengeValue = masterbatchMenge.value.trim();
+  
+  if (!materialValue || !materialMengeValue || !masterbatchValue || !masterbatchMengeValue) {
+    costPreview.textContent = '0,00 €';
     return;
   }
   
   try {
-    const materialSnapshot = await db.collection("materials").where("name", "==", material).get();
-    const masterbatchSnapshot = await db.collection("masterbatches").where("name", "==", masterbatch).get();
+    const materialSnapshot = await db.collection("materials").where("name", "==", materialValue).get();
+    const masterbatchSnapshot = await db.collection("masterbatches").where("name", "==", masterbatchValue).get();
     
     if (!materialSnapshot.empty && !masterbatchSnapshot.empty) {
       const materialPrice = materialSnapshot.docs[0].data().price;
       const masterbatchPrice = masterbatchSnapshot.docs[0].data().price;
       
-      const materialCost = parseGermanNumber(materialMenge) * materialPrice;
-      const masterbatchCost = parseGermanNumber(masterbatchMenge) * masterbatchPrice;
+      const materialCost = parseGermanNumber(materialMengeValue) * materialPrice;
+      const masterbatchCost = parseGermanNumber(masterbatchMengeValue) * masterbatchPrice;
       const totalCost = materialCost + masterbatchCost;
       
-      const costPreview = document.getElementById("costPreview");
-      if (costPreview) {
+      if (!isNaN(totalCost) && totalCost > 0) {
         costPreview.textContent = formatCurrency(totalCost);
+      } else {
+        costPreview.textContent = '0,00 €';
       }
+    } else {
+      costPreview.textContent = '0,00 €';
     }
   } catch (error) {
     console.error("Fehler bei der Kostenberechnung:", error);
+    costPreview.textContent = '0,00 €';
   }
 }
 
@@ -906,4 +1027,203 @@ async function testFirebaseConnection() {
     alert("⚠️ Verbindung zur Datenbank fehlgeschlagen: " + error.message);
     return false;
   }
+}
+
+// ==================== SUCH- UND SORTIERFUNKTIONEN ====================
+
+// User-Einträge suchen
+function searchUserEntries() {
+  const searchTerm = document.getElementById('userSearchInput').value.toLowerCase();
+  
+  if (!searchTerm) {
+    renderUserEntries(allUserEntries);
+    return;
+  }
+  
+  const filteredEntries = allUserEntries.filter(entry => {
+    return entry.material.toLowerCase().includes(searchTerm) ||
+           entry.masterbatch.toLowerCase().includes(searchTerm) ||
+           (entry.timestamp && new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE').includes(searchTerm));
+  });
+  
+  renderUserEntries(filteredEntries);
+}
+
+// Admin-Einträge suchen
+function searchAdminEntries() {
+  const searchTerm = document.getElementById('adminSearchInput').value.toLowerCase();
+  
+  if (!searchTerm) {
+    applyAdminFiltersAndSort();
+    return;
+  }
+  
+  const filteredEntries = allAdminEntries.filter(entry => {
+    return entry.name.toLowerCase().includes(searchTerm) ||
+           entry.kennung.toLowerCase().includes(searchTerm) ||
+           entry.material.toLowerCase().includes(searchTerm) ||
+           entry.masterbatch.toLowerCase().includes(searchTerm) ||
+           (entry.timestamp && new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE').includes(searchTerm));
+  });
+  
+  renderAdminEntries(filteredEntries);
+}
+
+// User-Einträge sortieren
+let userSortDirection = {};
+function sortUserEntries(column) {
+  // Toggle sort direction
+  userSortDirection[column] = userSortDirection[column] === 'asc' ? 'desc' : 'asc';
+  const direction = userSortDirection[column];
+  
+  let sortedEntries = [...allUserEntries];
+  
+  sortedEntries.sort((a, b) => {
+    let valueA, valueB;
+    
+    switch(column) {
+      case 'date':
+        valueA = a.timestamp ? a.timestamp.toDate() : new Date(0);
+        valueB = b.timestamp ? b.timestamp.toDate() : new Date(0);
+        break;
+      case 'material':
+        valueA = a.material.toLowerCase();
+        valueB = b.material.toLowerCase();
+        break;
+      case 'materialMenge':
+        valueA = a.materialMenge || 0;
+        valueB = b.materialMenge || 0;
+        break;
+      case 'masterbatch':
+        valueA = a.masterbatch.toLowerCase();
+        valueB = b.masterbatch.toLowerCase();
+        break;
+      case 'masterbatchMenge':
+        valueA = a.masterbatchMenge || 0;
+        valueB = b.masterbatchMenge || 0;
+        break;
+      case 'cost':
+        valueA = a.totalCost || 0;
+        valueB = b.totalCost || 0;
+        break;
+      case 'status':
+        valueA = (a.paid || a.isPaid) ? 1 : 0;
+        valueB = (b.paid || b.isPaid) ? 1 : 0;
+        break;
+      default:
+        return 0;
+    }
+    
+    if (valueA < valueB) return direction === 'asc' ? -1 : 1;
+    if (valueA > valueB) return direction === 'asc' ? 1 : -1;
+    return 0;
+  });
+  
+  renderUserEntries(sortedEntries);
+}
+
+// Admin-Einträge sortieren (Header-Klicks)
+let adminSortDirection = {};
+function sortAdminEntriesBy(column) {
+  // Toggle sort direction
+  adminSortDirection[column] = adminSortDirection[column] === 'asc' ? 'desc' : 'asc';
+  const direction = adminSortDirection[column];
+  
+  let sortedEntries = [...allAdminEntries];
+  
+  sortedEntries.sort((a, b) => {
+    let valueA, valueB;
+    
+    switch(column) {
+      case 'date':
+        valueA = a.timestamp ? a.timestamp.toDate() : new Date(0);
+        valueB = b.timestamp ? b.timestamp.toDate() : new Date(0);
+        break;
+      case 'name':
+        valueA = a.name.toLowerCase();
+        valueB = b.name.toLowerCase();
+        break;
+      case 'kennung':
+        valueA = a.kennung.toLowerCase();
+        valueB = b.kennung.toLowerCase();
+        break;
+      case 'material':
+        valueA = a.material.toLowerCase();
+        valueB = b.material.toLowerCase();
+        break;
+      case 'materialMenge':
+        valueA = a.materialMenge || 0;
+        valueB = b.materialMenge || 0;
+        break;
+      case 'masterbatch':
+        valueA = a.masterbatch.toLowerCase();
+        valueB = b.masterbatch.toLowerCase();
+        break;
+      case 'masterbatchMenge':
+        valueA = a.masterbatchMenge || 0;
+        valueB = b.masterbatchMenge || 0;
+        break;
+      case 'cost':
+        valueA = a.totalCost || 0;
+        valueB = b.totalCost || 0;
+        break;
+      case 'status':
+        valueA = (a.paid || a.isPaid) ? 1 : 0;
+        valueB = (b.paid || b.isPaid) ? 1 : 0;
+        break;
+      default:
+        return 0;
+    }
+    
+    if (valueA < valueB) return direction === 'asc' ? -1 : 1;
+    if (valueA > valueB) return direction === 'asc' ? 1 : -1;
+    return 0;
+  });
+  
+  renderAdminEntries(sortedEntries);
+}
+
+// Admin-Einträge sortieren (Dropdown)
+function sortAdminEntries() {
+  applyAdminFiltersAndSort();
+}
+
+// Admin-Filter und Sortierung anwenden
+function applyAdminFiltersAndSort() {
+  const sortSelect = document.getElementById('adminSortSelect');
+  const sortValue = sortSelect.value;
+  
+  let filteredEntries = [...allAdminEntries];
+  
+  // Filter anwenden
+  switch(sortValue) {
+    case 'status-paid':
+      filteredEntries = filteredEntries.filter(entry => entry.paid || entry.isPaid);
+      break;
+    case 'status-unpaid':
+      filteredEntries = filteredEntries.filter(entry => !(entry.paid || entry.isPaid));
+      break;
+  }
+  
+  // Sortierung anwenden
+  filteredEntries.sort((a, b) => {
+    switch(sortValue) {
+      case 'date-desc':
+        return (b.timestamp ? b.timestamp.toDate() : new Date(0)) - (a.timestamp ? a.timestamp.toDate() : new Date(0));
+      case 'date-asc':
+        return (a.timestamp ? a.timestamp.toDate() : new Date(0)) - (b.timestamp ? b.timestamp.toDate() : new Date(0));
+      case 'name-asc':
+        return a.name.localeCompare(b.name);
+      case 'name-desc':
+        return b.name.localeCompare(a.name);
+      case 'cost-desc':
+        return (b.totalCost || 0) - (a.totalCost || 0);
+      case 'cost-asc':
+        return (a.totalCost || 0) - (b.totalCost || 0);
+      default:
+        return 0;
+    }
+  });
+  
+  renderAdminEntries(filteredEntries);
 }

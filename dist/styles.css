@@ -482,6 +482,21 @@ body {
   text-align: left;
   border-bottom: 1px solid #f0f0f0;
   white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.data-table th:hover {
+  background: #e9ecef;
+}
+
+.data-table th:last-child {
+  cursor: default;
+}
+
+.data-table th:last-child:hover {
+  background: #f8f9fa;
 }
 
 .data-table td {
@@ -494,6 +509,42 @@ body {
 
 .data-table tr:hover {
   background: #fafafa;
+}
+
+/* Table Controls */
+.table-controls {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.search-input {
+  flex: 1;
+  padding: 10px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #FFEB00;
+}
+
+.sort-select {
+  padding: 10px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  min-width: 200px;
+}
+
+.sort-select:focus {
+  outline: none;
+  border-color: #FFEB00;
 }
 
 /* Loading State */

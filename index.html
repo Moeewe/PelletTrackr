@@ -126,6 +126,9 @@
             <!-- User Entries -->
             <div class="entries-section">
                 <h2 class="section-title">Deine Einträge</h2>
+                <div class="table-controls">
+                    <input type="text" id="userSearchInput" placeholder="Suchen..." class="search-input" onkeyup="searchUserEntries()">
+                </div>
                 <div id="userEntriesTable" class="data-table"></div>
             </div>
         </div>
@@ -187,6 +190,19 @@
             <!-- All Entries Table -->
             <div class="entries-section">
                 <h2 class="section-title">Alle Einträge</h2>
+                <div class="table-controls">
+                    <input type="text" id="adminSearchInput" placeholder="Suchen nach Name, Kennung, Material..." class="search-input" onkeyup="searchAdminEntries()">
+                    <select id="adminSortSelect" class="sort-select" onchange="sortAdminEntries()">
+                        <option value="date-desc">Datum (neueste zuerst)</option>
+                        <option value="date-asc">Datum (älteste zuerst)</option>
+                        <option value="name-asc">Name (A-Z)</option>
+                        <option value="name-desc">Name (Z-A)</option>
+                        <option value="cost-desc">Kosten (höchste zuerst)</option>
+                        <option value="cost-asc">Kosten (niedrigste zuerst)</option>
+                        <option value="status-paid">Nur bezahlt</option>
+                        <option value="status-unpaid">Nur unbezahlt</option>
+                    </select>
+                </div>
                 <div id="adminEntriesTable" class="data-table"></div>
             </div>
         </div>
