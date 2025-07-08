@@ -533,10 +533,14 @@ function renderUserEntries(entries) {
     const jobNotes = entry.jobNotes || "";
     const truncatedNotes = jobNotes.length > 30 ? jobNotes.substring(0, 30) + "..." : jobNotes;
     
-    // Aktionen für User (nur Zahlungsnachweis bei bezahlten Einträgen)
+    // Aktionen für User (Details, Bearbeiten, und Zahlungsnachweis bei bezahlten Einträgen)
     const actions = isPaid ? 
-      `<button class="btn btn-success" onclick="showPaymentProof('${entry.id}')">Nachweis</button>` :
-      `<span style="font-size: 12px; color: #666;">Nicht verfügbar</span>`;
+      `<button class="btn btn-success" onclick="showPaymentProof('${entry.id}')">Nachweis</button>
+       <button class="btn btn-tertiary" onclick="viewEntryDetails('${entry.id}')">Details</button>
+       <button class="btn btn-secondary" onclick="editUserEntry('${entry.id}')">Bearbeiten</button>` :
+      `<button class="btn btn-tertiary" onclick="viewEntryDetails('${entry.id}')">Details</button>
+       <button class="btn btn-secondary" onclick="editUserEntry('${entry.id}')">Bearbeiten</button>
+       <span style="font-size: 12px; color: #666;">Nachweis nach Zahlung</span>`;
     
     // Responsive Tabellen-Zeile mit data-label Attributen
     tableHtml += `
@@ -680,6 +684,8 @@ function renderAdminEntries(entries) {
           `<button class="btn btn-secondary" onclick="markEntryAsUnpaid('${entry.id}')">Rückgängig</button>
            <button class="btn btn-success" onclick="showPaymentProof('${entry.id}')">Nachweis</button>`
         }
+        <button class="btn btn-tertiary" onclick="viewEntryDetails('${entry.id}')">Details</button>
+        <button class="btn btn-secondary" onclick="editEntry('${entry.id}')">Bearbeiten</button>
         <button class="btn btn-danger" onclick="deleteEntry('${entry.id}')">Löschen</button>
       </div>
     `;
@@ -1890,3 +1896,333 @@ document.addEventListener('click', function(event) {
     closePaymentProofModal();
   }
 });
+
+// ==================== ENTRY DETAILS & EDIT FUNKTIONEN ====================
+
+// Eintrag-Details anzeigen
+async function viewEntryDetails(entryId) {
+  try {
+    const doc = await db.collection('entries').doc(entryId).get();
+    if (!doc.exists) {
+      alert('Eintrag nicht gefunden!');
+      return;
+    }
+    
+    const entry = doc.data();
+    const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
+    const time = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleTimeString('de-DE') : 'Unbekannt';
+    const isPaid = entry.paid || entry.isPaid;
+    const status = isPaid ? 'Bezahlt' : 'Offen';
+    const jobName = entry.jobName || "3D-Druck Auftrag";
+    const jobNotes = entry.jobNotes || "Keine Notizen";
+    
+    const modalHtml = `
+      <div class="modal-header">
+        <h2>Eintrag Details</h2>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="proof-details">
+          <div class="proof-section">
+            <h3>Allgemeine Informationen</h3>
+            <div class="proof-item">
+              <span class="proof-label">Name:</span>
+              <span class="proof-value">${entry.name}</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-label">FH-Kennung:</span>
+              <span class="proof-value">${entry.kennung}</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-label">Datum:</span>
+              <span class="proof-value">${date}</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-label">Uhrzeit:</span>
+              <span class="proof-value">${time}</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-label">Job-Name:</span>
+              <span class="proof-value">${jobName}</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-label">Status:</span>
+              <span class="proof-value">${status}</span>
+            </div>
+          </div>
+          
+          <div class="proof-section">
+            <h3>Material & Kosten</h3>
+            <div class="proof-item">
+              <span class="proof-label">Material:</span>
+              <span class="proof-value">${entry.material}</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-label">Material-Menge:</span>
+              <span class="proof-value">${(entry.materialMenge || 0).toFixed(2)} kg</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-label">Masterbatch:</span>
+              <span class="proof-value">${entry.masterbatch}</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-label">Masterbatch-Menge:</span>
+              <span class="proof-value">${(entry.masterbatchMenge || 0).toFixed(2)} kg</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="proof-total">
+          <div class="proof-total-amount">${formatCurrency(entry.totalCost)}</div>
+        </div>
+        
+        <div class="proof-section">
+          <h3>Notizen</h3>
+          <p style="padding: 16px; background: #f8f8f8; border: 1px solid #e0e0e0; border-radius: 0; white-space: pre-wrap;">${jobNotes}</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
+      </div>
+    `;
+    
+    showModalWithContent(modalHtml);
+    
+  } catch (error) {
+    console.error("Fehler beim Laden der Eintrag-Details:", error);
+    alert("Fehler beim Laden der Details!");
+  }
+}
+
+// Eintrag bearbeiten (Admin)
+async function editEntry(entryId) {
+  if (!checkAdminAccess()) return;
+  
+  try {
+    const doc = await db.collection('entries').doc(entryId).get();
+    if (!doc.exists) {
+      alert('Eintrag nicht gefunden!');
+      return;
+    }
+    
+    const entry = doc.data();
+    const jobName = entry.jobName || "3D-Druck Auftrag";
+    const jobNotes = entry.jobNotes || "";
+    
+    const modalHtml = `
+      <div class="modal-header">
+        <h2>Eintrag Bearbeiten</h2>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="editEntryForm">
+          <div class="form-group">
+            <label class="form-label">Job-Name</label>
+            <input type="text" id="editJobName" class="form-input" value="${jobName}">
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Material-Menge (kg)</label>
+              <input type="number" id="editMaterialMenge" class="form-input" value="${(entry.materialMenge || 0).toFixed(2)}" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Masterbatch-Menge (kg)</label>
+              <input type="number" id="editMasterbatchMenge" class="form-input" value="${(entry.masterbatchMenge || 0).toFixed(2)}" step="0.01" min="0">
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Notizen</label>
+            <textarea id="editJobNotes" class="form-textarea" rows="4">${jobNotes}</textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+        <button class="btn btn-primary" onclick="saveEntryChanges('${entryId}')">Speichern</button>
+      </div>
+    `;
+    
+    showModalWithContent(modalHtml);
+    
+  } catch (error) {
+    console.error("Fehler beim Laden des Eintrags:", error);
+    alert("Fehler beim Laden des Eintrags!");
+  }
+}
+
+// User-Eintrag bearbeiten (limitiert)
+async function editUserEntry(entryId) {
+  try {
+    const doc = await db.collection('entries').doc(entryId).get();
+    if (!doc.exists) {
+      alert('Eintrag nicht gefunden!');
+      return;
+    }
+    
+    const entry = doc.data();
+    
+    // Prüfen ob User berechtigt ist (nur eigene Einträge bearbeiten)
+    if (entry.kennung !== currentUser.kennung) {
+      alert('Du kannst nur deine eigenen Einträge bearbeiten!');
+      return;
+    }
+    
+    // Prüfen ob Eintrag bereits bezahlt wurde
+    if (entry.paid || entry.isPaid) {
+      alert('Bezahlte Einträge können nicht mehr bearbeitet werden!');
+      return;
+    }
+    
+    const jobName = entry.jobName || "3D-Druck Auftrag";
+    const jobNotes = entry.jobNotes || "";
+    
+    const modalHtml = `
+      <div class="modal-header">
+        <h2>Mein Eintrag Bearbeiten</h2>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="editUserEntryForm">
+          <div class="form-group">
+            <label class="form-label">Job-Name</label>
+            <input type="text" id="editUserJobName" class="form-input" value="${jobName}">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Notizen</label>
+            <textarea id="editUserJobNotes" class="form-textarea" rows="4">${jobNotes}</textarea>
+          </div>
+          
+          <p style="margin-top: 20px; padding: 16px; background: #f8f8f8; border: 1px solid #e0e0e0; color: #666; font-size: 14px;">
+            <strong>Hinweis:</strong> Als User kannst du nur Job-Name und Notizen bearbeiten. Material-Mengen können nur von Admins geändert werden.
+          </p>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+        <button class="btn btn-primary" onclick="saveUserEntryChanges('${entryId}')">Speichern</button>
+      </div>
+    `;
+    
+    showModalWithContent(modalHtml);
+    
+  } catch (error) {
+    console.error("Fehler beim Laden des Eintrags:", error);
+    alert("Fehler beim Laden des Eintrags!");
+  }
+}
+
+// Änderungen speichern (Admin)
+async function saveEntryChanges(entryId) {
+  const jobName = document.getElementById('editJobName').value.trim();
+  const materialMenge = parseFloat(document.getElementById('editMaterialMenge').value);
+  const masterbatchMenge = parseFloat(document.getElementById('editMasterbatchMenge').value);
+  const jobNotes = document.getElementById('editJobNotes').value.trim();
+  
+  if (!jobName) {
+    alert('Job-Name darf nicht leer sein!');
+    return;
+  }
+  
+  if (isNaN(materialMenge) || materialMenge < 0) {
+    alert('Bitte gültige Material-Menge eingeben!');
+    return;
+  }
+  
+  if (isNaN(masterbatchMenge) || masterbatchMenge < 0) {
+    alert('Bitte gültige Masterbatch-Menge eingeben!');
+    return;
+  }
+  
+  try {
+    // Neue Kosten berechnen
+    const materialsSnapshot = await db.collection('materials').get();
+    const masterbatchesSnapshot = await db.collection('masterbatches').get();
+    
+    let materialPrice = 0;
+    let masterbatchPrice = 0;
+    
+    const doc = await db.collection('entries').doc(entryId).get();
+    const entry = doc.data();
+    
+    // Material-Preis finden
+    materialsSnapshot.forEach(materialDoc => {
+      const material = materialDoc.data();
+      if (material.name === entry.material) {
+        materialPrice = material.price;
+      }
+    });
+    
+    // Masterbatch-Preis finden
+    masterbatchesSnapshot.forEach(masterbatchDoc => {
+      const masterbatch = masterbatchDoc.data();
+      if (masterbatch.name === entry.masterbatch) {
+        masterbatchPrice = masterbatch.price;
+      }
+    });
+    
+    const totalCost = (materialMenge * materialPrice) + (masterbatchMenge * masterbatchPrice);
+    
+    await db.collection('entries').doc(entryId).update({
+      jobName: jobName,
+      materialMenge: materialMenge,
+      masterbatchMenge: masterbatchMenge,
+      jobNotes: jobNotes,
+      totalCost: totalCost,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    alert('Eintrag erfolgreich aktualisiert!');
+    closeModal();
+    
+    // Dashboard neu laden
+    if (currentUser.isAdmin) {
+      initializeAdminDashboard();
+    } else {
+      initializeUserDashboard();
+    }
+    
+  } catch (error) {
+    console.error("Fehler beim Speichern:", error);
+    alert("Fehler beim Speichern der Änderungen!");
+  }
+}
+
+// User-Änderungen speichern (limitiert)
+async function saveUserEntryChanges(entryId) {
+  const jobName = document.getElementById('editUserJobName').value.trim();
+  const jobNotes = document.getElementById('editUserJobNotes').value.trim();
+  
+  if (!jobName) {
+    alert('Job-Name darf nicht leer sein!');
+    return;
+  }
+  
+  try {
+    await db.collection('entries').doc(entryId).update({
+      jobName: jobName,
+      jobNotes: jobNotes,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    alert('Eintrag erfolgreich aktualisiert!');
+    closeModal();
+    
+    // User Dashboard neu laden
+    initializeUserDashboard();
+    
+  } catch (error) {
+    console.error("Fehler beim Speichern:", error);
+    alert("Fehler beim Speichern der Änderungen!");
+  }
+}
+
+// Helper-Funktion für Modal
+function showModalWithContent(htmlContent) {
+  const modal = document.getElementById('modal');
+  const modalContent = modal.querySelector('.modal-content');
+  modalContent.innerHTML = htmlContent;
+  modal.classList.add('active');
+}

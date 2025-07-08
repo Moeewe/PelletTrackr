@@ -226,19 +226,20 @@ body {
   border-color: #FFEB00;
 }
 
-/* Buttons */
+/* Fraenk-Style Button System - Größer und konsistenter */
 .button-group {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-top: 30px;
+  gap: 20px;
+  margin-top: 32px;
 }
 
+/* Basis Button - Fraenk-Style */
 .btn {
-  padding: 8px 12px;
-  border: none;
-  border-radius: 4px;
-  font-size: 12px;
+  padding: 16px 24px;
+  border: 2px solid #000000;
+  border-radius: 0;
+  font-size: 16px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -246,54 +247,104 @@ body {
   display: inline-block;
   text-align: center;
   white-space: nowrap;
-  min-width: 60px;
+  min-width: 120px;
+  font-family: inherit;
+  background: white;
+  color: #000000;
+  line-height: 1.2;
+  position: relative;
 }
 
+.btn:hover {
+  background: #f0f0f0;
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+/* Primary Button - Schwarz mit gelbem Hover */
 .btn-primary {
   background: #000000;
   color: white;
+  border-color: #000000;
 }
 
 .btn-primary:hover {
-  background: #333333;
+  background: #FFEB00;
+  color: #000000;
+  border-color: #000000;
 }
 
+/* Secondary Button - Weiß mit schwarzem Border */
 .btn-secondary {
-  background: #f0f0f0;
+  background: white;
   color: #000000;
+  border-color: #000000;
 }
 
 .btn-secondary:hover {
-  background: #e0e0e0;
+  background: #FFEB00;
+  color: #000000;
+  border-color: #000000;
 }
 
+/* Link Button - Minimaler Style */
 .btn-link {
   background: none;
   color: #666666;
-  padding: 8px 12px;
-  font-size: 14px;
+  border: 2px solid transparent;
+  padding: 16px 24px;
+  font-size: 16px;
+  text-decoration: underline;
 }
 
 .btn-link:hover {
   color: #000000;
+  background: #f8f8f8;
+  text-decoration: none;
 }
 
+/* Danger Button - Rot */
 .btn-danger {
-  background: #ff4444;
-  color: white;
+  background: white;
+  color: #dc3545;
+  border-color: #dc3545;
 }
 
 .btn-danger:hover {
-  background: #cc3333;
+  background: #dc3545;
+  color: white;
+  border-color: #dc3545;
 }
 
+/* Success Button - Grün */
 .btn-success {
-  background: #28a745;
-  color: white;
+  background: white;
+  color: #28a745;
+  border-color: #28a745;
 }
 
 .btn-success:hover {
-  background: #218838;
+  background: #28a745;
+  color: white;
+  border-color: #28a745;
+}
+
+/* Large Buttons für wichtige Aktionen */
+.btn-large {
+  padding: 20px 32px;
+  font-size: 18px;
+  font-weight: 600;
+  min-width: 200px;
+}
+
+/* Small Buttons für Table Actions */
+.btn-small {
+  padding: 12px 16px;
+  font-size: 14px;
+  min-width: 80px;
 }
 
 /* Cost Preview */
@@ -388,23 +439,32 @@ body {
   font-weight: 400;
 }
 
-/* Buttons - Fraenk Style - kompakter */
+/* Buttons - Fraenk Style - konsistent überall */
 .btn {
-  width: auto;
-  padding: 8px 12px;
-  border: 1px solid #000000;
-  border-radius: 3px;
-  font-size: 12px;
+  padding: 16px 24px;
+  border: 2px solid #000000;
+  border-radius: 0;
+  font-size: 16px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s ease;
-  margin: 0 4px 4px 0;
+  transition: all 0.2s ease;
+  margin: 0 8px 8px 0;
   text-align: center;
   background: white;
   color: #000000;
   white-space: nowrap;
-  min-width: 60px;
+  min-width: 120px;
   display: inline-block;
+  font-family: inherit;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.btn:hover {
+  background: #FFEB00;
+  color: #000000;
+  border-color: #000000;
+  transform: translateY(-1px);
 }
 
 .btn-primary {
@@ -413,7 +473,9 @@ body {
 }
 
 .btn-primary:hover {
-  background: #333333;
+  background: #FFEB00;
+  color: #000000;
+  border-color: #000000;
 }
 
 .btn-secondary {
@@ -436,6 +498,59 @@ body {
 .btn-tertiary:hover {
   border-color: #000000;
   color: #000000;
+  background: #f8f8f8;
+}
+
+.btn-danger {
+  background: white;
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-danger:hover {
+  background: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
+
+.btn-success {
+  background: white;
+  color: #28a745;
+  border-color: #28a745;
+}
+
+.btn-success:hover {
+  background: #28a745;
+  color: white;
+  border-color: #28a745;
+}
+
+.btn-link {
+  background: none;
+  color: #666666;
+  border: 2px solid transparent;
+  text-decoration: underline;
+}
+
+.btn-link:hover {
+  color: #000000;
+  background: #f8f8f8;
+  text-decoration: none;
+}
+
+/* Large Buttons für wichtige Aktionen */
+.btn-large {
+  padding: 20px 32px;
+  font-size: 18px;
+  font-weight: 600;
+  min-width: 200px;
+}
+
+/* Small Buttons für kompakte Areas */
+.btn-small {
+  padding: 12px 16px;
+  font-size: 14px;
+  min-width: 100px;
 }
 
 /* Status Messages */
@@ -501,10 +616,10 @@ body {
   font-weight: 400;
 }
 
-/* Table - minimalistisch */
+/* Table - Desktop Version - Fraenk Style */
 .data-table {
   background: white;
-  border: 2px solid #f0f0f0;
+  border: 2px solid #000000;
   margin: 40px 0;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -513,48 +628,139 @@ body {
 .data-table table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 600px;
+  min-width: 800px;
 }
 
 .data-table th {
-  background: white;
+  background: #f8f8f8;
   padding: 20px 16px;
   font-size: 14px;
   font-weight: 600;
   color: #000000;
   text-align: left;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 2px solid #000000;
   white-space: nowrap;
   cursor: pointer;
   user-select: none;
   transition: background-color 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .data-table th:hover {
-  background: #e9ecef;
+  background: #FFEB00;
 }
 
 .data-table th:last-child {
   cursor: default;
+  text-align: center;
 }
 
 .data-table th:last-child:hover {
-  background: #f8f9fa;
+  background: #f8f8f8;
 }
 
 .data-table td {
   padding: 20px 16px;
   font-size: 16px;
-  border-bottom: 1px solid #f8f8f8;
+  border-bottom: 1px solid #e0e0e0;
   color: #000000;
   white-space: nowrap;
+  vertical-align: middle;
 }
 
 .data-table tr:hover {
   background: #fafafa;
 }
 
-/* Responsive Tables - Minimalistischer Fraenk-Style */
+.data-table tr:nth-child(even) {
+  background: #fafafa;
+}
+
+.data-table tr:nth-child(even):hover {
+  background: #f0f0f0;
+}
+
+/* Status Badges für Desktop */
+.status-paid,
+.status-unpaid {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 0;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border: 2px solid #000000;
+}
+
+.status-paid {
+  background: #000000;
+  color: #FFEB00;
+}
+
+.status-unpaid {
+  background: white;
+  color: #000000;
+}
+
+/* Action Buttons in Desktop Tables */
+.data-table .actions {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.data-table .actions .btn {
+  padding: 10px 16px;
+  font-size: 12px;
+  margin: 0 4px;
+  border: 2px solid #000000;
+  background: white;
+  color: #000000;
+  border-radius: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  min-width: 80px;
+}
+
+.data-table .actions .btn:hover {
+  background: #FFEB00;
+  color: #000000;
+}
+
+.data-table .actions .btn-primary {
+  background: #000000;
+  color: #FFEB00;
+}
+
+.data-table .actions .btn-primary:hover {
+  background: #FFEB00;
+  color: #000000;
+}
+
+.data-table .actions .btn-danger {
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+.data-table .actions .btn-danger:hover {
+  background: #dc3545;
+  color: white;
+}
+
+.data-table .actions .btn-success {
+  color: #28a745;
+  border-color: #28a745;
+}
+
+.data-table .actions .btn-success:hover {
+  background: #28a745;
+  color: white;
+}
+
+/* Responsive Tables - Verbessertes Fraenk-Design */
 @media (max-width: 768px) {
   /* Verstecke die normalen Tabellen-Header */
   .data-table thead {
@@ -564,79 +770,92 @@ body {
   /* Container für bessere Zentrierung */
   .data-table {
     max-width: 100%;
-    margin: 20px auto;
+    margin: 24px auto;
     padding: 0 16px;
+    border: none;
+    background: transparent;
   }
   
-  /* Jede Zeile wird zu einer minimalistischen Karte */
+  /* Jede Zeile wird zu einer schönen Fraenk-Karte */
   .data-table tr {
     display: block;
-    background: #f8f9fa;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
-    margin: 0 auto 24px auto;
-    padding: 24px;
+    background: white;
+    border: 2px solid #000000;
+    border-radius: 0;
+    margin: 0 auto 32px auto;
+    padding: 32px;
     position: relative;
-    transition: all 0.15s ease;
+    transition: all 0.2s ease;
     max-width: 500px;
     width: 100%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
   
   .data-table tr:hover {
-    border-color: #d0d0d0;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    background: #fafafa;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   }
   
-  /* Hauptinhalt - cleaner Fraenk-Look */
+  /* Zellen-Styling - cleaner Fraenk-Look */
   .data-table td {
     display: block;
     border: none;
     padding: 0;
-    margin: 0 0 16px 0;
+    margin: 0 0 20px 0;
     position: relative;
     text-align: left;
     font-size: 16px;
-    line-height: 1.3;
+    line-height: 1.4;
   }
   
   .data-table td:last-child {
     margin-bottom: 0;
   }
   
-  /* Erstes Element (Datum) als Header - minimalistisch */
+  /* Datum als kleine Überschrift */
   .data-table td:first-child {
-    font-size: 14px;
-    font-weight: 400;
+    font-size: 12px;
+    font-weight: 500;
     color: #666666;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
+    padding: 8px 16px;
+    background: #f8f8f8;
+    border: 1px solid #e0e0e0;
+    display: inline-block;
+    border-radius: 0;
   }
   
   .data-table td:first-child:before {
     display: none;
   }
   
-  /* Labels für die anderen Felder - sehr minimal */
+  /* Labels für die anderen Felder */
   .data-table td:not(:first-child):before {
     content: attr(data-label);
     display: block;
-    font-weight: 400;
-    color: #999999;
-    font-size: 12px;
+    font-weight: 600;
+    color: #000000;
+    font-size: 14px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 4px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 4px;
   }
   
-  /* Material/Name als primärer Titel */
+  /* Material/Name als großer Titel */
   .data-table td[data-label="Material"],
   .data-table td[data-label="Name"] {
-    font-size: 20px;
+    font-size: 24px;
     font-weight: 700;
     color: #000000;
-    margin: 8px 0 16px 0;
+    margin: 12px 0 20px 0;
     line-height: 1.2;
+    border-bottom: 2px solid #FFEB00;
+    padding-bottom: 12px;
   }
   
   .data-table td[data-label="Material"]:before,
@@ -646,51 +865,51 @@ body {
   
   /* Job Name als sekundärer Titel */
   .data-table td[data-label="Job"] {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 600;
     color: #333333;
-    margin: 4px 0 12px 0;
+    margin: 8px 0 16px 0;
   }
   
-  .data-table td[data-label="Job"]:before {
-    color: #999999;
-    font-size: 11px;
-  }
-  
-  /* Kosten - fett aber ohne gelben Hintergrund */
+  /* Kosten - prominente Darstellung */
   .data-table td[data-label="Kosten"],
   .data-table td[data-label="Preis pro kg"] {
-    font-size: 24px;
+    font-size: 28px;
     font-weight: 700;
     color: #000000;
-    margin: 16px 0;
-    padding: 16px 0;
-    border-left: 4px solid #FFEB00;
-    padding-left: 16px;
+    margin: 20px 0;
+    padding: 20px;
+    background: #FFEB00;
+    border: 2px solid #000000;
+    text-align: center;
   }
   
   .data-table td[data-label="Kosten"]:before,
   .data-table td[data-label="Preis pro kg"]:before {
     color: #000000;
-    font-weight: 500;
-    font-size: 11px;
+    font-weight: 600;
+    font-size: 12px;
+    text-align: center;
+    margin-bottom: 12px;
   }
   
-  /* Status - clean badges */
+  /* Status - schöne Badges */
   .data-table td[data-label="Status"] {
-    margin: 16px 0;
+    margin: 20px 0;
+    text-align: center;
   }
   
   .status-paid,
   .status-unpaid {
     display: inline-block;
-    padding: 6px 12px;
-    border-radius: 3px;
-    font-size: 11px;
+    padding: 12px 24px;
+    border-radius: 0;
+    font-size: 14px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border: none;
+    letter-spacing: 1px;
+    border: 2px solid #000000;
+    margin: 8px 0;
   }
   
   .status-paid {
@@ -699,133 +918,137 @@ body {
   }
   
   .status-unpaid {
-    background: #f0f0f0;
-    color: #666666;
+    background: white;
+    color: #000000;
   }
   
-  /* Kennung als dezenter Badge oben rechts */
+  /* Kennung als Badge oben rechts */
   .data-table td[data-label="Kennung"] {
     position: absolute;
-    top: 24px;
-    right: 24px;
-    background: #f0f0f0;
-    color: #666666;
-    padding: 4px 8px;
-    border-radius: 3px;
-    font-size: 10px;
-    font-weight: 500;
+    top: 32px;
+    right: 32px;
+    background: #000000;
+    color: #FFEB00;
+    padding: 8px 12px;
+    border-radius: 0;
+    font-size: 11px;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
     margin: 0;
+    border: none;
   }
   
   .data-table td[data-label="Kennung"]:before {
     display: none;
   }
   
-  /* Mengen-Felder - sehr clean */
+  /* Mengen-Felder - strukturiert */
   .data-table td[data-label="Menge"],
   .data-table td[data-label="Mat. Menge"],
   .data-table td[data-label="MB Menge"] {
-    background: none;
-    padding: 0;
-    margin: 8px 0;
-    font-size: 14px;
-    color: #666666;
+    background: #f8f8f8;
+    padding: 16px;
+    margin: 12px 0;
+    font-size: 16px;
+    color: #000000;
+    border: 1px solid #e0e0e0;
   }
   
-  .data-table td[data-label="Menge"]:before,
-  .data-table td[data-label="Mat. Menge"]:before,
-  .data-table td[data-label="MB Menge"]:before {
-    color: #999999;
-    font-size: 11px;
-  }
-  
-  /* Masterbatch als sekundärer Text */
+  /* Masterbatch als Info-Feld */
   .data-table td[data-label="Masterbatch"] {
-    font-size: 14px;
-    font-weight: 400;
+    font-size: 16px;
+    font-weight: 500;
     color: #666666;
-    margin: 4px 0 12px 0;
-  }
-  
-  .data-table td[data-label="Masterbatch"]:before {
-    color: #999999;
+    margin: 8px 0 16px 0;
+    padding: 12px;
+    background: #f8f8f8;
+    border-left: 4px solid #FFEB00;
   }
   
   /* Notizen-Feld */
   .data-table td[data-label="Notizen"] {
     font-size: 14px;
     color: #666666;
-    margin: 12px 0;
-    padding: 8px 0;
-    border-top: 1px solid #e0e0e0;
-  }
-  
-  .data-table td[data-label="Notizen"]:before {
-    color: #999999;
-    font-size: 11px;
+    margin: 16px 0;
+    padding: 16px;
+    background: #f8f8f8;
+    border: 1px solid #e0e0e0;
+    border-radius: 0;
   }
   
   /* Notiz-Bearbeitung Button */
   .btn-edit-note {
-    background: none;
-    border: none;
-    color: #666666;
+    background: #000000;
+    color: #FFEB00;
+    border: 2px solid #000000;
     font-size: 12px;
-    margin-left: 8px;
+    margin-top: 8px;
     cursor: pointer;
-    padding: 2px 4px;
-    border-radius: 2px;
+    padding: 8px 12px;
+    border-radius: 0;
     transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
   }
   
   .btn-edit-note:hover {
-    background: #f0f0f0;
+    background: #FFEB00;
     color: #000000;
   }
   
-  /* Aktionen - minimalistisch am unteren Rand */
+  /* Aktionen - große Buttons am unteren Rand */
   .data-table td.actions {
-    position: absolute;
-    bottom: 24px;
-    right: 24px;
-    padding: 0;
-    margin: 0;
+    position: static;
+    padding: 20px 0 0 0;
+    margin: 24px 0 0 0;
+    border-top: 2px solid #f0f0f0;
+    text-align: center;
   }
   
   .data-table td.actions:before {
-    display: none;
+    content: "AKTIONEN";
+    display: block;
+    font-weight: 600;
+    color: #000000;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+    text-align: center;
   }
   
   .data-table td.actions .btn {
     display: inline-block;
-    margin: 0 0 0 4px;
-    padding: 4px 8px;
-    font-size: 10px;
-    border-radius: 3px;
-    font-weight: 500;
+    margin: 8px 4px;
+    padding: 14px 20px;
+    font-size: 14px;
+    border-radius: 0;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
-    border: 1px solid #e0e0e0;
-    background: #ffffff;
-    color: #666666;
-    transition: all 0.15s ease;
+    letter-spacing: 0.5px;
+    border: 2px solid #000000;
+    background: white;
+    color: #000000;
+    transition: all 0.2s ease;
+    min-width: 100px;
   }
   
   .data-table td.actions .btn:hover {
-    background: #f8f8f8;
-    border-color: #cccccc;
+    background: #FFEB00;
+    color: #000000;
+    transform: translateY(-1px);
   }
   
   .data-table td.actions .btn-primary {
     background: #000000;
     color: #FFEB00;
-    border-color: #000000;
   }
   
   .data-table td.actions .btn-primary:hover {
-    background: #333333;
+    background: #FFEB00;
+    color: #000000;
   }
   
   .data-table td.actions .btn-danger {
@@ -836,6 +1059,7 @@ body {
   .data-table td.actions .btn-danger:hover {
     background: #dc3545;
     color: white;
+    border-color: #dc3545;
   }
   
   .data-table td.actions .btn-success {
@@ -846,6 +1070,7 @@ body {
   .data-table td.actions .btn-success:hover {
     background: #28a745;
     color: white;
+    border-color: #28a745;
   }
   
   /* Container-Optimierungen */
@@ -871,14 +1096,9 @@ body {
     width: 100%;
   }
   
-  /* Platz für Action-Buttons reservieren */
+  /* Platz optimieren */
   .data-table tr {
-    padding-bottom: 60px;
-  }
-  
-  /* User-Tabellen haben weniger Aktionen - weniger Platz nötig */
-  .user-entries-container .data-table tr {
-    padding-bottom: 50px;
+    padding: 32px 32px 32px 32px;
   }
 }
 
@@ -889,90 +1109,223 @@ body {
   }
   
   .data-table tr {
-    padding: 20px 16px 55px 16px;
-    margin: 0 auto 20px auto;
+    padding: 24px 20px;
+    margin: 0 auto 24px auto;
     max-width: 100%;
   }
   
   .data-table td[data-label="Material"],
   .data-table td[data-label="Name"] {
-    font-size: 18px;
+    font-size: 20px;
   }
   
   .data-table td[data-label="Kosten"],
   .data-table td[data-label="Preis pro kg"] {
-    font-size: 20px;
+    font-size: 24px;
     margin: 16px 0;
-    padding: 12px 0 12px 12px;
+    padding: 16px;
   }
   
   .data-table td[data-label="Kennung"] {
-    top: 20px;
-    right: 16px;
-    font-size: 9px;
-    padding: 3px 6px;
-  }
-  
-  .data-table td.actions {
-    bottom: 16px;
-    right: 16px;
+    top: 24px;
+    right: 20px;
+    font-size: 10px;
+    padding: 6px 8px;
   }
   
   .data-table td.actions .btn {
-    padding: 3px 6px;
-    font-size: 9px;
-    margin: 0 0 0 2px;
+    padding: 12px 16px;
+    font-size: 12px;
+    margin: 6px 2px;
+    min-width: 80px;
   }
 }
 
-/* Desktop-Ansicht - Tabellen bleiben normal */
-@media (min-width: 769px) {
-  .data-table-cards {
-    display: none !important;
+/* Mobile Optimierungen */
+@media (max-width: 768px) {
+  .dashboard {
+    padding: 20px;
   }
   
-  .data-table-responsive {
-    display: block !important;
+  .admin-dashboard {
+    padding: 20px;
+  }
+  
+  .dashboard-header {
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  
+  .user-info {
+    justify-content: center;
+  }
+  
+  .login-container {
+    padding: 40px 24px;
+    margin: 20px;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .table-controls {
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+  }
+  
+  .search-input,
+  .sort-select {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .admin-controls {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .control-buttons {
+    flex-direction: column;
+  }
+  
+  .stats-grid,
+  .admin-stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  
+  .stat-card {
+    padding: 20px 16px;
+  }
+  
+  .stat-number {
+    font-size: 28px;
+  }
+  
+  .btn {
+    padding: 14px 20px;
+    font-size: 15px;
+    min-width: 100px;
+  }
+  
+  .btn-large {
+    padding: 18px 28px;
+    font-size: 17px;
+  }
+  
+  .btn-small {
+    padding: 10px 14px;
+    font-size: 13px;
+    min-width: 80px;
   }
 }
 
-/* Table Controls */
+@media (max-width: 480px) {
+  .dashboard,
+  .admin-dashboard {
+    padding: 16px;
+  }
+  
+  .login-container {
+    padding: 32px 20px;
+    margin: 16px;
+  }
+  
+  .logo {
+    font-size: 28px;
+  }
+  
+  .stats-grid,
+  .admin-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-title,
+  .stats-section h2,
+  .entries-section h2 {
+    font-size: 20px;
+  }
+  
+  .form-container {
+    padding: 24px 20px;
+  }
+  
+  .table-controls {
+    padding: 12px;
+  }
+  
+  .btn {
+    padding: 12px 16px;
+    font-size: 14px;
+    width: 100%;
+    margin: 0 0 12px 0;
+  }
+  
+  .btn-large {
+    padding: 16px 24px;
+    font-size: 16px;
+  }
+}
+
+/* Table Controls - Fraenk Style */
 .table-controls {
   display: flex;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: 20px;
+  margin-bottom: 32px;
   align-items: center;
+  padding: 20px;
+  background: #f8f8f8;
+  border: 2px solid #000000;
+  border-radius: 0;
 }
 
 .search-input {
   flex: 1;
-  padding: 10px 16px;
-  border: 2px solid #e0e0e0;
-  border-radius: 6px;
-  font-size: 14px;
+  padding: 16px 20px;
+  border: 2px solid #000000;
+  border-radius: 0;
+  font-size: 16px;
   background: white;
+  color: #000000;
+  font-family: inherit;
+  transition: all 0.2s ease;
 }
 
 .search-input:focus {
   outline: none;
-  border-color: #FFEB00;
+  background: #FFEB00;
+  color: #000000;
+}
+
+.search-input::placeholder {
+  color: #666666;
+  font-style: italic;
 }
 
 .sort-select {
-  padding: 10px 16px;
-  border: 2px solid #e0e0e0;
-  border-radius: 6px;
-  font-size: 14px;
+  padding: 16px 20px;
+  border: 2px solid #000000;
+  border-radius: 0;
+  font-size: 16px;
   background: white;
-  min-width: 200px;
+  color: #000000;
+  min-width: 250px;
+  font-family: inherit;
+  transition: all 0.2s ease;
 }
 
 .sort-select:focus {
   outline: none;
-  border-color: #FFEB00;
+  background: #FFEB00;
+  color: #000000;
 }
 
-/* Loading State */
+/* Loading und Empty States */
 .loading {
   text-align: center;
   padding: 80px 20px;
@@ -981,13 +1334,13 @@ body {
 
 .loading-spinner {
   display: inline-block;
-  width: 24px;
-  height: 24px;
-  border: 2px solid #f0f0f0;
-  border-top: 2px solid #000000;
+  width: 32px;
+  height: 32px;
+  border: 3px solid #f0f0f0;
+  border-top: 3px solid #000000;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-right: 12px;
+  margin-right: 16px;
 }
 
 @keyframes spin {
@@ -995,11 +1348,13 @@ body {
   100% { transform: rotate(360deg); }
 }
 
-/* Empty State */
 .empty-state {
   text-align: center;
   padding: 80px 20px;
   color: #666666;
+  border: 2px solid #e0e0e0;
+  background: #f8f8f8;
+  margin: 40px 0;
 }
 
 .empty-state-icon {
@@ -1008,170 +1363,200 @@ body {
   opacity: 0.3;
 }
 
-/* Login Screen */
-.login-screen {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-  padding: 32px;
-}
-
-.login-container {
-  max-width: 400px;
-  width: 100%;
-  text-align: center;
-}
-
-.login-form {
-  margin-top: 48px;
-}
-
-.login-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-top: 32px;
-}
-
-.logout-btn {
-  position: absolute;
-  top: 32px;
-  right: 32px;
-  background: #f0f0f0;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  color: #666;
-}
-
-.logout-btn:hover {
-  background: #e0e0e0;
-}
-
-/* Dashboard Layout */
+/* Dashboard Layout - Fraenk Style */
 .dashboard {
-  padding: 32px;
+  padding: 40px;
   max-width: 1200px;
   margin: 0 auto;
 }
 
 .admin-dashboard {
   max-width: none;
-  padding: 32px 48px;
+  padding: 40px 60px;
 }
 
-/* User Dashboard */
-.stats-section {
-  margin-bottom: 48px;
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 60px;
+  padding-bottom: 32px;
+  border-bottom: 2px solid #000000;
 }
 
-.stats-section h2 {
-  font-size: 24px;
-  font-weight: 600;
-  margin-bottom: 24px;
-  color: #000;
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 16px;
+  color: #666666;
 }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.stat-card {
-  background: #f8f8f8;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 24px;
-  text-align: center;
-}
-
-.stat-number {
-  font-size: 32px;
-  font-weight: 700;
-  color: #000;
-  margin-bottom: 8px;
-}
-
-.stat-label {
+/* Logout Button */
+.logout-btn {
+  background: white;
+  color: #000000;
+  border: 2px solid #000000;
+  padding: 12px 20px;
+  border-radius: 0;
+  cursor: pointer;
   font-size: 14px;
-  color: #666;
-  font-weight: 400;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+  background: #FFEB00;
+  color: #000000;
+}
+
+/* Login Screen Layout */
+.login-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  padding: 40px;
+}
+
+.login-container {
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+  background: white;
+  border: 2px solid #000000;
+  padding: 60px 40px;
+  border-radius: 0;
+}
+
+.login-form {
+  margin-top: 48px;
 }
 
 /* Entry Form Section */
 .entry-section {
-  margin-bottom: 48px;
+  margin-bottom: 60px;
 }
 
 .entry-section h2 {
   font-size: 24px;
   font-weight: 600;
-  margin-bottom: 24px;
-  color: #000;
+  margin-bottom: 32px;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .form-container {
-  background: #f8f8f8;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 32px;
+  background: white;
+  border: 2px solid #000000;
+  border-radius: 0;
+  padding: 40px;
 }
 
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  margin-bottom: 24px;
+  gap: 32px;
+  margin-bottom: 32px;
 }
 
-.btn-large {
-  font-size: 18px;
-  padding: 16px 32px;
-  width: 100%;
-  margin-top: 16px;
+/* Login Form */
+.login-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 40px;
+}
+
+/* Stats Section */
+.stats-section {
+  margin-bottom: 60px;
+}
+
+.stats-section h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 32px;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: white;
+  border: 2px solid #000000;
+  border-radius: 0;
+  padding: 32px;
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 36px;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 12px;
+  letter-spacing: -1px;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #666666;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* Entries Section */
 .entries-section h2 {
   font-size: 24px;
   font-weight: 600;
-  margin-bottom: 24px;
-  color: #000;
+  margin-bottom: 32px;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* Admin Dashboard */
 .admin-stats-section {
-  margin-bottom: 48px;
+  margin-bottom: 60px;
 }
 
 .admin-stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
-  margin-bottom: 32px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 40px;
 }
 
 .admin-controls {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 32px;
-  margin-bottom: 48px;
+  margin-bottom: 60px;
 }
 
+/* Admin Controls */
 .control-section {
-  margin-bottom: 30px;
+  margin-bottom: 40px;
 }
 
 .control-title {
   font-size: 18px;
   font-weight: 600;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .control-buttons {
@@ -1181,34 +1566,37 @@ body {
 }
 
 .admin-section {
-  background: #f8f8f8;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 24px;
+  background: white;
+  border: 2px solid #000000;
+  border-radius: 0;
+  padding: 32px;
+  margin-bottom: 32px;
 }
 
 .admin-section h3 {
   font-size: 18px;
   font-weight: 600;
-  margin-bottom: 16px;
-  color: #000;
+  margin-bottom: 20px;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .admin-buttons {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .admin-content {
-  background: #f8f8f8;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  background: white;
+  border: 2px solid #000000;
+  border-radius: 0;
   padding: 32px;
   min-height: 400px;
 }
 
-/* Modal Styles */
+/* Modal Styles - Fraenk Design */
 .modal {
   display: none;
   position: fixed;
@@ -1217,7 +1605,7 @@ body {
   top: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.8);
   animation: fadeIn 0.3s ease;
 }
 
@@ -1229,8 +1617,9 @@ body {
 
 .modal-content {
   background: white;
-  border-radius: 8px;
-  max-width: 600px;
+  border: 2px solid #000000;
+  border-radius: 0;
+  max-width: 700px;
   width: 90%;
   max-height: 80vh;
   overflow-y: auto;
@@ -1241,44 +1630,52 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px;
-  border-bottom: 1px solid #e0e0e0;
+  padding: 32px;
+  border-bottom: 2px solid #000000;
+  background: #f8f8f8;
 }
 
 .modal-header h2 {
   margin: 0;
   font-size: 24px;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .close-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
+  background: #000000;
+  color: #FFEB00;
+  border: 2px solid #000000;
+  font-size: 18px;
   cursor: pointer;
-  color: #666;
-  padding: 0;
-  width: 30px;
-  height: 30px;
+  padding: 8px 12px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 0;
+  font-weight: 600;
+  transition: all 0.2s ease;
 }
 
 .close-btn:hover {
-  color: #000;
+  background: #FFEB00;
+  color: #000000;
 }
 
 .modal-body {
-  padding: 24px;
+  padding: 32px;
 }
 
 .modal-footer {
-  padding: 24px;
-  border-top: 1px solid #e0e0e0;
+  padding: 32px;
+  border-top: 2px solid #f0f0f0;
   display: flex;
-  gap: 12px;
+  gap: 16px;
   justify-content: flex-end;
+  background: #f8f8f8;
 }
 
 /* Payment Proof Styles */
