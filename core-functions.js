@@ -174,8 +174,7 @@ function calculateCostPreview() {
   }
 }
 
-// Throttled Version für bessere Performance
-var throttledCalculateCost = throttle(calculateCostPreview, 150);
+// Throttled Version wird jetzt in web-app.js definiert
 
 // ==================== NEUEN EINTRAG HINZUFÜGEN ====================
 

@@ -228,7 +228,6 @@ async function showUserOverview() {
     const snapshot = await db.collection("entries")
       .where("name", "==", name)
       .where("kennung", "==", kennung)
-      .orderBy("timestamp", "desc")
       .get();
 
     const tableDiv = document.getElementById("overviewTable");
@@ -242,6 +241,113 @@ async function showUserOverview() {
     snapshot.forEach(doc => {
       const entry = doc.data();
       entries.push(entry);
+    });
+
+    // Sortiere die Einträge clientseitig nach Timestamp (neueste zuerst)
+    entries.sort((a, b) => {
+      if (!a.timestamp || !b.timestamp) return 0;
+      return b.timestamp.toDate() - a.timestamp.toDate();
+    });
+
+    // Tabelle erstellen
+    let html = `
+      <div class="data-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Datum</th>
+              <th>Material</th>
+              <th>Mat. Menge</th>
+              <th>Masterbatch</th>
+              <th>MB Menge</th>
+              <th>Kosten</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    entries.forEach(function(entry) {
+      const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
+      const status = entry.paid ? "✅ Bezahlt" : "⏳ Offen";
+      
+      html += `
+        <tr>
+          <td>${date}</td>
+          <td>${entry.material}</td>
+          <td>${entry.materialMenge.toFixed(2)} kg</td>
+          <td>${entry.masterbatch}</td>
+          <td>${entry.masterbatchMenge.toFixed(2)} kg</td>
+          <td><strong>${entry.totalCost.toFixed(2).replace('.', ',')} €</strong></td>
+          <td>${status}</td>
+        </tr>
+      `;
+    });
+
+    html += `
+          </tbody>
+        </table>
+      </div>
+      <div style="text-align: center; margin-top: 24px; padding: 16px; background: #f8f8f8; border: 1px solid #e0e0e0;">
+        <div style="font-weight: 600; margin-bottom: 8px;">📊 Zusammenfassung</div>
+        <div style="font-size: 14px; color: #666;">
+          ✅ ${entries.length} Eintrag${entries.length !== 1 ? 'e' : ''}
+        </div>
+      </div>
+    `;
+    
+    tableDiv.innerHTML = html;
+    
+  } catch (error) {
+    console.error("Fehler beim Laden der Einträge:", error);
+    const tableDiv = document.getElementById("overviewTable");
+    tableDiv.innerHTML = createEmptyState("⚠️", "Fehler", "Konnte Einträge nicht laden: " + error.message);
+  }
+}
+
+// Alternative Nutzer-Übersicht mit einfacher Abfrage
+async function showUserOverviewSimple() {
+  const name = document.getElementById("name").value.trim();
+  const kennung = document.getElementById("kennung").value.trim();
+
+  if (!name || !kennung) {
+    showStatusMessage("⚠️ Bitte erst Name und FH-Kennung eingeben!", "error");
+    return;
+  }
+
+  showLoading("overviewTable", "Lade deine Einträge...");
+
+  try {
+    // Einfache Abfrage nur nach Name (ohne doppelte WHERE-Klausel)
+    const snapshot = await db.collection("entries")
+      .where("name", "==", name)
+      .get();
+
+    const tableDiv = document.getElementById("overviewTable");
+    
+    if (snapshot.empty) {
+      tableDiv.innerHTML = createEmptyState("📄", "Noch keine Einträge vorhanden", "Füge deinen ersten 3D-Druck hinzu!");
+      return;
+    }
+
+    const entries = [];
+    snapshot.forEach(doc => {
+      const entry = doc.data();
+      // Filtere clientseitig nach Kennung
+      if (entry.kennung === kennung) {
+        entries.push(entry);
+      }
+    });
+
+    if (entries.length === 0) {
+      tableDiv.innerHTML = createEmptyState("📄", "Noch keine Einträge vorhanden", "Füge deinen ersten 3D-Druck hinzu!");
+      return;
+    }
+
+    // Sortiere die Einträge clientseitig nach Timestamp (neueste zuerst)
+    entries.sort((a, b) => {
+      if (!a.timestamp || !b.timestamp) return 0;
+      return b.timestamp.toDate() - a.timestamp.toDate();
     });
 
     // Tabelle erstellen
@@ -301,7 +407,7 @@ async function showUserOverview() {
 }
 
 // Nutzer-Statistiken anzeigen
-function showUserStatistics() {
+async function showUserStatistics() {
   const name = document.getElementById("name").value.trim();
   const kennung = document.getElementById("kennung").value.trim();
 
@@ -312,15 +418,33 @@ function showUserStatistics() {
 
   showLoading("overviewTable", "Erstelle deine Statistiken...");
 
-  const result = dataManager.getUserStatistics(name, kennung);
-  const tableDiv = document.getElementById("overviewTable");
-  
-  if (!result.success) {
-    tableDiv.innerHTML = createEmptyState("⚠️", "Fehler", result.error);
-    return;
-  }
-  
-  const stats = result.statistics;
+  try {
+    // Firestore-Abfrage für Nutzer-Statistiken
+    const querySnapshot = await db.collection('entries')
+      .where('name', '==', name)
+      .where('kennung', '==', kennung)
+      .get();
+    
+    const entries = [];
+    querySnapshot.forEach((doc) => {
+      entries.push({ id: doc.id, ...doc.data() });
+    });
+    
+    // Statistiken berechnen
+    const stats = {
+      totalEntries: entries.length,
+      totalMaterialUsage: entries.reduce((sum, entry) => sum + (entry.materialMenge || 0), 0),
+      totalMasterbatchUsage: entries.reduce((sum, entry) => sum + (entry.masterbatchMenge || 0), 0),
+      totalCost: entries.reduce((sum, entry) => sum + (entry.totalCost || 0), 0),
+      paidEntries: entries.filter(entry => entry.paid || entry.isPaid).length,
+      unpaidEntries: entries.filter(entry => !(entry.paid || entry.isPaid)).length,
+      unpaidCost: entries.filter(entry => !(entry.paid || entry.isPaid)).reduce((sum, entry) => sum + (entry.totalCost || 0), 0),
+      paidCost: entries.filter(entry => entry.paid || entry.isPaid).reduce((sum, entry) => sum + (entry.totalCost || 0), 0),
+      averageCost: entries.length > 0 ? entries.reduce((sum, entry) => sum + (entry.totalCost || 0), 0) / entries.length : 0,
+      materialTypes: [...new Set(entries.map(entry => entry.material).filter(Boolean))]
+    };
+    
+    const tableDiv = document.getElementById("overviewTable");
   let html = `
     <div class="stats-grid">
       <div class="stat-card">
@@ -343,14 +467,23 @@ function showUserStatistics() {
   `;
   
   // Material-Aufschlüsselung
-  if (Object.keys(stats.materialTypes).length > 0) {
+  if (stats.materialTypes.length > 0) {
     html += `<div style="margin-top: 24px;">`;
     html += `<div style="font-weight: 600; margin-bottom: 12px;">Deine Materialien:</div>`;
-    for (const material in stats.materialTypes) {
+    
+    // Materialien gruppieren und zählen
+    const materialUsage = {};
+    entries.forEach(entry => {
+      if (entry.material) {
+        materialUsage[entry.material] = (materialUsage[entry.material] || 0) + (entry.materialUsage || 0);
+      }
+    });
+    
+    for (const material in materialUsage) {
       html += `
         <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0;">
           <span>${material}</span>
-          <span style="font-weight: 600;">${stats.materialTypes[material].toFixed(2)} kg</span>
+          <span style="font-weight: 600;">${materialUsage[material].toFixed(2)} kg</span>
         </div>
       `;
     }
@@ -358,33 +491,48 @@ function showUserStatistics() {
   }
   
   tableDiv.innerHTML = html;
+  
+  } catch (error) {
+    console.error('Fehler beim Laden der Nutzer-Statistiken:', error);
+    const tableDiv = document.getElementById("overviewTable");
+    tableDiv.innerHTML = createEmptyState("⚠️", "Fehler", "Fehler beim Laden der Statistiken: " + error.message);
+  }
 }
 
 // Admin-Ansicht anzeigen
-function showAdminView() {
+async function showAdminView() {
   if (!checkAdminAccess()) return;
   
   showLoading("overviewTable", "Lade alle Einträge...");
 
-  const result = dataManager.getAllEntries();
-  const tableDiv = document.getElementById("overviewTable");
-  
-  if (!result.success) {
-    tableDiv.innerHTML = createEmptyState("⚠️", "Fehler", result.error);
-    return;
-  }
-  
-  if (result.entries.length === 0) {
-    tableDiv.innerHTML = createEmptyState("📄", "Keine Einträge vorhanden", "Noch keine 3D-Drucke erfasst");
-    return;
-  }
+  try {
+    // Firestore-Abfrage für alle Einträge (ohne orderBy, um Index-Probleme zu vermeiden)
+    const querySnapshot = await db.collection('entries').get();
+    
+    const entries = [];
+    querySnapshot.forEach((doc) => {
+      entries.push({ id: doc.id, ...doc.data() });
+    });
+    
+    // Clientseitige Sortierung nach Timestamp (neueste zuerst)
+    entries.sort((a, b) => {
+      if (!a.timestamp || !b.timestamp) return 0;
+      return b.timestamp.toDate() - a.timestamp.toDate();
+    });
+    
+    const tableDiv = document.getElementById("overviewTable");
+    
+    if (entries.length === 0) {
+      tableDiv.innerHTML = createEmptyState("📄", "Keine Einträge vorhanden", "Noch keine 3D-Drucke erfasst");
+      return;
+    }
 
   // Admin-Tabelle erstellen
   let html = `
     <div style="margin-bottom: 24px; padding: 16px; background: #FFFF00; border: 2px solid #000000;">
       <div style="font-weight: 600; margin-bottom: 8px;">🔧 Admin-Ansicht</div>
-      <div style="font-size: 14px; color: #666;">
-        Alle Einträge • ${result.entries.length} gesamt
+      <div style="font-size: 14px; color: #666;" data-admin-counter>
+        Alle Einträge • ${entries.length} gesamt
       </div>
     </div>
     
@@ -401,18 +549,18 @@ function showAdminView() {
             <th>MB Menge</th>
             <th>Kosten</th>
             <th>Bezahlt</th>
-            <th>Aktion</th>
+            <th>Aktionen</th>
           </tr>
         </thead>
         <tbody>
   `;
 
-  result.entries.forEach(function(entry, index) {
-    const date = new Date(entry.timestamp).toLocaleDateString('de-DE');
-    const paidDate = entry.paidDate ? new Date(entry.paidDate).toLocaleDateString('de-DE') : '';
+  entries.forEach(function(entry, index) {
+    const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
+    const paidDate = entry.paidAt ? new Date(entry.paidAt.toDate()).toLocaleDateString('de-DE') : '';
     
     let statusHtml = '';
-    if (entry.paid) {
+    if (entry.paid || entry.isPaid) {
       statusHtml = `
         <div style="color: #28a745; font-weight: 600;">✅ Ja</div>
         <div style="font-size: 12px; color: #666;">${paidDate}</div>
@@ -422,15 +570,33 @@ function showAdminView() {
     }
     
     let actionHtml = '';
-    if (!entry.paid) {
+    if (!entry.paid && !entry.isPaid) {
       actionHtml = `
-        <button onclick="markEntryAsPaid(${entry.id})" 
-                style="background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
-          Als bezahlt markieren
-        </button>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <button onclick="markEntryAsPaid('${entry.id}')" 
+                  style="background: #28a745; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap;">
+            ✅ Als bezahlt markieren
+          </button>
+          <button onclick="deleteEntry('${entry.id}')" 
+                  style="background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap;">
+            🗑️ Löschen
+          </button>
+        </div>
       `;
     } else {
-      actionHtml = `<div style="color: #666; font-size: 12px;">Bereits bezahlt</div>`;
+      actionHtml = `
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <div style="font-size: 11px; color: #666; text-align: center; margin-bottom: 2px;">Bereits bezahlt</div>
+          <button onclick="markEntryAsUnpaid('${entry.id}')" 
+                  style="background: #ffc107; color: #000; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; white-space: nowrap;">
+            ↩️ Rückgängig
+          </button>
+          <button onclick="deleteEntry('${entry.id}')" 
+                  style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; white-space: nowrap;">
+            🗑️ Löschen
+          </button>
+        </div>
+      `;
     }
     
     html += `
@@ -439,10 +605,10 @@ function showAdminView() {
         <td>${entry.name}</td>
         <td>${entry.kennung}</td>
         <td>${entry.material}</td>
-        <td>${entry.materialMenge.toFixed(2)} kg</td>
+        <td>${(entry.materialMenge || 0).toFixed(2)} kg</td>
         <td>${entry.masterbatch}</td>
-        <td>${entry.masterbatchMenge.toFixed(2)} kg</td>
-        <td><strong>${entry.totalCost.toFixed(2).replace('.', ',')} €</strong></td>
+        <td>${(entry.masterbatchMenge || 0).toFixed(2)} kg</td>
+        <td><strong>${(entry.totalCost || 0).toFixed(2).replace('.', ',')} €</strong></td>
         <td>${statusHtml}</td>
         <td>${actionHtml}</td>
       </tr>
@@ -456,15 +622,26 @@ function showAdminView() {
   `;
   
   tableDiv.innerHTML = html;
+  
+  } catch (error) {
+    console.error('Fehler beim Laden der Admin-Ansicht:', error);
+    const tableDiv = document.getElementById("overviewTable");
+    tableDiv.innerHTML = createEmptyState("⚠️", "Fehler", "Fehler beim Laden der Einträge: " + error.message);
+  }
 }
 
 // Eintrag als bezahlt markieren
-function markEntryAsPaid(entryId) {
+async function markEntryAsPaid(entryId) {
   if (!confirm("Eintrag als bezahlt markieren?")) return;
   
-  const result = dataManager.markAsPaid(entryId);
-  
-  if (result.success) {
+  try {
+    // Firestore-Update für bezahlt markieren
+    await db.collection('entries').doc(entryId).update({
+      paid: true,
+      isPaid: true,
+      paidAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
     showStatusMessage("✅ Eintrag als bezahlt markiert!", "success");
     
     // Zeile visuell aktualisieren
@@ -478,32 +655,151 @@ function markEntryAsPaid(entryId) {
         <div style="font-size: 12px; color: #666;">${new Date().toLocaleDateString('de-DE')}</div>
       `;
       
-      actionCell.innerHTML = `<div style="color: #666; font-size: 12px;">Bereits bezahlt</div>`;
+      actionCell.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <div style="font-size: 11px; color: #666; text-align: center; margin-bottom: 2px;">Bereits bezahlt</div>
+          <button onclick="markEntryAsUnpaid('${entryId}')" 
+                  style="background: #ffc107; color: #000; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; white-space: nowrap;">
+            ↩️ Rückgängig
+          </button>
+          <button onclick="deleteEntry('${entryId}')" 
+                  style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; white-space: nowrap;">
+            🗑️ Löschen
+          </button>
+        </div>
+      `;
       
       // Zeile kurz hervorheben
       row.style.background = "#d4edda";
       setTimeout(() => row.style.background = "", 2000);
     }
-  } else {
-    showStatusMessage("❌ Fehler beim Markieren: " + result.error, "error");
+    
+  } catch (error) {
+    console.error('Fehler beim Markieren als bezahlt:', error);
+    showStatusMessage("❌ Fehler beim Markieren: " + error.message, "error");
+  }
+}
+
+// Eintrag als unbezahlt markieren (Admin-Funktion)
+async function markEntryAsUnpaid(entryId) {
+  if (!confirm("Eintrag als unbezahlt markieren? (Zahlung rückgängig machen)")) return;
+  
+  try {
+    // Firestore-Update für unbezahlt markieren
+    await db.collection('entries').doc(entryId).update({
+      paid: false,
+      isPaid: false,
+      paidAt: null
+    });
+    
+    showStatusMessage("⚠️ Eintrag als unbezahlt markiert!", "success");
+    
+    // Zeile visuell aktualisieren
+    const row = document.getElementById(`entry-${entryId}`);
+    if (row) {
+      const statusCell = row.cells[8]; // Bezahlt-Spalte
+      const actionCell = row.cells[9]; // Aktion-Spalte
+      
+      statusCell.innerHTML = `<div style="color: #dc3545; font-weight: 600;">❌ Nein</div>`;
+      
+      actionCell.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <button onclick="markEntryAsPaid('${entryId}')" 
+                  style="background: #28a745; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap;">
+            ✅ Als bezahlt markieren
+          </button>
+          <button onclick="deleteEntry('${entryId}')" 
+                  style="background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap;">
+            🗑️ Löschen
+          </button>
+        </div>
+      `;
+      
+      // Zeile kurz hervorheben
+      row.style.background = "#f8d7da";
+      setTimeout(() => row.style.background = "", 2000);
+    }
+    
+  } catch (error) {
+    console.error('Fehler beim Markieren als unbezahlt:', error);
+    showStatusMessage("❌ Fehler beim Markieren: " + error.message, "error");
+  }
+}
+
+// Eintrag löschen (Admin-Funktion)
+async function deleteEntry(entryId) {
+  if (!confirm("Eintrag wirklich unwiderruflich löschen? Diese Aktion kann nicht rückgängig gemacht werden!")) return;
+  
+  try {
+    // Firestore-Löschung
+    await db.collection('entries').doc(entryId).delete();
+    
+    showStatusMessage("🗑️ Eintrag erfolgreich gelöscht!", "success");
+    
+    // Zeile aus der Tabelle entfernen
+    const row = document.getElementById(`entry-${entryId}`);
+    if (row) {
+      // Fadeout-Effekt
+      row.style.transition = "opacity 0.5s ease";
+      row.style.opacity = "0";
+      setTimeout(() => {
+        row.remove();
+        // Aktualisiere die Gesamtanzahl
+        updateAdminViewCounter();
+      }, 500);
+    }
+    
+  } catch (error) {
+    console.error('Fehler beim Löschen des Eintrags:', error);
+    showStatusMessage("❌ Fehler beim Löschen: " + error.message, "error");
+  }
+}
+
+// Hilfsfunktion: Admin-Ansicht Zähler aktualisieren
+function updateAdminViewCounter() {
+  const rows = document.querySelectorAll('#overviewTable tbody tr');
+  const counterElement = document.querySelector('[data-admin-counter]');
+  if (counterElement) {
+    counterElement.textContent = `Alle Einträge • ${rows.length} gesamt`;
   }
 }
 
 // Admin-Statistiken anzeigen
-function showAdminStatistics() {
+async function showAdminStatistics() {
   if (!checkAdminAccess()) return;
   
   showLoading("overviewTable", "Lade Admin-Statistiken...");
 
-  const result = dataManager.getAdminStatistics();
-  const tableDiv = document.getElementById("overviewTable");
-  
-  if (!result.success) {
-    tableDiv.innerHTML = createEmptyState("⚠️", "Fehler", result.error);
-    return;
-  }
-  
-  const stats = result.statistics;
+  try {
+    // Firestore-Abfrage für Admin-Statistiken
+    const querySnapshot = await db.collection('entries').get();
+    
+    const entries = [];
+    querySnapshot.forEach((doc) => {
+      entries.push({ id: doc.id, ...doc.data() });
+    });
+    
+    // Statistiken berechnen
+    const uniqueUsers = new Set();
+    entries.forEach(entry => {
+      if (entry.name && entry.kennung) {
+        uniqueUsers.add(`${entry.name}_${entry.kennung}`);
+      }
+    });
+    
+    const stats = {
+      totalEntries: entries.length,
+      totalUsers: uniqueUsers.size,
+      totalMaterialUsage: entries.reduce((sum, entry) => sum + (entry.materialMenge || 0), 0),
+      totalMasterbatchUsage: entries.reduce((sum, entry) => sum + (entry.masterbatchMenge || 0), 0),
+      totalRevenue: entries.reduce((sum, entry) => sum + (entry.totalCost || 0), 0),
+      totalPaidEntries: entries.filter(entry => entry.paid || entry.isPaid).length,
+      totalUnpaidEntries: entries.filter(entry => !(entry.paid || entry.isPaid)).length,
+      unpaidRevenue: entries.filter(entry => !(entry.paid || entry.isPaid)).reduce((sum, entry) => sum + (entry.totalCost || 0), 0),
+      paidRevenue: entries.filter(entry => entry.paid || entry.isPaid).reduce((sum, entry) => sum + (entry.totalCost || 0), 0)
+    };
+    
+    const tableDiv = document.getElementById("overviewTable");
   let html = `
     <div style="margin-bottom: 24px; padding: 16px; background: #FFFF00; border: 2px solid #000000;">
       <div style="font-weight: 600; margin-bottom: 8px;">📊 Admin-Statistiken</div>
@@ -586,13 +882,56 @@ function showAdminStatistics() {
   }
   
   tableDiv.innerHTML = html;
+  
+  } catch (error) {
+    console.error('Fehler beim Laden der Admin-Statistiken:', error);
+    const tableDiv = document.getElementById("overviewTable");
+    tableDiv.innerHTML = createEmptyState("⚠️", "Fehler", "Fehler beim Laden der Statistiken: " + error.message);
+  }
 }
 
 // Daten exportieren
-function exportData() {
-  const exportData = dataManager.exportData();
-  if (exportData) {
-    const blob = new Blob([exportData], { type: 'application/json' });
+async function exportData() {
+  try {
+    showStatusMessage("⏳ Exportiere Daten...", "info");
+    
+    // Alle Collections exportieren
+    const [materialsSnapshot, masterbatchesSnapshot, entriesSnapshot] = await Promise.all([
+      db.collection('materials').get(),
+      db.collection('masterbatches').get(),
+      db.collection('entries').get()
+    ]);
+    
+    const exportObj = {
+      materials: [],
+      masterbatches: [],
+      entries: [],
+      exportDate: new Date().toISOString(),
+      version: "2.0"
+    };
+    
+    materialsSnapshot.forEach(doc => {
+      exportObj.materials.push({ id: doc.id, ...doc.data() });
+    });
+    
+    masterbatchesSnapshot.forEach(doc => {
+      exportObj.masterbatches.push({ id: doc.id, ...doc.data() });
+    });
+    
+    entriesSnapshot.forEach(doc => {
+      const data = doc.data();
+      // Timestamp zu String konvertieren für JSON
+      if (data.timestamp && data.timestamp.toDate) {
+        data.timestamp = data.timestamp.toDate().toISOString();
+      }
+      if (data.paidAt && data.paidAt.toDate) {
+        data.paidAt = data.paidAt.toDate().toISOString();
+      }
+      exportObj.entries.push({ id: doc.id, ...data });
+    });
+    
+    const jsonString = JSON.stringify(exportObj, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -601,8 +940,10 @@ function exportData() {
     URL.revokeObjectURL(url);
     
     showStatusMessage("✅ Daten erfolgreich exportiert!", "success");
-  } else {
-    showStatusMessage("❌ Fehler beim Exportieren!", "error");
+    
+  } catch (error) {
+    console.error('Fehler beim Exportieren:', error);
+    showStatusMessage("❌ Fehler beim Exportieren: " + error.message, "error");
   }
 }
 
@@ -615,14 +956,60 @@ function importData() {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = function(e) {
-        const result = dataManager.importData(e.target.result);
-        if (result.success) {
+      reader.onload = async function(e) {
+        try {
+          showStatusMessage("⏳ Importiere Daten...", "info");
+          
+          const importObj = JSON.parse(e.target.result);
+          
+          // Validierung der Datenstruktur
+          if (!importObj.materials || !importObj.masterbatches || !importObj.entries) {
+            throw new Error("Ungültige Datenstruktur");
+          }
+          
+          // Batch-Upload für bessere Performance
+          const batch = db.batch();
+          
+          // Materialien importieren
+          for (const material of importObj.materials) {
+            const docRef = material.id ? db.collection('materials').doc(material.id) : db.collection('materials').doc();
+            const { id, ...data } = material;
+            batch.set(docRef, data);
+          }
+          
+          // Masterbatches importieren
+          for (const masterbatch of importObj.masterbatches) {
+            const docRef = masterbatch.id ? db.collection('masterbatches').doc(masterbatch.id) : db.collection('masterbatches').doc();
+            const { id, ...data } = masterbatch;
+            batch.set(docRef, data);
+          }
+          
+          // Einträge importieren
+          for (const entry of importObj.entries) {
+            const docRef = entry.id ? db.collection('entries').doc(entry.id) : db.collection('entries').doc();
+            const { id, ...data } = entry;
+            
+            // Timestamp von String zurück zu Firestore-Timestamp konvertieren
+            if (data.timestamp && typeof data.timestamp === 'string') {
+              data.timestamp = firebase.firestore.Timestamp.fromDate(new Date(data.timestamp));
+            }
+            if (data.paidAt && typeof data.paidAt === 'string') {
+              data.paidAt = firebase.firestore.Timestamp.fromDate(new Date(data.paidAt));
+            }
+            
+            batch.set(docRef, data);
+          }
+          
+          // Batch commit
+          await batch.commit();
+          
           showStatusMessage("✅ Daten erfolgreich importiert!", "success");
           loadMaterials();
           loadMasterbatches();
-        } else {
-          showStatusMessage("❌ Fehler beim Importieren: " + result.error, "error");
+          
+        } catch (error) {
+          console.error('Fehler beim Importieren:', error);
+          showStatusMessage("❌ Fehler beim Importieren: " + error.message, "error");
         }
       };
       reader.readAsText(file);
@@ -675,6 +1062,40 @@ async function debugMaterialsAndMasterbatches() {
     masterbatchSnapshot.forEach(doc => {
       const masterbatch = doc.data();
       console.log("- Masterbatch:", masterbatch.name, "Preis:", masterbatch.price, masterbatch.currency || '€');
+    });
+    
+    showStatusMessage("✅ Debug-Informationen in der Konsole!", "success");
+    
+  } catch (error) {
+    console.error("❌ Debug-Fehler:", error);
+    showStatusMessage("❌ Debug-Fehler: " + error.message, "error");
+  }
+}
+
+// Debug-Funktion um alle Einträge zu prüfen
+async function debugAllEntries() {
+  try {
+    console.log("🔍 Lade alle Einträge...");
+    const snapshot = await db.collection("entries").get();
+    console.log("📊 Einträge gefunden:", snapshot.size);
+    
+    if (snapshot.empty) {
+      console.log("⚠️ Keine Einträge in der Datenbank gefunden");
+      showStatusMessage("⚠️ Keine Einträge in der Datenbank gefunden", "error");
+      return;
+    }
+    
+    snapshot.forEach(doc => {
+      const entry = doc.data();
+      console.log("📝 Eintrag:", {
+        id: doc.id,
+        name: entry.name,
+        kennung: entry.kennung,
+        material: entry.material,
+        masterbatch: entry.masterbatch,
+        totalCost: entry.totalCost,
+        timestamp: entry.timestamp
+      });
     });
     
     showStatusMessage("✅ Debug-Informationen in der Konsole!", "success");
@@ -746,28 +1167,9 @@ function checkAdminAccess() {
   }
 }
 
-// Deutsche Zahlenformate parsen
-function parseGermanNumber(value) {
-  if (!value || value === '') return 0;
-  const cleaned = value.toString().replace(/[^\d,.-]/g, '');
-  const normalizedValue = cleaned.replace(',', '.');
-  const parsedValue = parseFloat(normalizedValue);
-  return isNaN(parsedValue) ? 0 : parsedValue;
-}
+// parseGermanNumber wird in core-functions.js definiert
 
-// Throttle-Funktion
-function throttle(func, limit) {
-  let inThrottle;
-  return function() {
-    const args = arguments;
-    const context = this;
-    if (!inThrottle) {
-      func.apply(context, args);
-      inThrottle = true;
-      setTimeout(() => inThrottle = false, limit);
-    }
-  }
-}
+// throttle wird in core-functions.js definiert
 
 // Kostenvorschau berechnen
 async function calculateCostPreview() {
@@ -824,28 +1226,9 @@ async function calculateCostPreview() {
 // Throttled Kostenberechnung
 const throttledCalculateCost = throttle(calculateCostPreview, 500);
 
-// Status-Nachricht anzeigen
-function showStatusMessage(message, type = 'info') {
-  const confirmation = document.getElementById("confirmation");
-  confirmation.className = `status-message status-${type}`;
-  confirmation.innerHTML = message;
-  
-  setTimeout(() => {
-    confirmation.innerHTML = '';
-    confirmation.className = '';
-  }, 5000);
-}
+// Status-Nachricht wird in core-functions.js definiert
 
-// Lade-Anzeige
-function showLoading(elementId, message = 'Laden...') {
-  const element = document.getElementById(elementId);
-  element.innerHTML = `
-    <div class="loading">
-      <div class="loading-spinner"></div>
-      ${message}
-    </div>
-  `;
-}
+// Lade-Anzeige wird in core-functions.js definiert
 
 // Empty State erstellen
 function createEmptyState(icon, title, message) {

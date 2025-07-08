@@ -83,39 +83,42 @@
           <div class="section-title"><span class="highlight">Aktionen</span><br>& Übersicht</div>
           
           <!-- User Actions -->
-          <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;">
-            <button onclick="showUserOverview()" style="flex: 1; min-width: 200px; background: #000000; color: white; border: none; padding: 16px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500;">
-              📊 Meine Übersicht
+          <div class="button-grid">
+            <button onclick="showUserOverviewSimple()" class="btn btn-secondary">
+              Meine Übersicht
             </button>
-            <button onclick="showUserStatistics()" style="flex: 1; min-width: 200px; background: #000000; color: white; border: none; padding: 16px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500;">
-              📈 Meine Statistiken
+            <button onclick="showUserStatistics()" class="btn btn-secondary">
+              Meine Statistiken
             </button>
           </div>
           
           <!-- Admin Actions -->
-          <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;">
-            <button onclick="showAdminView()" style="flex: 1; min-width: 200px; background: #dc3545; color: white; border: none; padding: 16px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500;">
-              🔧 Admin: Alle Einträge
+          <div class="button-grid">
+            <button onclick="showAdminView()" class="btn btn-danger">
+              Admin: Alle Einträge
             </button>
-            <button onclick="showAdminStatistics()" style="flex: 1; min-width: 200px; background: #dc3545; color: white; border: none; padding: 16px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500;">
-              📊 Admin: Statistiken
+            <button onclick="showAdminStatistics()" class="btn btn-danger">
+              Admin: Statistiken
             </button>
           </div>
           
           <!-- Debug Actions -->
-          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-            <button onclick="testFirebaseConnection()" style="flex: 1; min-width: 200px; background: #666666; color: white; border: none; padding: 16px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500;">
-              🔧 Verbindung testen
+          <div class="button-grid">
+            <button onclick="testFirebaseConnection()" class="btn btn-outline">
+              Verbindung testen
             </button>
-            <button onclick="debugMaterialsAndMasterbatches()" style="flex: 1; min-width: 200px; background: #666666; color: white; border: none; padding: 16px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500;">
-              🔧 Debug Materialien
+            <button onclick="debugMaterialsAndMasterbatches()" class="btn btn-outline">
+              Debug Materialien
             </button>
           </div>
           
-          <!-- Testdaten-Button -->
-          <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px;">
-            <button onclick="addTestData()" style="flex: 1; min-width: 200px; background: #ff6b35; color: white; border: none; padding: 16px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500;">
-              🧪 Testdaten hinzufügen
+          <!-- Erweiterte Debug-Buttons -->
+          <div class="button-grid">
+            <button onclick="debugAllEntries()" class="btn btn-outline">
+              Debug Einträge
+            </button>
+            <button onclick="addTestData()" class="btn btn-warning">
+              Testdaten hinzufügen
             </button>
           </div>
         </div>
