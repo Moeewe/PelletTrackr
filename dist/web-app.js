@@ -2451,3 +2451,9 @@ function showModalWithContent(htmlContent) {
   modalContent.innerHTML = htmlContent;
   modal.classList.add('active');
 }
+
+// Modal schließen
+function closeModal() {
+  const modal = document.getElementById('modal');
+  modal.classList.remove('active');
+}

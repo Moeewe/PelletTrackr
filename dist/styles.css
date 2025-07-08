@@ -839,7 +839,7 @@ body {
     padding: 8px 0;
     text-align: left;
     position: relative;
-    padding-left: 120px;
+    padding-left: 150px; /* Erweitert für längere Labels */
     min-height: 24px;
   }
   
@@ -850,9 +850,11 @@ body {
     top: 8px;
     font-weight: 600;
     color: #000000;
-    width: 110px;
-    font-size: 12px;
+    width: 140px; /* Erweitert für längere Labels */
+    font-size: 11px; /* Leicht kleiner für bessere Passform */
     text-transform: uppercase;
+    line-height: 1.2;
+    word-wrap: break-word;
   }
   
   .data-table td[data-label="Aktionen"] {
