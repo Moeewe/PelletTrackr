@@ -243,7 +243,12 @@
                     <label class="form-label">Neues Material hinzufügen</label>
                     <div class="form-row">
                         <input type="text" id="newMaterialName" class="form-input" placeholder="Material Name">
-                        <input type="number" id="newMaterialPrice" class="form-input" placeholder="Preis pro kg" step="0.01">
+                        <input type="text" id="newMaterialManufacturer" class="form-input" placeholder="Hersteller">
+                    </div>
+                    <div class="form-row">
+                        <input type="number" id="newMaterialNetPrice" class="form-input" placeholder="EK Netto €/kg" step="0.01">
+                        <input type="number" id="newMaterialTaxRate" class="form-input" placeholder="USt %" value="19" step="0.01">
+                        <input type="number" id="newMaterialMarkup" class="form-input" placeholder="Aufschlag %" value="30" step="0.01">
                         <button class="btn btn-primary" onclick="addMaterial()">Hinzufügen</button>
                     </div>
                 </div>
@@ -266,7 +271,12 @@
                     <label class="form-label">Neuen Masterbatch hinzufügen</label>
                     <div class="form-row">
                         <input type="text" id="newMasterbatchName" class="form-input" placeholder="Masterbatch Name">
-                        <input type="number" id="newMasterbatchPrice" class="form-input" placeholder="Preis pro kg" step="0.01">
+                        <input type="text" id="newMasterbatchManufacturer" class="form-input" placeholder="Hersteller">
+                    </div>
+                    <div class="form-row">
+                        <input type="number" id="newMasterbatchNetPrice" class="form-input" placeholder="EK Netto €/kg" step="0.01">
+                        <input type="number" id="newMasterbatchTaxRate" class="form-input" placeholder="USt %" value="19" step="0.01">
+                        <input type="number" id="newMasterbatchMarkup" class="form-input" placeholder="Aufschlag %" value="30" step="0.01">
                         <button class="btn btn-primary" onclick="addMasterbatch()">Hinzufügen</button>
                     </div>
                 </div>

@@ -337,50 +337,69 @@ async function addEntry() {
     return;
   }
 
-  const materialMengeNum = parseGermanNumber(materialMenge);
-  const masterbatchMengeNum = parseGermanNumber(masterbatchMenge);
+  // Prüfe ob mindestens ein Material ausgewählt ist
+  const hasMaterial = material && materialMenge;
+  const hasMasterbatch = masterbatch && masterbatchMenge;
+  
+  if (!hasMaterial && !hasMasterbatch) {
+    alert("⚠️ Bitte wählen Sie mindestens Material oder Masterbatch aus!");
+    return;
+  }
 
-  if (isNaN(materialMengeNum) || materialMengeNum <= 0) {
+  // Validierung der ausgewählten Mengen
+  const materialMengeNum = hasMaterial ? parseGermanNumber(materialMenge) : 0;
+  const masterbatchMengeNum = hasMasterbatch ? parseGermanNumber(masterbatchMenge) : 0;
+
+  if (hasMaterial && (isNaN(materialMengeNum) || materialMengeNum <= 0)) {
     alert("⚠️ Bitte eine gültige Materialmenge eingeben!");
     return;
   }
 
-  if (isNaN(masterbatchMengeNum) || masterbatchMengeNum <= 0) {
+  if (hasMasterbatch && (isNaN(masterbatchMengeNum) || masterbatchMengeNum <= 0)) {
     alert("⚠️ Bitte eine gültige Masterbatch-Menge eingeben!");
     return;
   }
 
   try {
-    // Preise aus Firestore abrufen
-    const materialSnapshot = await db.collection("materials").where("name", "==", material).get();
-    const masterbatchSnapshot = await db.collection("masterbatches").where("name", "==", masterbatch).get();
+    let materialData = null;
+    let masterbatchData = null;
+    let materialCost = 0;
+    let masterbatchCost = 0;
 
-    if (materialSnapshot.empty) {
-      throw new Error("Material nicht gefunden");
+    // Material-Daten abrufen (falls ausgewählt)
+    if (hasMaterial) {
+      const materialSnapshot = await db.collection("materials").where("name", "==", material).get();
+      if (materialSnapshot.empty) {
+        throw new Error("Material nicht gefunden");
+      }
+      materialData = materialSnapshot.docs[0].data();
+      materialCost = materialMengeNum * materialData.price;
     }
-    if (masterbatchSnapshot.empty) {
-      throw new Error("Masterbatch nicht gefunden");
+
+    // Masterbatch-Daten abrufen (falls ausgewählt)
+    if (hasMasterbatch) {
+      const masterbatchSnapshot = await db.collection("masterbatches").where("name", "==", masterbatch).get();
+      if (masterbatchSnapshot.empty) {
+        throw new Error("Masterbatch nicht gefunden");
+      }
+      masterbatchData = masterbatchSnapshot.docs[0].data();
+      masterbatchCost = masterbatchMengeNum * masterbatchData.price;
     }
 
-    const materialData = materialSnapshot.docs[0].data();
-    const masterbatchData = masterbatchSnapshot.docs[0].data();
-
-    // Kosten berechnen
-    const materialCost = materialMengeNum * materialData.price;
-    const masterbatchCost = masterbatchMengeNum * masterbatchData.price;
+    // Gesamtkosten berechnen
     const totalCost = materialCost + masterbatchCost;
 
     // Druck in Firestore speichern
     const entry = {
       name: name,
       kennung: kennung,
-      material: material,
+      material: material || "",
       materialMenge: materialMengeNum,
-      materialPrice: materialData.price,
+      materialPrice: materialData ? materialData.price : 0,
       materialCost: materialCost,
-      masterbatch: masterbatch,
+      masterbatch: masterbatch || "",
       masterbatchMenge: masterbatchMengeNum,
-      masterbatchPrice: masterbatchData.price,
+      masterbatchPrice: masterbatchData ? masterbatchData.price : 0,
       masterbatchCost: masterbatchCost,
       totalCost: totalCost,
       jobName: jobName || "3D-Druck Auftrag", // Default if empty
@@ -820,7 +839,11 @@ async function loadMaterialsForManagement() {
         <thead>
           <tr>
             <th>Name</th>
-            <th>Preis pro kg</th>
+            <th>Hersteller</th>
+            <th>EK Netto €/kg</th>
+            <th>EK Brutto €/kg</th>
+            <th>Aufschlag %</th>
+            <th>VK €/kg</th>
             <th>Aktionen</th>
           </tr>
         </thead>
@@ -830,13 +853,24 @@ async function loadMaterialsForManagement() {
     snapshot.forEach(doc => {
       const material = doc.data();
       
+      // Berechne Brutto und VK (falls alte Daten)
+      const netPrice = material.netPrice || material.price || 0;
+      const taxRate = material.taxRate || 19;
+      const markup = material.markup || 30;
+      const grossPrice = netPrice * (1 + taxRate / 100);
+      const sellingPrice = grossPrice * (1 + markup / 100);
+      
       // Responsive Tabellen-Zeile mit data-label Attributen
       tableHtml += `
         <tr id="material-row-${doc.id}">
           <td data-label="Name" id="material-name-${doc.id}">${material.name}</td>
-          <td data-label="Preis pro kg" id="material-price-${doc.id}">${formatCurrency(material.price)}</td>
+          <td data-label="Hersteller" id="material-manufacturer-${doc.id}">${material.manufacturer || 'Unbekannt'}</td>
+          <td data-label="EK Netto €/kg" id="material-netprice-${doc.id}">${formatCurrency(netPrice)}</td>
+          <td data-label="EK Brutto €/kg" id="material-grossprice-${doc.id}">${formatCurrency(grossPrice)}</td>
+          <td data-label="Aufschlag %" id="material-markup-${doc.id}">${markup}%</td>
+          <td data-label="VK €/kg" id="material-price-${doc.id}">${formatCurrency(sellingPrice)}</td>
           <td class="actions" data-label="Aktionen">
-            <button class="btn btn-secondary" onclick="editMaterial('${doc.id}', '${material.name}', ${material.price})">Bearbeiten</button>
+            <button class="btn btn-secondary" onclick="editMaterial('${doc.id}')">Bearbeiten</button>
             <button class="btn btn-danger" onclick="deleteMaterial('${doc.id}')">Löschen</button>
           </td>
         </tr>
@@ -874,7 +908,11 @@ async function loadMasterbatchesForManagement() {
         <thead>
           <tr>
             <th>Name</th>
-            <th>Preis pro kg</th>
+            <th>Hersteller</th>
+            <th>EK Netto €/kg</th>
+            <th>EK Brutto €/kg</th>
+            <th>Aufschlag %</th>
+            <th>VK €/kg</th>
             <th>Aktionen</th>
           </tr>
         </thead>
@@ -886,13 +924,24 @@ async function loadMasterbatchesForManagement() {
     snapshot.forEach(doc => {
       const masterbatch = doc.data();
       
+      // Berechne Brutto und VK (falls alte Daten)
+      const netPrice = masterbatch.netPrice || masterbatch.price || 0;
+      const taxRate = masterbatch.taxRate || 19;
+      const markup = masterbatch.markup || 30;
+      const grossPrice = netPrice * (1 + taxRate / 100);
+      const sellingPrice = grossPrice * (1 + markup / 100);
+      
       // Responsive Tabellen-Zeile mit data-label Attributen
       tableHtml += `
         <tr id="masterbatch-row-${doc.id}">
           <td data-label="Name" id="masterbatch-name-${doc.id}">${masterbatch.name}</td>
-          <td data-label="Preis pro kg" id="masterbatch-price-${doc.id}">${formatCurrency(masterbatch.price)}</td>
+          <td data-label="Hersteller" id="masterbatch-manufacturer-${doc.id}">${masterbatch.manufacturer || 'Unbekannt'}</td>
+          <td data-label="EK Netto €/kg" id="masterbatch-netprice-${doc.id}">${formatCurrency(netPrice)}</td>
+          <td data-label="EK Brutto €/kg" id="masterbatch-grossprice-${doc.id}">${formatCurrency(grossPrice)}</td>
+          <td data-label="Aufschlag %" id="masterbatch-markup-${doc.id}">${markup}%</td>
+          <td data-label="VK €/kg" id="masterbatch-price-${doc.id}">${formatCurrency(sellingPrice)}</td>
           <td class="actions" data-label="Aktionen">
-            <button class="btn btn-secondary" onclick="editMasterbatch('${doc.id}', '${masterbatch.name}', ${masterbatch.price})">Bearbeiten</button>
+            <button class="btn btn-secondary" onclick="editMasterbatch('${doc.id}')">Bearbeiten</button>
             <button class="btn btn-danger" onclick="deleteMasterbatch('${doc.id}')">Löschen</button>
           </td>
         </tr>
@@ -913,23 +962,37 @@ async function loadMasterbatchesForManagement() {
 
 async function addMaterial() {
   const name = document.getElementById('newMaterialName').value.trim();
-  const price = parseFloat(document.getElementById('newMaterialPrice').value);
+  const manufacturer = document.getElementById('newMaterialManufacturer').value.trim();
+  const netPrice = parseFloat(document.getElementById('newMaterialNetPrice').value);
+  const taxRate = parseFloat(document.getElementById('newMaterialTaxRate').value) || 19;
+  const markup = parseFloat(document.getElementById('newMaterialMarkup').value) || 30;
   
-  if (!name || isNaN(price) || price <= 0) {
-    alert('Bitte gültigen Namen und Preis eingeben!');
+  if (!name || isNaN(netPrice) || netPrice <= 0) {
+    alert('Bitte gültigen Namen und EK-Netto-Preis eingeben!');
     return;
   }
+  
+  const grossPrice = netPrice * (1 + taxRate / 100);
+  const sellingPrice = grossPrice * (1 + markup / 100);
   
   try {
     await db.collection('materials').add({
       name: name,
-      price: price,
+      manufacturer: manufacturer || 'Unbekannt',
+      netPrice: netPrice,
+      taxRate: taxRate,
+      markup: markup,
+      grossPrice: grossPrice,
+      price: sellingPrice, // VK für Kompatibilität
       currency: '€'
     });
     
     alert('Material erfolgreich hinzugefügt!');
     document.getElementById('newMaterialName').value = '';
-    document.getElementById('newMaterialPrice').value = '';
+    document.getElementById('newMaterialManufacturer').value = '';
+    document.getElementById('newMaterialNetPrice').value = '';
+    document.getElementById('newMaterialTaxRate').value = '19';
+    document.getElementById('newMaterialMarkup').value = '30';
     
     loadMaterialsForManagement();
     loadMaterials(); // Dropdown aktualisieren
@@ -942,12 +1005,46 @@ async function addMaterial() {
 
 async function addMasterbatch() {
   const name = document.getElementById('newMasterbatchName').value.trim();
-  const price = parseFloat(document.getElementById('newMasterbatchPrice').value);
+  const manufacturer = document.getElementById('newMasterbatchManufacturer').value.trim();
+  const netPrice = parseFloat(document.getElementById('newMasterbatchNetPrice').value);
+  const taxRate = parseFloat(document.getElementById('newMasterbatchTaxRate').value) || 19;
+  const markup = parseFloat(document.getElementById('newMasterbatchMarkup').value) || 30;
   
-  if (!name || isNaN(price) || price <= 0) {
-    alert('Bitte gültigen Namen und Preis eingeben!');
+  if (!name || isNaN(netPrice) || netPrice <= 0) {
+    alert('Bitte gültigen Namen und EK-Netto-Preis eingeben!');
     return;
   }
+  
+  const grossPrice = netPrice * (1 + taxRate / 100);
+  const sellingPrice = grossPrice * (1 + markup / 100);
+  
+  try {
+    await db.collection('masterbatches').add({
+      name: name,
+      manufacturer: manufacturer || 'Unbekannt',
+      netPrice: netPrice,
+      taxRate: taxRate,
+      markup: markup,
+      grossPrice: grossPrice,
+      price: sellingPrice, // VK für Kompatibilität
+      currency: '€'
+    });
+    
+    alert('Masterbatch erfolgreich hinzugefügt!');
+    document.getElementById('newMasterbatchName').value = '';
+    document.getElementById('newMasterbatchManufacturer').value = '';
+    document.getElementById('newMasterbatchNetPrice').value = '';
+    document.getElementById('newMasterbatchTaxRate').value = '19';
+    document.getElementById('newMasterbatchMarkup').value = '30';
+    
+    loadMasterbatchesForManagement();
+    loadMasterbatches(); // Dropdown aktualisieren
+    
+  } catch (error) {
+    console.error('Fehler beim Hinzufügen:', error);
+    alert('Fehler beim Hinzufügen: ' + error.message);
+  }
+}
   
   try {
     await db.collection('masterbatches').add({
@@ -999,51 +1096,141 @@ async function deleteMasterbatch(masterbatchId) {
 
 // ==================== EDIT FUNKTIONEN ====================
 
-function editMaterial(materialId, currentName, currentPrice) {
-  const newName = prompt('Neuer Material-Name:', currentName);
-  if (newName === null) return; // User cancelled
+async function editMaterial(materialId) {
+  try {
+    const doc = await db.collection('materials').doc(materialId).get();
+    if (!doc.exists) {
+      alert('Material nicht gefunden!');
+      return;
+    }
+    
+    const material = doc.data();
+    
+    const modalHtml = `
+      <div class="modal-header">
+        <h3>Material bearbeiten</h3>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Material Name</label>
+          <input type="text" id="editMaterialName" class="form-input" value="${material.name}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hersteller</label>
+          <input type="text" id="editMaterialManufacturer" class="form-input" value="${material.manufacturer || ''}">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">EK Netto €/kg</label>
+            <input type="number" id="editMaterialNetPrice" class="form-input" value="${material.netPrice || material.price || 0}" step="0.01">
+          </div>
+          <div class="form-group">
+            <label class="form-label">USt %</label>
+            <input type="number" id="editMaterialTaxRate" class="form-input" value="${material.taxRate || 19}" step="0.01">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Aufschlag %</label>
+            <input type="number" id="editMaterialMarkup" class="form-input" value="${material.markup || 30}" step="0.01">
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+          <button class="btn btn-primary" onclick="updateMaterial('${materialId}')">Speichern</button>
+        </div>
+      </div>
+    `;
+    
+    showModal(modalHtml);
+    
+  } catch (error) {
+    console.error('Fehler beim Laden des Materials:', error);
+    alert('Fehler beim Laden des Materials: ' + error.message);
+  }
+}
+
+async function editMasterbatch(masterbatchId) {
+  try {
+    const doc = await db.collection('masterbatches').doc(masterbatchId).get();
+    if (!doc.exists) {
+      alert('Masterbatch nicht gefunden!');
+      return;
+    }
+    
+    const masterbatch = doc.data();
+    
+    const modalHtml = `
+      <div class="modal-header">
+        <h3>Masterbatch bearbeiten</h3>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Masterbatch Name</label>
+          <input type="text" id="editMasterbatchName" class="form-input" value="${masterbatch.name}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hersteller</label>
+          <input type="text" id="editMasterbatchManufacturer" class="form-input" value="${masterbatch.manufacturer || ''}">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">EK Netto €/kg</label>
+            <input type="number" id="editMasterbatchNetPrice" class="form-input" value="${masterbatch.netPrice || masterbatch.price || 0}" step="0.01">
+          </div>
+          <div class="form-group">
+            <label class="form-label">USt %</label>
+            <input type="number" id="editMasterbatchTaxRate" class="form-input" value="${masterbatch.taxRate || 19}" step="0.01">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Aufschlag %</label>
+            <input type="number" id="editMasterbatchMarkup" class="form-input" value="${masterbatch.markup || 30}" step="0.01">
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+          <button class="btn btn-primary" onclick="updateMasterbatch('${masterbatchId}')">Speichern</button>
+        </div>
+      </div>
+    `;
+    
+    showModal(modalHtml);
+    
+  } catch (error) {
+    console.error('Fehler beim Laden des Masterbatch:', error);
+    alert('Fehler beim Laden des Masterbatch: ' + error.message);
+  }
+}
+
+async function updateMaterial(materialId) {
+  const name = document.getElementById('editMaterialName').value.trim();
+  const manufacturer = document.getElementById('editMaterialManufacturer').value.trim();
+  const netPrice = parseFloat(document.getElementById('editMaterialNetPrice').value);
+  const taxRate = parseFloat(document.getElementById('editMaterialTaxRate').value);
+  const markup = parseFloat(document.getElementById('editMaterialMarkup').value);
   
-  const newPriceStr = prompt('Neuer Preis pro kg (€):', currentPrice.toFixed(2));
-  if (newPriceStr === null) return; // User cancelled
-  
-  const newPrice = parseFloat(newPriceStr);
-  
-  if (!newName.trim() || isNaN(newPrice) || newPrice <= 0) {
-    alert('Bitte gültigen Namen und Preis eingeben!');
+  if (!name || isNaN(netPrice) || netPrice <= 0) {
+    alert('Bitte gültigen Namen und EK-Netto-Preis eingeben!');
     return;
   }
   
-  updateMaterial(materialId, newName.trim(), newPrice);
-}
-
-function editMasterbatch(masterbatchId, currentName, currentPrice) {
-  const newName = prompt('Neuer Masterbatch-Name:', currentName);
-  if (newName === null) return; // User cancelled
+  const grossPrice = netPrice * (1 + taxRate / 100);
+  const sellingPrice = grossPrice * (1 + markup / 100);
   
-  const newPriceStr = prompt('Neuer Preis pro kg (€):', currentPrice.toFixed(2));
-  if (newPriceStr === null) return; // User cancelled
-  
-  const newPrice = parseFloat(newPriceStr);
-  
-  if (!newName.trim() || isNaN(newPrice) || newPrice <= 0) {
-    alert('Bitte gültigen Namen und Preis eingeben!');
-    return;
-  }
-  
-  updateMasterbatch(masterbatchId, newName.trim(), newPrice);
-}
-
-async function updateMaterial(materialId, newName, newPrice) {
   try {
     await db.collection('materials').doc(materialId).update({
-      name: newName,
-      price: newPrice,
+      name: name,
+      manufacturer: manufacturer || 'Unbekannt',
+      netPrice: netPrice,
+      taxRate: taxRate,
+      markup: markup,
+      grossPrice: grossPrice,
+      price: sellingPrice, // VK für Kompatibilität
       currency: '€'
     });
     
     alert('Material erfolgreich aktualisiert!');
-    
-    // Tabelle aktualisieren
+    closeModal();
     loadMaterialsForManagement();
     loadMaterials(); // Dropdown aktualisieren
     
@@ -1053,19 +1240,49 @@ async function updateMaterial(materialId, newName, newPrice) {
   }
 }
 
-async function updateMasterbatch(masterbatchId, newName, newPrice) {
+async function updateMasterbatch(masterbatchId) {
+  const name = document.getElementById('editMasterbatchName').value.trim();
+  const manufacturer = document.getElementById('editMasterbatchManufacturer').value.trim();
+  const netPrice = parseFloat(document.getElementById('editMasterbatchNetPrice').value);
+  const taxRate = parseFloat(document.getElementById('editMasterbatchTaxRate').value);
+  const markup = parseFloat(document.getElementById('editMasterbatchMarkup').value);
+  
+  if (!name || isNaN(netPrice) || netPrice <= 0) {
+    alert('Bitte gültigen Namen und EK-Netto-Preis eingeben!');
+    return;
+  }
+  
+  const grossPrice = netPrice * (1 + taxRate / 100);
+  const sellingPrice = grossPrice * (1 + markup / 100);
+  
   try {
     await db.collection('masterbatches').doc(masterbatchId).update({
-      name: newName,
-      price: newPrice,
+      name: name,
+      manufacturer: manufacturer || 'Unbekannt',
+      netPrice: netPrice,
+      taxRate: taxRate,
+      markup: markup,
+      grossPrice: grossPrice,
+      price: sellingPrice, // VK für Kompatibilität
       currency: '€'
     });
     
     alert('Masterbatch erfolgreich aktualisiert!');
-    
-    // Tabelle aktualisieren
+    closeModal();
     loadMasterbatchesForManagement();
     loadMasterbatches(); // Dropdown aktualisieren
+    
+  } catch (error) {
+    console.error('Fehler beim Aktualisieren:', error);
+    alert('Fehler beim Aktualisieren: ' + error.message);
+  }
+}
+    
+    alert('Material erfolgreich aktualisiert!');
+    
+    // Tabelle aktualisieren
+    loadMaterialsForManagement();
+    loadMaterials(); // Dropdown aktualisieren
     
   } catch (error) {
     console.error('Fehler beim Aktualisieren:', error);
@@ -1122,47 +1339,56 @@ async function calculateCostPreview() {
     masterbatchMenge: masterbatchMengeValue
   });
   
-  if (!materialValue || !materialMengeValue || !masterbatchValue || !masterbatchMengeValue) {
-    console.log("⚠️ Nicht alle Felder ausgefüllt");
+  // Prüfe ob mindestens ein Material ausgewählt ist
+  const hasMaterial = materialValue && materialMengeValue;
+  const hasMasterbatch = masterbatchValue && masterbatchMengeValue;
+  
+  if (!hasMaterial && !hasMasterbatch) {
+    console.log("⚠️ Weder Material noch Masterbatch ausgefüllt");
     costPreview.textContent = '0,00 €';
     return;
   }
   
   try {
     console.log("🔍 Suche Preise in Firestore...");
-    const materialSnapshot = await db.collection("materials").where("name", "==", materialValue).get();
-    const masterbatchSnapshot = await db.collection("masterbatches").where("name", "==", masterbatchValue).get();
+    let materialCost = 0;
+    let masterbatchCost = 0;
     
-    if (!materialSnapshot.empty && !masterbatchSnapshot.empty) {
-      const materialPrice = materialSnapshot.docs[0].data().price;
-      const masterbatchPrice = masterbatchSnapshot.docs[0].data().price;
-      
-      console.log("💰 Preise gefunden:", {
-        materialPrice: materialPrice,
-        masterbatchPrice: masterbatchPrice
-      });
-      
-      const materialCost = parseGermanNumber(materialMengeValue) * materialPrice;
-      const masterbatchCost = parseGermanNumber(masterbatchMengeValue) * masterbatchPrice;
-      const totalCost = materialCost + masterbatchCost;
-      
-      console.log("🧮 Berechnung:", {
-        materialCost: materialCost,
-        masterbatchCost: masterbatchCost,
-        totalCost: totalCost
-      });
-      
-      if (!isNaN(totalCost) && totalCost > 0) {
-        const formattedCost = formatCurrency(totalCost);
-        costPreview.textContent = formattedCost;
-        console.log("✅ Kostenvorschau aktualisiert:", formattedCost);
-      } else {
-        costPreview.textContent = '0,00 €';
-        console.log("⚠️ Ungültige Berechnung");
+    // Material-Kosten berechnen (falls ausgewählt)
+    if (hasMaterial) {
+      const materialSnapshot = await db.collection("materials").where("name", "==", materialValue).get();
+      if (!materialSnapshot.empty) {
+        const materialPrice = materialSnapshot.docs[0].data().price;
+        materialCost = parseGermanNumber(materialMengeValue) * materialPrice;
+        console.log("💰 Material-Kosten:", materialCost);
       }
+    }
+    
+    // Masterbatch-Kosten berechnen (falls ausgewählt)
+    if (hasMasterbatch) {
+      const masterbatchSnapshot = await db.collection("masterbatches").where("name", "==", masterbatchValue).get();
+      if (!masterbatchSnapshot.empty) {
+        const masterbatchPrice = masterbatchSnapshot.docs[0].data().price;
+        masterbatchCost = parseGermanNumber(masterbatchMengeValue) * masterbatchPrice;
+        console.log("💰 Masterbatch-Kosten:", masterbatchCost);
+      }
+    }
+    
+    const totalCost = materialCost + masterbatchCost;
+    
+    console.log("🧮 Gesamtberechnung:", {
+      materialCost: materialCost,
+      masterbatchCost: masterbatchCost,
+      totalCost: totalCost
+    });
+    
+    if (!isNaN(totalCost) && totalCost >= 0) {
+      const formattedCost = formatCurrency(totalCost);
+      costPreview.textContent = formattedCost;
+      console.log("✅ Kostenvorschau aktualisiert:", formattedCost);
     } else {
       costPreview.textContent = '0,00 €';
-      console.log("❌ Material oder Masterbatch nicht gefunden");
+      console.log("⚠️ Ungültige Berechnung");
     }
   } catch (error) {
     console.error("❌ Fehler bei der Kostenberechnung:", error);

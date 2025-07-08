@@ -797,15 +797,17 @@ body {
   .data-table tr {
     display: block;
     background: white;
-    border: 2px solid #000000;
+    border: 1px solid #000000;
     border-radius: 0;
-    margin: 0 0 24px 0;
-    padding: 24px;
+    margin: 0 0 16px 0;
+    padding: 16px;
     position: relative;
     transition: all 0.2s ease;
     width: 100%;
+    max-width: 100%;
     box-sizing: border-box;
     overflow: hidden;
+    word-wrap: break-word;
   }
   
   .data-table tr:hover {
@@ -832,17 +834,17 @@ body {
     margin-bottom: 0;
   }
   
-  /* Datum als Header-Badge */
+  /* Datum als Header mit minimaler Styling */
   .data-table td:first-child {
-    background: #000000;
-    color: #FFEB00;
+    background: #f8f8f8;
+    color: #000000;
     font-size: 12px;
     font-weight: 600;
-    margin: -24px -24px 20px -24px;
-    padding: 12px 24px;
+    margin: -16px -16px 16px -16px;
+    padding: 12px 16px;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    border-bottom: 2px solid #FFEB00;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #ddd;
   }
   
   .data-table td:first-child:before {
@@ -864,13 +866,13 @@ body {
   /* Material/Name als großer Titel */
   .data-table td[data-label="Material"],
   .data-table td[data-label="Name"] {
-    font-size: 22px;
-    font-weight: 700;
+    font-size: 18px;
+    font-weight: 600;
     color: #000000;
-    margin: 16px 0 20px 0;
+    margin: 8px 0 12px 0;
     line-height: 1.2;
-    padding-bottom: 12px;
-    border-bottom: 2px solid #FFEB00;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
   }
   
   .data-table td[data-label="Material"]:before,
@@ -881,35 +883,31 @@ body {
   /* Job Name als Subtitle */
   .data-table td[data-label="Job"],
   .data-table td[data-label="Job Name"] {
-    font-size: 16px;
-    font-weight: 600;
-    color: #333333;
-    margin: 8px 0 16px 0;
-    padding: 12px;
-    background: #f8f8f8;
-    border-left: 4px solid #000000;
+    font-size: 14px;
+    font-weight: 500;
+    color: #666666;
+    margin: 4px 0 12px 0;
+    padding: 0;
   }
   
-  /* Kosten - Fraenk-Style Highlight */
+  /* Kosten - Minimalistisch */
   .data-table td[data-label="Kosten"],
   .data-table td[data-label="Preis pro kg"] {
-    font-size: 24px;
-    font-weight: 700;
+    font-size: 16px;
+    font-weight: 600;
     color: #000000;
-    margin: 20px 0;
-    padding: 20px;
-    background: #FFEB00;
-    border: 2px solid #000000;
-    text-align: center;
+    margin: 12px 0;
+    padding: 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
   }
   
   .data-table td[data-label="Kosten"]:before,
   .data-table td[data-label="Preis pro kg"]:before {
-    color: #000000;
-    font-weight: 600;
+    color: #666666;
+    font-weight: 500;
     font-size: 12px;
-    text-align: center;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
   }
   
   /* Status - Fraenk Badges */
@@ -942,97 +940,70 @@ body {
     color: #000000;
   }
   
-  /* Kennung-Badge oben rechts */
-  .data-table td[data-label="Kennung"] {
+  /* Kennung-Badge minimalistisch */
+  .data-table td[data-label="Kennung"],
+  .data-table td[data-label="FH-Kennung"] {
     position: absolute;
-    top: 20px;
-    right: 24px;
-    background: #f8f8f8;
+    top: 16px;
+    right: 16px;
     color: #666666;
-    padding: 6px 12px;
-    border-radius: 0;
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 500;
     margin: 0;
-    border: 1px solid #e0e0e0;
     max-width: 120px;
-    text-align: center;
+    text-align: right;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   
-  .data-table td[data-label="Kennung"]:before {
+  .data-table td[data-label="Kennung"]:before,
+  .data-table td[data-label="FH-Kennung"]:before {
     display: none;
   }
   
-  /* Mengen-Felder - strukturiert */
+  /* Mengen-Felder - minimal */
   .data-table td[data-label="Menge"],
   .data-table td[data-label="Mat. Menge"],
   .data-table td[data-label="MB Menge"] {
-    background: #f8f8f8;
-    padding: 12px;
+    padding: 0;
     margin: 8px 0;
     font-size: 14px;
     color: #000000;
-    border-left: 3px solid #000000;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
   }
   
-  /* Masterbatch-Info */
+  /* Masterbatch-Info - minimal */
   .data-table td[data-label="Masterbatch"] {
     font-size: 14px;
     font-weight: 500;
     color: #666666;
     margin: 8px 0;
-    padding: 10px;
-    background: #f8f8f8;
-    border-left: 3px solid #FFEB00;
+    padding: 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
   }
   
-  /* Notizen-Feld */
+  /* Notizen-Feld - minimal */
   .data-table td[data-label="Notizen"] {
     font-size: 14px;
     color: #666666;
-    margin: 16px 0;
-    padding: 12px;
-    background: #f8f8f8;
-    border: 1px solid #e0e0e0;
-    border-radius: 0;
+    margin: 12px 0;
+    padding: 0;
     word-wrap: break-word;
     overflow-wrap: break-word;
     max-width: 100%;
   }
   
-  /* Notiz-Bearbeitung Button */
-  .btn-edit-note {
-    background: #000000;
-    color: #FFEB00;
-    border: 2px solid #000000;
-    font-size: 12px;
-    margin-top: 8px;
-    cursor: pointer;
-    padding: 8px 12px;
-    border-radius: 0;
-    transition: all 0.2s ease;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 600;
-  }
-  
-  .btn-edit-note:hover {
-    background: #FFEB00;
-    color: #000000;
-  }
-  
-  /* Action-Buttons - Fraenk-Style am unteren Rand */
+  /* Action-Buttons - linksbündig übereinander */
   .data-table td.actions,
   .data-table td[data-label="Aktionen"] {
     position: static;
-    padding: 20px 0;
-    margin: 24px -24px -24px -24px;
-    border-top: 2px solid #000000;
+    padding: 16px 0 0 0;
+    margin: 16px 0 0 0;
+    border-top: 1px solid #eee;
     background: #f8f8f8;
     text-align: center;
     width: calc(100% + 48px);
@@ -1040,38 +1011,42 @@ body {
   
   .data-table td.actions:before,
   .data-table td[data-label="Aktionen"]:before {
-    content: "AKTIONEN";
+    content: "Aktionen";
     display: block;
     font-weight: 600;
-    color: #000000;
+    color: #666666;
     font-size: 12px;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 16px;
-    text-align: center;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    text-align: left;
+  }
+  
+  .data-table td.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
   }
   
   .data-table td.actions .btn {
-    display: inline-block;
-    margin: 4px 3px;
-    padding: 12px 16px;
-    font-size: 11px;
+    display: block;
+    margin: 0;
+    padding: 10px 16px;
+    font-size: 13px;
     border-radius: 0;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border: 2px solid #000000;
+    font-weight: 500;
+    border: 1px solid #000000;
     background: white;
     color: #000000;
     transition: all 0.2s ease;
-    min-width: 90px;
-    white-space: nowrap;
-    vertical-align: top;
+    min-width: 120px;
+    width: auto;
+    text-align: center;
   }
   
   .data-table td.actions .btn:hover {
-    background: #FFEB00;
-    color: #000000;
+    background: #f8f8f8;
   }
   
   .data-table td.actions .btn-primary {
@@ -1080,8 +1055,7 @@ body {
   }
   
   .data-table td.actions .btn-primary:hover {
-    background: #FFEB00;
-    color: #000000;
+    background: #333333;
   }
   
   .data-table td.actions .btn-danger {
@@ -1092,7 +1066,6 @@ body {
   .data-table td.actions .btn-danger:hover {
     background: #dc3545;
     color: white;
-    border-color: #dc3545;
   }
   
   .data-table td.actions .btn-success {
@@ -1103,7 +1076,25 @@ body {
   .data-table td.actions .btn-success:hover {
     background: #28a745;
     color: white;
-    border-color: #28a745;
+  }
+  
+  /* Nachweis Button - ausgegraut wenn noch nicht bezahlt */
+  .data-table td.actions .btn-nachweis {
+    background: #f5f5f5;
+    color: #999999;
+    border-color: #ccc;
+    cursor: not-allowed;
+  }
+  
+  .data-table td.actions .btn-nachweis.active {
+    background: white;
+    color: #000000;
+    border-color: #000000;
+    cursor: pointer;
+  }
+  
+  .data-table td.actions .btn-nachweis.active:hover {
+    background: #f8f8f8;
   }
   
   /* Container-Fixes */
