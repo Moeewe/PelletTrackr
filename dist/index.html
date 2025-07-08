@@ -262,8 +262,8 @@
                     </div>
                     <div class="form-row">
                         <input type="number" id="newMaterialNetPrice" class="form-input" placeholder="EK Netto €/kg" step="0.01">
-                        <input type="number" id="newMaterialTaxRate" class="form-input" placeholder="USt %" value="19" step="0.01">
-                        <input type="number" id="newMaterialMarkup" class="form-input" placeholder="Aufschlag %" value="30" step="0.01">
+                        <input type="number" id="newMaterialTaxRate" class="form-input" placeholder="Mehrwertsteuer %" value="19" step="0.01">
+                        <input type="number" id="newMaterialMarkup" class="form-input" placeholder="Gemeinkosten % (Strom, Versand, etc.)" value="30" step="0.01">
                         <button class="btn btn-primary" onclick="addMaterial()">Hinzufügen</button>
                     </div>
                 </div>
@@ -290,8 +290,8 @@
                     </div>
                     <div class="form-row">
                         <input type="number" id="newMasterbatchNetPrice" class="form-input" placeholder="EK Netto €/kg" step="0.01">
-                        <input type="number" id="newMasterbatchTaxRate" class="form-input" placeholder="USt %" value="19" step="0.01">
-                        <input type="number" id="newMasterbatchMarkup" class="form-input" placeholder="Aufschlag %" value="30" step="0.01">
+                        <input type="number" id="newMasterbatchTaxRate" class="form-input" placeholder="Mehrwertsteuer %" value="19" step="0.01">
+                        <input type="number" id="newMasterbatchMarkup" class="form-input" placeholder="Gemeinkosten % (Strom, Versand, etc.)" value="30" step="0.01">
                         <button class="btn btn-primary" onclick="addMasterbatch()">Hinzufügen</button>
                     </div>
                 </div>
@@ -303,7 +303,7 @@
     </div>
 
     <!-- User Manager Modal -->
-    <div id="userManager" class="modal user-management-modal">
+    <div id="userManager" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Nutzer verwalten</h3>

@@ -865,7 +865,7 @@ async function loadMaterialsForManagement() {
             <th>Hersteller</th>
             <th>EK Netto €/kg</th>
             <th>EK Brutto €/kg</th>
-            <th>Aufschlag %</th>
+            <th>Gemeinkosten %</th>
             <th>VK €/kg</th>
             <th>Aktionen</th>
           </tr>
@@ -890,7 +890,7 @@ async function loadMaterialsForManagement() {
           <td data-label="Hersteller" id="material-manufacturer-${doc.id}">${material.manufacturer || 'Unbekannt'}</td>
           <td data-label="EK Netto €/kg" id="material-netprice-${doc.id}">${formatCurrency(netPrice)}</td>
           <td data-label="EK Brutto €/kg" id="material-grossprice-${doc.id}">${formatCurrency(grossPrice)}</td>
-          <td data-label="Aufschlag %" id="material-markup-${doc.id}">${markup}%</td>
+          <td data-label="Gemeinkosten %" id="material-markup-${doc.id}">${markup}%</td>
           <td data-label="VK €/kg" id="material-price-${doc.id}">${formatCurrency(sellingPrice)}</td>
           <td class="actions" data-label="Aktionen">
             <button class="btn btn-secondary" onclick="editMaterial('${doc.id}')">Bearbeiten</button>
@@ -934,7 +934,7 @@ async function loadMasterbatchesForManagement() {
             <th>Hersteller</th>
             <th>EK Netto €/kg</th>
             <th>EK Brutto €/kg</th>
-            <th>Aufschlag %</th>
+            <th>Gemeinkosten %</th>
             <th>VK €/kg</th>
             <th>Aktionen</th>
           </tr>
@@ -961,7 +961,7 @@ async function loadMasterbatchesForManagement() {
           <td data-label="Hersteller" id="masterbatch-manufacturer-${doc.id}">${masterbatch.manufacturer || 'Unbekannt'}</td>
           <td data-label="EK Netto €/kg" id="masterbatch-netprice-${doc.id}">${formatCurrency(netPrice)}</td>
           <td data-label="EK Brutto €/kg" id="masterbatch-grossprice-${doc.id}">${formatCurrency(grossPrice)}</td>
-          <td data-label="Aufschlag %" id="masterbatch-markup-${doc.id}">${markup}%</td>
+          <td data-label="Gemeinkosten %" id="masterbatch-markup-${doc.id}">${markup}%</td>
           <td data-label="VK €/kg" id="masterbatch-price-${doc.id}">${formatCurrency(sellingPrice)}</td>
           <td class="actions" data-label="Aktionen">
             <button class="btn btn-secondary" onclick="editMasterbatch('${doc.id}')">Bearbeiten</button>
@@ -1129,11 +1129,11 @@ async function editMaterial(materialId) {
             <input type="number" id="editMaterialNetPrice" class="form-input" value="${material.netPrice || material.price || 0}" step="0.01">
           </div>
           <div class="form-group">
-            <label class="form-label">USt %</label>
+            <label class="form-label">Mehrwertsteuer %</label>
             <input type="number" id="editMaterialTaxRate" class="form-input" value="${material.taxRate || 19}" step="0.01">
           </div>
           <div class="form-group">
-            <label class="form-label">Aufschlag %</label>
+            <label class="form-label">Gemeinkosten % (Strom, Versand, etc.)</label>
             <input type="number" id="editMaterialMarkup" class="form-input" value="${material.markup || 30}" step="0.01">
           </div>
         </div>
@@ -1182,11 +1182,11 @@ async function editMasterbatch(masterbatchId) {
             <input type="number" id="editMasterbatchNetPrice" class="form-input" value="${masterbatch.netPrice || masterbatch.price || 0}" step="0.01">
           </div>
           <div class="form-group">
-            <label class="form-label">USt %</label>
+            <label class="form-label">Mehrwertsteuer %</label>
             <input type="number" id="editMasterbatchTaxRate" class="form-input" value="${masterbatch.taxRate || 19}" step="0.01">
           </div>
           <div class="form-group">
-            <label class="form-label">Aufschlag %</label>
+            <label class="form-label">Gemeinkosten % (Strom, Versand, etc.)</label>
             <input type="number" id="editMasterbatchMarkup" class="form-input" value="${masterbatch.markup || 30}" step="0.01">
           </div>
         </div>
@@ -2262,7 +2262,7 @@ async function editEntry(entryId) {
       </div>
     `;
     
-    showModalWithContent(modalHtml);
+    showModal(modalHtml);
     
   } catch (error) {
     console.error("Fehler beim Laden des Eintrags:", error);
@@ -2324,7 +2324,7 @@ async function editUserEntry(entryId) {
       </div>
     `;
     
-    showModalWithContent(modalHtml);
+    showModal(modalHtml);
     
   } catch (error) {
     console.error("Fehler beim Laden des Eintrags:", error);
@@ -2438,51 +2438,16 @@ async function saveUserEntryChanges(entryId) {
 }
 
 // Helper-Funktion für Modal
-function showModalWithContent(htmlContent) {
+function showModal(htmlContent) {
   const modal = document.getElementById('modal');
   const modalContent = modal.querySelector('.modal-content');
   modalContent.innerHTML = htmlContent;
   modal.classList.add('active');
 }
 
-// ==================== USER MANAGEMENT ====================
-
-// Nutzer bearbeiten
-async function editUser(kennung) {
-  if (!checkAdminAccess()) return;
-  
-  const user = allUsers.find(u => u.kennung === kennung);
-  if (!user) {
-    alert('Nutzer nicht gefunden!');
-    return;
-  }
-  
-  const newName = prompt(`Name des Nutzers bearbeiten:\n\nAktueller Name: ${user.name}`, user.name);
-  if (newName === null) return; // Abbruch
-  
-  if (!newName.trim()) {
-    alert('Name darf nicht leer sein!');
-    return;
-  }
-  
-  try {
-    // Update user document using compat syntax
-    const userSnapshot = await db.collection('users').where('kennung', '==', kennung).get();
-    
-    if (!userSnapshot.empty) {
-      const userDoc = userSnapshot.docs[0];
-      await userDoc.ref.update({
-        name: newName.trim(),
-        updatedAt: new Date()
-      });
-      
-      alert('Nutzer erfolgreich aktualisiert!');
-      loadUsers(); // Reload users list
-    } else {
-      alert('Nutzer-Dokument nicht gefunden!');
-    }
-  } catch (error) {
-    console.error('Fehler beim Bearbeiten des Nutzers:', error);
-    alert('Fehler beim Bearbeiten des Nutzers: ' + error.message);
-  }
+function showModalWithContent(htmlContent) {
+  const modal = document.getElementById('modal');
+  const modalContent = modal.querySelector('.modal-content');
+  modalContent.innerHTML = htmlContent;
+  modal.classList.add('active');
 }
