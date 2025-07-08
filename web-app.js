@@ -23,6 +23,23 @@ function initializeApp() {
 
 // ==================== LOGIN FUNKTIONEN ====================
 
+function showAdminLogin() {
+  const passwordGroup = document.getElementById('passwordGroup');
+  const adminBtn = document.querySelector('.btn-secondary');
+  
+  if (passwordGroup.style.display === 'none' || passwordGroup.style.display === '') {
+    // Passwort-Feld anzeigen
+    passwordGroup.style.display = 'block';
+    adminBtn.textContent = 'Admin Login';
+    adminBtn.onclick = loginAsAdmin;
+  } else {
+    // Passwort-Feld verstecken
+    passwordGroup.style.display = 'none';
+    adminBtn.textContent = 'Als Admin anmelden';
+    adminBtn.onclick = showAdminLogin;
+  }
+}
+
 async function loginAsUser() {
   const name = document.getElementById('loginName').value.trim();
   const kennung = document.getElementById('loginKennung').value.trim();
@@ -1086,23 +1103,6 @@ async function deleteMaterial(materialId) {
 async function deleteMasterbatch(masterbatchId) {
   if (!confirm('Masterbatch wirklich löschen?')) return;
   
-  try {
-    await db.collection('masterbatches').doc(masterbatchId).delete();
-    alert('Masterbatch gelöscht!');
-    loadMasterbatchesForManagement();
-    loadMasterbatches(); // Dropdown aktualisieren
-  } catch (error) {
-    console.error('Fehler beim Löschen:', error);
-    alert('Fehler beim Löschen: ' + error.message);
-  }
-}
-
-// ==================== EDIT FUNKTIONEN ====================
-
-async function editMaterial(materialId) {
-  try {
-    const doc = await db.collection('materials').doc(materialId).get();
-    if (!doc.exists) {
       alert('Material nicht gefunden!');
       return;
     }
