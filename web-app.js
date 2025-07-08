@@ -41,35 +41,41 @@ function setupEventListeners() {
   });
 }
 
-// Materialien laden
-function loadMaterials() {
-  const result = dataManager.getMaterials();
-  if (result.success) {
-    const select = document.getElementById("material");
-    select.innerHTML = '<option value="">Material auswählen...</option>';
-    
-    result.materials.forEach(function(material) {
+// Materialien laden (direkt aus Firestore)
+async function loadMaterials() {
+  const select = document.getElementById("material");
+  select.innerHTML = '<option value="">Material auswählen...</option>';
+  try {
+    const snapshot = await db.collection("materials").get();
+    snapshot.forEach(doc => {
+      const material = doc.data();
       const option = document.createElement("option");
       option.value = material.name;
-      option.textContent = material.name + " (" + material.price.toFixed(2) + " " + material.currency + "/kg)";
+      option.textContent = `${material.name} (${material.price.toFixed(2)} ${(material.currency || '€')}/kg)`;
       select.appendChild(option);
     });
+  } catch (e) {
+    console.error("Fehler beim Laden der Materialien:", e);
+    select.innerHTML = '<option value="">Fehler beim Laden</option>';
   }
 }
 
-// Masterbatches laden
-function loadMasterbatches() {
-  const result = dataManager.getMasterbatches();
-  if (result.success) {
-    const select = document.getElementById("masterbatch");
-    select.innerHTML = '<option value="">Masterbatch auswählen...</option>';
-    
-    result.masterbatches.forEach(function(masterbatch) {
+// Masterbatches laden (direkt aus Firestore)
+async function loadMasterbatches() {
+  const select = document.getElementById("masterbatch");
+  select.innerHTML = '<option value="">Masterbatch auswählen...</option>';
+  try {
+    const snapshot = await db.collection("masterbatches").get();
+    snapshot.forEach(doc => {
+      const masterbatch = doc.data();
       const option = document.createElement("option");
       option.value = masterbatch.name;
-      option.textContent = masterbatch.name + " (" + masterbatch.price.toFixed(2) + " " + masterbatch.currency + "/kg)";
+      option.textContent = `${masterbatch.name} (${masterbatch.price.toFixed(2)} ${(masterbatch.currency || '€')}/kg)`;
       select.appendChild(option);
     });
+  } catch (e) {
+    console.error("Fehler beim Laden der Masterbatches:", e);
+    select.innerHTML = '<option value="">Fehler beim Laden</option>';
   }
 }
 

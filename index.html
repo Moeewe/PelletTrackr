@@ -120,7 +120,26 @@
       </div>
     </div>
     
-    <!-- JavaScript Module -->
+    <!-- Firebase SDKs (CDN) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <!-- Firebase Initialisierung -->
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyBaaMwmjxyytxHLinmigccF30-1Wl0tzD0",
+        authDomain: "fgf-3d-druck.firebaseapp.com",
+        databaseURL: "https://fgf-3d-druck-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "fgf-3d-druck",
+        storageBucket: "fgf-3d-druck.firebasestorage.app",
+        messagingSenderId: "37190466890",
+        appId: "1:37190466890:web:cfb25f3c2f6bb62006d5b3"
+      };
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+    </script>
+
+    <!-- Deine App-Skripte -->
     <script src="config.js"></script>
     <script src="core-functions.js"></script>
     <script src="user-functions.js"></script>
