@@ -1,0 +1,583 @@
+/* ===== RESPONSIVE STYLES ===== */
+/* Mobile und Tablet Optimierungen */
+
+/* Desktop Scrollbar Styles */
+@media (min-width: 1024px) {
+  .data-table::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+  }
+  
+  .data-table::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 0;
+  }
+  
+  .data-table::-webkit-scrollbar-thumb {
+    background: #000000;
+    border-radius: 0;
+  }
+  
+  .data-table::-webkit-scrollbar-thumb:hover {
+    background: #333333;
+  }
+}
+
+/* Tablet Styles */
+@media (min-width: 769px) {
+  .data-table {
+    font-size: 12px;
+  }
+  
+  .data-table th,
+  .data-table td {
+    padding: 12px 8px;
+  }
+  
+  .data-table th {
+    font-size: 11px;
+  }
+  
+  .actions {
+    gap: 4px;
+  }
+  
+  .btn-small {
+    padding: 6px 10px;
+    font-size: 11px;
+    min-width: 60px;
+  }
+}
+
+/* Mobile Responsive - Fraenk Flat Design */
+@media (max-width: 768px) {
+  .data-table {
+    border: none;
+    background: transparent;
+    width: 100%;
+    max-width: 100%;
+    overflow: visible;
+  }
+  
+  .data-table table {
+    border-collapse: separate;
+    border-spacing: 0 16px;
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .data-table thead {
+    display: none;
+  }
+  
+  .data-table tbody {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .data-table tr {
+    display: block;
+    background: white;
+    border: 2px solid #000000;
+    border-radius: 0;
+    padding: 20px 16px;
+    margin: 0 0 16px 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+  }
+  
+  .data-table tr:hover {
+    background: #f8f8f8;
+  }
+
+  .data-table td {
+    display: block;
+    border: none;
+    padding: 8px 0;
+    text-align: left;
+    position: relative;
+    padding-left: 100px;
+    min-height: 24px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  
+  .data-table td:before {
+    content: attr(data-label) ": ";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    font-weight: 600;
+    color: #000000;
+    width: 90px;
+    font-size: 11px;
+    text-transform: uppercase;
+    line-height: 1.2;
+    word-wrap: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: 0.5px;
+  }
+
+  .data-table td[data-label="Aktionen"] {
+    padding-left: 0;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 2px solid #000000;
+  }
+  
+  .data-table td[data-label="Aktionen"]:before {
+    display: none;
+  }
+  
+  .data-table .actions {
+    white-space: normal;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-start;
+  }
+  
+  .data-table .btn,
+  .data-table .btn-small {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 10px 12px;
+    font-size: 12px;
+    min-width: auto;
+    flex: 0 1 auto;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    max-width: 100px;
+    border-radius: 0; /* Scharfe Kanten */
+    border-width: 1px;
+  }
+  
+  .data-table .btn-small.btn-secondary,
+  .data-table .btn-small.btn-tertiary,
+  .data-table .btn-small.btn-warning,
+  .data-table .btn-small.btn-danger {
+    flex: 1 1 calc(50% - 4px);
+    max-width: calc(50% - 4px);
+    min-width: 0;
+    font-size: 11px;
+    padding: 8px 10px;
+  }
+}
+
+/* Mobile Layout Optimierungen */
+@media (max-width: 768px) {
+  .container,
+  .admin-container {
+    padding: 16px;
+    max-width: 100%;
+    margin: 0;
+    overflow-x: hidden;
+  }
+  
+  .dashboard {
+    padding: 16px;
+  }
+  
+  .admin-dashboard {
+    padding: 16px;
+  }
+  
+  .dashboard-header {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+    margin-bottom: 32px;
+    padding: 16px;
+    position: relative;
+  }
+  
+  .user-info {
+    position: static;
+    justify-content: center;
+  }
+
+  .login-container {
+    padding: 24px 20px;
+    margin: 0 auto;
+    max-width: calc(100% - 32px);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .table-controls {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+  }
+  
+  .search-input,
+  .sort-select {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .admin-controls {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .control-buttons {
+    flex-direction: column;
+  }
+  
+  .stats-grid,
+  .admin-stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  
+  .stat-card {
+    padding: 16px 12px;
+  }
+  
+  .stat-number {
+    font-size: 24px;
+  }
+  
+  .btn {
+    padding: 14px 20px;
+    font-size: 15px;
+    min-width: 100px;
+    border-width: 2px;
+    border-radius: 0;
+  }
+  
+  .btn-large {
+    padding: 16px 24px;
+    font-size: 16px;
+    border-radius: 0;
+  }
+  
+  .btn-small {
+    padding: 10px 14px;
+    font-size: 13px;
+    min-width: 80px;
+    border-radius: 0;
+  }
+}
+
+/* Small Mobile Optimierungen */
+@media (max-width: 480px) {
+  .dashboard,
+  .admin-dashboard {
+    padding: 16px;
+  }
+  
+  .login-container {
+    padding: 20px 16px;
+    margin: 0 auto;
+    max-width: calc(100% - 24px);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .logo {
+    font-size: 28px;
+  }
+  
+  .stats-grid,
+  .admin-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-title,
+  .stats-section h2,
+  .entries-section h2 {
+    font-size: 20px;
+  }
+  
+  .form-container {
+    padding: 24px 20px;
+  }
+  
+  .table-controls {
+    padding: 12px;
+  }
+  
+  .btn {
+    padding: 12px 16px;
+    font-size: 14px;
+    width: 100%;
+    margin: 0 0 12px 0;
+    border-width: 1px;
+    border-radius: 0; /* Scharfe Kanten */
+  }
+  
+  .btn-large {
+    padding: 14px 20px;
+    font-size: 15px;
+    border-radius: 0; /* Scharfe Kanten */
+  }
+  
+  .data-table .actions {
+    gap: 8px;
+  }
+  
+  .data-table .btn,
+  .data-table .btn-small {
+    font-size: 11px;
+    padding: 8px 10px;
+    border-radius: 0; /* Scharfe Kanten */
+    border-width: 1px;
+  }
+  
+  .data-table .btn-small.btn-secondary,
+  .data-table .btn-small.btn-tertiary,
+  .data-table .btn-small.btn-warning,
+  .data-table .btn-small.btn-danger {
+    flex: 1 1 calc(50% - 4px);
+    max-width: calc(50% - 4px);
+    text-align: center;
+  }
+  
+  .data-table tr {
+    padding: 18px 16px;
+    margin: 0 0 16px 0;
+    background: white;
+    border: 2px solid #000000;
+    border-radius: 0;
+  }
+  
+  .data-table td {
+    padding: 6px 0;
+    padding-left: 110px;
+    font-size: 13px;
+  }
+  
+  .data-table td:before {
+    width: 100px;
+    font-size: 10px;
+    color: #000000;
+    font-weight: 600;
+  }
+}
+
+/* Extra Small Mobile (iPhone SE) */
+@media (max-width: 375px) {
+  .container,
+  .admin-container {
+    padding: 12px;
+    max-width: 100%;
+    margin: 0;
+  }
+  
+  .data-table tr {
+    padding: 12px;
+    margin: 0 0 12px 0;
+    background: white;
+    border: 2px solid #000000;
+    border-radius: 0;
+  }
+  
+  .data-table td {
+    padding-left: 70px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    font-size: 12px;
+  }
+  
+  .data-table td:before {
+    width: 60px;
+    font-size: 9px;
+    line-height: 1.0;
+    color: #000000;
+    font-weight: 600;
+  }
+  
+  .data-table td[data-label="Material"]:before {
+    content: "M: ";
+  }
+  
+  .data-table td[data-label="Masterbatch"]:before {
+    content: "MB: ";
+  }
+  
+  .data-table td[data-label="Gewicht"]:before {
+    content: "kg: ";
+  }
+  
+  .data-table td[data-label="Kosten"]:before {
+    content: "€: ";
+  }
+  
+  .data-table td[data-label="Status"]:before {
+    content: "St: ";
+  }
+  
+  .data-table td[data-label="Datum"]:before {
+    content: "D: ";
+  }
+}
+
+/* Modal Mobile Optimierung */
+@media (max-width: 768px) {
+  .modal {
+    padding: 0;
+    align-items: stretch;
+    justify-content: stretch;
+    background-color: rgba(0, 0, 0, 0.4);
+  }
+  
+  .modal-content {
+    max-width: 100%;
+    width: 100%;
+    max-height: 100vh;
+    height: 100vh;
+    border-radius: 0;
+    border: none;
+    margin: 0;
+  }
+  
+  .modal-header {
+    padding: 20px 24px;
+    border-bottom: 2px solid #000000;
+    background: white;
+  }
+  
+  .modal-header h2,
+  .modal-header h3 {
+    font-size: 18px;
+    line-height: 1.3;
+    color: #000000;
+  }
+  
+  .close-btn {
+    width: 44px;
+    height: 44px;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 0;
+  }
+  
+  .modal-body {
+    padding: 20px;
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    background: white;
+  }
+  
+  .modal-footer {
+    padding: 20px;
+    flex-direction: column;
+    border-top: 2px solid #000000;
+    gap: 12px;
+    background: white;
+  }
+
+  .modal-footer .btn {
+    width: 100%;
+    margin: 0;
+    padding: 16px 20px;
+    font-size: 16px;
+  }
+  
+  .modal .form-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .modal .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .modal .form-input,
+  .modal .form-select,
+  .modal .form-textarea {
+    font-size: 16px;
+    padding: 14px 16px;
+    border: 2px solid #000000;
+    border-radius: 0;
+  }
+  
+  .modal .form-label {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  
+  .modal .form-hint {
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+    display: block;
+  }
+  
+  .modal .modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 24px;
+  }
+  
+  .modal .modal-actions .btn {
+    width: 100%;
+    padding: 16px 20px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-header {
+    padding: 16px 20px;
+  }
+  
+  .modal-header h2,
+  .modal-header h3 {
+    font-size: 16px;
+  }
+  
+  .close-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+  
+  .modal-body {
+    padding: 16px 20px;
+  }
+  
+  .modal-footer {
+    padding: 16px 20px;
+  }
+  
+  .modal .form-input,
+  .modal .form-select,
+  .modal .form-textarea {
+    padding: 12px 14px;
+    font-size: 16px;
+  }
+  
+  .modal .form-label {
+    font-size: 13px;
+  }
+}

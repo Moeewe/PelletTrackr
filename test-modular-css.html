@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Druck FGF Abrechnung - Modular CSS Test</title>
+    <link rel="stylesheet" href="styles-modular.css">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+</head>
+<body>
+    <!-- Test Seite für modulares CSS -->
+    <div class="screen active" id="loginScreen">
+        <div class="login-container">
+            <div class="header">
+                <h1 class="logo">Pellet<span class="highlight">Trackr</span></h1>
+                <p class="tagline">3D-Druck Abrechnung für die FH Münster</p>
+            </div>
+
+            <div class="form-container">
+                <h2 class="form-title">Login</h2>
+                
+                <div class="form-group">
+                    <label class="form-label" for="loginEmail">E-Mail:</label>
+                    <input type="email" id="loginEmail" class="form-input" placeholder="name@fh-muenster.de" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="loginPassword">Passwort:</label>
+                    <input type="password" id="loginPassword" class="form-input" placeholder="Ihr Passwort" required>
+                </div>
+
+                <div class="header-actions">
+                    <button type="button" class="btn btn-primary">Anmelden</button>
+                    <button type="button" class="btn btn-secondary">Registrieren</button>
+                </div>
+            </div>
+
+            <!-- Test verschiedener Button-Typen -->
+            <div class="mt-4">
+                <h3 class="text-center mb-3">Button Tests (alle mit scharfen Kanten)</h3>
+                <div class="flex-center gap-2 flex-wrap">
+                    <button class="btn btn-primary">Primary</button>
+                    <button class="btn btn-secondary">Secondary</button>
+                    <button class="btn btn-tertiary">Tertiary</button>
+                    <button class="btn btn-success">Success</button>
+                    <button class="btn btn-danger">Danger</button>
+                    <button class="btn btn-warning">Warning</button>
+                </div>
+                
+                <div class="flex-center gap-2 flex-wrap mt-2">
+                    <button class="btn btn-small btn-primary">Klein Primary</button>
+                    <button class="btn btn-large btn-secondary">Groß Secondary</button>
+                    <button class="btn-nachweis">Nachweis</button>
+                </div>
+            </div>
+
+            <!-- Test Cost Preview -->
+            <div class="cost-preview show mt-4">
+                <div class="cost-amount">45,79 €</div>
+                <div class="cost-label">Geschätzte Kosten</div>
+            </div>
+
+            <!-- Test Stat Cards -->
+            <div class="stats-grid mt-4">
+                <div class="stat-card">
+                    <div class="stat-number">127</div>
+                    <div class="stat-label">Drucke</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">2,456 €</div>
+                    <div class="stat-label">Gesamt</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Footer -->
+    <div class="global-footer">
+        <div class="global-footer-links">
+            <a href="impressum.html">Impressum</a>
+            <a href="datenschutz.html">Datenschutz</a>
+        </div>
+    </div>
+</body>
+</html>

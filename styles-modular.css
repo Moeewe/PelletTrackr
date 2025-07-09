@@ -1,0 +1,29 @@
+/*
+ * ===== MODULAR CSS STRUCTURE =====
+ * PelletTrackr Responsive Design System
+ * 
+ * Modularisiert am 9. Juli 2025
+ * Alle Buttons mit scharfen Kanten (border-radius: 0)
+ * 
+ * Module Overview:
+ * - base.css:       Reset, Body, Animations
+ * - layout.css:     Container, Header, Dashboard
+ * - buttons.css:    Alle Button-Styles (scharf)
+ * - forms.css:      Form-Elemente, Inputs
+ * - tables.css:     Tabellen, Stats, Controls
+ * - modals.css:     Modal-Overlays
+ * - responsive.css: Mobile & Tablet Optimierungen
+ * - footer.css:     Footer-Links
+ * - utilities.css:  Hilfklassen
+ */
+
+/* Import aller Module in der richtigen Reihenfolge */
+@import url('./styles/base.css');
+@import url('./styles/layout.css');
+@import url('./styles/buttons.css');
+@import url('./styles/forms.css');
+@import url('./styles/tables.css');
+@import url('./styles/modals.css');
+@import url('./styles/responsive.css');
+@import url('./styles/footer.css');
+@import url('./styles/utilities.css');

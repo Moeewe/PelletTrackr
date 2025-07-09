@@ -1,0 +1,173 @@
+/* ===== FORM STYLES ===== */
+/* Alle Form-Elemente und Input-Felder */
+
+/* Form Containers */
+.form-container {
+  background: white;
+  border: 2px solid #000000;
+  border-radius: 0;
+  padding: 40px;
+  margin-bottom: 40px;
+}
+
+.form-section {
+  margin-bottom: 32px;
+}
+
+.form-section:last-child {
+  margin-bottom: 0;
+}
+
+.form-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #000000;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+/* Form Layout */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 24px;
+}
+
+.form-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #000000;
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* Form Inputs */
+.form-input,
+.form-select,
+.form-textarea {
+  padding: 16px;
+  border: 2px solid #000000;
+  border-radius: 0;
+  font-size: 16px;
+  font-family: inherit;
+  background: white;
+  color: #000000;
+  transition: border-color 0.2s ease;
+  width: 100%;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: #FFEB00;
+}
+
+.form-textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+/* Form Hints */
+.form-hint {
+  font-size: 14px;
+  color: #666666;
+  margin-top: 8px;
+  font-style: italic;
+}
+
+/* Error States */
+.form-input.error,
+.form-select.error,
+.form-textarea.error {
+  border-color: #dc3545;
+}
+
+.form-error {
+  color: #dc3545;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+/* Cost Preview */
+.cost-preview {
+  background: #FFEB00;
+  color: #000000;
+  padding: 24px;
+  border-radius: 0;
+  text-align: center;
+  margin: 40px 0;
+  display: block;
+  border: 2px solid #000000;
+  transition: all 0.2s ease;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.cost-preview.calculating {
+  background: #f8f8f8;
+  color: #666666;
+  border-color: #cccccc;
+}
+
+.cost-preview.show {
+  background: #FFEB00;
+  color: #000000;
+  border-color: #000000;
+  animation: pulse 0.3s ease;
+}
+
+.cost-preview.show.calculating {
+  animation: pulse 1.5s infinite;
+}
+
+.cost-amount {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: -1px;
+  color: #000000;
+}
+
+.cost-label {
+  font-size: 16px;
+  font-weight: 400;
+}
+
+/* Admin Controls */
+.admin-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 32px;
+  margin-bottom: 40px;
+}
+
+.control-section {
+  background: white;
+  border: 2px solid #000000;
+  border-radius: 0;
+  padding: 24px;
+}
+
+.control-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #000000;
+}
+
+.control-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
