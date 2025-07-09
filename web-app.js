@@ -1966,26 +1966,9 @@ async function saveEntryChanges(entryId) {
 
 // User Manager anzeigen
 function showUserManager() {
-  console.log("🔍 showUserManager aufgerufen");
-  console.log("👤 currentUser:", currentUser);
-  console.log("🔑 isAdmin:", currentUser.isAdmin);
-  
-  if (!checkAdminAccess()) {
-    console.log("❌ Admin-Zugriff verweigert");
-    return;
-  }
-  
-  console.log("✅ Admin-Zugriff gewährt, öffne User Manager");
-  const userManagerElement = document.getElementById('userManager');
-  console.log("📋 userManager Element:", userManagerElement);
-  
-  if (userManagerElement) {
-    userManagerElement.classList.add('active');
-    console.log("🎯 'active' Klasse hinzugefügt");
-    loadUsersForManagement();
-  } else {
-    console.error("❌ userManager Element nicht gefunden!");
-  }
+  if (!checkAdminAccess()) return;
+  document.getElementById('userManager').classList.add('active');
+  loadUsersForManagement();
 }
 
 // User Manager schließen
@@ -2001,6 +1984,15 @@ async function loadUsersForManagement() {
     // Alle Einträge laden, um Benutzer zu extrahieren
     const snapshot = await db.collection("entries").get();
     
+    // Benutzerinformationen aus users-Sammlung laden
+    const usersSnapshot = await db.collection("users").get();
+    const usersData = new Map();
+    
+    usersSnapshot.forEach(doc => {
+      const userData = doc.data();
+      usersData.set(userData.kennung, userData);
+    });
+    
     const userMap = new Map();
     
     snapshot.forEach(doc => {
@@ -2008,9 +2000,11 @@ async function loadUsersForManagement() {
       const userKey = `${entry.name}_${entry.kennung}`;
       
       if (!userMap.has(userKey)) {
+        const userData = usersData.get(entry.kennung) || {};
         userMap.set(userKey, {
           name: entry.name,
           kennung: entry.kennung,
+          email: userData.email, // E-Mail aus users-Sammlung
           entries: [],
           totalCost: 0,
           paidAmount: 0,
@@ -2077,11 +2071,16 @@ function renderUsersTable(users) {
       </div>
     </div>
     
+    <div class="table-actions">
+      <button class="btn btn-primary" onclick="showAddUserDialog()">+ Neuen Nutzer hinzufügen</button>
+    </div>
+    
     <table class="data-table">
       <thead>
         <tr>
           <th onclick="sortUsersBy('name')">Name ↕</th>
           <th onclick="sortUsersBy('kennung')">FH-Kennung ↕</th>
+          <th onclick="sortUsersBy('email')">E-Mail ↕</th>
           <th onclick="sortUsersBy('entries')">Drucke ↕</th>
           <th onclick="sortUsersBy('totalCost')">Gesamtkosten ↕</th>
           <th onclick="sortUsersBy('paidAmount')">Bezahlt ↕</th>
@@ -2096,20 +2095,23 @@ function renderUsersTable(users) {
   users.forEach(user => {
     const lastEntryDate = user.lastEntry.toLocaleDateString('de-DE');
     const statusClass = user.unpaidAmount > 0 ? 'status-unpaid' : 'status-paid';
+    const email = user.email || `${user.kennung}@fh-muenster.de`;
     
     tableHtml += `
       <tr>
         <td data-label="Name">${user.name}</td>
         <td data-label="FH-Kennung">${user.kennung}</td>
+        <td data-label="E-Mail">${email}</td>
         <td data-label="Drucke">${user.entries.length}</td>
         <td data-label="Gesamtkosten"><strong>${formatCurrency(user.totalCost)}</strong></td>
         <td data-label="Bezahlt">${formatCurrency(user.paidAmount)}</td>
         <td data-label="Offen" class="${statusClass}">${formatCurrency(user.unpaidAmount)}</td>
         <td data-label="Letzter Druck">${lastEntryDate}</td>
         <td data-label="Aktionen" class="actions">
-          <button class="btn btn-tertiary" onclick="showUserDetails('${user.kennung}')">Details</button>
-          <button class="btn btn-warning" onclick="sendPaymentReminder('${user.kennung}')">Mahnung</button>
-          <button class="btn btn-danger" onclick="deleteUser('${user.kennung}')">Löschen</button>
+          <button class="btn-small btn-secondary" onclick="editUser('${user.kennung}')">Bearbeiten</button>
+          <button class="btn-small btn-tertiary" onclick="showUserDetails('${user.kennung}')">Details</button>
+          <button class="btn-small btn-warning" onclick="sendPaymentReminder('${user.kennung}')">Mahnung</button>
+          <button class="btn-small btn-danger" onclick="deleteUser('${user.kennung}')">Löschen</button>
         </td>
       </tr>
     `;
@@ -2144,6 +2146,10 @@ function sortUsersBy(field) {
       case 'kennung':
         aVal = a.kennung.toLowerCase();
         bVal = b.kennung.toLowerCase();
+        break;
+      case 'email':
+        aVal = (a.email || `${a.kennung}@fh-muenster.de`).toLowerCase();
+        bVal = (b.email || `${b.kennung}@fh-muenster.de`).toLowerCase();
         break;
       case 'entries':
         aVal = a.entries.length;
@@ -2185,10 +2191,12 @@ function searchUsers() {
   
   const searchTerm = document.getElementById('userManagerSearchInput').value.toLowerCase();
   
-  const filteredUsers = window.allUsers.filter(user => 
-    user.name.toLowerCase().includes(searchTerm) ||
-    user.kennung.toLowerCase().includes(searchTerm)
-  );
+  const filteredUsers = window.allUsers.filter(user => {
+    const email = user.email || `${user.kennung}@fh-muenster.de`;
+    return user.name.toLowerCase().includes(searchTerm) ||
+           user.kennung.toLowerCase().includes(searchTerm) ||
+           email.toLowerCase().includes(searchTerm);
+  });
   
   renderUsersTable(filteredUsers);
 }
@@ -2320,5 +2328,206 @@ Möchten Sie wirklich fortfahren?`;
   } catch (error) {
     console.error("❌ Fehler beim Löschen des Benutzers:", error);
     alert("❌ Fehler beim Löschen des Benutzers. Bitte versuchen Sie es erneut.");
+  }
+}
+
+// ==================== USER MANAGEMENT EDIT FUNKTIONEN ====================
+
+// Benutzer bearbeiten
+async function editUser(kennung) {
+  if (!checkAdminAccess()) return;
+  
+  const user = window.allUsers.find(u => u.kennung === kennung);
+  if (!user) {
+    alert('Benutzer nicht gefunden!');
+    return;
+  }
+  
+  const currentEmail = user.email || `${user.kennung}@fh-muenster.de`;
+  
+  const modalHtml = `
+    <div class="modal-header">
+      <h3>Benutzer bearbeiten</h3>
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Name</label>
+        <input type="text" id="editUserName" class="form-input" value="${user.name}" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">FH-Kennung</label>
+        <input type="text" id="editUserKennung" class="form-input" value="${user.kennung}" required readonly 
+               title="FH-Kennung kann nicht geändert werden, da sie mit Drucken verknüpft ist">
+      </div>
+      <div class="form-group">
+        <label class="form-label">E-Mail-Adresse</label>
+        <input type="email" id="editUserEmail" class="form-input" value="${currentEmail}" required>
+        <small class="form-hint">Standard: kennung@fh-muenster.de</small>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+        <button class="btn btn-primary" onclick="updateUser('${kennung}')">Speichern</button>
+      </div>
+    </div>
+  `;
+  
+  showModal(modalHtml);
+}
+
+// Benutzer aktualisieren
+async function updateUser(oldKennung) {
+  const name = document.getElementById('editUserName').value.trim();
+  const email = document.getElementById('editUserEmail').value.trim();
+  
+  if (!name) {
+    alert('Bitte einen Namen eingeben!');
+    return;
+  }
+  
+  if (!email || !email.includes('@')) {
+    alert('Bitte eine gültige E-Mail-Adresse eingeben!');
+    return;
+  }
+  
+  try {
+    // User in Firestore-Sammlung erstellen/aktualisieren
+    const userQuery = await db.collection('users').where('kennung', '==', oldKennung).get();
+    
+    if (!userQuery.empty) {
+      // Benutzer existiert - aktualisieren
+      const userDoc = userQuery.docs[0];
+      await userDoc.ref.update({
+        name: name,
+        email: email,
+        updatedAt: new Date()
+      });
+    } else {
+      // Benutzer existiert nicht - erstellen
+      await db.collection('users').add({
+        name: name,
+        kennung: oldKennung,
+        email: email,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+    }
+    
+    // Alle Einträge mit diesem Namen aktualisieren
+    const entriesQuery = await db.collection('entries').where('kennung', '==', oldKennung).get();
+    const batch = db.batch();
+    
+    entriesQuery.forEach(doc => {
+      batch.update(doc.ref, { name: name });
+    });
+    
+    await batch.commit();
+    
+    alert('✅ Benutzer erfolgreich aktualisiert!');
+    closeModal();
+    loadUsersForManagement();
+    
+    // Admin Dashboard aktualisieren falls nötig
+    if (currentUser.isAdmin) {
+      loadAdminStats();
+      loadAllEntries();
+    }
+    
+  } catch (error) {
+    console.error('Fehler beim Aktualisieren des Benutzers:', error);
+    alert('❌ Fehler beim Aktualisieren: ' + error.message);
+  }
+}
+
+// Dialog für neuen Benutzer anzeigen
+function showAddUserDialog() {
+  if (!checkAdminAccess()) return;
+  
+  const modalHtml = `
+    <div class="modal-header">
+      <h3>Neuen Benutzer hinzufügen</h3>
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Name</label>
+        <input type="text" id="newUserName" class="form-input" placeholder="Vorname Nachname" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">FH-Kennung</label>
+        <input type="text" id="newUserKennung" class="form-input" placeholder="z.B. mw123456" required>
+        <small class="form-hint">Ohne @fh-muenster.de</small>
+      </div>
+      <div class="form-group">
+        <label class="form-label">E-Mail-Adresse</label>
+        <input type="email" id="newUserEmail" class="form-input" placeholder="wird automatisch ausgefüllt">
+        <small class="form-hint">Standard: kennung@fh-muenster.de</small>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+        <button class="btn btn-primary" onclick="createNewUser()">Hinzufügen</button>
+      </div>
+    </div>
+  `;
+  
+  showModal(modalHtml);
+  
+  // Auto-generate email when kennung changes
+  document.getElementById('newUserKennung').addEventListener('input', function() {
+    const kennung = this.value.trim();
+    const emailField = document.getElementById('newUserEmail');
+    if (kennung && !emailField.value) {
+      emailField.value = `${kennung}@fh-muenster.de`;
+    }
+  });
+}
+
+// Neuen Benutzer erstellen
+async function createNewUser() {
+  const name = document.getElementById('newUserName').value.trim();
+  const kennung = document.getElementById('newUserKennung').value.trim().toLowerCase();
+  const email = document.getElementById('newUserEmail').value.trim();
+  
+  if (!name || !kennung) {
+    alert('Bitte Name und FH-Kennung eingeben!');
+    return;
+  }
+  
+  if (!email || !email.includes('@')) {
+    alert('Bitte eine gültige E-Mail-Adresse eingeben!');
+    return;
+  }
+  
+  try {
+    // Prüfen ob Kennung bereits existiert
+    const existingUserQuery = await db.collection('users').where('kennung', '==', kennung).get();
+    if (!existingUserQuery.empty) {
+      alert('❌ Diese FH-Kennung ist bereits registriert!');
+      return;
+    }
+    
+    // Prüfen ob bereits Einträge mit dieser Kennung existieren
+    const entriesQuery = await db.collection('entries').where('kennung', '==', kennung).get();
+    if (!entriesQuery.empty) {
+      alert('❌ Es existieren bereits Drucke mit dieser FH-Kennung!');
+      return;
+    }
+    
+    // Benutzer erstellen
+    await db.collection('users').add({
+      name: name,
+      kennung: kennung,
+      email: email,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+    
+    alert('✅ Neuer Benutzer erfolgreich hinzugefügt!');
+    closeModal();
+    loadUsersForManagement();
+    
+  } catch (error) {
+    console.error('Fehler beim Hinzufügen:', error);
+    alert('Fehler beim Hinzufügen: ' + error.message);
   }
 }
