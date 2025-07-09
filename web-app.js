@@ -8,6 +8,27 @@ const ADMIN_PASSWORD = 'fgf2024admin'; // In production sollte das in einer sich
 let allUserEntries = [];
 let allAdminEntries = [];
 
+// ==================== FIREBASE VERBINDUNG TESTEN ====================
+
+async function testFirebaseConnection() {
+  try {
+    console.log("🧪 Teste Firebase-Verbindung...");
+    
+    // Einfache Abfrage um Verbindung zu testen
+    const testQuery = await db.collection('materials').limit(1).get();
+    
+    if (testQuery) {
+      console.log("✅ Firebase-Verbindung erfolgreich!");
+    } else {
+      console.warn("⚠️ Firebase-Verbindung möglicherweise fehlerhaft!");
+    }
+    
+  } catch (error) {
+    console.error("❌ Firebase-Verbindungstest fehlgeschlagen:", error);
+    // Hier könnten wir optional eine Benutzerwarnung anzeigen
+  }
+}
+
 // App initialisieren
 function initializeApp() {
   console.log("🚀 PelletTrackr wird initialisiert...");
@@ -1231,26 +1252,5 @@ async function saveUserEntryChanges(entryId) {
   } catch (error) {
     console.error("Fehler beim Speichern:", error);
     alert("Fehler beim Speichern der Änderungen!");
-  }
-}
-
-// ==================== FIREBASE VERBINDUNG TESTEN ====================
-
-async function testFirebaseConnection() {
-  try {
-    console.log("🧪 Teste Firebase-Verbindung...");
-    
-    // Einfache Abfrage um Verbindung zu testen
-    const testQuery = await db.collection('materials').limit(1).get();
-    
-    if (testQuery) {
-      console.log("✅ Firebase-Verbindung erfolgreich!");
-    } else {
-      console.warn("⚠️ Firebase-Verbindung möglicherweise fehlerhaft!");
-    }
-    
-  } catch (error) {
-    console.error("❌ Firebase-Verbindungstest fehlgeschlagen:", error);
-    // Hier könnten wir optional eine Benutzerwarnung anzeigen
   }
 }
