@@ -656,6 +656,7 @@ body {
   border-radius: 0;
   overflow-x: auto;
   overflow-y: visible;
+  padding: 3px; /* 3px Innenabstand um Rahmenüberlappung zu vermeiden */
 }
 
 .data-table table {

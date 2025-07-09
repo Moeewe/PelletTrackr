@@ -62,7 +62,7 @@
 
             <!-- User Stats -->
             <div class="stats-section">
-                <h2 class="section-title">Deine Statistiken</h2>
+                <h2 class="section-title">Meine Statistiken</h2>
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-value" id="userTotalEntries">0</div>
@@ -140,9 +140,22 @@
 
             <!-- User Entries -->
             <div class="entries-section">
-                <h2 class="section-title">Deine Drucke</h2>
+                <h2 class="section-title">Meine Drucke</h2>
                 <div class="table-controls">
                     <input type="text" id="userSearchInput" placeholder="Suchen nach Material, FH-Kennung, Status..." class="search-input" onkeyup="searchUserEntries()">
+                    <select id="userSortSelect" class="sort-select" onchange="sortUserEntriesBy()">
+                        <option value="">Sortierung wählen...</option>
+                        <option value="date_desc">Neueste zuerst</option>
+                        <option value="date_asc">Älteste zuerst</option>
+                        <option value="jobName_asc">Job A-Z</option>
+                        <option value="jobName_desc">Job Z-A</option>
+                        <option value="material_asc">Material A-Z</option>
+                        <option value="material_desc">Material Z-A</option>
+                        <option value="cost_desc">Höchste Kosten</option>
+                        <option value="cost_asc">Niedrigste Kosten</option>
+                        <option value="status_paid">Bezahlt zuerst</option>
+                        <option value="status_unpaid">Offen zuerst</option>
+                    </select>
                 </div>
                 <div class="user-entries-container">
                     <div id="userEntriesTable" class="data-table data-table-responsive"></div>

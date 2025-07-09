@@ -2056,21 +2056,6 @@ function renderUsersTable(users) {
   }
   
   let tableHtml = `
-    <div class="user-stats">
-      <div class="stat-card">
-        <div class="stat-number">${users.length}</div>
-        <div class="stat-label">Gesamt Benutzer</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-number">${users.reduce((sum, u) => sum + u.entries.length, 0)}</div>
-        <div class="stat-label">Gesamt Drucke</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-number">${formatCurrency(users.reduce((sum, u) => sum + u.totalCost, 0))}</div>
-        <div class="stat-label">Gesamtumsatz</div>
-      </div>
-    </div>
-    
     <div class="table-actions">
       <button class="btn btn-primary" onclick="showAddUserDialog()">+ Neuen Nutzer hinzufügen</button>
     </div>
