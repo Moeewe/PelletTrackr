@@ -18,6 +18,17 @@ cp impressum.html dist/
 cp datenschutz.html dist/
 cp favicon.svg dist/
 
+# Modular CSS kopieren
+echo "🎨 Kopiere modular CSS..."
+if [ -f styles-modular.css ]; then
+  cp styles-modular.css dist/
+fi
+
+if [ -d styles ]; then
+  echo "📁 Kopiere styles/ Ordner..."
+  cp -r styles dist/
+fi
+
 # Konfiguration kopieren (falls vorhanden)
 echo "⚙️ Kopiere Konfiguration..."
 if [ -f config.js ]; then
