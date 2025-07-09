@@ -73,14 +73,32 @@ async function loadAllEntries() {
  * Admin-Drucke rendern
  */
 function renderAdminEntries(entries) {
-  const tableBody = document.getElementById("adminEntriesTable");
+  const tableContainer = document.getElementById("adminEntriesTable");
   
   if (entries.length === 0) {
-    tableBody.innerHTML = '<tr><td colspan="9" style="text-align: center;">Keine Einträge gefunden</td></tr>';
+    tableContainer.innerHTML = '<p style="text-align: center; padding: 40px; color: #666;">Keine Einträge gefunden</p>';
     return;
   }
   
-  let html = '';
+  let html = `
+    <table class="responsive-table">
+      <thead>
+        <tr>
+          <th class="col-date">Datum</th>
+          <th class="col-name">Name</th>
+          <th class="col-kennung">Kennung</th>
+          <th class="col-material">Material</th>
+          <th class="col-weight">Gewicht</th>
+          <th class="col-masterbatch">Masterbatch</th>
+          <th class="col-job">Job</th>
+          <th class="col-cost">Kosten</th>
+          <th class="col-status">Status</th>
+          <th class="col-actions">Aktionen</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+  
   entries.forEach(entry => {
     const date = entry.date ? 
       (entry.date.seconds ? new Date(entry.date.seconds * 1000).toLocaleDateString('de-DE') : new Date(entry.date).toLocaleDateString('de-DE')) : 
@@ -92,16 +110,16 @@ function renderAdminEntries(entries) {
     
     html += `
       <tr class="${entry.paid ? 'paid' : 'unpaid'}">
-        <td data-label="Datum">${date}</td>
-        <td data-label="Name">${entry.name || 'N/A'}</td>
-        <td data-label="Kennung">${entry.kennung || 'N/A'}</td>
-        <td data-label="Material">${entry.material || 'N/A'}</td>
-        <td data-label="Gewicht">${entry.weight || 0} kg</td>
-        <td data-label="Masterbatch">${entry.masterbatch || 'Keiner'}</td>
-        <td data-label="Job">${entry.jobName || 'Kein Name'}</td>
-        <td data-label="Kosten">${formatCurrency(entry.totalCost || 0)}</td>
-        <td data-label="Status">${statusBadge}</td>
-        <td class="actions" data-label="Aktionen">
+        <td data-label="Datum" class="col-date">${date}</td>
+        <td data-label="Name" class="col-name">${entry.name || 'N/A'}</td>
+        <td data-label="Kennung" class="col-kennung">${entry.kennung || 'N/A'}</td>
+        <td data-label="Material" class="col-material">${entry.material || 'N/A'}</td>
+        <td data-label="Gewicht" class="col-weight">${entry.weight || 0} kg</td>
+        <td data-label="Masterbatch" class="col-masterbatch">${entry.masterbatch || 'Keiner'}</td>
+        <td data-label="Job" class="col-job">${entry.jobName || 'Kein Name'}</td>
+        <td data-label="Kosten" class="col-cost">${formatCurrency(entry.totalCost || 0)}</td>
+        <td data-label="Status" class="col-status">${statusBadge}</td>
+        <td class="actions col-actions" data-label="Aktionen">
           <button class="btn btn-sm btn-secondary" onclick="viewEntryDetails('${entry.id}')">Details</button>
           <button class="btn btn-sm btn-primary" onclick="editEntry('${entry.id}')">Bearbeiten</button>
           ${!entry.paid ? 
@@ -114,68 +132,91 @@ function renderAdminEntries(entries) {
     `;
   });
   
-  tableBody.innerHTML = html;
+  html += `
+      </tbody>
+    </table>
+  `;
+  
+  tableContainer.innerHTML = html;
 }
 
 /**
- * Entry als bezahlt markieren
+ * Entry als bezahlt markieren (Admin)
  */
 async function markEntryAsPaid(entryId) {
-  if (!checkAdminAccess()) return;
+  if (!currentUser.isAdmin) {
+    alert('Nur Admins können Zahlungen verwalten!');
+    return;
+  }
   
   try {
     await db.collection('entries').doc(entryId).update({
       paid: true,
-      paidDate: new Date()
+      paidDate: new Date(),
+      paidBy: currentUser.kennung
     });
     
     alert('✅ Eintrag als bezahlt markiert!');
     loadAllEntries();
-    loadAdminStats();
+    if (document.getElementById('userEntriesTable')) {
+      loadUserEntries();
+    }
     
   } catch (error) {
     console.error('Fehler beim Markieren als bezahlt:', error);
-    alert('❌ Fehler beim Markieren als bezahlt: ' + error.message);
+    alert('❌ Fehler: ' + error.message);
   }
 }
 
 /**
- * Entry als unbezahlt markieren
+ * Entry als unbezahlt markieren (Admin)
  */
 async function markEntryAsUnpaid(entryId) {
-  if (!checkAdminAccess()) return;
+  if (!currentUser.isAdmin) {
+    alert('Nur Admins können Zahlungen verwalten!');
+    return;
+  }
   
   try {
     await db.collection('entries').doc(entryId).update({
       paid: false,
-      paidDate: firebase.firestore.FieldValue.delete()
+      paidDate: null,
+      paidBy: null
     });
     
     alert('⚠️ Eintrag als unbezahlt markiert!');
     loadAllEntries();
-    loadAdminStats();
+    if (document.getElementById('userEntriesTable')) {
+      loadUserEntries();
+    }
     
   } catch (error) {
     console.error('Fehler beim Markieren als unbezahlt:', error);
-    alert('❌ Fehler beim Markieren als unbezahlt: ' + error.message);
+    alert('❌ Fehler: ' + error.message);
   }
 }
 
 /**
- * Entry löschen
+ * Entry löschen (Admin)
  */
 async function deleteEntry(entryId) {
-  if (!checkAdminAccess()) return;
+  if (!currentUser.isAdmin) {
+    alert('Nur Admins können Einträge löschen!');
+    return;
+  }
   
-  if (!confirm('⚠️ Eintrag wirklich löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden!')) {
+  if (!confirm('❌ Soll dieser Eintrag wirklich gelöscht werden?\n\nDiese Aktion kann nicht rückgängig gemacht werden!')) {
     return;
   }
   
   try {
     await db.collection('entries').doc(entryId).delete();
-    alert('✅ Eintrag gelöscht!');
+    
+    alert('🗑️ Eintrag erfolgreich gelöscht!');
     loadAllEntries();
-    loadAdminStats();
+    if (document.getElementById('userEntriesTable')) {
+      loadUserEntries();
+    }
     
   } catch (error) {
     console.error('Fehler beim Löschen:', error);
