@@ -1,39 +1,65 @@
 #!/bin/bash
-# Build-Skript für Netlify Deployment (kopiert alle nötigen Dateien in dist/)
+# Build-Skript für Netlify Deployment (aktualisiert für aufgeräumte Struktur)
 
 set -e
+
+echo "🚀 Starte Build für Netlify..."
 
 # Zielordner vorbereiten
 rm -rf dist
 mkdir -p dist/assets
 
-
-# Web-App Dateien kopieren (angepasst für aktuelle Struktur)
+# Hauptdateien kopieren (die definitiv existieren)
+echo "📄 Kopiere Hauptdateien..."
 cp index.html dist/
 cp web-app.js dist/
 cp styles.css dist/
 cp impressum.html dist/
 cp datenschutz.html dist/
+cp favicon.svg dist/
 
-# Scripte und Konfiguration
-cp firebase-data-manager.js dist/
-cp config.js dist/
-
-# Assets kopieren
-cp -r assets/* dist/assets/
-
-# Sonstige benötigte Dateien
-cp netlify.toml dist/
-cp admin-functions.js dist/
-cp core-functions.js dist/
-cp debug-functions.js dist/
-cp user-functions.js dist/
-
-
-# Optional: Test-Tools (kopiere nur, wenn Datei existiert)
-if [ -f tests/csv-import-tool.html ]; then
-  cp tests/csv-import-tool.html dist/
+# Konfiguration kopieren (falls vorhanden)
+echo "⚙️ Kopiere Konfiguration..."
+if [ -f config.js ]; then
+  cp config.js dist/
 fi
 
-# Info
-echo "✅ Build abgeschlossen. Alle Dateien liegen in dist/ bereit für Netlify."
+# Firebase-Konfiguration kopieren (falls vorhanden)
+if [ -f firestore.rules ]; then
+  cp firestore.rules dist/
+fi
+
+if [ -f firestore.indexes.json ]; then
+  cp firestore.indexes.json dist/
+fi
+
+# Assets kopieren (falls Ordner existiert)
+if [ -d assets ]; then
+  echo "🖼️ Kopiere Assets..."
+  cp -r assets/* dist/assets/
+fi
+
+# Netlify-Konfiguration kopieren
+if [ -f netlify.toml ]; then
+  cp netlify.toml dist/
+fi
+
+# Modulare Version auch kopieren (für Tests/Entwicklung)
+if [ -f web-app-modular.js ]; then
+  echo "📦 Kopiere modulare Version..."
+  cp web-app-modular.js dist/
+fi
+
+if [ -f index-modular-complete.html ]; then
+  cp index-modular-complete.html dist/
+fi
+
+# Module kopieren (falls vorhanden)
+if [ -d modules ]; then
+  echo "📂 Kopiere Module..."
+  cp -r modules dist/
+fi
+
+echo "✅ Build erfolgreich abgeschlossen!"
+echo "📁 Alle Dateien sind in dist/ bereit für Netlify."
+echo "🌐 Hauptdatei: dist/index.html"

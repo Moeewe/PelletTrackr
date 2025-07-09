@@ -1,0 +1,11 @@
+[build]
+  publish = "dist"
+  command = "bash build.sh"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[context.production.environment]
+  NODE_VERSION = "18"
