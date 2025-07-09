@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PelletTrackr - Test Version</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Debug styles */
+        .debug-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 9999;
+        }
+        
+        /* Temporarily lower footer z-index for testing */
+        .global-footer {
+            z-index: 100 !important;
+            background: rgba(255, 0, 0, 0.3) !important; /* Red to see overlap */
+        }
+        
+        /* Highlight clickable elements */
+        .btn, button {
+            border: 2px solid lime !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-info">
+        <div>Body padding-bottom: <span id="bodyPadding"></span></div>
+        <div>Footer height: <span id="footerHeight"></span></div>
+        <div>Footer z-index: <span id="footerZIndex"></span></div>
+        <div>Buttons clickable: <span id="buttonsClickable">Testing...</span></div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="screen active">
+        <div class="login-container">
+            <div class="header">
+                <h1 class="logo">
+                    <span class="highlight">Pellet</span>Trackr
+                </h1>
+            </div>
+            
+            <div class="login-form">
+                <div class="form-group">
+                    <input type="text" id="loginName" class="form-input" placeholder="Test Name">
+                </div>
+                
+                <div class="form-group">
+                    <input type="text" id="loginKennung" class="form-input" placeholder="Test Kennung">
+                </div>
+                
+                <div class="form-group" id="passwordGroup" style="display: none;">
+                    <input type="password" id="adminPassword" class="form-input" placeholder="Admin Passwort">
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="testClick('User Login')">
+                        Login
+                    </button>
+                    <button class="btn btn-secondary" onclick="testClick('Admin Login')">
+                        Als Admin anmelden
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Footer -->
+    <div class="global-footer">
+        <div class="global-footer-links">
+            <a href="impressum.html" target="_blank">Impressum</a>
+            <a href="datenschutz.html" target="_blank">Datenschutz</a>
+        </div>
+    </div>
+
+    <script>
+        function testClick(buttonName) {
+            alert('Button "' + buttonName + '" wurde erfolgreich geklickt!');
+            document.getElementById('buttonsClickable').textContent = 'YES ✅';
+        }
+
+        // Debug information
+        function updateDebugInfo() {
+            const body = document.body;
+            const footer = document.querySelector('.global-footer');
+            
+            document.getElementById('bodyPadding').textContent = 
+                window.getComputedStyle(body).paddingBottom;
+            
+            if (footer) {
+                document.getElementById('footerHeight').textContent = 
+                    footer.offsetHeight + 'px';
+                document.getElementById('footerZIndex').textContent = 
+                    window.getComputedStyle(footer).zIndex;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDebugInfo();
+            
+            // Test if buttons are reachable
+            setTimeout(function() {
+                const buttons = document.querySelectorAll('.btn');
+                let allClickable = true;
+                
+                buttons.forEach(function(btn) {
+                    const rect = btn.getBoundingClientRect();
+                    const elementAtPoint = document.elementFromPoint(
+                        rect.left + rect.width/2, 
+                        rect.top + rect.height/2
+                    );
+                    
+                    if (elementAtPoint !== btn && !btn.contains(elementAtPoint)) {
+                        allClickable = false;
+                        console.log('Button not clickable:', btn, 'Element at point:', elementAtPoint);
+                    }
+                });
+                
+                document.getElementById('buttonsClickable').textContent = 
+                    allClickable ? 'YES ✅' : 'NO ❌';
+            }, 500);
+        });
+    </script>
+</body>
+</html>
