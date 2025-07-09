@@ -800,234 +800,68 @@ function renderAdminEntries(entries) {
   tableDiv.innerHTML = tableHtml;
 }
 
-// ==================== USER MANAGEMENT DETAIL FUNKTIONEN ====================
+// ==================== USER ENTRY BEARBEITUNG ====================
 
-// User-Details anzeigen
-function showUserDetails(kennung) {
-  if (!checkAdminAccess()) return;
-  
-  const user = window.allUsers.find(u => u.kennung === kennung);
-  if (!user) {
-    alert('Benutzer nicht gefunden!');
-    return;
-  }
-  
-  const email = user.email || `${user.kennung}@fh-muenster.de`;
-  const firstEntryDate = user.firstEntry.toLocaleDateString('de-DE');
-  const lastEntryDate = user.lastEntry.toLocaleDateString('de-DE');
-  
-  // Neueste 5 Einträge
-  const recentEntries = user.entries
-    .sort((a, b) => (b.timestamp ? b.timestamp.toDate() : new Date(0)) - (a.timestamp ? a.timestamp.toDate() : new Date(0)))
-    .slice(0, 5);
-  
-  let recentEntriesHtml = '';
-  if (recentEntries.length > 0) {
-    recentEntriesHtml = `
-      <h4>Letzte Drucke</h4>
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Datum</th>
-            <th>Job</th>
-            <th>Material</th>
-            <th>Kosten</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-    
-    recentEntries.forEach(entry => {
-      const entryDate = entry.timestamp ? entry.timestamp.toDate().toLocaleDateString('de-DE') : 'Unbekannt';
-      const isPaid = entry.paid || entry.isPaid;
-      const status = isPaid ? '<span class="status-paid">Bezahlt</span>' : '<span class="status-unpaid">Offen</span>';
-      
-      recentEntriesHtml += `
-        <tr>
-          <td>${entryDate}</td>
-          <td>${entry.jobName || '3D-Druck Auftrag'}</td>
-          <td>${entry.material}</td>
-          <td>${formatCurrency(entry.totalCost)}</td>
-          <td>${status}</td>
-        </tr>
-      `;
-    });
-    
-    recentEntriesHtml += `
-        </tbody>
-      </table>
-    `;
-  } else {
-    recentEntriesHtml = '<p>Keine Drucke vorhanden.</p>';
-  }
-  
-  const modalHtml = `
-    <div class="modal-header">
-      <h3>Benutzer-Details: ${user.name}</h3>
-      <button class="close-btn" onclick="closeModal()">&times;</button>
-    </div>
-    <div class="modal-body">
-      <div class="user-details">
-        <div class="detail-section">
-          <h4>Benutzerinformationen</h4>
-          <div class="detail-item">
-            <span class="detail-label">Name:</span>
-            <span class="detail-value">${user.name}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">FH-Kennung:</span>
-            <span class="detail-value">${user.kennung}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">E-Mail:</span>
-            <span class="detail-value">${email}</span>
-          </div>
-        </div>
-        
-        <div class="detail-section">
-          <h4>Aktivitätsstatistiken</h4>
-          <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-value">${user.entries.length}</div>
-              <div class="stat-label">Drucke gesamt</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-value">${formatCurrency(user.totalCost)}</div>
-              <div class="stat-label">Gesamtkosten</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-value">${formatCurrency(user.paidAmount)}</div>
-              <div class="stat-label">Bezahlt</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-value">${formatCurrency(user.unpaidAmount)}</div>
-              <div class="stat-label">Ausstehend</div>
-            </div>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Erster Druck:</span>
-            <span class="detail-value">${firstEntryDate}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Letzter Druck:</span>
-            <span class="detail-value">${lastEntryDate}</span>
-          </div>
-        </div>
-        
-        <div class="detail-section">
-          ${recentEntriesHtml}
-        </div>
-      </div>
-      
-      <div class="modal-actions">
-        <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
-        <button class="btn btn-primary" onclick="editUser('${kennung}')">Benutzer bearbeiten</button>
-        ${user.unpaidAmount > 0 ? 
-          `<button class="btn btn-warning" onclick="sendPaymentReminder('${kennung}')">Zahlungserinnerung senden</button>` : 
-          ''
-        }
-      </div>
-    </div>
-  `;
-  
-  showModal(modalHtml);
-}
-
-// Zahlungserinnerung senden
-function sendPaymentReminder(kennung) {
-  if (!checkAdminAccess()) return;
-  
-  const user = window.allUsers.find(u => u.kennung === kennung);
-  if (!user) {
-    alert('Benutzer nicht gefunden!');
-    return;
-  }
-  
-  if (user.unpaidAmount <= 0) {
-    alert('Dieser Benutzer hat keine offenen Zahlungen.');
-    return;
-  }
-  
-  const email = user.email || `${user.kennung}@fh-muenster.de`;
-  const unpaidEntries = user.entries.filter(entry => !(entry.paid || entry.isPaid));
-  
-  // E-Mail-Inhalt erstellen
-  const subject = encodeURIComponent(`PelletTrackr - Zahlungserinnerung für offene 3D-Drucke`);
-  
-  let entryList = '';
-  unpaidEntries.forEach((entry, index) => {
-    const date = entry.timestamp ? entry.timestamp.toDate().toLocaleDateString('de-DE') : 'Unbekannt';
-    entryList += `${index + 1}. ${entry.jobName || '3D-Druck Auftrag'} vom ${date} - ${formatCurrency(entry.totalCost)}\n`;
-  });
-  
-  const body = encodeURIComponent(`Hallo ${user.name},
-
-dies ist eine freundliche Erinnerung, dass noch Zahlungen für Ihre 3D-Drucke ausstehen.
-
-OFFENE DRUCKE:
-${entryList}
-
-GESAMTBETRAG: ${formatCurrency(user.unpaidAmount)}
-
-Bitte begleichen Sie die offenen Beträge zeitnah.
-
-Bei Fragen wenden Sie sich gerne an das FGF 3D-Druck Team.
-
-Mit freundlichen Grüßen
-Ihr FGF 3D-Druck Team
-
----
-Diese E-Mail wurde automatisch von PelletTrackr generiert am ${new Date().toLocaleDateString('de-DE')}.`);
-  
-  const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
-  
-  // E-Mail-Programm öffnen
-  window.open(mailtoLink, '_blank');
-  
-  // Bestätigung
-  alert(`Zahlungserinnerung für ${user.name} wurde in Ihrem E-Mail-Programm geöffnet.`);
-}
-
-// User-Sortierung aus Dropdown
-function sortUsers() {
-  if (!window.allUsers) return;
-  
-  const sortValue = document.getElementById('userManagerSortSelect').value;
-  const [field, direction] = sortValue.split('-');
-  
-  const sortedUsers = [...window.allUsers].sort((a, b) => {
-    let aVal, bVal;
-    
-    switch(field) {
-      case 'name':
-        aVal = a.name.toLowerCase();
-        bVal = b.name.toLowerCase();
-        break;
-      case 'kennung':
-        aVal = a.kennung.toLowerCase();
-        bVal = b.kennung.toLowerCase();
-        break;
-      case 'entries':
-        aVal = a.entries.length;
-        bVal = b.entries.length;
-        break;
-      case 'revenue':
-        aVal = a.totalCost;
-        bVal = b.totalCost;
-        break;
-      default:
-        return 0;
+// User-Eintrag bearbeiten (limitiert)
+async function editUserEntry(entryId) {
+  try {
+    const doc = await db.collection('entries').doc(entryId).get();
+    if (!doc.exists) {
+      alert('Druck nicht gefunden!');
+      return;
     }
     
-    if (direction === 'asc') {
-      return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
-    } else {
-      return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
+    const entry = doc.data();
+    
+    // Prüfen ob User berechtigt ist (nur eigene Drucke bearbeiten)
+    if (entry.kennung !== currentUser.kennung) {
+      alert('Du kannst nur deine eigenen Drucke bearbeiten!');
+      return;
     }
-  });
-  
-  renderUsersTable(sortedUsers);
+    
+    // Prüfen ob Eintrag bereits bezahlt wurde
+    if (entry.paid || entry.isPaid) {
+      alert('Bezahlte Einträge können nicht mehr bearbeitet werden!');
+      return;
+    }
+    
+    const jobName = entry.jobName || "3D-Druck Auftrag";
+    const jobNotes = entry.jobNotes || "";
+    
+    const modalHtml = `
+      <div class="modal-header">
+        <h2>Mein Eintrag Bearbeiten</h2>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="editUserEntryForm">
+          <div class="form-group">
+            <label class="form-label">Job-Name</label>
+            <input type="text" id="editUserJobName" class="form-input" value="${jobName}">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Notizen</label>
+            <textarea id="editUserJobNotes" class="form-textarea" rows="4">${jobNotes}</textarea>
+          </div>
+          
+          <p style="margin-top: 20px; padding: 16px; background: #f8f8f8; border: 1px solid #e0e0e0; color: #666; font-size: 14px;">
+            <strong>Hinweis:</strong> Als User kannst du nur Job-Name und Notizen bearbeiten. Material-Mengen können nur von Admins geändert werden.
+          </p>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+        <button class="btn btn-primary" onclick="saveUserEntryChanges('${entryId}')">Speichern</button>
+      </div>
+    `;
+    
+    showModal(modalHtml);
+    
+  } catch (error) {
+    console.error("Fehler beim Laden des Eintrags:", error);
+    alert("Fehler beim Laden des Eintrags!");
+  }
 }
 
 // ==================== MODAL FUNKTIONEN ====================
@@ -1253,4 +1087,79 @@ async function saveUserEntryChanges(entryId) {
     console.error("Fehler beim Speichern:", error);
     alert("Fehler beim Speichern der Änderungen!");
   }
+}
+
+// ==================== USER ENTRY SUCHE & SORTIERUNG ====================
+
+// User-Einträge suchen
+function searchUserEntries() {
+  const searchInput = document.getElementById('userSearchInput');
+  if (!searchInput) return;
+  
+  const searchTerm = searchInput.value.toLowerCase().trim();
+  
+  if (!searchTerm) {
+    // Alle Einträge anzeigen
+    renderUserEntries(allUserEntries);
+    return;
+  }
+  
+  const filteredEntries = allUserEntries.filter(entry => {
+    const jobName = (entry.jobName || '').toLowerCase();
+    const material = (entry.material || '').toLowerCase();
+    const masterbatch = (entry.masterbatch || '').toLowerCase();
+    const status = (entry.paid || entry.isPaid) ? 'bezahlt' : 'offen';
+    const notes = (entry.jobNotes || '').toLowerCase();
+    
+    return jobName.includes(searchTerm) || 
+           material.includes(searchTerm) || 
+           masterbatch.includes(searchTerm) || 
+           status.includes(searchTerm) ||
+           notes.includes(searchTerm);
+  });
+  
+  renderUserEntries(filteredEntries);
+}
+
+// User-Einträge sortieren
+function sortUserEntries(field) {
+  if (!allUserEntries || allUserEntries.length === 0) return;
+  
+  let sortedEntries = [...allUserEntries];
+  
+  switch(field) {
+    case 'date':
+      sortedEntries.sort((a, b) => {
+        if (!a.timestamp || !b.timestamp) return 0;
+        return b.timestamp.toDate() - a.timestamp.toDate();
+      });
+      break;
+    case 'jobName':
+      sortedEntries.sort((a, b) => (a.jobName || '').localeCompare(b.jobName || ''));
+      break;
+    case 'material':
+      sortedEntries.sort((a, b) => (a.material || '').localeCompare(b.material || ''));
+      break;
+    case 'materialMenge':
+      sortedEntries.sort((a, b) => (b.materialMenge || 0) - (a.materialMenge || 0));
+      break;
+    case 'masterbatch':
+      sortedEntries.sort((a, b) => (a.masterbatch || '').localeCompare(b.masterbatch || ''));
+      break;
+    case 'masterbatchMenge':
+      sortedEntries.sort((a, b) => (b.masterbatchMenge || 0) - (a.masterbatchMenge || 0));
+      break;
+    case 'cost':
+      sortedEntries.sort((a, b) => (b.totalCost || 0) - (a.totalCost || 0));
+      break;
+    case 'status':
+      sortedEntries.sort((a, b) => {
+        const aStatus = (a.paid || a.isPaid) ? 1 : 0;
+        const bStatus = (b.paid || b.isPaid) ? 1 : 0;
+        return bStatus - aStatus;
+      });
+      break;
+  }
+  
+  renderUserEntries(sortedEntries);
 }
