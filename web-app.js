@@ -1722,3 +1722,96 @@ function closeModal() {
   const modal = document.getElementById('modal');
   modal.classList.remove('active');
 }
+
+// ==================== USER ENTRY EDIT FUNKTIONEN ====================
+
+// User-Eintrag bearbeiten (nur Job-Name und Notizen)
+async function editUserEntry(entryId) {
+  try {
+    const doc = await db.collection('entries').doc(entryId).get();
+    if (!doc.exists) {
+      alert('Druck nicht gefunden!');
+      return;
+    }
+    
+    const entry = doc.data();
+    
+    // Prüfen ob User berechtigt ist (nur eigene Drucke bearbeiten)
+    if (entry.kennung !== currentUser.kennung) {
+      alert('Du kannst nur deine eigenen Drucke bearbeiten!');
+      return;
+    }
+    
+    // Prüfen ob Eintrag bereits bezahlt wurde
+    if (entry.paid || entry.isPaid) {
+      alert('Bezahlte Einträge können nicht mehr bearbeitet werden!');
+      return;
+    }
+    
+    const jobName = entry.jobName || "3D-Druck Auftrag";
+    const jobNotes = entry.jobNotes || "";
+    
+    const modalHtml = `
+      <div class="modal-header">
+        <h2>Mein Eintrag Bearbeiten</h2>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="editUserEntryForm">
+          <div class="form-group">
+            <label class="form-label">Job-Name</label>
+            <input type="text" id="editUserJobName" class="form-input" value="${jobName}">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Notizen</label>
+            <textarea id="editUserJobNotes" class="form-textarea" rows="4" placeholder="Optionale Notizen zu diesem Druck...">${jobNotes}</textarea>
+          </div>
+          
+          <p style="margin-top: 20px; padding: 16px; background: #f8f8f8; border: 1px solid #e0e0e0; color: #666; font-size: 14px;">
+            <strong>Hinweis:</strong> Als Benutzer kannst du nur Job-Name und Notizen bearbeiten. Material-Mengen können nur von Admins geändert werden.
+          </p>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+        <button class="btn btn-primary" onclick="saveUserEntryChanges('${entryId}')">Speichern</button>
+      </div>
+    `;
+    
+    showModal(modalHtml);
+    
+  } catch (error) {
+    console.error("Fehler beim Laden des Eintrags:", error);
+    alert("Fehler beim Laden des Eintrags!");
+  }
+}
+
+// User-Änderungen speichern (nur Job-Name und Notizen)
+async function saveUserEntryChanges(entryId) {
+  const jobName = document.getElementById('editUserJobName').value.trim();
+  const jobNotes = document.getElementById('editUserJobNotes').value.trim();
+  
+  if (!jobName) {
+    alert('Job-Name darf nicht leer sein!');
+    return;
+  }
+  
+  try {
+    await db.collection('entries').doc(entryId).update({
+      jobName: jobName,
+      jobNotes: jobNotes,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    alert('✅ Eintrag erfolgreich aktualisiert!');
+    closeModal();
+    
+    // User Dashboard aktualisieren
+    loadUserEntries();
+    
+  } catch (error) {
+    console.error('Fehler beim Aktualisieren des Eintrags:', error);
+    alert('❌ Fehler beim Speichern: ' + error.message);
+  }
+}
