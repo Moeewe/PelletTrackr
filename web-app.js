@@ -1815,3 +1815,149 @@ async function saveUserEntryChanges(entryId) {
     alert('❌ Fehler beim Speichern: ' + error.message);
   }
 }
+
+// ==================== ADMIN ENTRY EDIT FUNKTIONEN ====================
+
+// Admin-Eintrag bearbeiten (alle Felder)
+async function editEntry(entryId) {
+  if (!checkAdminAccess()) return;
+  
+  try {
+    const doc = await db.collection('entries').doc(entryId).get();
+    if (!doc.exists) {
+      alert('Druck nicht gefunden!');
+      return;
+    }
+    
+    const entry = doc.data();
+    const jobName = entry.jobName || "3D-Druck Auftrag";
+    const jobNotes = entry.jobNotes || "";
+    
+    const modalHtml = `
+      <div class="modal-header">
+        <h2>Eintrag Bearbeiten (Admin)</h2>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="editEntryForm">
+          <div class="form-group">
+            <label class="form-label">Job-Name</label>
+            <input type="text" id="editJobName" class="form-input" value="${jobName}">
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Material-Menge (kg)</label>
+              <input type="number" id="editMaterialMenge" class="form-input" value="${(entry.materialMenge || 0).toFixed(2)}" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Masterbatch-Menge (kg)</label>
+              <input type="number" id="editMasterbatchMenge" class="form-input" value="${(entry.masterbatchMenge || 0).toFixed(2)}" step="0.01" min="0">
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Notizen</label>
+            <textarea id="editJobNotes" class="form-textarea" rows="4" placeholder="Optionale Notizen zu diesem Druck...">${jobNotes}</textarea>
+          </div>
+          
+          <p style="margin-top: 20px; padding: 16px; background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; font-size: 14px;">
+            <strong>Admin-Berechtigung:</strong> Du kannst alle Felder dieses Eintrags bearbeiten. Kosten werden automatisch neu berechnet.
+          </p>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+        <button class="btn btn-primary" onclick="saveEntryChanges('${entryId}')">Speichern</button>
+      </div>
+    `;
+    
+    showModal(modalHtml);
+    
+  } catch (error) {
+    console.error("Fehler beim Laden des Eintrags:", error);
+    alert("Fehler beim Laden des Eintrags!");
+  }
+}
+
+// Admin-Änderungen speichern (alle Felder mit Kostenberechnung)
+async function saveEntryChanges(entryId) {
+  const jobName = document.getElementById('editJobName').value.trim();
+  const materialMenge = parseFloat(document.getElementById('editMaterialMenge').value);
+  const masterbatchMenge = parseFloat(document.getElementById('editMasterbatchMenge').value);
+  const jobNotes = document.getElementById('editJobNotes').value.trim();
+  
+  if (!jobName) {
+    alert('Job-Name darf nicht leer sein!');
+    return;
+  }
+  
+  if (isNaN(materialMenge) || materialMenge < 0) {
+    alert('Bitte gültige Material-Menge eingeben!');
+    return;
+  }
+  
+  if (isNaN(masterbatchMenge) || masterbatchMenge < 0) {
+    alert('Bitte gültige Masterbatch-Menge eingeben!');
+    return;
+  }
+  
+  try {
+    // Aktuellen Eintrag laden
+    const doc = await db.collection('entries').doc(entryId).get();
+    const entry = doc.data();
+    
+    // Neue Kosten berechnen
+    let materialCost = 0;
+    let masterbatchCost = 0;
+    
+    // Material-Preis ermitteln
+    if (entry.material && materialMenge > 0) {
+      const materialSnapshot = await db.collection('materials')
+        .where('name', '==', entry.material)
+        .get();
+      
+      if (!materialSnapshot.empty) {
+        const materialData = materialSnapshot.docs[0].data();
+        materialCost = materialMenge * (materialData.price || 0);
+      }
+    }
+    
+    // Masterbatch-Preis ermitteln
+    if (entry.masterbatch && masterbatchMenge > 0) {
+      const masterbatchSnapshot = await db.collection('masterbatches')
+        .where('name', '==', entry.masterbatch)
+        .get();
+      
+      if (!masterbatchSnapshot.empty) {
+        const masterbatchData = masterbatchSnapshot.docs[0].data();
+        masterbatchCost = masterbatchMenge * (masterbatchData.price || 0);
+      }
+    }
+    
+    const totalCost = materialCost + masterbatchCost;
+    
+    // Eintrag aktualisieren
+    await db.collection('entries').doc(entryId).update({
+      jobName: jobName,
+      jobNotes: jobNotes,
+      materialMenge: materialMenge,
+      masterbatchMenge: masterbatchMenge,
+      materialCost: materialCost,
+      masterbatchCost: masterbatchCost,
+      totalCost: totalCost,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    alert('✅ Eintrag erfolgreich aktualisiert!');
+    closeModal();
+    
+    // Admin Dashboard aktualisieren
+    loadAdminStats();
+    loadAllEntries();
+    
+  } catch (error) {
+    console.error('Fehler beim Aktualisieren des Eintrags:', error);
+    alert('❌ Fehler beim Speichern: ' + error.message);
+  }
+}
