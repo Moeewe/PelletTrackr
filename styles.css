@@ -1543,8 +1543,10 @@ body {
     border-bottom: 2px solid #000000;
   }
   
-  .modal-header h2 {
-    font-size: 20px;
+  .modal-header h2,
+  .modal-header h3 {
+    font-size: 18px;
+    line-height: 1.3;
   }
   
   .close-btn {
@@ -1555,24 +1557,69 @@ body {
   }
   
   .modal-body {
-    padding: 24px;
+    padding: 20px;
     flex: 1;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   
   .modal-footer {
-    padding: 20px 24px;
+    padding: 20px;
     flex-direction: column;
     border-top: 2px solid #000000;
+    gap: 12px;
   }
   
   .modal-footer .btn {
     width: 100%;
-    margin: 0 0 8px 0;
+    margin: 0;
+    padding: 16px 20px;
+    font-size: 16px;
   }
   
-  .modal-footer .btn:last-child {
-    margin-bottom: 0;
+  /* Form-Optimierungen für Modal */
+  .modal .form-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .modal .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .modal .form-input,
+  .modal .form-select,
+  .modal .form-textarea {
+    font-size: 16px; /* Verhindert Auto-Zoom auf iOS */
+    padding: 14px 16px;
+    border-width: 2px;
+  }
+  
+  .modal .form-label {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  
+  .modal .form-hint {
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+    display: block;
+  }
+  
+  /* Modal Actions Buttons */
+  .modal .modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 24px;
+  }
+  
+  .modal .modal-actions .btn {
+    width: 100%;
+    padding: 16px 20px;
+    font-size: 16px;
   }
 }
 
@@ -1581,8 +1628,9 @@ body {
     padding: 16px 20px;
   }
   
-  .modal-header h2 {
-    font-size: 18px;
+  .modal-header h2,
+  .modal-header h3 {
+    font-size: 16px;
   }
   
   .close-btn {
@@ -1592,11 +1640,31 @@ body {
   }
   
   .modal-body {
-    padding: 20px;
+    padding: 16px 20px;
   }
   
   .modal-footer {
     padding: 16px 20px;
+  }
+  
+  /* Kleinere Form-Elemente für sehr kleine Bildschirme */
+  .modal .form-input,
+  .modal .form-select,
+  .modal .form-textarea {
+    padding: 12px 14px;
+    font-size: 16px;
+  }
+  
+  .modal .form-label {
+    font-size: 13px;
+  }
+  
+  .modal .form-group {
+    margin-bottom: 16px;
+  }
+  
+  .modal .form-hint {
+    font-size: 11px;
   }
 }
 
@@ -1921,5 +1989,74 @@ body {
   .data-table .btn-small:contains("Löschen"):after {
     content: "Del";
     font-size: 11px;
+  }
+}
+
+/* Erweiterte Modal-Optimierungen für alle Bildschirmgrößen */
+@media (max-width: 768px) {
+  /* Touch-optimierte Eingabefelder */
+  .modal input[type="text"],
+  .modal input[type="email"],
+  .modal input[type="number"],
+  .modal select,
+  .modal textarea {
+    appearance: none;
+    -webkit-appearance: none;
+    -webkit-border-radius: 0;
+    border-radius: 0;
+    min-height: 44px; /* Apple empfohlene Touch-Größe */
+  }
+  
+  /* Verhindert Zoom bei Eingabe auf iOS */
+  .modal input[type="text"],
+  .modal input[type="email"],
+  .modal input[type="number"],
+  .modal textarea {
+    font-size: 16px !important;
+  }
+  
+  /* Bessere Scrollbar für Modal-Inhalte */
+  .modal-body {
+    scrollbar-width: thin;
+    scrollbar-color: #ccc transparent;
+  }
+  
+  .modal-body::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .modal-body::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 3px;
+  }
+  
+  /* Optimierter Spacing für Touch */
+  .modal .form-group + .form-group {
+    margin-top: 20px;
+  }
+  
+  /* Verbesserte Button-Bereiche */
+  .modal .btn {
+    min-height: 48px;
+    touch-action: manipulation;
+  }
+  
+  /* Spezielle Behandlung für Material/Masterbatch Formulare */
+  .modal .form-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  /* Bessere Lesbarkeit für kleine Labels */
+  .modal .form-label {
+    line-height: 1.4;
+    word-wrap: break-word;
+  }
+  
+  /* Optimierte Modal-Actions für Touch */
+  .modal-actions {
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+    margin-top: 20px;
   }
 }
