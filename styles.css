@@ -18,6 +18,7 @@ body {
   font-size: 16px;
   width: 100%;
   max-width: 100%;
+  padding-bottom: 50px; /* Space for footer */
 }
 
 /* Screen Management */
@@ -2347,4 +2348,95 @@ body {
     border-top: 1px solid #e0e0e0;
     margin-top: 20px;
   }
+}
+
+/* ===== GLOBAL FOOTER ===== */
+/* Global footer that appears at the bottom of every page */
+.global-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 8px 16px;
+    text-align: center;
+    z-index: 1000;
+}
+
+.global-footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin: 0;
+}
+
+.global-footer-links a {
+    color: #999;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 400;
+    transition: color 0.2s ease;
+}
+
+.global-footer-links a:hover {
+    color: #666;
+    text-decoration: underline;
+}
+
+/* Mobile adjustments for global footer */
+@media screen and (max-width: 480px) {
+    .global-footer {
+        padding: 6px 12px;
+    }
+    
+    .global-footer-links {
+        gap: 16px;
+    }
+    
+    .global-footer-links a {
+        font-size: 11px;
+    }
+    
+    body {
+        padding-bottom: 45px;
+    }
+}
+
+/* ===== LEGACY FOOTER LINKS ===== */
+/* Keep existing footer-links styles for backward compatibility but make them less prominent */
+.footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 24px;
+    padding: 16px 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.footer-links a {
+    color: #999;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 400;
+    transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+    color: #666;
+    text-decoration: underline;
+}
+
+@media screen and (max-width: 480px) {
+    .footer-links {
+        gap: 16px;
+        margin-top: 20px;
+        padding: 12px 0;
+    }
+    
+    .footer-links a {
+        font-size: 11px;
+    }
 }
