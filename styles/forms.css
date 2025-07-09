@@ -30,14 +30,14 @@
 .entry-form,
 .form-section {
   background: #f8f9fa;
-  border: 2px solid #000000;
-  border-radius: 0;
-  padding: 32px;
+  border: none;
+  border-radius: 8px;
+  padding: 30px;
   margin-bottom: 40px;
 }
 
 .form-section h2 {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 600;
   color: #000000;
   margin-bottom: 24px;

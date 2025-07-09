@@ -36,7 +36,7 @@
 
 .dashboard-header {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 40px;
   padding: 20px 32px;
@@ -78,13 +78,16 @@
 
 /* User Info */
 .user-info {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  position: static;
+  right: auto;
+  top: auto;
+  transform: none;
   text-align: right;
   color: #666666;
   font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 .user-info .user-name {

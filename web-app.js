@@ -2385,12 +2385,12 @@ async function updateUser(oldKennung) {
   }
   
   try {
-    // User in Firestore-Sammlung erstellen/aktualisieren
-    const userQuery = await db.collection('users').where('kennung', '==', oldKennung).get();
+    // Prüfen ob Kennung bereits existiert
+    const existingUserQuery = await db.collection('users').where('kennung', '==', oldKennung).get();
     
-    if (!userQuery.empty) {
+    if (!existingUserQuery.empty) {
       // Benutzer existiert - aktualisieren
-      const userDoc = userQuery.docs[0];
+      const userDoc = existingUserQuery.docs[0];
       await userDoc.ref.update({
         name: name,
         email: email,
@@ -2495,6 +2495,7 @@ async function createNewUser() {
   try {
     // Prüfen ob Kennung bereits existiert
     const existingUserQuery = await db.collection('users').where('kennung', '==', kennung).get();
+    
     if (!existingUserQuery.empty) {
       alert('❌ Diese FH-Kennung ist bereits registriert!');
       return;
@@ -2523,5 +2524,37 @@ async function createNewUser() {
   } catch (error) {
     console.error('Fehler beim Hinzufügen:', error);
     alert('Fehler beim Hinzufügen: ' + error.message);
+  }
+}
+
+// ==================== NOTE EDIT FUNKTIONEN ====================
+
+// Notiz bearbeiten
+async function editNote(entryId, currentNote) {
+  try {
+    const newNote = prompt('Notiz bearbeiten:', currentNote || '');
+    
+    if (newNote === null) {
+      // User hat Cancel gedrückt
+      return;
+    }
+    
+    // Notiz in Firestore aktualisieren
+    await db.collection('entries').doc(entryId).update({
+      jobNotes: newNote.trim()
+    });
+    
+    console.log(`✅ Notiz für Entry ${entryId} aktualisiert`);
+    
+    // UI aktualisieren
+    if (currentUser.isAdmin) {
+      await loadAdminEntries();
+    } else {
+      await loadUserEntries();
+    }
+    
+  } catch (error) {
+    console.error('❌ Fehler beim Aktualisieren der Notiz:', error);
+    alert('Fehler beim Speichern der Notiz!');
   }
 }
