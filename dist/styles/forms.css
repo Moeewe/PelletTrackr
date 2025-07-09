@@ -26,6 +26,24 @@
   text-align: center;
 }
 
+/* Entry Form Container - Grauer Hintergrund */
+.entry-form,
+.form-section {
+  background: #f8f9fa;
+  border: 2px solid #000000;
+  border-radius: 0;
+  padding: 32px;
+  margin-bottom: 40px;
+}
+
+.form-section h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #000000;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
 /* Form Layout */
 .form-row {
   display: grid;
@@ -124,11 +142,11 @@
   background: #FFEB00;
   color: #000000;
   border-color: #000000;
-  animation: pulse 0.3s ease;
 }
 
 .cost-preview.show.calculating {
-  animation: pulse 1.5s infinite;
+  background: #f8f8f8;
+  color: #666666;
 }
 
 .cost-amount {
@@ -170,4 +188,33 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* Login Form Specific Styles */
+.login-form {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.login-form .form-group {
+  margin-bottom: 20px;
+}
+
+.login-form .form-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.login-form .button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.login-form .button-group .btn {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
 }

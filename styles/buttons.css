@@ -195,7 +195,7 @@
 
 .button-group .btn {
   width: 100%;
-  max-width: 200px;
+  max-width: none;
   margin: 0;
 }
 

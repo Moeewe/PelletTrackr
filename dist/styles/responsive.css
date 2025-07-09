@@ -3,7 +3,26 @@
 
 /* Desktop Scrollbar Styles */
 @media (min-width: 1024px) {
-  .data-table::-webkit-scrollbar {
+  .data-tabl  .data-table .btn,
+  .data-table .btn-small {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 10px 12px;
+    font-size: 12px;
+    min-width: auto;
+    flex: 0 1 auto;
+    white-space: normal;
+    text-overflow: clip;
+    overflow: visible;
+    max-width: 100%;
+    border-radius: 0;
+    border-width: 2px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.2;
+  }bar {
     height: 8px;
     width: 8px;
   }
@@ -140,8 +159,8 @@
   .data-table .actions {
     white-space: normal;
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-wrap: nowrap;
+    gap: 6px;
     justify-content: flex-start;
   }
   
@@ -151,27 +170,25 @@
     align-items: center;
     justify-content: center;
     margin: 0;
-    padding: 10px 12px;
-    font-size: 12px;
+    padding: 8px 10px;
+    font-size: 11px;
     min-width: auto;
-    flex: 0 1 auto;
+    flex: 1;
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
-    max-width: 100px;
+    max-width: none;
     border-radius: 0; /* Scharfe Kanten */
-    border-width: 1px;
+    border-width: 2px;
   }
   
-  .data-table .btn-small.btn-secondary,
-  .data-table .btn-small.btn-tertiary,
-  .data-table .btn-small.btn-warning,
-  .data-table .btn-small.btn-danger {
-    flex: 1 1 calc(50% - 4px);
-    max-width: calc(50% - 4px);
-    min-width: 0;
-    font-size: 11px;
-    padding: 8px 10px;
+  /* Status Field spezifisch */
+  .data-table td[data-label="Status"] {
+    padding-left: 100px;
+  }
+  
+  .data-table td[data-label="Status"]:before {
+    content: "STATUS: ";
   }
 }
 
@@ -195,16 +212,28 @@
   
   .dashboard-header {
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     text-align: center;
-    margin-bottom: 32px;
-    padding: 16px;
+    margin-bottom: 24px;
+    padding: 16px 12px;
     position: relative;
+    overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .user-info {
     position: static;
-    justify-content: center;
+    text-align: center;
+    margin-top: 8px;
+    transform: none;
+    right: auto;
+    top: auto;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
   }
 
   .login-container {
