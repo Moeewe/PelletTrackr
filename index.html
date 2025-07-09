@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PelletTrackr - FGF 3D-Druck Verwaltung</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="alternate icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%23FFEB00'/><rect width='16' height='16' fill='none' stroke='%23000' stroke-width='1'/><rect x='2' y='2' width='12' height='1' fill='%23000'/><rect x='2' y='2' width='1' height='10' fill='%23000'/><rect x='13' y='2' width='1' height='10' fill='%23000'/><rect x='1' y='12' width='14' height='2' fill='%23000'/><rect x='5' y='9' width='6' height='3' fill='%23333'/><text x='8' y='8' text-anchor='middle' font-family='Arial' font-size='5' font-weight='bold' fill='%23000'>P</text></svg>">
+    
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -62,7 +67,7 @@
 
             <!-- User Stats -->
             <div class="stats-section">
-                <h2 class="section-title">Meine Statistiken</h2>
+                <h2 class="section-title">Deine Statistiken</h2>
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-value" id="userTotalEntries">0</div>
@@ -140,22 +145,9 @@
 
             <!-- User Entries -->
             <div class="entries-section">
-                <h2 class="section-title">Meine Drucke</h2>
+                <h2 class="section-title">Deine Drucke</h2>
                 <div class="table-controls">
                     <input type="text" id="userSearchInput" placeholder="Suchen nach Material, FH-Kennung, Status..." class="search-input" onkeyup="searchUserEntries()">
-                    <select id="userSortSelect" class="sort-select" onchange="sortUserEntriesBy()">
-                        <option value="">Sortierung wählen...</option>
-                        <option value="date_desc">Neueste zuerst</option>
-                        <option value="date_asc">Älteste zuerst</option>
-                        <option value="jobName_asc">Job A-Z</option>
-                        <option value="jobName_desc">Job Z-A</option>
-                        <option value="material_asc">Material A-Z</option>
-                        <option value="material_desc">Material Z-A</option>
-                        <option value="cost_desc">Höchste Kosten</option>
-                        <option value="cost_asc">Niedrigste Kosten</option>
-                        <option value="status_paid">Bezahlt zuerst</option>
-                        <option value="status_unpaid">Offen zuerst</option>
-                    </select>
                 </div>
                 <div class="user-entries-container">
                     <div id="userEntriesTable" class="data-table data-table-responsive"></div>
