@@ -856,6 +856,28 @@ body {
     text-transform: uppercase;
     line-height: 1.2;
     word-wrap: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Spezielle Label-Behandlung für verschiedene Feldtypen */
+  .data-table td[data-label="Gesamtkosten"]:before,
+  .data-table td[data-label="Masterbatch-Menge"]:before,
+  .data-table td[data-label="Material-Menge"]:before {
+    font-size: 10px;
+    line-height: 1.1;
+  }
+  
+  .data-table td[data-label="E-Mail"]:before {
+    content: "E-Mail: ";
+  }
+  
+  .data-table td[data-label="FH-Kennung"]:before {
+    content: "Kennung: ";
+  }
+  
+  .data-table td[data-label="Letzter Druck"]:before {
+    content: "Letzter: ";
   }
   
   .data-table td[data-label="Aktionen"] {
@@ -871,13 +893,41 @@ body {
   
   .data-table .actions {
     white-space: normal;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-start;
   }
   
-  .data-table .btn {
-    display: inline-block;
-    margin: 4px 8px 4px 0;
-    padding: 8px 12px;
+  .data-table .btn,
+  .data-table .btn-small {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 10px 12px;
     font-size: 12px;
+    min-width: auto;
+    flex: 0 1 auto;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    max-width: 100px;
+  }
+  
+  /* Spezielle Button-Größen für mobile */
+  .data-table .btn-small.btn-secondary,
+  .data-table .btn-small.btn-tertiary {
+    flex: 1 1 calc(50% - 4px);
+    max-width: calc(50% - 4px);
+    min-width: 0;
+  }
+  
+  .data-table .btn-small.btn-warning,
+  .data-table .btn-small.btn-danger {
+    flex: 1 1 calc(50% - 4px);
+    max-width: calc(50% - 4px);
+    min-width: 0;
   }
 }
 
@@ -1012,6 +1062,44 @@ body {
   .btn-large {
     padding: 16px 24px;
     font-size: 16px;
+  }
+  
+  /* Verbesserte Button-Behandlung für sehr kleine Bildschirme */
+  .data-table .actions {
+    gap: 6px;
+  }
+  
+  .data-table .btn,
+  .data-table .btn-small {
+    font-size: 11px;
+    padding: 8px 10px;
+    border-radius: 0;
+  }
+  
+  /* Buttons in 2x2 Grid auf sehr kleinen Bildschirmen */
+  .data-table .btn-small.btn-secondary,
+  .data-table .btn-small.btn-tertiary,
+  .data-table .btn-small.btn-warning,
+  .data-table .btn-small.btn-danger {
+    flex: 1 1 calc(50% - 3px);
+    max-width: calc(50% - 3px);
+    text-align: center;
+  }
+  
+  /* Verbesserung der Card-Darstellung */
+  .data-table tr {
+    padding: 16px;
+    margin: 0 0 12px 0;
+  }
+  
+  .data-table td {
+    padding: 6px 0;
+    padding-left: 120px;
+  }
+  
+  .data-table td:before {
+    width: 110px;
+    font-size: 10px;
   }
 }
 
@@ -1760,162 +1848,78 @@ body {
   }
 }
 
-/* Tablet responsive improvements */
-@media (min-width: 769px) and (max-width: 1024px) {
-  .admin-container .data-table {
-    font-size: 13px;
-  }
-  
-  .admin-container .data-table td,
-  .admin-container .data-table th {
-    padding: 8px 6px;
-  }
-  
-  .actions-cell {
-    min-width: 200px;
-  }
-  
-  .action-group {
-    gap: 6px;
-  }
-  
-  .entry-actions {
-    gap: 4px;
-  }
-  
-  .entry-actions .btn {
-    padding: 6px 8px;
-    font-size: 12px;
-  }
-}
-
-/* Large desktop improvements */
-@media (min-width: 1400px) {
-  .admin-container {
-    max-width: 1600px;
-  }
-  
-  .admin-container .data-table {
-    font-size: 15px;
-  }
-  
-  .actions-cell {
-    min-width: 280px;
-  }
-  
-  .action-group {
-    gap: 8px;
-  }
-}
-
-/* Legal Content Styles */
-.legal-content {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-  line-height: 1.6;
-}
-
-.legal-content h2 {
-  font-size: 28px;
-  font-weight: 600;
-  margin-bottom: 30px;
-  color: #000000;
-  border-bottom: 2px solid #FFEB00;
-  padding-bottom: 10px;
-}
-
-.legal-content h3 {
-  font-size: 20px;
-  font-weight: 600;
-  margin-top: 30px;
-  margin-bottom: 15px;
-  color: #000000;
-}
-
-.legal-content h4 {
-  font-size: 16px;
-  font-weight: 600;
-  margin-top: 20px;
-  margin-bottom: 10px;
-  color: #333333;
-}
-
-.legal-content p {
-  margin-bottom: 15px;
-  color: #444444;
-  text-align: justify;
-}
-
-.back-link {
-  margin-top: 40px;
-  padding-top: 20px;
-  border-top: 1px solid #e9ecef;
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-}
-
-/* Footer Links */
-.footer-links {
-  text-align: center;
-  padding: 20px;
-  margin-top: 30px;
-  border-top: 1px solid #e9ecef;
-}
-
-.footer-links a {
-  color: #666666;
-  text-decoration: none;
-  font-size: 12px;
-  margin: 0 10px;
-  transition: color 0.2s ease;
-}
-
-.footer-links a:hover {
-  color: #000000;
-  text-decoration: underline;
-}
-
+/* Erweiterte Mobile Responsive Verbesserungen */
 @media (max-width: 768px) {
-  .legal-content {
-    padding: 15px;
+  /* Verhindert horizontales Scrollen durch zu breite Inhalte */
+  .data-table,
+  .data-table * {
+    max-width: 100%;
+    box-sizing: border-box;
   }
   
-  .legal-content h2 {
-    font-size: 24px;
+  /* Optimierte Zeilenhöhe für bessere Lesbarkeit */
+  .data-table td {
+    line-height: 1.4;
+    word-break: break-word;
+    overflow-wrap: break-word;
   }
   
-  .back-link {
-    flex-direction: column;
-    align-items: center;
+  /* Spezielle Behandlung für Status-Felder */
+  .data-table .status-paid,
+  .data-table .status-unpaid {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 0;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 4px;
   }
   
-  .footer-links {
-    padding: 15px 10px;
-  }
-  
-  .footer-links a {
-    display: block;
-    margin: 5px 0;
+  /* Bessere Trennung zwischen Datenbereichen */
+  .data-table td[data-label="Material"]:before,
+  .data-table td[data-label="Name"]:before,
+  .data-table td[data-label="Datum"]:before {
+    color: #333;
+    font-weight: 700;
   }
 }
 
-/* Aktionen in Tabellen kompakt darstellen */
-.actions .btn-small {
-  margin: 2px 4px 2px 0;
-  padding: 8px 12px;
-  font-size: 13px;
-  min-width: 80px;
-}
-
-/* Table actions header */
-.table-actions {
-  margin: 20px 0;
-  padding: 15px 0;
-  border-bottom: 2px solid #000000;
-}
-
-.table-actions .btn {
-  margin-bottom: 0;
+/* Spezielle Optimierungen für Button-Text */
+@media (max-width: 480px) {
+  /* Kürzere Button-Texte für sehr kleine Bildschirme */
+  .data-table .btn-small:contains("Bearbeiten") {
+    font-size: 0;
+  }
+  
+  .data-table .btn-small:contains("Bearbeiten"):after {
+    content: "Edit";
+    font-size: 11px;
+  }
+  
+  .data-table .btn-small:contains("Details") {
+    font-size: 0;
+  }
+  
+  .data-table .btn-small:contains("Details"):after {
+    content: "Info";
+    font-size: 11px;
+  }
+  
+  .data-table .btn-small:contains("Mahnung") {
+    font-size: 0;
+  }
+  
+  .data-table .btn-small:contains("Mahnung"):after {
+    content: "Mail";
+    font-size: 11px;
+  }
+  
+  .data-table .btn-small:contains("Löschen") {
+    font-size: 0;
+  }
+  
+  .data-table .btn-small:contains("Löschen"):after {
+    content: "Del";
+    font-size: 11px;
+  }
 }

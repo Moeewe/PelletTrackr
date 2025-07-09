@@ -2277,7 +2277,7 @@ Ihr FGF 3D-Druck Team
 ---
 Diese E-Mail wurde automatisch generiert von PelletTrackr.`);
   
-  const mailtoLink = `mailto:${user.kennung}@hs-furtwangen.de?subject=${subject}&body=${body}`;
+  const mailtoLink = `mailto:${user.kennung}@fh-muenster.de?subject=${subject}&body=${body}`;
   window.open(mailtoLink, '_blank');
 }
 
