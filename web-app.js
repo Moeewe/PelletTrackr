@@ -1103,6 +1103,23 @@ async function deleteMaterial(materialId) {
 async function deleteMasterbatch(masterbatchId) {
   if (!confirm('Masterbatch wirklich löschen?')) return;
   
+  try {
+    await db.collection('masterbatches').doc(masterbatchId).delete();
+    alert('Masterbatch gelöscht!');
+    loadMasterbatchesForManagement();
+    loadMasterbatches(); // Dropdown aktualisieren
+  } catch (error) {
+    console.error('Fehler beim Löschen:', error);
+    alert('Fehler beim Löschen: ' + error.message);
+  }
+}
+
+// ==================== EDIT FUNKTIONEN ====================
+
+async function editMaterial(materialId) {
+  try {
+    const doc = await db.collection('materials').doc(materialId).get();
+    if (!doc.exists) {
       alert('Material nicht gefunden!');
       return;
     }
