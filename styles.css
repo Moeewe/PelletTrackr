@@ -5,12 +5,19 @@
   box-sizing: border-box;
 }
 
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
 body { 
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   background: white;
   color: #000000;
   line-height: 1.4;
   font-size: 16px;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* Screen Management */
@@ -809,15 +816,25 @@ body {
   .data-table {
     border: none;
     background: transparent;
+    width: 100%;
+    max-width: 100%;
+    overflow: visible;
   }
   
   .data-table table {
     border-collapse: separate;
-    border-spacing: 0 16px;
+    border-spacing: 0 12px;
+    width: 100%;
+    max-width: 100%;
   }
   
   .data-table thead {
     display: none;
+  }
+  
+  .data-table tbody {
+    width: 100%;
+    max-width: 100%;
   }
   
   .data-table tr {
@@ -825,9 +842,12 @@ body {
     background: white;
     border: 2px solid #000000;
     border-radius: 0;
-    padding: 20px;
-    margin: 0 0 16px 0;
+    padding: 16px;
+    margin: 0 0 12px 0;
     box-shadow: none;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   
   .data-table tr:hover {
@@ -837,24 +857,29 @@ body {
   .data-table td {
     display: block;
     border: none;
-    padding: 8px 0;
+    padding: 6px 0;
     text-align: left;
     position: relative;
-    padding-left: 150px; /* Erweitert für längere Labels */
-    min-height: 24px;
+    padding-left: 110px; /* Reduziert für schmale Bildschirme */
+    min-height: 20px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
   }
   
   .data-table td:before {
     content: attr(data-label) ": ";
     position: absolute;
     left: 0;
-    top: 8px;
+    top: 6px;
     font-weight: 600;
     color: #000000;
-    width: 140px; /* Erweitert für längere Labels */
-    font-size: 11px; /* Leicht kleiner für bessere Passform */
+    width: 100px; /* Reduziert für kompakte Darstellung */
+    font-size: 10px; /* Kleiner für mobile */
     text-transform: uppercase;
-    line-height: 1.2;
+    line-height: 1.1;
     word-wrap: break-word;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -864,26 +889,39 @@ body {
   .data-table td[data-label="Gesamtkosten"]:before,
   .data-table td[data-label="Masterbatch-Menge"]:before,
   .data-table td[data-label="Material-Menge"]:before {
-    font-size: 10px;
-    line-height: 1.1;
+    font-size: 9px;
+    line-height: 1.0;
   }
   
   .data-table td[data-label="E-Mail"]:before {
     content: "E-Mail: ";
+    font-size: 9px;
   }
   
   .data-table td[data-label="FH-Kennung"]:before {
     content: "Kennung: ";
+    font-size: 9px;
   }
   
   .data-table td[data-label="Letzter Druck"]:before {
     content: "Letzter: ";
+    font-size: 9px;
+  }
+  
+  .data-table td[data-label="Masterbatch"]:before {
+    content: "MB: ";
+    font-size: 9px;
+  }
+  
+  .data-table td[data-label="Gewicht"]:before {
+    content: "Gewicht: ";
+    font-size: 9px;
   }
   
   .data-table td[data-label="Aktionen"] {
     padding-left: 0;
-    margin-top: 16px;
-    padding-top: 16px;
+    margin-top: 12px;
+    padding-top: 12px;
     border-top: 1px solid #e9ecef;
   }
   
@@ -895,7 +933,7 @@ body {
     white-space: normal;
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
     justify-content: flex-start;
   }
   
@@ -905,48 +943,52 @@ body {
     align-items: center;
     justify-content: center;
     margin: 0;
-    padding: 10px 12px;
-    font-size: 12px;
+    padding: 8px 10px;
+    font-size: 11px;
     min-width: auto;
     flex: 0 1 auto;
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
-    max-width: 100px;
+    max-width: 90px; /* Reduziert für mobile */
   }
   
   /* Spezielle Button-Größen für mobile */
   .data-table .btn-small.btn-secondary,
-  .data-table .btn-small.btn-tertiary {
-    flex: 1 1 calc(50% - 4px);
-    max-width: calc(50% - 4px);
-    min-width: 0;
-  }
-  
+  .data-table .btn-small.btn-tertiary,
   .data-table .btn-small.btn-warning,
   .data-table .btn-small.btn-danger {
-    flex: 1 1 calc(50% - 4px);
-    max-width: calc(50% - 4px);
+    flex: 1 1 calc(50% - 3px);
+    max-width: calc(50% - 3px);
     min-width: 0;
+    font-size: 10px;
   }
 }
 
 /* Mobile Optimierungen */
 @media (max-width: 768px) {
+  .container,
+  .admin-container {
+    padding: 16px;
+    max-width: 100%;
+    margin: 0;
+    overflow-x: hidden;
+  }
+  
   .dashboard {
-    padding: 20px;
+    padding: 16px;
   }
   
   .admin-dashboard {
-    padding: 20px;
+    padding: 16px;
   }
   
   .dashboard-header {
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
     text-align: center;
-    margin-bottom: 40px;
-    padding: 20px;
+    margin-bottom: 32px;
+    padding: 16px;
     position: relative;
   }
   
@@ -956,19 +998,20 @@ body {
   }
   
   .login-container {
-    padding: 40px 24px;
-    margin: 20px;
+    padding: 32px 20px;
+    margin: 16px;
+    max-width: calc(100% - 32px);
   }
   
   .form-row {
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: 16px;
   }
   
   .table-controls {
     flex-direction: column;
-    gap: 16px;
-    padding: 16px;
+    gap: 12px;
+    padding: 12px;
   }
   
   .search-input,
@@ -979,7 +1022,7 @@ body {
   
   .admin-controls {
     grid-template-columns: 1fr;
-    gap: 24px;
+    gap: 20px;
   }
   
   .control-buttons {
@@ -989,15 +1032,15 @@ body {
   .stats-grid,
   .admin-stats-grid {
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    gap: 12px;
   }
   
   .stat-card {
-    padding: 20px 16px;
+    padding: 16px 12px;
   }
   
   .stat-number {
-    font-size: 28px;
+    font-size: 24px;
   }
   
   .btn {
@@ -1103,55 +1146,300 @@ body {
   }
 }
 
-/* Table Controls - Fraenk Style */
-.table-controls {
+/* Extra extra kleine Bildschirme - iPhone SE & alte iPhones (320px) */
+@media (max-width: 375px) {
+  .container,
+  .admin-container {
+    padding: 8px;
+    max-width: 100%;
+    margin: 0;
+  }
+  
+  .data-table tr {
+    padding: 8px;
+    margin: 0 0 6px 0;
+  }
+  
+  .data-table td {
+    padding-left: 70px; /* Sehr kompakt für 320px */
+    padding-top: 3px;
+    padding-bottom: 3px;
+    font-size: 13px;
+  }
+  
+  .data-table td:before {
+    width: 60px; /* Extrem kompakt */
+    font-size: 8px;
+    line-height: 1.0;
+  }
+  
+  /* Extrem kurze Labels für 320px Bildschirme */
+  .data-table td[data-label="Material"]:before {
+    content: "M: ";
+  }
+  
+  .data-table td[data-label="Masterbatch"]:before {
+    content: "MB: ";
+  }
+  
+  .data-table td[data-label="Gewicht"]:before {
+    content: "kg: ";
+  }
+  
+  .data-table td[data-label="Kosten"]:before {
+    content: "€: ";
+  }
+  
+  .data-table td[data-label="Status"]:before {
+    content: "St: ";
+  }
+  
+  .data-table td[data-label="Datum"]:before {
+    content: "D: ";
+  }
+  
+  .data-table td[data-label="Name"]:before {
+    content: "N: ";
+  }
+  
+  .data-table td[data-label="Kennung"]:before,
+  .data-table td[data-label="FH-Kennung"]:before {
+    content: "K: ";
+  }
+  
+  .data-table td[data-label="Job"]:before {
+    content: "J: ";
+  }
+  
+  .data-table td[data-label="E-Mail"]:before {
+    content: "@: ";
+  }
+  
+  .data-table td[data-label="Drucke"]:before {
+    content: "#: ";
+  }
+  
+  .data-table td[data-label="Gesamtkosten"]:before {
+    content: "Σ: ";
+  }
+  
+  .data-table td[data-label="Bezahlt"]:before {
+    content: "✓: ";
+  }
+  
+  .data-table td[data-label="Offen"]:before {
+    content: "!: ";
+  }
+  
+  .data-table td[data-label="Letzter Druck"]:before {
+    content: "→: ";
+  }
+  
+  .data-table .btn,
+  .data-table .btn-small {
+    padding: 4px 6px;
+    font-size: 9px;
+    max-width: 60px;
+    min-height: 28px;
+  }
+  
+  .data-table .btn-small.btn-secondary,
+  .data-table .btn-small.btn-tertiary,
+  .data-table .btn-small.btn-warning,
+  .data-table .btn-small.btn-danger {
+    flex: 1 1 calc(50% - 1px);
+    max-width: calc(50% - 1px);
+    font-size: 8px;
+    padding: 4px 2px;
+  }
+  
+  .stats-grid,
+  .admin-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .stat-card {
+    padding: 12px 8px;
+  }
+  
+  .stat-number {
+    font-size: 20px;
+  }
+  
+  .dashboard-header {
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+  
+  .dashboard-header h1 {
+    font-size: 18px;
+  }
+  
+  .form-section {
+    padding: 8px;
+  }
+  
+  .table-section {
+    padding: 8px;
+  }
+  
+  .table-section h2 {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+  
+  .login-container {
+    padding: 24px 12px;
+    margin: 8px;
+    max-width: calc(100% - 16px);
+  }
+  
+  .form-grid {
+    gap: 12px;
+  }
+  
+  .form-group {
+    margin-bottom: 12px;
+  }
+  
+  .btn {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+}
+
+/* Extra kleine Bildschirme - Weitere Optimierung */
+@media (max-width: 480px) {
+  .container {
+    padding: 10px;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  
+  .data-table {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .data-table table {
+    width: 100%;
+    max-width: 100%;
+    border-spacing: 0 8px;
+  }
+  
+  .data-table tr {
+    padding: 12px;
+    margin: 0 0 8px 0;
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .data-table td {
+    padding-left: 90px; /* Noch kompakter */
+    padding-top: 4px;
+    padding-bottom: 4px;
+    font-size: 14px;
+  }
+  
+  .data-table td:before {
+    width: 80px; /* Sehr kompakt für kleine Bildschirme */
+    font-size: 9px;
+    line-height: 1.0;
+  }
+  
+  /* Kurze Labels für sehr kleine Bildschirme */
+  .data-table td[data-label="Material"]:before {
+    content: "Mat: ";
+  }
+  
+  .data-table td[data-label="Masterbatch"]:before {
+    content: "MB: ";
+  }
+  
+  .data-table td[data-label="Gewicht"]:before {
+    content: "Gew: ";
+  }
+  
+  .data-table td[data-label="Kosten"]:before {
+    content: "€: ";
+  }
+  
+  .data-table td[data-label="Status"]:before {
+    content: "Stat: ";
+  }
+  
+  .data-table td[data-label="Datum"]:before {
+    content: "Dat: ";
+  }
+  
+  .data-table td[data-label="Name"]:before {
+    content: "Name: ";
+  }
+  
+  .data-table td[data-label="Kennung"]:before,
+  .data-table td[data-label="FH-Kennung"]:before {
+    content: "Ken: ";
+  }
+  
+  .data-table td[data-label="Job"]:before {
+    content: "Job: ";
+  }
+  
+  .data-table .btn,
+  .data-table .btn-small {
+    padding: 6px 8px;
+    font-size: 10px;
+    max-width: 80px;
+  }
+  
+  .data-table .btn-small.btn-secondary,
+  .data-table .btn-small.btn-tertiary,
+  .data-table .btn-small.btn-warning,
+  .data-table .btn-small.btn-danger {
+    flex: 1 1 calc(50% - 2px);
+    max-width: calc(50% - 2px);
+    font-size: 9px;
+    padding: 6px 4px;
+  }
+}
+
+/* Table Container mobile fixes */
+.table-container {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  padding: 0;
+  margin: 0;
+}
+
+.table-section {
+  width: 100%;
+  max-width: 100%;
+  padding: 12px;
+  overflow-x: hidden;
+}
+
+.form-section {
+  width: 100%;
+  max-width: 100%;
+  padding: 12px;
+  overflow-x: hidden;
+}
+
+/* Header Actions für mobile */
+.header-actions {
   display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
-  align-items: center;
-  padding: 20px 0;
-  background: transparent;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
 }
 
-.search-input {
-  flex: 1;
-  padding: 16px 20px;
-  border: 2px solid #000000;
-  border-radius: 0;
-  font-size: 16px;
-  background: white;
-  color: #000000;
-  font-family: inherit;
-  transition: all 0.2s ease;
-}
-
-.search-input:focus {
-  outline: none;
-  background: #f8f8f8;
-  border-color: #000000;
-}
-
-.search-input::placeholder {
-  color: #999999;
-  font-style: normal;
-}
-
-.sort-select {
-  padding: 16px 20px;
-  border: 2px solid #000000;
-  border-radius: 0;
-  font-size: 16px;
-  background: white;
-  color: #000000;
-  min-width: 250px;
-  font-family: inherit;
-  transition: all 0.2s ease;
-}
-
-.sort-select:focus {
-  outline: none;
-  background: #f8f8f8;
-  border-color: #000000;
+.header-actions .btn {
+  width: 100%;
+  margin: 0;
 }
 
 /* Loading und Empty States */
