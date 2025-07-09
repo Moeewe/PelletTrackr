@@ -1320,6 +1320,12 @@ function parseGermanNumber(str) {
   return parseFloat(str.replace(',', '.')) || 0;
 }
 
+// Anführungszeichen escapen für HTML-Attribute
+function escapeQuotes(str) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+}
+
 // Kostenvorschau berechnen
 async function calculateCostPreview() {
   console.log("💰 Kostenvorschau wird berechnet...");
@@ -2280,7 +2286,10 @@ async function deleteUser(kennung) {
   if (!checkAdminAccess()) return;
   
   const user = window.allUsers.find(u => u.kennung === kennung);
-  if (!user) return;
+  if (!user) {
+    alert('Benutzer nicht gefunden!');
+    return;
+  }
   
   const confirmMessage = `⚠️ ACHTUNG: Alle ${user.entries.length} Einträge von "${user.name}" (${kennung}) werden unwiderruflich gelöscht!
   
@@ -2420,7 +2429,7 @@ async function updateUser(oldKennung) {
     
   } catch (error) {
     console.error('Fehler beim Aktualisieren des Benutzers:', error);
-    alert('❌ Fehler beim Aktualisieren: ' + error.message);
+    alert('Fehler beim Aktualisieren: ' + error.message);
   }
 }
 
