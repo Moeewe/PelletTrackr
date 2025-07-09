@@ -779,170 +779,206 @@ function renderAdminEntries(entries) {
   tableDiv.innerHTML = tableHtml;
 }
 
-// ==================== USER ENTRY SEARCH & SORT FUNKTIONEN ====================
+// ==================== USER MANAGEMENT DETAIL FUNKTIONEN ====================
 
-// User-Einträge durchsuchen
-function searchUserEntries() {
-  if (!allUserEntries) return;
+// User-Details anzeigen
+function showUserDetails(kennung) {
+  if (!checkAdminAccess()) return;
   
-  const searchTerm = document.getElementById('userSearchInput').value.toLowerCase();
-  
-  const filteredEntries = allUserEntries.filter(entry => {
-    return entry.material.toLowerCase().includes(searchTerm) ||
-           entry.masterbatch.toLowerCase().includes(searchTerm) ||
-           entry.kennung.toLowerCase().includes(searchTerm) ||
-           (entry.jobName && entry.jobName.toLowerCase().includes(searchTerm)) ||
-           (entry.jobNotes && entry.jobNotes.toLowerCase().includes(searchTerm));
-  });
-  
-  renderUserEntries(filteredEntries);
-}
-
-// User-Einträge sortieren
-function sortUserEntries(field) {
-  if (!allUserEntries) return;
-  
-  // Toggle sort direction
-  if (!window.userEntrySortState) window.userEntrySortState = {};
-  const currentDirection = window.userEntrySortState[field] || 'asc';
-  const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
-  window.userEntrySortState[field] = newDirection;
-  
-  const sortedEntries = [...allUserEntries].sort((a, b) => {
-    let aVal, bVal;
-    
-    switch(field) {
-      case 'date':
-        aVal = a.timestamp ? a.timestamp.toDate() : new Date(0);
-        bVal = b.timestamp ? b.timestamp.toDate() : new Date(0);
-        break;
-      case 'jobName':
-        aVal = (a.jobName || '').toLowerCase();
-        bVal = (b.jobName || '').toLowerCase();
-        break;
-      case 'material':
-        aVal = a.material.toLowerCase();
-        bVal = b.material.toLowerCase();
-        break;
-      case 'materialMenge':
-        aVal = a.materialMenge || 0;
-        bVal = b.materialMenge || 0;
-        break;
-      case 'masterbatch':
-        aVal = a.masterbatch.toLowerCase();
-        bVal = b.masterbatch.toLowerCase();
-        break;
-      case 'masterbatchMenge':
-        aVal = a.masterbatchMenge || 0;
-        bVal = b.masterbatchMenge || 0;
-        break;
-      case 'cost':
-        aVal = a.totalCost || 0;
-        bVal = b.totalCost || 0;
-        break;
-      case 'status':
-        aVal = a.paid || a.isPaid ? 1 : 0;
-        bVal = b.paid || b.isPaid ? 1 : 0;
-        break;
-      default:
-        return 0;
-    }
-    
-    if (newDirection === 'asc') {
-      return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
-    } else {
-      return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
-    }
-  });
-  
-  renderUserEntries(sortedEntries);
-}
-
-// ==================== ADMIN ENTRY SEARCH & SORT FUNKTIONEN ====================
-
-// Admin-Einträge durchsuchen
-function searchAdminEntries() {
-  if (!allAdminEntries) return;
-  
-  const searchTerm = document.getElementById('adminSearchInput').value.toLowerCase();
-  
-  const filteredEntries = allAdminEntries.filter(entry => {
-    return entry.name.toLowerCase().includes(searchTerm) ||
-           entry.kennung.toLowerCase().includes(searchTerm) ||
-           entry.material.toLowerCase().includes(searchTerm) ||
-           entry.masterbatch.toLowerCase().includes(searchTerm) ||
-           (entry.jobName && entry.jobName.toLowerCase().includes(searchTerm)) ||
-           (entry.jobNotes && entry.jobNotes.toLowerCase().includes(searchTerm));
-  });
-  
-  renderAdminEntries(filteredEntries);
-}
-
-// Admin-Einträge sortieren
-function sortAdminEntries() {
-  if (!allAdminEntries) return;
-  
-  const sortValue = document.getElementById('adminSortSelect').value;
-  const [field, direction] = sortValue.split('-');
-  
-  let sortedEntries = [...allAdminEntries];
-  
-  if (field === 'status') {
-    if (direction === 'paid') {
-      sortedEntries = sortedEntries.filter(entry => entry.paid || entry.isPaid);
-    } else if (direction === 'unpaid') {
-      sortedEntries = sortedEntries.filter(entry => !(entry.paid || entry.isPaid));
-    }
-  } else {
-    sortedEntries.sort((a, b) => {
-      let aVal, bVal;
-      
-      switch(field) {
-        case 'date':
-          aVal = a.timestamp ? a.timestamp.toDate() : new Date(0);
-          bVal = b.timestamp ? b.timestamp.toDate() : new Date(0);
-          break;
-        case 'name':
-          aVal = a.name.toLowerCase();
-          bVal = b.name.toLowerCase();
-          break;
-        case 'cost':
-          aVal = a.totalCost || 0;
-          bVal = b.totalCost || 0;
-          break;
-        default:
-          return 0;
-      }
-      
-      if (direction === 'asc') {
-        return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
-      } else {
-        return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
-      }
-    });
+  const user = window.allUsers.find(u => u.kennung === kennung);
+  if (!user) {
+    alert('Benutzer nicht gefunden!');
+    return;
   }
   
-  renderAdminEntries(sortedEntries);
+  const email = user.email || `${user.kennung}@fh-muenster.de`;
+  const firstEntryDate = user.firstEntry.toLocaleDateString('de-DE');
+  const lastEntryDate = user.lastEntry.toLocaleDateString('de-DE');
+  
+  // Neueste 5 Einträge
+  const recentEntries = user.entries
+    .sort((a, b) => (b.timestamp ? b.timestamp.toDate() : new Date(0)) - (a.timestamp ? a.timestamp.toDate() : new Date(0)))
+    .slice(0, 5);
+  
+  let recentEntriesHtml = '';
+  if (recentEntries.length > 0) {
+    recentEntriesHtml = `
+      <h4>Letzte Drucke</h4>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Datum</th>
+            <th>Job</th>
+            <th>Material</th>
+            <th>Kosten</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+    
+    recentEntries.forEach(entry => {
+      const entryDate = entry.timestamp ? entry.timestamp.toDate().toLocaleDateString('de-DE') : 'Unbekannt';
+      const isPaid = entry.paid || entry.isPaid;
+      const status = isPaid ? '<span class="status-paid">Bezahlt</span>' : '<span class="status-unpaid">Offen</span>';
+      
+      recentEntriesHtml += `
+        <tr>
+          <td>${entryDate}</td>
+          <td>${entry.jobName || '3D-Druck Auftrag'}</td>
+          <td>${entry.material}</td>
+          <td>${formatCurrency(entry.totalCost)}</td>
+          <td>${status}</td>
+        </tr>
+      `;
+    });
+    
+    recentEntriesHtml += `
+        </tbody>
+      </table>
+    `;
+  } else {
+    recentEntriesHtml = '<p>Keine Drucke vorhanden.</p>';
+  }
+  
+  const modalHtml = `
+    <div class="modal-header">
+      <h3>Benutzer-Details: ${user.name}</h3>
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="user-details">
+        <div class="detail-section">
+          <h4>Benutzerinformationen</h4>
+          <div class="detail-item">
+            <span class="detail-label">Name:</span>
+            <span class="detail-value">${user.name}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">FH-Kennung:</span>
+            <span class="detail-value">${user.kennung}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">E-Mail:</span>
+            <span class="detail-value">${email}</span>
+          </div>
+        </div>
+        
+        <div class="detail-section">
+          <h4>Aktivitätsstatistiken</h4>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-value">${user.entries.length}</div>
+              <div class="stat-label">Drucke gesamt</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">${formatCurrency(user.totalCost)}</div>
+              <div class="stat-label">Gesamtkosten</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">${formatCurrency(user.paidAmount)}</div>
+              <div class="stat-label">Bezahlt</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">${formatCurrency(user.unpaidAmount)}</div>
+              <div class="stat-label">Ausstehend</div>
+            </div>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Erster Druck:</span>
+            <span class="detail-value">${firstEntryDate}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Letzter Druck:</span>
+            <span class="detail-value">${lastEntryDate}</span>
+          </div>
+        </div>
+        
+        <div class="detail-section">
+          ${recentEntriesHtml}
+        </div>
+      </div>
+      
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
+        <button class="btn btn-primary" onclick="editUser('${kennung}')">Benutzer bearbeiten</button>
+        ${user.unpaidAmount > 0 ? 
+          `<button class="btn btn-warning" onclick="sendPaymentReminder('${kennung}')">Zahlungserinnerung senden</button>` : 
+          ''
+        }
+      </div>
+    </div>
+  `;
+  
+  showModal(modalHtml);
 }
 
-// Admin-Einträge nach Feld sortieren
-function sortAdminEntriesBy(field) {
-  if (!allAdminEntries) return;
+// Zahlungserinnerung senden
+function sendPaymentReminder(kennung) {
+  if (!checkAdminAccess()) return;
   
-  // Toggle sort direction
-  if (!window.adminEntrySortState) window.adminEntrySortState = {};
-  const currentDirection = window.adminEntrySortState[field] || 'asc';
-  const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
-  window.adminEntrySortState[field] = newDirection;
+  const user = window.allUsers.find(u => u.kennung === kennung);
+  if (!user) {
+    alert('Benutzer nicht gefunden!');
+    return;
+  }
   
-  const sortedEntries = [...allAdminEntries].sort((a, b) => {
+  if (user.unpaidAmount <= 0) {
+    alert('Dieser Benutzer hat keine offenen Zahlungen.');
+    return;
+  }
+  
+  const email = user.email || `${user.kennung}@fh-muenster.de`;
+  const unpaidEntries = user.entries.filter(entry => !(entry.paid || entry.isPaid));
+  
+  // E-Mail-Inhalt erstellen
+  const subject = encodeURIComponent(`PelletTrackr - Zahlungserinnerung für offene 3D-Drucke`);
+  
+  let entryList = '';
+  unpaidEntries.forEach((entry, index) => {
+    const date = entry.timestamp ? entry.timestamp.toDate().toLocaleDateString('de-DE') : 'Unbekannt';
+    entryList += `${index + 1}. ${entry.jobName || '3D-Druck Auftrag'} vom ${date} - ${formatCurrency(entry.totalCost)}\n`;
+  });
+  
+  const body = encodeURIComponent(`Hallo ${user.name},
+
+dies ist eine freundliche Erinnerung, dass noch Zahlungen für Ihre 3D-Drucke ausstehen.
+
+OFFENE DRUCKE:
+${entryList}
+
+GESAMTBETRAG: ${formatCurrency(user.unpaidAmount)}
+
+Bitte begleichen Sie die offenen Beträge zeitnah.
+
+Bei Fragen wenden Sie sich gerne an das FGF 3D-Druck Team.
+
+Mit freundlichen Grüßen
+Ihr FGF 3D-Druck Team
+
+---
+Diese E-Mail wurde automatisch von PelletTrackr generiert am ${new Date().toLocaleDateString('de-DE')}.`);
+  
+  const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
+  
+  // E-Mail-Programm öffnen
+  window.open(mailtoLink, '_blank');
+  
+  // Bestätigung
+  alert(`Zahlungserinnerung für ${user.name} wurde in Ihrem E-Mail-Programm geöffnet.`);
+}
+
+// User-Sortierung aus Dropdown
+function sortUsers() {
+  if (!window.allUsers) return;
+  
+  const sortValue = document.getElementById('userManagerSortSelect').value;
+  const [field, direction] = sortValue.split('-');
+  
+  const sortedUsers = [...window.allUsers].sort((a, b) => {
     let aVal, bVal;
     
     switch(field) {
-      case 'date':
-        aVal = a.timestamp ? a.timestamp.toDate() : new Date(0);
-        bVal = b.timestamp ? b.timestamp.toDate() : new Date(0);
-        break;
       case 'name':
         aVal = a.name.toLowerCase();
         bVal = b.name.toLowerCase();
@@ -951,46 +987,249 @@ function sortAdminEntriesBy(field) {
         aVal = a.kennung.toLowerCase();
         bVal = b.kennung.toLowerCase();
         break;
-      case 'jobName':
-        aVal = (a.jobName || '').toLowerCase();
-        bVal = (b.jobName || '').toLowerCase();
+      case 'entries':
+        aVal = a.entries.length;
+        bVal = b.entries.length;
         break;
-      case 'material':
-        aVal = a.material.toLowerCase();
-        bVal = b.material.toLowerCase();
-        break;
-      case 'materialMenge':
-        aVal = a.materialMenge || 0;
-        bVal = b.materialMenge || 0;
-        break;
-      case 'masterbatch':
-        aVal = a.masterbatch.toLowerCase();
-        bVal = b.masterbatch.toLowerCase();
-        break;
-      case 'masterbatchMenge':
-        aVal = a.masterbatchMenge || 0;
-        bVal = b.masterbatchMenge || 0;
-        break;
-      case 'cost':
-        aVal = a.totalCost || 0;
-        bVal = b.totalCost || 0;
-        break;
-      case 'status':
-        aVal = a.paid || a.isPaid ? 1 : 0;
-        bVal = b.paid || b.isPaid ? 1 : 0;
+      case 'revenue':
+        aVal = a.totalCost;
+        bVal = b.totalCost;
         break;
       default:
         return 0;
     }
     
-    if (newDirection === 'asc') {
+    if (direction === 'asc') {
       return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
     } else {
       return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
     }
   });
   
-  renderAdminEntries(sortedEntries);
+  renderUsersTable(sortedUsers);
 }
 
-// ...existing code...
+// ==================== MODAL FUNKTIONEN ====================
+
+// Helper-Funktion für Modal
+function showModal(htmlContent) {
+  const modal = document.getElementById('modal');
+  const modalContent = modal.querySelector('.modal-content');
+  modalContent.innerHTML = htmlContent;
+  modal.classList.add('active');
+}
+
+// Alias für showModalWithContent
+function showModalWithContent(htmlContent) {
+  showModal(htmlContent);
+}
+
+// Modal schließen
+function closeModal() {
+  const modal = document.getElementById('modal');
+  modal.classList.remove('active');
+}
+
+// ==================== ENTRY DETAILS & EDIT FUNKTIONEN ====================
+
+// Druck-Details anzeigen
+async function viewEntryDetails(entryId) {
+  try {
+    const doc = await db.collection('entries').doc(entryId).get();
+    if (!doc.exists) {
+      alert('Eintrag nicht gefunden!');
+      return;
+    }
+    
+    const entry = doc.data();
+    const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
+    const time = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleTimeString('de-DE') : 'Unbekannt';
+    const isPaid = entry.paid || entry.isPaid;
+    const status = isPaid ? 'Bezahlt' : 'Offen';
+    const jobName = entry.jobName || "3D-Druck Auftrag";
+    const jobNotes = entry.jobNotes || "Keine Notizen";
+    
+    const modalHtml = `
+      <div class="modal-header">
+        <h2>Druck Details</h2>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="proof-details">
+          <div class="proof-section">
+            <h3>Allgemeine Informationen</h3>
+            <div class="proof-item">
+              <span class="proof-label">Name:</span>
+              <span class="proof-value">${entry.name}</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-label">FH-Kennung:</span>
+              <span class="proof-value">${entry.kennung}</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-label">Datum:</span>
+              <span class="proof-value">${date}</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-label">Uhrzeit:</span>
+              <span class="proof-value">${time}</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-label">Job-Name:</span>
+              <span class="proof-value">${jobName}</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-label">Status:</span>
+              <span class="proof-value">${status}</span>
+            </div>
+          </div>
+          
+          <div class="proof-section">
+            <h3>Material & Kosten</h3>
+            <div class="proof-item">
+              <span class="proof-label">Material:</span>
+              <span class="proof-value">${entry.material}</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-label">Material-Menge:</span>
+              <span class="proof-value">${(entry.materialMenge || 0).toFixed(2)} kg</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-label">Masterbatch:</span>
+              <span class="proof-value">${entry.masterbatch}</span>
+            </div>
+            <div class="proof-item">
+              <span class="proof-label">Masterbatch-Menge:</span>
+              <span class="proof-value">${(entry.masterbatchMenge || 0).toFixed(2)} kg</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="proof-total">
+          <div class="proof-total-amount">${formatCurrency(entry.totalCost)}</div>
+        </div>
+        
+        <div class="proof-section">
+          <h3>Notizen</h3>
+          <p style="padding: 16px; background: #f8f8f8; border: 1px solid #e0e0e0; border-radius: 0; white-space: pre-wrap;">${jobNotes}</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
+      </div>
+    `;
+    
+    showModal(modalHtml);
+    
+  } catch (error) {
+    console.error("Fehler beim Laden der Druck-Details:", error);
+    alert("Fehler beim Laden der Details!");
+  }
+}
+
+// ==================== ENTRY EDIT SAVE FUNKTIONEN ====================
+
+// Änderungen speichern (Admin)
+async function saveEntryChanges(entryId) {
+  const jobName = document.getElementById('editJobName').value.trim();
+  const materialMenge = parseFloat(document.getElementById('editMaterialMenge').value);
+  const masterbatchMenge = parseFloat(document.getElementById('editMasterbatchMenge').value);
+  const jobNotes = document.getElementById('editJobNotes').value.trim();
+  
+  if (!jobName) {
+    alert('Job-Name darf nicht leer sein!');
+    return;
+  }
+  
+  if (isNaN(materialMenge) || materialMenge < 0) {
+    alert('Bitte gültige Material-Menge eingeben!');
+    return;
+  }
+  
+  if (isNaN(masterbatchMenge) || masterbatchMenge < 0) {
+    alert('Bitte gültige Masterbatch-Menge eingeben!');
+    return;
+  }
+  
+  try {
+    // Neue Kosten berechnen
+    const materialsSnapshot = await db.collection('materials').get();
+    const masterbatchesSnapshot = await db.collection('masterbatches').get();
+    
+    let materialPrice = 0;
+    let masterbatchPrice = 0;
+    
+    const doc = await db.collection('entries').doc(entryId).get();
+    const entry = doc.data();
+    
+    // Material-Preis finden
+    materialsSnapshot.forEach(materialDoc => {
+      const material = materialDoc.data();
+      if (material.name === entry.material) {
+        materialPrice = material.price;
+      }
+    });
+    
+    // Masterbatch-Preis finden
+    masterbatchesSnapshot.forEach(masterbatchDoc => {
+      const masterbatch = masterbatchDoc.data();
+      if (masterbatch.name === entry.masterbatch) {
+        masterbatchPrice = masterbatch.price;
+      }
+    });
+    
+    const totalCost = (materialMenge * materialPrice) + (masterbatchMenge * masterbatchPrice);
+    
+    await db.collection('entries').doc(entryId).update({
+      jobName: jobName,
+      materialMenge: materialMenge,
+      masterbatchMenge: masterbatchMenge,
+      jobNotes: jobNotes,
+      totalCost: totalCost,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    alert('Eintrag erfolgreich aktualisiert!');
+    closeModal();
+    
+    // Dashboard neu laden
+    if (currentUser.isAdmin) {
+      initializeAdminDashboard();
+    } else {
+      initializeUserDashboard();
+    }
+    
+  } catch (error) {
+    console.error("Fehler beim Speichern:", error);
+    alert("Fehler beim Speichern der Änderungen!");
+  }
+}
+
+// User-Änderungen speichern (limitiert)
+async function saveUserEntryChanges(entryId) {
+  const jobName = document.getElementById('editUserJobName').value.trim();
+  const jobNotes = document.getElementById('editUserJobNotes').value.trim();
+  
+  if (!jobName) {
+    alert('Job-Name darf nicht leer sein!');
+    return;
+  }
+  
+  try {
+    await db.collection('entries').doc(entryId).update({
+      jobName: jobName,
+      jobNotes: jobNotes,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    alert('Eintrag erfolgreich aktualisiert!');
+    closeModal();
+    
+    // User Dashboard neu laden
+    initializeUserDashboard();
+    
+  } catch (error) {
+    console.error("Fehler beim Speichern:", error);
+    alert("Fehler beim Speichern der Änderungen!");
+  }
+}
