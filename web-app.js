@@ -1961,3 +1961,364 @@ async function saveEntryChanges(entryId) {
     alert('❌ Fehler beim Speichern: ' + error.message);
   }
 }
+
+// ==================== USER MANAGEMENT FUNKTIONEN ====================
+
+// User Manager anzeigen
+function showUserManager() {
+  console.log("🔍 showUserManager aufgerufen");
+  console.log("👤 currentUser:", currentUser);
+  console.log("🔑 isAdmin:", currentUser.isAdmin);
+  
+  if (!checkAdminAccess()) {
+    console.log("❌ Admin-Zugriff verweigert");
+    return;
+  }
+  
+  console.log("✅ Admin-Zugriff gewährt, öffne User Manager");
+  const userManagerElement = document.getElementById('userManager');
+  console.log("📋 userManager Element:", userManagerElement);
+  
+  if (userManagerElement) {
+    userManagerElement.classList.add('active');
+    console.log("🎯 'active' Klasse hinzugefügt");
+    loadUsersForManagement();
+  } else {
+    console.error("❌ userManager Element nicht gefunden!");
+  }
+}
+
+// User Manager schließen
+function closeUserManager() {
+  document.getElementById('userManager').classList.remove('active');
+}
+
+// Benutzer für Verwaltung laden
+async function loadUsersForManagement() {
+  try {
+    console.log("🔄 Lade Benutzer für Verwaltung...");
+    
+    // Alle Einträge laden, um Benutzer zu extrahieren
+    const snapshot = await db.collection("entries").get();
+    
+    const userMap = new Map();
+    
+    snapshot.forEach(doc => {
+      const entry = doc.data();
+      const userKey = `${entry.name}_${entry.kennung}`;
+      
+      if (!userMap.has(userKey)) {
+        userMap.set(userKey, {
+          name: entry.name,
+          kennung: entry.kennung,
+          entries: [],
+          totalCost: 0,
+          paidAmount: 0,
+          unpaidAmount: 0,
+          firstEntry: entry.timestamp ? entry.timestamp.toDate() : new Date(),
+          lastEntry: entry.timestamp ? entry.timestamp.toDate() : new Date()
+        });
+      }
+      
+      const user = userMap.get(userKey);
+      user.entries.push({
+        id: doc.id,
+        ...entry
+      });
+      
+      user.totalCost += entry.totalCost || 0;
+      if (entry.paid || entry.isPaid) {
+        user.paidAmount += entry.totalCost || 0;
+      } else {
+        user.unpaidAmount += entry.totalCost || 0;
+      }
+      
+      // Datum-Updates
+      const entryDate = entry.timestamp ? entry.timestamp.toDate() : new Date();
+      if (entryDate < user.firstEntry) user.firstEntry = entryDate;
+      if (entryDate > user.lastEntry) user.lastEntry = entryDate;
+    });
+    
+    const users = Array.from(userMap.values());
+    
+    // Global speichern für Suche und Sortierung
+    window.allUsers = users;
+    
+    renderUsersTable(users);
+    
+  } catch (error) {
+    console.error("Fehler beim Laden der Benutzer:", error);
+    document.getElementById("usersTable").innerHTML = '<p>Fehler beim Laden der Benutzer.</p>';
+  }
+}
+
+// Benutzer-Tabelle rendern
+function renderUsersTable(users) {
+  const tableDiv = document.getElementById("usersTable");
+  
+  if (users.length === 0) {
+    tableDiv.innerHTML = '<p>Keine Benutzer gefunden.</p>';
+    return;
+  }
+  
+  let tableHtml = `
+    <div class="user-stats">
+      <div class="stat-card">
+        <div class="stat-number">${users.length}</div>
+        <div class="stat-label">Gesamt Benutzer</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">${users.reduce((sum, u) => sum + u.entries.length, 0)}</div>
+        <div class="stat-label">Gesamt Drucke</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">${formatCurrency(users.reduce((sum, u) => sum + u.totalCost, 0))}</div>
+        <div class="stat-label">Gesamtumsatz</div>
+      </div>
+    </div>
+    
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th onclick="sortUsersBy('name')">Name ↕</th>
+          <th onclick="sortUsersBy('kennung')">FH-Kennung ↕</th>
+          <th onclick="sortUsersBy('entries')">Drucke ↕</th>
+          <th onclick="sortUsersBy('totalCost')">Gesamtkosten ↕</th>
+          <th onclick="sortUsersBy('paidAmount')">Bezahlt ↕</th>
+          <th onclick="sortUsersBy('unpaidAmount')">Offen ↕</th>
+          <th onclick="sortUsersBy('lastEntry')">Letzter Druck ↕</th>
+          <th>Aktionen</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+  
+  users.forEach(user => {
+    const lastEntryDate = user.lastEntry.toLocaleDateString('de-DE');
+    const statusClass = user.unpaidAmount > 0 ? 'status-unpaid' : 'status-paid';
+    
+    tableHtml += `
+      <tr>
+        <td data-label="Name">${user.name}</td>
+        <td data-label="FH-Kennung">${user.kennung}</td>
+        <td data-label="Drucke">${user.entries.length}</td>
+        <td data-label="Gesamtkosten"><strong>${formatCurrency(user.totalCost)}</strong></td>
+        <td data-label="Bezahlt">${formatCurrency(user.paidAmount)}</td>
+        <td data-label="Offen" class="${statusClass}">${formatCurrency(user.unpaidAmount)}</td>
+        <td data-label="Letzter Druck">${lastEntryDate}</td>
+        <td data-label="Aktionen" class="actions">
+          <button class="btn btn-tertiary" onclick="showUserDetails('${user.kennung}')">Details</button>
+          <button class="btn btn-warning" onclick="sendPaymentReminder('${user.kennung}')">Mahnung</button>
+          <button class="btn btn-danger" onclick="deleteUser('${user.kennung}')">Löschen</button>
+        </td>
+      </tr>
+    `;
+  });
+  
+  tableHtml += `
+      </tbody>
+    </table>
+  `;
+  
+  tableDiv.innerHTML = tableHtml;
+}
+
+// Benutzer nach Feld sortieren
+function sortUsersBy(field) {
+  if (!window.allUsers) return;
+  
+  // Toggle sort direction
+  if (!window.userSortState) window.userSortState = {};
+  const currentDirection = window.userSortState[field] || 'asc';
+  const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+  window.userSortState[field] = newDirection;
+  
+  const sortedUsers = [...window.allUsers].sort((a, b) => {
+    let aVal, bVal;
+    
+    switch(field) {
+      case 'name':
+        aVal = a.name.toLowerCase();
+        bVal = b.name.toLowerCase();
+        break;
+      case 'kennung':
+        aVal = a.kennung.toLowerCase();
+        bVal = b.kennung.toLowerCase();
+        break;
+      case 'entries':
+        aVal = a.entries.length;
+        bVal = b.entries.length;
+        break;
+      case 'totalCost':
+        aVal = a.totalCost;
+        bVal = b.totalCost;
+        break;
+      case 'paidAmount':
+        aVal = a.paidAmount;
+        bVal = b.paidAmount;
+        break;
+      case 'unpaidAmount':
+        aVal = a.unpaidAmount;
+        bVal = b.unpaidAmount;
+        break;
+      case 'lastEntry':
+        aVal = a.lastEntry.getTime();
+        bVal = b.lastEntry.getTime();
+        break;
+      default:
+        return 0;
+    }
+    
+    if (newDirection === 'asc') {
+      return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+    } else {
+      return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
+    }
+  });
+  
+  renderUsersTable(sortedUsers);
+}
+
+// Benutzer suchen
+function searchUsers() {
+  if (!window.allUsers) return;
+  
+  const searchTerm = document.getElementById('userManagerSearchInput').value.toLowerCase();
+  
+  const filteredUsers = window.allUsers.filter(user => 
+    user.name.toLowerCase().includes(searchTerm) ||
+    user.kennung.toLowerCase().includes(searchTerm)
+  );
+  
+  renderUsersTable(filteredUsers);
+}
+
+// Benutzer-Details anzeigen
+function showUserDetails(kennung) {
+  const user = window.allUsers.find(u => u.kennung === kennung);
+  if (!user) return;
+  
+  const modalHtml = `
+    <div class="modal-header">
+      <h2>Benutzer Details: ${user.name}</h2>
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="user-details">
+        <div class="detail-section">
+          <h3>Basisinformationen</h3>
+          <p><strong>Name:</strong> ${user.name}</p>
+          <p><strong>FH-Kennung:</strong> ${user.kennung}</p>
+          <p><strong>Erster Druck:</strong> ${user.firstEntry.toLocaleDateString('de-DE')}</p>
+          <p><strong>Letzter Druck:</strong> ${user.lastEntry.toLocaleDateString('de-DE')}</p>
+        </div>
+        
+        <div class="detail-section">
+          <h3>Statistiken</h3>
+          <p><strong>Anzahl Drucke:</strong> ${user.entries.length}</p>
+          <p><strong>Gesamtkosten:</strong> ${formatCurrency(user.totalCost)}</p>
+          <p><strong>Bezahlt:</strong> ${formatCurrency(user.paidAmount)}</p>
+          <p><strong>Offen:</strong> ${formatCurrency(user.unpaidAmount)}</p>
+        </div>
+        
+        <div class="detail-section">
+          <h3>Letzte Drucke</h3>
+          <div class="recent-entries">
+            ${user.entries.slice(0, 5).map(entry => `
+              <div class="entry-item">
+                <span>${entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt'}</span>
+                <span>${entry.jobName || '3D-Druck'}</span>
+                <span>${formatCurrency(entry.totalCost)}</span>
+                <span class="${entry.paid || entry.isPaid ? 'status-paid' : 'status-unpaid'}">
+                  ${entry.paid || entry.isPaid ? 'Bezahlt' : 'Offen'}
+                </span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
+    </div>
+  `;
+  
+  showModal(modalHtml);
+}
+
+// Zahlungserinnerung senden
+function sendPaymentReminder(kennung) {
+  const user = window.allUsers.find(u => u.kennung === kennung);
+  if (!user) return;
+  
+  if (user.unpaidAmount <= 0) {
+    alert('Dieser Benutzer hat keine offenen Beträge.');
+    return;
+  }
+  
+  const subject = encodeURIComponent(`Zahlungserinnerung FGF 3D-Druck - ${user.name}`);
+  const openEntries = user.entries.filter(e => !(e.paid || e.isPaid));
+  
+  const body = encodeURIComponent(`Hallo ${user.name},
+
+hiermit möchten wir Sie freundlich an die offenen Beträge für Ihre 3D-Drucke erinnern:
+
+OFFENE DRUCKE:
+${openEntries.map(entry => 
+  `- ${entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt'}: ${entry.jobName || '3D-Druck'} - ${formatCurrency(entry.totalCost)}`
+).join('\n')}
+
+GESAMTBETRAG: ${formatCurrency(user.unpaidAmount)}
+
+Bitte überweisen Sie den Betrag zeitnah oder melden Sie sich bei Fragen.
+
+Mit freundlichen Grüßen
+Ihr FGF 3D-Druck Team
+
+---
+Diese E-Mail wurde automatisch generiert von PelletTrackr.`);
+  
+  const mailtoLink = `mailto:${user.kennung}@hs-furtwangen.de?subject=${subject}&body=${body}`;
+  window.open(mailtoLink, '_blank');
+}
+
+// Benutzer löschen (alle Einträge des Benutzers)
+async function deleteUser(kennung) {
+  if (!checkAdminAccess()) return;
+  
+  const user = window.allUsers.find(u => u.kennung === kennung);
+  if (!user) return;
+  
+  const confirmMessage = `⚠️ ACHTUNG: Alle ${user.entries.length} Einträge von "${user.name}" (${kennung}) werden unwiderruflich gelöscht!
+  
+Gesamtumsatz: ${formatCurrency(user.totalCost)}
+
+Möchten Sie wirklich fortfahren?`;
+  
+  if (!confirm(confirmMessage)) return;
+  
+  try {
+    console.log(`🗑️ Lösche alle Einträge von Benutzer: ${user.name} (${kennung})`);
+    
+    // Alle Einträge des Benutzers löschen
+    const batch = db.batch();
+    user.entries.forEach(entry => {
+      const entryRef = db.collection("entries").doc(entry.id);
+      batch.delete(entryRef);
+    });
+    
+    await batch.commit();
+    
+    console.log(`✅ ${user.entries.length} Einträge von ${user.name} gelöscht`);
+    alert(`✅ Benutzer "${user.name}" und alle ${user.entries.length} Einträge wurden gelöscht.`);
+    
+    // Listen neu laden
+    loadUsersForManagement();
+    loadAdminStats();
+    loadAllEntries();
+    
+  } catch (error) {
+    console.error("❌ Fehler beim Löschen des Benutzers:", error);
+    alert("❌ Fehler beim Löschen des Benutzers. Bitte versuchen Sie es erneut.");
+  }
+}
