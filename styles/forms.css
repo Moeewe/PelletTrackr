@@ -178,10 +178,17 @@
 }
 
 .control-title {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 16px;
+  font-size: 20px;
+  font-weight: 700;
   color: #000000;
+  margin-bottom: 16px;
+  text-align: left;
+  position: relative;
+  padding: 8px 16px;
+  background: linear-gradient(90deg, #FFEB00 0%, #FFEB00 40px, transparent 40px);
+  border-left: 3px solid #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
 }
 
 .control-buttons {
