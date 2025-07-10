@@ -14,6 +14,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
+  border: none; /* Kein zusätzlicher Rahmen für das table Element */
 }
 
 .data-table thead {

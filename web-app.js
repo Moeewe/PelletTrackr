@@ -50,63 +50,74 @@ async function loginAsUser() {
     return;
   }
   
+  setButtonLoading(loginButton, true);
+  
   try {
-    await UXHelpers.performLogin(async () => {
-      // Prüfen ob Kennung bereits von jemand anderem verwendet wird
-      const existingUser = await checkExistingKennung(kennung.toLowerCase(), name);
-      if (existingUser) {
-        const userChoice = confirm(
-          `⚠️ FH-Kennung bereits registriert!\n\n` +
-          `Die Kennung "${kennung}" ist bereits für "${existingUser.name}" registriert.\n\n` +
-          `Möchtest du:\n` +
-          `✅ OK = Als "${existingUser.name}" anmelden\n` +
-          `❌ Abbrechen = Andere Kennung verwenden`
-        );
-        
-        if (userChoice) {
-          // Als existierender User anmelden
-          currentUser = {
-            name: existingUser.name,
-            kennung: kennung.toLowerCase(),
-            isAdmin: false
-          };
-          document.getElementById('userWelcome').textContent = `Willkommen zurück, ${existingUser.name}!`;
-        } else {
-          toast.info('Bitte verwende eine andere FH-Kennung oder wende dich an den Administrator.');
-          return;
-        }
-      } else {
-        // Neue Kombination - User in Firestore speichern
+    const loadingId = loading.show('Anmeldung läuft...');
+    
+    // Prüfen ob Kennung bereits von jemand anderem verwendet wird
+    const existingUser = await checkExistingKennung(kennung.toLowerCase(), name);
+    if (existingUser) {
+      loading.hide(loadingId);
+      
+      const userChoice = confirm(
+        `⚠️ FH-Kennung bereits registriert!\n\n` +
+        `Die Kennung "${kennung}" ist bereits für "${existingUser.name}" registriert.\n\n` +
+        `Möchtest du:\n` +
+        `✅ OK = Als "${existingUser.name}" anmelden\n` +
+        `❌ Abbrechen = Andere Kennung verwenden`
+      );
+      
+      if (userChoice) {
+        // Als existierender User anmelden
         currentUser = {
-          name: name,
+          name: existingUser.name,
           kennung: kennung.toLowerCase(),
           isAdmin: false
         };
-        
-        try {
-          // User-Dokument in Firestore erstellen
-          await db.collection('users').add({
-            name: name,
-            kennung: kennung.toLowerCase(),
-            createdAt: new Date(),
-            updatedAt: new Date()
-          });
-          console.log('Neuer User in Firestore erstellt:', kennung.toLowerCase());
-        } catch (error) {
-          console.warn('Fehler beim Erstellen des User-Dokuments:', error);
-          // Trotzdem fortfahren - nicht kritisch für User-Login
-        }
-        
-        document.getElementById('userWelcome').textContent = `Willkommen, ${name}!`;
+        document.getElementById('userWelcome').textContent = `Willkommen zurück, ${existingUser.name}!`;
+        showScreen('userDashboard');
+        initializeUserDashboard();
+        toast.success(`Willkommen zurück, ${existingUser.name}!`);
+      } else {
+        toast.info('Bitte verwende eine andere FH-Kennung oder wende dich an den Administrator.');
+        return;
+      }
+    } else {
+      // Neue Kombination - User in Firestore speichern
+      currentUser = {
+        name: name,
+        kennung: kennung.toLowerCase(),
+        isAdmin: false
+      };
+      
+      try {
+        // User-Dokument in Firestore erstellen
+        await db.collection('users').add({
+          name: name,
+          kennung: kennung.toLowerCase(),
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+        console.log('Neuer User in Firestore erstellt:', kennung.toLowerCase());
+      } catch (error) {
+        console.warn('Fehler beim Erstellen des User-Dokuments:', error);
+        // Trotzdem fortfahren - nicht kritisch für User-Login
       }
       
+      document.getElementById('userWelcome').textContent = `Willkommen, ${name}!`;
       showScreen('userDashboard');
-      
-      // User Dashboard initialisieren
       initializeUserDashboard();
-    }, loginButton);
+      toast.success(`Willkommen, ${name}!`);
+    }
+    
+    loading.hide(loadingId);
   } catch (error) {
     console.error('Login error:', error);
+    loading.hideAll();
+    toast.error('Fehler bei der Anmeldung: ' + error.message);
+  } finally {
+    setButtonLoading(loginButton, false);
   }
 }
 
@@ -575,7 +586,7 @@ function renderUserEntries(entries) {
 
   // Tabelle erstellen
   let tableHtml = `
-    <table class="data-table">
+    <table>
       <thead>
         <tr>
           <th onclick="sortUserEntries('date')">Datum ↕</th>
@@ -728,7 +739,7 @@ function renderAdminEntries(entries) {
 
   // Admin-Tabelle erstellen
   let tableHtml = `
-    <table class="data-table">
+    <table>
       <thead>
         <tr>
           <th onclick="sortAdminEntriesBy('date')">Datum ↕</th>
@@ -901,7 +912,7 @@ async function loadMaterialsForManagement() {
     }
 
     let tableHtml = `
-      <table class="data-table">
+      <table>
         <thead>
           <tr>
             <th>Name</th>
@@ -970,7 +981,7 @@ async function loadMasterbatchesForManagement() {
     }
 
     let tableHtml = `
-      <table class="data-table">
+      <table>
         <thead>
           <tr>
             <th>Name</th>
@@ -2092,7 +2103,7 @@ function renderUsersTable(users) {
       <button class="btn btn-primary" onclick="showAddUserDialog()">+ Neuen Nutzer hinzufügen</button>
     </div>
     
-    <table class="data-table">
+    <table>
       <thead>
         <tr>
           <th onclick="sortUsersBy('name')">Name ↕</th>

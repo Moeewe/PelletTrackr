@@ -71,11 +71,12 @@
 /* Mobile Responsive - Fraenk Flat Design */
 @media (max-width: 768px) {
   .data-table {
-    border: none;
+    border: none; /* Kein äußerer Rahmen auf Mobile */
     background: transparent;
     width: 100%;
     max-width: 100%;
     overflow: visible;
+    margin-bottom: 16px; /* Reduzierter Margin */
   }
   
   .data-table table {
