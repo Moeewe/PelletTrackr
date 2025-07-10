@@ -7,17 +7,14 @@
   border: 2px solid #000000;
   border-radius: 0;
   margin-bottom: 32px;
-  overflow-x: auto;
-  overflow-y: visible;
+  overflow: hidden;
 }
 
 .data-table table {
-  width: auto;
-  min-width: 100%;
+  width: 100%;
   border-collapse: collapse;
   font-size: 14px;
-  border: none;
-  table-layout: auto;
+  border: none; /* Kein zusätzlicher Rahmen für das table Element */
 }
 
 .data-table thead {
@@ -34,15 +31,6 @@
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  white-space: nowrap;
-  cursor: pointer;
-  user-select: none;
-  transition: background-color 0.2s ease;
-  min-width: fit-content;
-}
-
-.data-table th:hover {
-  background: #e8e8e8;
 }
 
 .data-table th:last-child {
@@ -64,109 +52,10 @@
   border-right: 1px solid #f0f0f0;
   color: #000000;
   line-height: 1.4;
-  white-space: nowrap;
-  min-width: fit-content;
 }
 
 .data-table td:last-child {
   border-right: none;
-  white-space: normal;
-}
-
-/* Move status button after the date column */
-.data-table td[data-label="Status"] {
-  position: relative;
-  order: 2; /* Adjust order to place after date */
-  padding: 8px 12px;
-  text-align: center;
-}
-
-.data-table td[data-label="Datum"] {
-  order: 1; /* Ensure date column comes before status */
-}
-
-/* Style status button consistently */
-.data-table .status-button {
-  background: #FFEB00;
-  color: #000000;
-  border: 2px solid #000000;
-  padding: 6px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.data-table .status-button:hover {
-  background: #e6d200;
-}
-
-/* Desktop Table Column Widths */
-@media (min-width: 769px) {
-  .data-table th:nth-child(1),
-  .data-table td:nth-child(1) { 
-    min-width: 100px; /* Datum */
-  }
-  
-  .data-table th:nth-child(2),
-  .data-table td:nth-child(2) { 
-    min-width: 120px; /* Name */
-  }
-  
-  .data-table th:nth-child(3),
-  .data-table td:nth-child(3) { 
-    min-width: 100px; /* Kennung */
-  }
-  
-  .data-table th:nth-child(4),
-  .data-table td:nth-child(4) { 
-    min-width: 80px; /* Job */
-  }
-  
-  .data-table th:nth-child(5),
-  .data-table td:nth-child(5) { 
-    min-width: 120px; /* Material */
-  }
-  
-  .data-table th:nth-child(6),
-  .data-table td:nth-child(6) { 
-    min-width: 80px; /* Mat. Menge */
-  }
-  
-  .data-table th:nth-child(7),
-  .data-table td:nth-child(7) { 
-    min-width: 140px; /* Masterbatch */
-  }
-  
-  .data-table th:nth-child(8),
-  .data-table td:nth-child(8) { 
-    min-width: 80px; /* MB Menge */
-  }
-  
-  .data-table th:nth-child(9),
-  .data-table td:nth-child(9) { 
-    min-width: 100px; /* Kosten */
-  }
-  
-  .data-table th:nth-child(10),
-  .data-table td:nth-child(10) { 
-    min-width: 80px; /* Status */
-  }
-  
-  .data-table th:nth-child(11),
-  .data-table td:nth-child(11) { 
-    min-width: 200px; /* Notizen */
-    white-space: normal;
-    max-width: 250px;
-    word-wrap: break-word;
-  }
-  
-  .data-table th:nth-child(12),
-  .data-table td:nth-child(12) { 
-    min-width: 180px; /* Aktionen */
-    white-space: normal;
-  }
 }
 
 /* Responsive Card Layout für Mobile */
@@ -340,21 +229,10 @@
   }
   
   .data-table .btn-edit-note:before {
-    content: "✏";
+    content: "📝";
     margin-right: 4px;
-    font-weight: 600;
   }
   
-  /* Update notiz-edit icon to a simple black icon */
-.notiz-edit-icon {
-  background-image: url('/assets/black-icon.svg'); /* Replace with the path to the black icon */
-  width: 16px;
-  height: 16px;
-  display: inline-block;
-  background-size: contain;
-  background-repeat: no-repeat;
-}
-
   /* Details in kompakter Form */
   .data-table td[data-label="Datum"],
   .data-table td[data-label="Material"],
@@ -535,27 +413,26 @@
   vertical-align: middle;
 }
 
-.status-paid,
-.status-unpaid {
-  display: inline-block;
+.status-paid {
+  background: #d4edda;
+  color: #155724;
   padding: 6px 12px;
-  font-weight: 600;
-  font-size: 11px;
+  border-radius: 0; /* Scharfe Kanten */
+  font-weight: 500;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-radius: 0;
-  border: 2px solid #000000;
-  cursor: default;
 }
 
-.status-paid {
-  background: #28a745;
-  color: white;
-}
-
-.status-unpaid {
-  background: #FFEB00;
-  color: #000000;
+.status-open {
+  background: #fff3cd;
+  color: #856404;
+  padding: 6px 12px;
+  border-radius: 0; /* Scharfe Kanten */
+  font-weight: 500;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .status-overdue {
@@ -616,52 +493,48 @@
   font-weight: 600;
 }
 
-/* Section Titles - Einfach und einheitlich mit gelbem Element */
+/* Section Titles - Fraenk Style mit gelber Markierung */
 .section-title,
 .stats-section h2,
 .entries-section h2 {
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 28px;
+  font-weight: 700;
   color: #000000;
   margin-bottom: 24px;
   text-align: left;
   position: relative;
-  padding-left: 20px;
+  padding: 12px 20px;
+  background: linear-gradient(90deg, #FFEB00 0%, #FFEB00 60px, transparent 60px);
+  border-left: 4px solid #000000;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-.section-title::before,
-.stats-section h2::before,
-.entries-section h2::before {
+.section-title::after,
+.stats-section h2::after,
+.entries-section h2::after {
   content: '';
   position: absolute;
+  bottom: 0;
   left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 12px;
-  height: 12px;
-  background: #FFEB00;
+  width: 100%;
+  height: 3px;
+  background: #000000;
 }
 
 /* Control Titles für Admin-Bereiche */
 .control-title {
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 700;
   color: #000000;
   margin-bottom: 16px;
   text-align: left;
   position: relative;
-  padding-left: 20px;
-}
-
-.control-title::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 10px;
-  height: 10px;
-  background: #FFEB00;
+  padding: 8px 16px;
+  background: linear-gradient(90deg, #FFEB00 0%, #FFEB00 40px, transparent 40px);
+  border-left: 3px solid #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
 }
 
 /* Header Actions */

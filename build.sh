@@ -12,34 +12,56 @@ mkdir -p dist/assets
 # Hauptdateien kopieren (die definitiv existieren)
 echo "📄 Kopiere Hauptdateien..."
 cp index.html dist/
-cp web-app.js dist/
 
 # styles.css nur kopieren, wenn sie existiert
 if [ -f styles.css ]; then
   cp styles.css dist/
+  echo "   ✅ styles.css kopiert"
 fi
 
-# Impressum und Datenschutz kopieren
-cp html/impressum.html dist/
-cp html/datenschutz.html dist/
+# Impressum und Datenschutz kopieren (korrigierter Pfad)
+if [ -f HTML/impressum.html ]; then
+  cp HTML/impressum.html dist/
+  echo "   ✅ impressum.html kopiert"
+fi
+
+if [ -f HTML/datenschutz.html ]; then
+  cp HTML/datenschutz.html dist/
+  echo "   ✅ datenschutz.html kopiert"
+fi
 
 # Favicon kopieren
-cp favicon.svg dist/
+if [ -f favicon.svg ]; then
+  cp favicon.svg dist/
+  echo "   ✅ favicon.svg kopiert"
+fi
 
 # UX-Helpers und andere JavaScript-Module kopieren
 echo "🔧 Kopiere JavaScript-Module..."
+
+# Neue modulare Struktur kopieren
+if [ -d js ]; then
+  echo "📂 Kopiere js/ Ordner (modulare Struktur)..."
+  cp -r js dist/
+fi
+
+# Hauptkoordinator kopieren
+if [ -f web-app-modular.js ]; then
+  cp web-app-modular.js dist/
+  echo "   ✅ web-app-modular.js kopiert"
+fi
+
+# UX-Helpers kopieren
 if [ -f ux-helpers.js ]; then
   cp ux-helpers.js dist/
   echo "   ✅ ux-helpers.js kopiert"
 fi
 
-# Prüfe auf weitere JS-Module (falls sie existieren)
-for js_file in core-functions.js user-functions.js admin-functions.js; do
-  if [ -f "$js_file" ]; then
-    cp "$js_file" dist/
-    echo "   ✅ $js_file kopiert"
-  fi
-done
+# Legacy web-app.js als Backup kopieren (falls benötigt)
+if [ -f web-app.js ]; then
+  cp web-app.js dist/web-app-legacy.js
+  echo "   ✅ web-app.js als Legacy-Backup kopiert"
+fi
 
 # Modular CSS kopieren
 echo "🎨 Kopiere modular CSS..."

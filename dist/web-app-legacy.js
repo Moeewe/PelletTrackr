@@ -60,12 +60,17 @@ async function loginAsUser() {
     if (existingUser) {
       loading.hide(loadingId);
       
-      const userChoice = confirm(
-        `⚠️ FH-Kennung bereits registriert!\n\n` +
-        `Die Kennung "${kennung}" ist bereits für "${existingUser.name}" registriert.\n\n` +
-        `Möchtest du:\n` +
-        `✅ OK = Als "${existingUser.name}" anmelden\n` +
-        `❌ Abbrechen = Andere Kennung verwenden`
+      // Moderne Bestätigung verwenden
+      const confirmMessage = `FH-Kennung bereits registriert!
+
+Die Kennung "${kennung}" ist bereits für "${existingUser.name}" registriert.
+
+Möchtest du dich als "${existingUser.name}" anmelden?`;
+      
+      const userChoice = await toast.confirm(
+        confirmMessage,
+        `Als "${existingUser.name}" anmelden`,
+        'Andere Kennung verwenden'
       );
       
       if (userChoice) {
@@ -763,8 +768,8 @@ function renderAdminEntries(entries) {
     const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
     const isPaid = entry.paid || entry.isPaid;
     const status = isPaid ? 
-      '<span class="status-paid">✅ Bezahlt</span>' : 
-      '<span class="status-unpaid">❌ Offen</span>';
+      '<span class="status-paid">Bezahlt</span>' : 
+      '<span class="status-unpaid">Offen</span>';
     const jobName = entry.jobName || "3D-Druck Auftrag";
     const jobNotes = entry.jobNotes || "";
     const truncatedNotes = jobNotes.length > 20 ? jobNotes.substring(0, 20) + "..." : jobNotes;
@@ -2216,17 +2221,31 @@ function sortUsersBy(field) {
 // Benutzer suchen
 function searchUsers() {
   if (!window.allUsers) return;
-  
+
   const searchTerm = document.getElementById('userManagerSearchInput').value.toLowerCase();
-  
+
   const filteredUsers = window.allUsers.filter(user => {
     const email = user.email || `${user.kennung}@fh-muenster.de`;
     return user.name.toLowerCase().includes(searchTerm) ||
            user.kennung.toLowerCase().includes(searchTerm) ||
            email.toLowerCase().includes(searchTerm);
   });
-  
+
   renderUsersTable(filteredUsers);
+}
+
+// Benutzer suchen
+function searchAdmins() {
+  if (!window.allAdmins) return;
+
+  const searchTerm = document.getElementById('adminManagerSearchInput').value.toLowerCase();
+
+  const filteredAdmins = window.allAdmins.filter(admin => {
+    return admin.name.toLowerCase().includes(searchTerm) ||
+           admin.kennung.toLowerCase().includes(searchTerm);
+  });
+
+  renderAdminsTable(filteredAdmins);
 }
 
 // Benutzer-Details anzeigen
@@ -2321,44 +2340,36 @@ Diese E-Mail wurde automatisch generiert von PelletTrackr.`);
 // Benutzer löschen (alle Einträge des Benutzers)
 async function deleteUser(kennung) {
   if (!checkAdminAccess()) return;
-  
-  const user = window.allUsers.find(u => u.kennung === kennung);
-  if (!user) {
-    alert('Benutzer nicht gefunden!');
-    return;
-  }
-  
-  const confirmMessage = `⚠️ ACHTUNG: Alle ${user.entries.length} Einträge von "${user.name}" (${kennung}) werden unwiderruflich gelöscht!
-  
-Gesamtumsatz: ${formatCurrency(user.totalCost)}
-
-Möchten Sie wirklich fortfahren?`;
-  
-  if (!confirm(confirmMessage)) return;
+  if (!confirm("Benutzer wirklich löschen? Alle zugehörigen Daten werden entfernt!")) return;
   
   try {
-    console.log(`🗑️ Lösche alle Einträge von Benutzer: ${user.name} (${kennung})`);
+    // Alle Einträge des Benutzers abrufen
+    const entriesSnapshot = await db.collection('entries').where('kennung', '==', kennung).get();
     
-    // Alle Einträge des Benutzers löschen
+    // Batch-Delete für alle Einträge
     const batch = db.batch();
-    user.entries.forEach(entry => {
-      const entryRef = db.collection("entries").doc(entry.id);
-      batch.delete(entryRef);
+    entriesSnapshot.forEach(doc => {
+      batch.delete(doc.ref);
     });
+    
+    // Benutzer-Dokument löschen
+    const userSnapshot = await db.collection('users').where('kennung', '==', kennung).get();
+    if (!userSnapshot.empty) {
+      userSnapshot.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+    }
     
     await batch.commit();
     
-    console.log(`✅ ${user.entries.length} Einträge von ${user.name} gelöscht`);
-    alert(`✅ Benutzer "${user.name}" und alle ${user.entries.length} Einträge wurden gelöscht.`);
-    
-    // Listen neu laden
+    alert('✅ Benutzer und alle zugehörigen Daten wurden gelöscht.');
     loadUsersForManagement();
     loadAdminStats();
     loadAllEntries();
     
   } catch (error) {
-    console.error("❌ Fehler beim Löschen des Benutzers:", error);
-    alert("❌ Fehler beim Löschen des Benutzers. Bitte versuchen Sie es erneut.");
+    console.error('Fehler beim Löschen des Benutzers:', error);
+    alert('Fehler beim Löschen: ' + error.message);
   }
 }
 
@@ -2594,4 +2605,127 @@ async function editNote(entryId, currentNote) {
     console.error('❌ Fehler beim Aktualisieren der Notiz:', error);
     alert('Fehler beim Speichern der Notiz!');
   }
+}
+
+// ==================== SORTIER-FUNKTIONEN ====================
+
+let userSortDirection = {};
+let adminSortDirection = {};
+
+function sortUserEntries(column) {
+  if (!allUserEntries.length) return;
+  
+  // Toggle sort direction
+  userSortDirection[column] = userSortDirection[column] === 'asc' ? 'desc' : 'asc';
+  const direction = userSortDirection[column];
+  
+  allUserEntries.sort((a, b) => {
+    let valueA, valueB;
+    
+    switch(column) {
+      case 'date':
+        valueA = new Date(a.date);
+        valueB = new Date(b.date);
+        break;
+      case 'jobName':
+        valueA = a.jobName?.toLowerCase() || '';
+        valueB = b.jobName?.toLowerCase() || '';
+        break;
+      case 'material':
+        valueA = a.material?.toLowerCase() || '';
+        valueB = b.material?.toLowerCase() || '';
+        break;
+      case 'materialMenge':
+        valueA = parseFloat(a.materialMenge) || 0;
+        valueB = parseFloat(b.materialMenge) || 0;
+        break;
+      case 'masterbatch':
+        valueA = a.masterbatch?.toLowerCase() || '';
+        valueB = b.masterbatch?.toLowerCase() || '';
+        break;
+      case 'masterbatchMenge':
+        valueA = parseFloat(a.masterbatchMenge) || 0;
+        valueB = parseFloat(b.masterbatchMenge) || 0;
+        break;
+      case 'cost':
+        valueA = parseFloat(a.cost) || 0;
+        valueB = parseFloat(b.cost) || 0;
+        break;
+      case 'status':
+        valueA = a.status?.toLowerCase() || '';
+        valueB = b.status?.toLowerCase() || '';
+        break;
+      default:
+        return 0;
+    }
+    
+    if (valueA < valueB) return direction === 'asc' ? -1 : 1;
+    if (valueA > valueB) return direction === 'asc' ? 1 : -1;
+    return 0;
+  });
+  
+  displayUserEntries(allUserEntries);
+}
+
+function sortAdminEntriesBy(column) {
+  if (!allAdminEntries.length) return;
+  
+  // Toggle sort direction
+  adminSortDirection[column] = adminSortDirection[column] === 'asc' ? 'desc' : 'asc';
+  const direction = adminSortDirection[column];
+  
+  allAdminEntries.sort((a, b) => {
+    let valueA, valueB;
+    
+    switch (column) {
+      case 'date':
+        valueA = new Date(a.date);
+        valueB = new Date(b.date);
+        break;
+      case 'name':
+        valueA = a.name?.toLowerCase() || '';
+        valueB = b.name?.toLowerCase() || '';
+        break;
+      case 'kennung':
+        valueA = a.kennung?.toLowerCase() || '';
+        valueB = b.kennung?.toLowerCase() || '';
+        break;
+      case 'jobName':
+        valueA = a.jobName?.toLowerCase() || '';
+        valueB = b.jobName?.toLowerCase() || '';
+        break;
+      case 'material':
+        valueA = a.material?.toLowerCase() || '';
+        valueB = b.material?.toLowerCase() || '';
+        break;
+      case 'materialMenge':
+        valueA = parseFloat(a.materialMenge) || 0;
+        valueB = parseFloat(b.materialMenge) || 0;
+        break;
+      case 'masterbatch':
+        valueA = a.masterbatch?.toLowerCase() || '';
+        valueB = b.masterbatch?.toLowerCase() || '';
+        break;
+      case 'masterbatchMenge':
+        valueA = parseFloat(a.masterbatchMenge) || 0;
+        valueB = parseFloat(b.masterbatchMenge) || 0;
+        break;
+      case 'cost':
+        valueA = parseFloat(a.cost) || 0;
+        valueB = parseFloat(b.cost) || 0;
+        break;
+      case 'status':
+        valueA = a.status?.toLowerCase() || '';
+        valueB = b.status?.toLowerCase() || '';
+        break;
+      default:
+        return 0;
+    }
+    
+    if (valueA < valueB) return direction === 'asc' ? -1 : 1;
+    if (valueA > valueB) return direction === 'asc' ? 1 : -1;
+    return 0;
+  });
+  
+  displayAdminEntries(allAdminEntries);
 }

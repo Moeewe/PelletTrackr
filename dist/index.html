@@ -9,7 +9,19 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="alternate icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%23FFEB00'/><rect width='16' height='16' fill='none' stroke='%23000' stroke-width='1'/><rect x='2' y='2' width='12' height='1' fill='%23000'/><rect x='2' y='2' width='1' height='10' fill='%23000'/><rect x='13' y='2' width='1' height='10' fill='%23000'/><rect x='1' y='12' width='14' height='2' fill='%23000'/><rect x='5' y='9' width='6' height='3' fill='%23333'/><text x='8' y='8' text-anchor='middle' font-family='Arial' font-size='5' font-weight='bold' fill='%23000'>P</text></svg>">
     
-    <link rel="stylesheet" href="styles-modular.css">
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Core Modules -->
+    <script src="js/core/firebase-config.js"></script>
+    <script src="js/core/globals.js"></script>
+    <script src="js/core/app-init.js"></script>
+    <script src="js/core/utils.js"></script>
+    <script src="js/core/auth.js"></script>
+    <script src="js/core/navigation.js"></script>
 </head>
 <body>
     <!-- Login Screen -->
@@ -302,6 +314,7 @@
             </div>
             <div class="modal-body">
                 <div class="table-controls">
+                    <button class="btn btn-primary" onclick="showAddUserDialog()">+ Neuen Nutzer hinzufügen</button>
                     <input type="text" id="userManagerSearchInput" placeholder="Suchen nach Name oder FH-Kennung..." class="search-input" onkeyup="searchUsers()">
                     <select id="userManagerSortSelect" class="sort-select" onchange="sortUsers()">
                         <option value="name-asc">Name (A-Z)</option>
@@ -354,27 +367,34 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-    <!-- App Scripts -->
+    <!-- UX Helpers -->
     <script src="ux-helpers.js"></script>
-    <script src="web-app.js"></script>
+    
+    <!-- Core Modules -->
+    <script src="js/core/globals.js"></script>
+    <script src="js/core/utils.js"></script>
+    <script src="js/core/app-init.js"></script>
+    <script src="js/core/auth.js"></script>
+    <script src="js/core/navigation.js"></script>
+    
+    <!-- UI Modules -->
+    <script src="js/ui/cost-calculator.js"></script>
+    <script src="js/ui/modals.js"></script>
+    <script src="js/ui/payment-proof.js"></script>
+    <script src="js/ui/sorting.js"></script>
+    
+    <!-- Feature Modules -->
+    <script src="js/features/materials/material-loading.js"></script>
+    <script src="js/features/entries/entry-management.js"></script>
+    <script src="js/features/entries/entry-stats.js"></script>
+    <script src="js/features/entries/entry-rendering.js"></script>
+    <script src="js/features/users/user-management.js"></script>
+    
+    <!-- Main App (Coordinator) -->
+    <script src="web-app-modular.js"></script>
 
     <!-- App Initialization -->
     <script>
-        // Firebase Config
-        const firebaseConfig = {
-            apiKey: "AIzaSyBaaMwmjxyytxHLinmigccF30-1Wl0tzD0",
-            authDomain: "fgf-3d-druck.firebaseapp.com",
-            databaseURL: "https://fgf-3d-druck-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "fgf-3d-druck",
-            storageBucket: "fgf-3d-druck.firebasestorage.app",
-            messagingSenderId: "37190466890",
-            appId: "1:37190466890:web:cfb25f3c2f6bb62006d5b3"
-        };
-        
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        
         // Initialize app when DOM is ready
         document.addEventListener('DOMContentLoaded', function() {
             console.log("🚀 PelletTrackr wird initialisiert...");
