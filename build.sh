@@ -13,9 +13,17 @@ mkdir -p dist/assets
 echo "📄 Kopiere Hauptdateien..."
 cp index.html dist/
 cp web-app.js dist/
-cp styles.css dist/
-cp impressum.html dist/
-cp datenschutz.html dist/
+
+# styles.css nur kopieren, wenn sie existiert
+if [ -f styles.css ]; then
+  cp styles.css dist/
+fi
+
+# Impressum und Datenschutz kopieren
+cp html/impressum.html dist/
+cp html/datenschutz.html dist/
+
+# Favicon kopieren
 cp favicon.svg dist/
 
 # UX-Helpers und andere JavaScript-Module kopieren
