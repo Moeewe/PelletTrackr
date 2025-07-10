@@ -1,11 +1,22 @@
 // ==================== MODAL MODULE ====================
 // Modal-Verwaltung und UI-Komponenten
 
-// Modal anzeigen
+// Modal anzeigen mit korrekter Struktur
 function showModal(htmlContent) {
   const modal = document.getElementById('modal');
-  modal.innerHTML = htmlContent;
+  
+  // Prüfen ob Content bereits modal-content Wrapper hat
+  if (htmlContent.includes('<div class="modal-content">')) {
+    modal.innerHTML = htmlContent;
+  } else {
+    // Content in modal-content Wrapper einbetten
+    modal.innerHTML = `<div class="modal-content">${htmlContent}</div>`;
+  }
+  
   modal.classList.add('active');
+  
+  // Prevent body scrolling when modal is open
+  document.body.style.overflow = 'hidden';
 }
 
 // Modal mit Content anzeigen
@@ -18,8 +29,37 @@ function closeModal() {
   const modal = document.getElementById('modal');
   if (modal) {
     modal.classList.remove('active');
+    modal.innerHTML = '';
+    // Restore body scrolling
+    document.body.style.overflow = '';
   }
 }
+
+// ESC-Taste Support für Modals
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') {
+    const activeModal = document.querySelector('.modal.active');
+    if (activeModal) {
+      if (activeModal.id === 'modal') {
+        closeModal();
+      } else if (activeModal.id === 'paymentProofModal') {
+        window.closePaymentProofModal();
+      }
+    }
+  }
+});
+
+// Click outside modal to close
+document.addEventListener('click', function(event) {
+  const activeModal = document.querySelector('.modal.active');
+  if (activeModal && event.target === activeModal) {
+    if (activeModal.id === 'modal') {
+      closeModal();
+    } else if (activeModal.id === 'paymentProofModal') {
+      window.closePaymentProofModal();
+    }
+  }
+});
 
 // ==================== ENTRY DETAILS & VIEWING ====================
 
@@ -46,12 +86,12 @@ async function viewEntryDetails(entryId) {
       </div>
       <div class="modal-body">
         <div class="mobile-detail-layout">
+          <div class="detail-name">${entry.name}</div>
+          
           <div class="detail-row">
             <span class="detail-label">Datum:</span>
-            <span class="detail-value">${date}</span>
+            <span class="detail-value">${date} ${time}</span>
           </div>
-          
-          <div class="detail-name">${entry.name}</div>
           
           <div class="detail-row">
             <span class="detail-label">Material:</span>
@@ -75,22 +115,27 @@ async function viewEntryDetails(entryId) {
           
           <div class="detail-cost-status">
             <div class="cost-section">
-              <span class="cost-label">Kosten:</span>
+              <span class="cost-label">Gesamtkosten:</span>
               <span class="cost-value">${window.formatCurrency(entry.totalCost)}</span>
             </div>
-            <div class="status-badge ${isPaid ? 'status-paid' : 'status-unpaid'}">${status.toUpperCase()}</div>
+            <div class="status-badge ${isPaid ? 'status-paid' : 'status-unpaid'}">${status}</div>
           </div>
           
           <div class="notes-section">
-            <div class="notes-header">◆ Notizen:</div>
+            <div class="notes-header">Job-Name</div>
+            <div class="notes-content">${jobName}</div>
+          </div>
+          
+          <div class="notes-section">
+            <div class="notes-header">Notizen</div>
             <div class="notes-content">${jobNotes}</div>
           </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-nachweis" ${!isPaid ? 'disabled' : ''} ${isPaid ? `onclick="showPaymentProof('${entry.id}')"` : ''}>Nachweis</button>
-        <button class="btn btn-details" onclick="closeModal()">Details</button>
-        <button class="btn btn-edit" onclick="editUserEntry('${entry.id}')">Bearbeiten</button>
+        <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
+        ${isPaid ? `<button class="btn btn-nachweis" onclick="showPaymentProof('${entry.id}')">Nachweis</button>` : ''}
+        <button class="btn btn-primary" onclick="editUserEntry('${entry.id}')">Bearbeiten</button>
       </div>
     `;
     
@@ -131,24 +176,24 @@ async function editUserEntry(entryId) {
     
     const modalHtml = `
       <div class="modal-header">
-        <h2>Mein Eintrag Bearbeiten</h2>
+        <h2>Eintrag Bearbeiten</h2>
         <button class="close-btn" onclick="closeModal()">&times;</button>
       </div>
       <div class="modal-body">
         <form id="editUserEntryForm">
           <div class="form-group">
-            <label class="form-label">Job-Name</label>
-            <input type="text" id="editUserJobName" class="form-input" value="${jobName}">
+            <label class="form-label">Job-Name *</label>
+            <input type="text" id="editUserJobName" class="form-input" value="${jobName}" required>
           </div>
           
           <div class="form-group">
-            <label class="form-label">Notizen</label>
+            <label class="form-label">Notizen (optional)</label>
             <textarea id="editUserJobNotes" class="form-textarea" rows="4" placeholder="Optionale Notizen zu diesem Druck...">${jobNotes}</textarea>
           </div>
           
-          <p style="margin-top: 20px; padding: 16px; background: #f8f8f8; border: 1px solid #e0e0e0; color: #666; font-size: 14px;">
+          <div style="margin-top: 24px; padding: 16px; background: #f8f9fa; border: 1px solid #dee2e6; color: #666; font-size: 14px; line-height: 1.5;">
             <strong>Hinweis:</strong> Als Benutzer kannst du nur Job-Name und Notizen bearbeiten. Material-Mengen können nur von Admins geändert werden.
-          </p>
+          </div>
         </form>
       </div>
       <div class="modal-footer">
@@ -215,29 +260,29 @@ async function editEntry(entryId) {
       <div class="modal-body">
         <form id="editEntryForm">
           <div class="form-group">
-            <label class="form-label">Job-Name</label>
-            <input type="text" id="editJobName" class="form-input" value="${jobName}">
+            <label class="form-label">Job-Name *</label>
+            <input type="text" id="editJobName" class="form-input" value="${jobName}" required>
           </div>
           
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Material-Menge (kg)</label>
-              <input type="number" id="editMaterialMenge" class="form-input" value="${(entry.materialMenge || 0).toFixed(2)}" step="0.01" min="0">
+              <label class="form-label">Material-Menge (kg) *</label>
+              <input type="number" id="editMaterialMenge" class="form-input" value="${(entry.materialMenge || 0).toFixed(2)}" step="0.01" min="0" required>
             </div>
             <div class="form-group">
-              <label class="form-label">Masterbatch-Menge (kg)</label>
-              <input type="number" id="editMasterbatchMenge" class="form-input" value="${(entry.masterbatchMenge || 0).toFixed(2)}" step="0.01" min="0">
+              <label class="form-label">Masterbatch-Menge (kg) *</label>
+              <input type="number" id="editMasterbatchMenge" class="form-input" value="${(entry.masterbatchMenge || 0).toFixed(2)}" step="0.01" min="0" required>
             </div>
           </div>
           
           <div class="form-group">
-            <label class="form-label">Notizen</label>
+            <label class="form-label">Notizen (optional)</label>
             <textarea id="editJobNotes" class="form-textarea" rows="4" placeholder="Optionale Notizen zu diesem Druck...">${jobNotes}</textarea>
           </div>
           
-          <p style="margin-top: 20px; padding: 16px; background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; font-size: 14px;">
+          <div style="margin-top: 24px; padding: 16px; background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; font-size: 14px; line-height: 1.5;">
             <strong>Admin-Berechtigung:</strong> Du kannst alle Felder dieses Eintrags bearbeiten. Kosten werden automatisch neu berechnet.
-          </p>
+          </div>
         </form>
       </div>
       <div class="modal-footer">

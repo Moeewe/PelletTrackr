@@ -1,0 +1,149 @@
+/* ===== MODAL ENHANCEMENTS ===== */
+/* Zusätzliche Verbesserungen für Modal-UX */
+
+/* Smooth scrolling für Modal-Body */
+.modal-body {
+  scroll-behavior: smooth;
+}
+
+/* Besser sichtbare Focus-States */
+.modal .form-input:focus,
+.modal .form-select:focus,
+.modal .form-textarea:focus {
+  border-color: #007bff !important;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1) !important;
+}
+
+/* Loading State für Modal-Buttons */
+.modal .btn.loading {
+  pointer-events: none;
+  opacity: 0.7;
+  position: relative;
+}
+
+.modal .btn.loading::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+@keyframes spin {
+  0% { transform: translateY(-50%) rotate(0deg); }
+  100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+/* Bessere Hover-States für Modal-Buttons */
+.modal .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.modal .btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Verbesserte Form-Validierung */
+.modal .form-input:invalid,
+.modal .form-select:invalid,
+.modal .form-textarea:invalid {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+.modal .form-input:valid,
+.modal .form-select:valid,
+.modal .form-textarea:valid {
+  border-color: #28a745;
+}
+
+/* Bessere Accessibility */
+.modal[aria-hidden="false"] {
+  display: flex !important;
+}
+
+.modal[aria-hidden="true"] {
+  display: none !important;
+}
+
+/* Responsive Text-Skalierung */
+@media (max-width: 480px) {
+  .modal .detail-label {
+    font-size: 13px;
+  }
+  
+  .modal .detail-value {
+    font-size: 13px;
+  }
+  
+  .modal .form-label {
+    font-size: 14px;
+  }
+}
+
+/* Bessere Kontraste für bessere Lesbarkeit */
+.modal .detail-label {
+  color: #555;
+}
+
+.modal .detail-value {
+  color: #000;
+  font-weight: 600;
+}
+
+/* Highlight für wichtige Informationen */
+.modal .cost-value {
+  color: #000;
+  font-weight: 700;
+}
+
+.modal .detail-name {
+  color: #000;
+  font-weight: 700;
+}
+
+/* Verbesserte Notes-Darstellung */
+.modal .notes-content {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  color: #495057;
+  font-family: inherit;
+}
+
+.modal .notes-content:empty::after {
+  content: 'Keine Notizen vorhanden';
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* Bessere Button-Spacing */
+.modal .modal-footer .btn {
+  min-width: 100px;
+}
+
+.modal .modal-footer .btn:last-child {
+  margin-left: auto;
+}
+
+/* Responsive Modal-Header */
+@media (max-width: 768px) {
+  .modal .modal-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  
+  .modal .modal-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+  }
+}
