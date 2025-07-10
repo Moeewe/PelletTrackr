@@ -43,92 +43,110 @@ function showAdminLogin() {
 async function loginAsUser() {
   const name = document.getElementById('loginName').value.trim();
   const kennung = document.getElementById('loginKennung').value.trim();
+  const loginButton = document.getElementById('loginBtn');
   
   if (!name || !kennung) {
-    alert('Bitte Name und FH-Kennung eingeben!');
+    toast.warning('Bitte Name und FH-Kennung eingeben!');
     return;
   }
   
-  // Prüfen ob Kennung bereits von jemand anderem verwendet wird
-  const existingUser = await checkExistingKennung(kennung.toLowerCase(), name);
-  if (existingUser) {
-    const userChoice = confirm(
-      `⚠️ FH-Kennung bereits registriert!\n\n` +
-      `Die Kennung "${kennung}" ist bereits für "${existingUser.name}" registriert.\n\n` +
-      `Möchtest du:\n` +
-      `✅ OK = Als "${existingUser.name}" anmelden\n` +
-      `❌ Abbrechen = Andere Kennung verwenden`
-    );
-    
-    if (userChoice) {
-      // Als existierender User anmelden
-      currentUser = {
-        name: existingUser.name,
-        kennung: kennung.toLowerCase(),
-        isAdmin: false
-      };
-      document.getElementById('userWelcome').textContent = `Willkommen zurück, ${existingUser.name}!`;
-    } else {
-      alert('Bitte verwende eine andere FH-Kennung oder wende dich an den Administrator.');
-      return;
-    }
-  } else {
-    // Neue Kombination - User in Firestore speichern
-    currentUser = {
-      name: name,
-      kennung: kennung.toLowerCase(),
-      isAdmin: false
-    };
-    
-    try {
-      // User-Dokument in Firestore erstellen
-      await db.collection('users').add({
-        name: name,
-        kennung: kennung.toLowerCase(),
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
-      console.log('Neuer User in Firestore erstellt:', kennung.toLowerCase());
-    } catch (error) {
-      console.warn('Fehler beim Erstellen des User-Dokuments:', error);
-      // Trotzdem fortfahren - nicht kritisch für User-Login
-    }
-    
-    document.getElementById('userWelcome').textContent = `Willkommen, ${name}!`;
+  try {
+    await UXHelpers.performLogin(async () => {
+      // Prüfen ob Kennung bereits von jemand anderem verwendet wird
+      const existingUser = await checkExistingKennung(kennung.toLowerCase(), name);
+      if (existingUser) {
+        const userChoice = confirm(
+          `⚠️ FH-Kennung bereits registriert!\n\n` +
+          `Die Kennung "${kennung}" ist bereits für "${existingUser.name}" registriert.\n\n` +
+          `Möchtest du:\n` +
+          `✅ OK = Als "${existingUser.name}" anmelden\n` +
+          `❌ Abbrechen = Andere Kennung verwenden`
+        );
+        
+        if (userChoice) {
+          // Als existierender User anmelden
+          currentUser = {
+            name: existingUser.name,
+            kennung: kennung.toLowerCase(),
+            isAdmin: false
+          };
+          document.getElementById('userWelcome').textContent = `Willkommen zurück, ${existingUser.name}!`;
+        } else {
+          toast.info('Bitte verwende eine andere FH-Kennung oder wende dich an den Administrator.');
+          return;
+        }
+      } else {
+        // Neue Kombination - User in Firestore speichern
+        currentUser = {
+          name: name,
+          kennung: kennung.toLowerCase(),
+          isAdmin: false
+        };
+        
+        try {
+          // User-Dokument in Firestore erstellen
+          await db.collection('users').add({
+            name: name,
+            kennung: kennung.toLowerCase(),
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+          console.log('Neuer User in Firestore erstellt:', kennung.toLowerCase());
+        } catch (error) {
+          console.warn('Fehler beim Erstellen des User-Dokuments:', error);
+          // Trotzdem fortfahren - nicht kritisch für User-Login
+        }
+        
+        document.getElementById('userWelcome').textContent = `Willkommen, ${name}!`;
+      }
+      
+      showScreen('userDashboard');
+      
+      // User Dashboard initialisieren
+      initializeUserDashboard();
+    }, loginButton);
+  } catch (error) {
+    console.error('Login error:', error);
   }
-  showScreen('userDashboard');
-  
-  // User Dashboard initialisieren
-  initializeUserDashboard();
 }
 
 function loginAsAdmin() {
   const name = document.getElementById('loginName').value.trim();
   const kennung = document.getElementById('loginKennung').value.trim();
   const password = document.getElementById('adminPassword').value;
+  const adminButton = document.getElementById('adminBtn');
   
   if (!name || !kennung) {
-    alert('Bitte Name und FH-Kennung eingeben!');
+    toast.warning('Bitte Name und FH-Kennung eingeben!');
     return;
   }
   
   if (password !== ADMIN_PASSWORD) {
-    alert('Falsches Admin-Passwort!');
+    toast.error('Falsches Admin-Passwort!');
     return;
   }
   
-  currentUser = {
-    name: name,
-    kennung: kennung.toLowerCase(),
-    isAdmin: true
-  };
+  // Admin-Login mit Loading-Effekt
+  setButtonLoading(adminButton, true);
   
-  // Admin Dashboard anzeigen
-  document.getElementById('adminWelcome').textContent = `Admin Dashboard - ${name}`;
-  showScreen('adminDashboard');
-  
-  // Admin Dashboard initialisieren
-  initializeAdminDashboard();
+  // Kurze Verzögerung für UX
+  setTimeout(() => {
+    currentUser = {
+      name: name,
+      kennung: kennung.toLowerCase(),
+      isAdmin: true
+    };
+    
+    // Admin Dashboard anzeigen
+    document.getElementById('adminWelcome').textContent = `Admin Dashboard - ${name}`;
+    showScreen('adminDashboard');
+    
+    // Admin Dashboard initialisieren
+    initializeAdminDashboard();
+    
+    setButtonLoading(adminButton, false);
+    toast.success(`Willkommen im Admin-Bereich, ${name}!`);
+  }, 800);
 }
 
 function logout() {
@@ -365,7 +383,7 @@ async function addEntry() {
 
   // Validierung
   if (!material || !materialMenge || !masterbatch || !masterbatchMenge) {
-    alert("⚠️ Bitte alle Felder ausfüllen!");
+    toast.warning("⚠️ Bitte alle Felder ausfüllen!");
     return;
   }
 
@@ -374,7 +392,7 @@ async function addEntry() {
   const hasMasterbatch = masterbatch && masterbatchMenge;
   
   if (!hasMaterial && !hasMasterbatch) {
-    alert("⚠️ Bitte wählen Sie mindestens Material oder Masterbatch aus!");
+    toast.warning("⚠️ Bitte wählen Sie mindestens Material oder Masterbatch aus!");
     return;
   }
 
@@ -383,80 +401,84 @@ async function addEntry() {
   const masterbatchMengeNum = hasMasterbatch ? parseGermanNumber(masterbatchMenge) : 0;
 
   if (hasMaterial && (isNaN(materialMengeNum) || materialMengeNum <= 0)) {
-    alert("⚠️ Bitte eine gültige Materialmenge eingeben!");
+    toast.warning("⚠️ Bitte eine gültige Materialmenge eingeben!");
     return;
   }
 
   if (hasMasterbatch && (isNaN(masterbatchMengeNum) || masterbatchMengeNum <= 0)) {
-    alert("⚠️ Bitte eine gültige Masterbatch-Menge eingeben!");
+    toast.warning("⚠️ Bitte eine gültige Masterbatch-Menge eingeben!");
     return;
   }
 
   try {
-    let materialData = null;
-    let masterbatchData = null;
-    let materialCost = 0;
-    let masterbatchCost = 0;
+    await withLoading(async () => {
+      let materialData = null;
+      let masterbatchData = null;
+      let materialCost = 0;
+      let masterbatchCost = 0;
 
-    // Material-Daten abrufen (falls ausgewählt)
-    if (hasMaterial) {
-      const materialSnapshot = await db.collection("materials").where("name", "==", material).get();
-      if (materialSnapshot.empty) {
-        throw new Error("Material nicht gefunden");
+      // Material-Daten abrufen (falls ausgewählt)
+      if (hasMaterial) {
+        const materialSnapshot = await db.collection("materials").where("name", "==", material).get();
+        if (materialSnapshot.empty) {
+          throw new Error("Material nicht gefunden");
+        }
+        materialData = materialSnapshot.docs[0].data();
+        materialCost = materialMengeNum * materialData.price;
       }
-      materialData = materialSnapshot.docs[0].data();
-      materialCost = materialMengeNum * materialData.price;
-    }
 
-    // Masterbatch-Daten abrufen (falls ausgewählt)
-    if (hasMasterbatch) {
-      const masterbatchSnapshot = await db.collection("masterbatches").where("name", "==", masterbatch).get();
-      if (masterbatchSnapshot.empty) {
-        throw new Error("Masterbatch nicht gefunden");
+      // Masterbatch-Daten abrufen (falls ausgewählt)
+      if (hasMasterbatch) {
+        const masterbatchSnapshot = await db.collection("masterbatches").where("name", "==", masterbatch).get();
+        if (masterbatchSnapshot.empty) {
+          throw new Error("Masterbatch nicht gefunden");
+        }
+        masterbatchData = masterbatchSnapshot.docs[0].data();
+        masterbatchCost = masterbatchMengeNum * masterbatchData.price;
       }
-      masterbatchData = masterbatchSnapshot.docs[0].data();
-      masterbatchCost = masterbatchMengeNum * masterbatchData.price;
-    }
 
-    // Gesamtkosten berechnen
-    const totalCost = materialCost + masterbatchCost;
+      // Gesamtkosten berechnen
+      const totalCost = materialCost + masterbatchCost;
 
-    // Druck in Firestore speichern
-    const entry = {
-      name: name,
-      kennung: kennung,
-      material: material || "",
-      materialMenge: materialMengeNum,
-      materialPrice: materialData ? materialData.price : 0,
-      materialCost: materialCost,
-      masterbatch: masterbatch || "",
-      masterbatchMenge: masterbatchMengeNum,
-      masterbatchPrice: masterbatchData ? masterbatchData.price : 0,
-      masterbatchCost: masterbatchCost,
-      totalCost: totalCost,
-      jobName: jobName || "3D-Druck Auftrag", // Default if empty
-      jobNotes: jobNotes || "",
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      paid: false
-    };
+      // Druck in Firestore speichern
+      const entry = {
+        name: name,
+        kennung: kennung,
+        material: material || "",
+        materialMenge: materialMengeNum,
+        materialPrice: materialData ? materialData.price : 0,
+        materialCost: materialCost,
+        masterbatch: masterbatch || "",
+        masterbatchMenge: masterbatchMengeNum,
+        masterbatchPrice: masterbatchData ? masterbatchData.price : 0,
+        masterbatchCost: masterbatchCost,
+        totalCost: totalCost,
+        jobName: jobName || "3D-Druck Auftrag", // Default if empty
+        jobNotes: jobNotes || "",
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        paid: false
+      };
 
-    await db.collection("entries").add(entry);
+      await db.collection("entries").add(entry);
 
-    alert("✅ Druck erfolgreich gespeichert!");
-    clearForm();
-    
-    // Dashboard aktualisieren
-    if (!currentUser.isAdmin) {
-      loadUserStats();
-      loadUserEntries();
-    } else {
-      loadAdminStats();
-      loadAllEntries();
-    }
+      clearForm();
+      
+      // Dashboard aktualisieren
+      if (!currentUser.isAdmin) {
+        loadUserStats();
+        loadUserEntries();
+      } else {
+        loadAdminStats();
+        loadAllEntries();
+      }
+    }, 
+    'Druck wird gespeichert...', 
+    '✅ Druck erfolgreich gespeichert!', 
+    'Fehler beim Speichern des Drucks');
     
   } catch (error) {
     console.error("Fehler beim Speichern:", error);
-    alert("❌ Fehler beim Speichern: " + error.message);
+    // Error Toast wird bereits von withLoading() gehandhabt
   }
 }
 
@@ -829,14 +851,18 @@ async function deleteEntry(entryId) {
   if (!confirm("Druck wirklich unwiderruflich löschen?")) return;
   
   try {
-    await db.collection('entries').doc(entryId).delete();
-    alert("🗑️ Druck erfolgreich gelöscht!");
-    loadAdminStats();
-    loadAllEntries(); // Lädt alle Daten neu und wendet aktuelle Filter an
+    await withLoading(async () => {
+      await db.collection('entries').doc(entryId).delete();
+      loadAdminStats();
+      loadAllEntries(); // Lädt alle Daten neu und wendet aktuelle Filter an
+    }, 
+    'Druck wird gelöscht...', 
+    '🗑️ Druck erfolgreich gelöscht!', 
+    'Fehler beim Löschen des Drucks');
     
   } catch (error) {
     console.error('Fehler beim Löschen des Drucks:', error);
-    alert("❌ Fehler beim Löschen: " + error.message);
+    // Error Toast wird bereits von withLoading() gehandhabt
   }
 }
 
