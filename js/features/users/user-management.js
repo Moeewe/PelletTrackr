@@ -122,10 +122,10 @@ function renderUsersTable(users) {
         <td data-label="Letzter Druck"><span class="cell-value">${lastEntryDate}</span></td>
         <td data-label="Aktionen" class="actions">
           <div class="action-group">
-            <button class="btn btn-primary" onclick="editUser('${user.kennung}')">Bearbeiten</button>
-            <button class="btn btn-tertiary" onclick="showUserDetails('${user.kennung}')">Details</button>
-            <button class="btn btn-warning" onclick="sendPaymentReminder('${user.kennung}')">Mahnung</button>
-            <button class="btn btn-danger" onclick="deleteUser('${user.kennung}')">Löschen</button>
+            ${ButtonFactory.editUser(user.kennung)}
+            ${ButtonFactory.userDetails(user.kennung)}
+            ${ButtonFactory.sendReminder(user.kennung)}
+            ${ButtonFactory.deleteUser(user.kennung)}
           </div>
         </td>
       </tr>
@@ -263,11 +263,11 @@ function showUserDetails(kennung) {
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
+      ${ButtonFactory.closeModal()}
     </div>
   `;
   
-  window.showModal(modalHtml);
+  window.showModalWithContent(modalHtml);
 }
 
 function sendPaymentReminder(kennung) {
@@ -374,12 +374,14 @@ async function editUser(kennung) {
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
-      <button class="btn btn-primary" onclick="updateUser('${kennung}')">Speichern</button>
+      <div class="button-group">
+        ${ButtonFactory.cancelModal()}
+        ${ButtonFactory.saveChanges(`updateUser('${kennung}')`)}
+      </div>
     </div>
   `;
   
-  window.showModal(modalHtml);
+  showModalWithContent(modalHtml);
 }
 
 async function updateUser(oldKennung) {
@@ -476,8 +478,8 @@ function showAddUserDialog() {
           </div>
         </div>
         <div class="card-footer">
-          <button class="btn btn-primary" onclick="createNewUser()">BENUTZER HINZUFÜGEN</button>
-          <button class="btn btn-secondary" onclick="closeModal()">ABBRECHEN</button>
+          ${ButtonFactory.primary('BENUTZER HINZUFÜGEN', 'createNewUser()')}
+          ${ButtonFactory.cancelModal()}
         </div>
       </div>
     </div>

@@ -128,25 +128,25 @@
 }
 
 .data-table .actions .btn-success {
-  background: #28a745;
-  border-color: #28a745;
+  background: #4CAF50;
+  border-color: #4CAF50;
   color: white;
 }
 
 .data-table .actions .btn-success:hover {
-  background: #1e7e34;
-  border-color: #1e7e34;
+  background: #45a049;
+  border-color: #45a049;
 }
 
 .data-table .actions .btn-danger {
-  background: #dc3545;
-  border-color: #dc3545;
+  background: #FF5722;
+  border-color: #FF5722;
   color: white;
 }
 
 .data-table .actions .btn-danger:hover {
-  background: #c82333;
-  border-color: #c82333;
+  background: #e64a19;
+  border-color: #e64a19;
 }
 
 .data-table .actions .btn-nachweis {
@@ -449,25 +449,36 @@
   }
 
   .data-table .actions .btn-success {
-    background: #28a745;
-    border-color: #28a745;
+    background: #4CAF50; /* Harmonisches Grün */
+    border-color: #4CAF50;
     color: white;
   }
 
   .data-table .actions .btn-success:hover {
-    background: #1e7e34;
-    border-color: #1e7e34;
+    background: #45a049;
+    border-color: #45a049;
   }
 
   .data-table .actions .btn-danger {
-    background: #dc3545;
-    border-color: #dc3545;
+    background: #FF5722; /* Harmonisches Orange-Rot */
+    border-color: #FF5722;
     color: white;
   }
 
   .data-table .actions .btn-danger:hover {
-    background: #c82333;
-    border-color: #c82333;
+    background: #e64a19;
+    border-color: #e64a19;
+  }
+
+  .data-table .actions .btn-undo {
+    background: #757575; /* Harmonisches Grau für Rückgängig */
+    border-color: #757575;
+    color: white;
+  }
+
+  .data-table .actions .btn-undo:hover {
+    background: #616161;
+    border-color: #616161;
   }
 
   /* Nachweis Button */
@@ -668,36 +679,36 @@
 }
 
 .data-table td.actions .btn-success {
-  background: #28a745;
-  border-color: #28a745;
+  background: #4CAF50;
+  border-color: #4CAF50;
   color: white;
 }
 
 .data-table td.actions .btn-success:hover {
-  background: #1e7e34;
-  border-color: #1e7e34;
+  background: #45a049;
+  border-color: #45a049;
 }
 
 .data-table td.actions .btn-danger {
-  background: #dc3545;
-  border-color: #dc3545;
+  background: #FF5722;
+  border-color: #FF5722;
   color: white;
 }
 
 .data-table td.actions .btn-danger:hover {
-  background: #c82333;
-  border-color: #c82333;
+  background: #e64a19;
+  border-color: #e64a19;
 }
 
 .data-table td.actions .btn-warning {
-  background: #ffc107;
-  border-color: #ffc107;
+  background: #FFEB00;
+  border-color: #000000;
   color: #000000;
 }
 
 .data-table td.actions .btn-warning:hover {
-  background: #e0a800;
-  border-color: #e0a800;
+  background: #e6d200;
+  border-color: #000000;
 }
 
 .data-table td.actions .btn-nachweis {
@@ -857,36 +868,36 @@
 }
 
 .actions-cell .actions .btn-success {
-  background: #28a745;
-  border-color: #28a745;
+  background: #4CAF50;
+  border-color: #4CAF50;
   color: white;
 }
 
 .actions-cell .actions .btn-success:hover {
-  background: #1e7e34;
-  border-color: #1e7e34;
+  background: #45a049;
+  border-color: #45a049;
 }
 
 .actions-cell .actions .btn-danger {
-  background: #dc3545;
-  border-color: #dc3545;
+  background: #FF5722;
+  border-color: #FF5722;
   color: white;
 }
 
 .actions-cell .actions .btn-danger:hover {
-  background: #c82333;
-  border-color: #c82333;
+  background: #e64a19;
+  border-color: #e64a19;
 }
 
 .actions-cell .actions .btn-warning {
-  background: #ffc107;
-  border-color: #ffc107;
+  background: #FFEB00;
+  border-color: #000000;
   color: #000000;
 }
 
 .actions-cell .actions .btn-warning:hover {
-  background: #e0a800;
-  border-color: #e0a800;
+  background: #e6d200;
+  border-color: #000000;
 }
 
 .actions-cell .actions .btn-nachweis {

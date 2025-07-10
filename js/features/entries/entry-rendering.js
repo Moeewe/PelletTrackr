@@ -42,15 +42,11 @@ function renderUserEntries(entries) {
     const truncatedNotes = jobNotes.length > 30 ? jobNotes.substring(0, 30) + "..." : jobNotes;
     
     // Aktionen für User (Zahlungsnachweis, Details und Bearbeiten gruppiert)
-    const nachweisBtn = isPaid ? 
-      `<button class="btn btn-nachweis" onclick="showPaymentProof('${entry.id}')">Nachweis</button>` :
-      `<button class="btn btn-nachweis disabled" disabled title="Nachweis nach Zahlung verfügbar">Nachweis</button>`;
-      
     const actions = `
       <div class="actions">
-        ${nachweisBtn}
-        <button class="btn btn-tertiary" onclick="viewEntryDetails('${entry.id}')">Details</button>
-        <button class="btn btn-primary" onclick="editUserEntry('${entry.id}')">Bearbeiten</button>
+        ${ButtonFactory.showNachweis(entry.id, isPaid)}
+        ${ButtonFactory.viewDetails(entry.id)}
+        ${ButtonFactory.editEntry(entry.id, true)}
       </div>`;
     
     // Responsive Tabellen-Zeile mit Zwei-Zeilen-Layout
@@ -128,13 +124,13 @@ function renderAdminEntries(entries) {
     const actions = `
       <div class="actions">
         ${!isPaid ? 
-          `<button class="btn btn-primary" onclick="markEntryAsPaid('${entry.id}')">Zahlung registrieren</button>` :
-          `<button class="btn btn-secondary" onclick="markEntryAsUnpaid('${entry.id}')">Rückgängig</button>
-           <button class="btn btn-success" onclick="showPaymentProof('${entry.id}')">Nachweis</button>`
+          ButtonFactory.registerPayment(entry.id) :
+          `${ButtonFactory.undoPayment(entry.id)}
+           ${ButtonFactory.showNachweis(entry.id, true)}`
         }
-        <button class="btn btn-tertiary" onclick="viewEntryDetails('${entry.id}')">Details</button>
-        <button class="btn btn-primary" onclick="editEntry('${entry.id}')">Bearbeiten</button>
-        <button class="btn btn-danger" onclick="deleteEntry('${entry.id}')">Löschen</button>
+        ${ButtonFactory.viewDetails(entry.id)}
+        ${ButtonFactory.editEntry(entry.id)}
+        ${ButtonFactory.deleteEntry(entry.id)}
       </div>
     `;
     

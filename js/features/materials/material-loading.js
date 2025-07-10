@@ -149,8 +149,10 @@ async function loadMaterialsForManagement() {
           <td data-label="Gemeinkosten %" id="material-markup-${doc.id}"><span class="cell-value">${markup}%</span></td>
           <td data-label="VK €/kg" id="material-price-${doc.id}"><span class="cell-value">${window.formatCurrency(sellingPrice)}</span></td>
           <td class="actions" data-label="Aktionen">
-            <button class="btn btn-secondary" onclick="editMaterial('${doc.id}')">Bearbeiten</button>
-            <button class="btn btn-danger" onclick="deleteMaterial('${doc.id}')">Löschen</button>
+            <div class="action-group">
+              ${ButtonFactory.editMaterial(doc.id)}
+              ${ButtonFactory.deleteMaterial(doc.id)}
+            </div>
           </td>
         </tr>
       `;
@@ -216,8 +218,10 @@ async function loadMasterbatchesForManagement() {
           <td data-label="Gemeinkosten %" id="masterbatch-markup-${doc.id}"><span class="cell-value">${markup}%</span></td>
           <td data-label="VK €/kg" id="masterbatch-price-${doc.id}"><span class="cell-value">${window.formatCurrency(sellingPrice)}</span></td>
           <td class="actions" data-label="Aktionen">
-            <button class="btn btn-secondary" onclick="editMasterbatch('${doc.id}')">Bearbeiten</button>
-            <button class="btn btn-danger" onclick="deleteMasterbatch('${doc.id}')">Löschen</button>
+            <div class="action-group">
+              ${ButtonFactory.editMasterbatch(doc.id)}
+              ${ButtonFactory.deleteMasterbatch(doc.id)}
+            </div>
           </td>
         </tr>
       `;
@@ -398,12 +402,12 @@ async function editMaterial(materialId) {
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeEditMaterialModal()">Abbrechen</button>
-        <button class="btn btn-primary" onclick="updateMaterial('${materialId}')">Speichern</button>
+        ${ButtonFactory.cancelMaterialModal()}
+        ${ButtonFactory.saveChanges(`updateMaterial('${materialId}')`)}
       </div>
     `;
     
-    window.showModal(modalHtml);
+    showModalWithContent(modalHtml);
     
   } catch (error) {
     console.error('Fehler beim Laden des Materials:', error);
@@ -454,12 +458,12 @@ async function editMasterbatch(masterbatchId) {
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeEditMasterbatchModal()">Abbrechen</button>
-        <button class="btn btn-primary" onclick="updateMasterbatch('${masterbatchId}')">Speichern</button>
+        ${ButtonFactory.cancelMasterbatchModal()}
+        ${ButtonFactory.saveChanges(`updateMasterbatch('${masterbatchId}')`)}
       </div>
     `;
     
-    window.showModal(modalHtml);
+    showModalWithContent(modalHtml);
     
   } catch (error) {
     console.error('Fehler beim Laden des Masterbatches:', error);

@@ -3,6 +3,9 @@
 
 // Modal anzeigen mit korrekter Struktur
 function showModal(htmlContent) {
+  // Erst alle anderen Modals schließen
+  closeModal();
+  
   const modal = document.getElementById('modal');
   
   // Prüfen ob Content bereits modal-content Wrapper hat
@@ -13,7 +16,10 @@ function showModal(htmlContent) {
     modal.innerHTML = `<div class="modal-content">${htmlContent}</div>`;
   }
   
-  modal.classList.add('active');
+  // Kurze Verzögerung für bessere Animation
+  setTimeout(() => {
+    modal.classList.add('active');
+  }, 10);
   
   // Prevent body scrolling when modal is open
   document.body.style.overflow = 'hidden';
@@ -145,9 +151,8 @@ async function viewEntryDetails(entryId) {
           </div>
           <div class="card-footer">
             <div class="button-group">
-              ${isPaid ? `<button class="btn btn-success" onclick="showPaymentProof('${entryId}')">NACHWEIS ANZEIGEN</button>` : ''}
-              <button class="btn btn-primary" onclick="editUserEntry('${entryId}')">BEARBEITEN</button>
-              <button class="btn btn-secondary" onclick="closeModal()">SCHLIEßEN</button>
+              ${isPaid ? ButtonFactory.showNachweis(entryId, true) : ''}
+              ${ButtonFactory.closeModal()}
             </div>
           </div>
         </div>
@@ -218,8 +223,8 @@ async function editUserEntry(entryId) {
           </div>
           <div class="card-footer">
             <div class="button-group">
-              <button class="btn btn-primary" onclick="saveUserEntryChanges('${entryId}')">SPEICHERN</button>
-              <button class="btn btn-secondary" onclick="closeModal()">ABBRECHEN</button>
+              ${ButtonFactory.saveChanges(`saveUserEntryChanges('${entryId}')`)}
+              ${ButtonFactory.cancelModal()}
             </div>
           </div>
         </div>
@@ -434,6 +439,16 @@ async function editNote(entryId, currentNote) {
     alert('Fehler beim Speichern der Notiz: ' + error.message);
   }
 }
+
+// ==================== GLOBAL EXPORTS ====================
+// Modal-Funktionen global verfügbar machen
+window.showModal = showModal;
+window.showModalWithContent = showModalWithContent;
+window.closeModal = closeModal;
+window.showDetails = showDetails;
+window.editUserEntry = editUserEntry;
+window.editEntry = editEntry;
+window.editNote = editNote;
 
 // ==================== MODALS MODULE ====================
 // Modal-Verwaltung und Entry-Details/Bearbeitung
