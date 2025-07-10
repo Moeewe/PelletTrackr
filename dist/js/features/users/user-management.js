@@ -88,10 +88,6 @@ function renderUsersTable(users) {
   }
   
   let tableHtml = `
-    <div class="table-actions">
-      <button class="btn btn-primary" onclick="showAddUserDialog()">+ Neuen Nutzer hinzufügen</button>
-    </div>
-    
     <table>
       <thead>
         <tr>

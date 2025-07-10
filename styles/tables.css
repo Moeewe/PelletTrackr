@@ -7,14 +7,17 @@
   border: 2px solid #000000;
   border-radius: 0;
   margin-bottom: 32px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: visible;
+  max-width: 100%;
 }
 
 .data-table table {
   width: 100%;
+  min-width: 800px; /* Mindestbreite für Desktop */
   border-collapse: collapse;
   font-size: 14px;
-  border: none; /* Kein zusätzlicher Rahmen für das table Element */
+  border: none;
 }
 
 .data-table thead {
@@ -70,6 +73,8 @@
   .data-table table {
     border-collapse: separate;
     border-spacing: 0 16px;
+    width: 100%;
+    min-width: auto; /* Überschreibt die Desktop min-width */
   }
   
   .data-table thead {

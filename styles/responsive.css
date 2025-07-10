@@ -3,26 +3,7 @@
 
 /* Desktop Scrollbar Styles */
 @media (min-width: 1024px) {
-  .data-tabl  .data-table .btn,
-  .data-table .btn-small {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0;
-    padding: 10px 12px;
-    font-size: 12px;
-    min-width: auto;
-    flex: 0 1 auto;
-    white-space: normal;
-    text-overflow: clip;
-    overflow: visible;
-    max-width: 100%;
-    border-radius: 0;
-    border-width: 2px;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    line-height: 1.2;
-  }bar {
+  .data-table::-webkit-scrollbar {
     height: 8px;
     width: 8px;
   }
@@ -68,22 +49,20 @@
   }
 }
 
-/* Mobile Responsive - Fraenk Flat Design */
+/* Mobile Responsive - Card Layout */
 @media (max-width: 768px) {
   .data-table {
-    border: none; /* Kein äußerer Rahmen auf Mobile */
+    border: none;
     background: transparent;
     width: 100%;
-    max-width: 100%;
     overflow: visible;
-    margin-bottom: 16px; /* Reduzierter Margin */
+    margin-bottom: 16px;
   }
   
   .data-table table {
     border-collapse: separate;
-    border-spacing: 0 16px;
+    border-spacing: 0 12px;
     width: 100%;
-    max-width: 100%;
   }
   
   .data-table thead {
@@ -92,7 +71,6 @@
   
   .data-table tbody {
     width: 100%;
-    max-width: 100%;
   }
   
   .data-table tr {
@@ -100,10 +78,9 @@
     background: white;
     border: 2px solid #000000;
     border-radius: 0;
-    padding: 20px 16px;
-    margin: 0 0 16px 0;
+    padding: 16px;
+    margin: 0 0 12px 0;
     width: 100%;
-    max-width: 100%;
     box-sizing: border-box;
     transition: all 0.2s ease;
   }
@@ -115,13 +92,12 @@
   .data-table td {
     display: block;
     border: none;
-    padding: 8px 0;
+    padding: 6px 0;
     text-align: left;
     position: relative;
-    padding-left: 100px;
-    min-height: 24px;
+    padding-left: 80px;
+    min-height: 20px;
     width: 100%;
-    max-width: 100%;
     box-sizing: border-box;
     overflow-wrap: break-word;
     word-wrap: break-word;
@@ -133,14 +109,13 @@
     content: attr(data-label) ": ";
     position: absolute;
     left: 0;
-    top: 8px;
+    top: 6px;
     font-weight: 600;
     color: #000000;
-    width: 90px;
+    width: 75px;
     font-size: 11px;
     text-transform: uppercase;
     line-height: 1.2;
-    word-wrap: break-word;
     overflow: hidden;
     text-overflow: ellipsis;
     letter-spacing: 0.5px;
@@ -148,9 +123,9 @@
 
   .data-table td[data-label="Aktionen"] {
     padding-left: 0;
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 2px solid #000000;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #ccc;
   }
   
   .data-table td[data-label="Aktionen"]:before {
@@ -158,9 +133,8 @@
   }
   
   .data-table .actions {
-    white-space: normal;
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     gap: 6px;
     justify-content: flex-start;
   }
@@ -171,21 +145,20 @@
     align-items: center;
     justify-content: center;
     margin: 0;
-    padding: 8px 10px;
+    padding: 8px 12px;
     font-size: 11px;
     min-width: auto;
     flex: 1;
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
-    max-width: none;
-    border-radius: 0; /* Scharfe Kanten */
+    border-radius: 0;
     border-width: 2px;
   }
   
   /* Status Field spezifisch */
   .data-table td[data-label="Status"] {
-    padding-left: 100px;
+    padding-left: 80px;
   }
   
   .data-table td[data-label="Status"]:before {
@@ -197,26 +170,26 @@
 @media (max-width: 768px) {
   .container,
   .admin-container {
-    padding: 16px;
+    padding: 12px;
     max-width: 100%;
     margin: 0;
     overflow-x: hidden;
   }
   
   .dashboard {
-    padding: 16px;
+    padding: 12px;
   }
   
   .admin-dashboard {
-    padding: 16px;
+    padding: 12px;
   }
   
   .dashboard-header {
     flex-direction: column;
     gap: 12px;
     text-align: center;
-    margin-bottom: 24px;
-    padding: 16px 12px;
+    margin-bottom: 20px;
+    padding: 12px;
     position: relative;
     overflow: hidden;
     width: 100%;
@@ -268,11 +241,12 @@
   
   .admin-controls {
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: 16px;
   }
   
   .control-buttons {
     flex-direction: column;
+    gap: 12px;
   }
   
   .stats-grid,
@@ -315,7 +289,7 @@
 @media (max-width: 480px) {
   .dashboard,
   .admin-dashboard {
-    padding: 16px;
+    padding: 12px;
   }
   
   .login-container {
@@ -346,7 +320,7 @@
   }
   
   .form-container {
-    padding: 24px 20px;
+    padding: 20px 16px;
   }
   
   .table-controls {
@@ -359,24 +333,24 @@
     width: 100%;
     margin: 0 0 12px 0;
     border-width: 1px;
-    border-radius: 0; /* Scharfe Kanten */
+    border-radius: 0;
   }
   
   .btn-large {
     padding: 14px 20px;
     font-size: 15px;
-    border-radius: 0; /* Scharfe Kanten */
+    border-radius: 0;
   }
   
   .data-table .actions {
-    gap: 8px;
+    gap: 6px;
   }
   
   .data-table .btn,
   .data-table .btn-small {
     font-size: 11px;
     padding: 8px 10px;
-    border-radius: 0; /* Scharfe Kanten */
+    border-radius: 0;
     border-width: 1px;
   }
   
@@ -384,27 +358,27 @@
   .data-table .btn-small.btn-tertiary,
   .data-table .btn-small.btn-warning,
   .data-table .btn-small.btn-danger {
-    flex: 1 1 calc(50% - 4px);
-    max-width: calc(50% - 4px);
+    flex: 1 1 calc(50% - 3px);
+    max-width: calc(50% - 3px);
     text-align: center;
   }
   
   .data-table tr {
-    padding: 18px 16px;
-    margin: 0 0 16px 0;
+    padding: 14px;
+    margin: 0 0 12px 0;
     background: white;
     border: 2px solid #000000;
     border-radius: 0;
   }
   
   .data-table td {
-    padding: 6px 0;
-    padding-left: 110px;
+    padding: 5px 0;
+    padding-left: 70px;
     font-size: 13px;
   }
   
   .data-table td:before {
-    width: 100px;
+    width: 65px;
     font-size: 10px;
     color: #000000;
     font-weight: 600;
@@ -415,28 +389,28 @@
 @media (max-width: 375px) {
   .container,
   .admin-container {
-    padding: 12px;
+    padding: 10px;
     max-width: 100%;
     margin: 0;
   }
   
   .data-table tr {
     padding: 12px;
-    margin: 0 0 12px 0;
+    margin: 0 0 10px 0;
     background: white;
     border: 2px solid #000000;
     border-radius: 0;
   }
   
   .data-table td {
-    padding-left: 70px;
+    padding-left: 55px;
     padding-top: 4px;
     padding-bottom: 4px;
     font-size: 12px;
   }
   
   .data-table td:before {
-    width: 60px;
+    width: 50px;
     font-size: 9px;
     line-height: 1.0;
     color: #000000;
@@ -444,7 +418,7 @@
   }
   
   .data-table td[data-label="Material"]:before {
-    content: "M: ";
+    content: "MAT: ";
   }
   
   .data-table td[data-label="Masterbatch"]:before {
@@ -452,7 +426,7 @@
   }
   
   .data-table td[data-label="Gewicht"]:before {
-    content: "kg: ";
+    content: "KG: ";
   }
   
   .data-table td[data-label="Kosten"]:before {
@@ -460,11 +434,23 @@
   }
   
   .data-table td[data-label="Status"]:before {
-    content: "St: ";
+    content: "STATUS: ";
   }
   
   .data-table td[data-label="Datum"]:before {
-    content: "D: ";
+    content: "DATUM: ";
+  }
+  
+  .data-table td[data-label="Name"]:before {
+    content: "NAME: ";
+  }
+  
+  .data-table td[data-label="FH-Kennung"]:before {
+    content: "FH: ";
+  }
+  
+  .data-table td[data-label="E-Mail"]:before {
+    content: "MAIL: ";
   }
 }
 
@@ -573,6 +559,54 @@
     width: 100%;
     padding: 16px 20px;
     font-size: 16px;
+  }
+}
+
+/* Desktop Modal Styles - Wichtig dass diese nach den Mobile-Styles kommen */
+@media (min-width: 769px) {
+  .modal-footer {
+    flex-direction: row !important;
+    justify-content: flex-end !important;
+    padding: 24px 32px !important;
+    gap: 16px !important;
+  }
+  
+  .modal-footer .btn {
+    width: auto !important;
+    min-width: 100px !important;
+    padding: 12px 24px !important;
+  }
+  
+  .modal-header {
+    padding: 24px 32px !important;
+  }
+  
+  .modal-body {
+    padding: 32px !important;
+  }
+  
+  .modal-content {
+    max-width: 800px !important;
+    width: 100% !important;
+    max-height: 85vh !important;
+    height: auto !important;
+    border-radius: 0 !important;
+    border: 2px solid #000000 !important;
+    margin: 0 !important;
+  }
+}
+
+/* Desktop Tabellen-Scrolling sicherstellen */
+@media (min-width: 769px) {
+  .data-table {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    max-width: 100% !important;
+  }
+  
+  .data-table table {
+    min-width: 800px !important;
+    width: 100% !important;
   }
 }
 
