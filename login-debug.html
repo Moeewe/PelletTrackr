@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .log { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e8; color: #2e7d32; }
+        input { padding: 10px; margin: 5px; width: 200px; }
+        button { padding: 10px 20px; margin: 10px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Login Debug Test</h1>
+    
+    <div>
+        <input type="text" id="loginName" placeholder="Vorname Nachname" value="Test User">
+        <input type="text" id="loginKennung" placeholder="FH-Kennung" value="test123">
+        <button onclick="debugLogin()">Login testen</button>
+    </div>
+    
+    <h2>Debug Log:</h2>
+    <div id="debugLog"></div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <!-- App Scripts -->
+    <script src="ux-helpers.js"></script>
+
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyBaaMwmjxyytxHLinmigccF30-1Wl0tzD0",
+            authDomain: "fgf-3d-druck.firebaseapp.com",
+            databaseURL: "https://fgf-3d-druck-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "fgf-3d-druck",
+            storageBucket: "fgf-3d-druck.firebasestorage.app",
+            messagingSenderId: "37190466890",
+            appId: "1:37190466890:web:cfb25f3c2f6bb62006d5b3"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('debugLog');
+            const div = document.createElement('div');
+            div.className = 'log ' + type;
+            div.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(div);
+            console.log(message);
+        }
+
+        async function checkExistingKennung(kennung, currentName) {
+            try {
+                log(`🔍 Prüfe Kennung: ${kennung} für Name: ${currentName}`);
+                
+                // Alle Drucke mit dieser Kennung abrufen
+                const snapshot = await db.collection('entries').where('kennung', '==', kennung).get();
+                
+                log(`📊 Firebase Abfrage: ${snapshot.size} Drucke gefunden`);
+                
+                if (!snapshot.empty) {
+                    // Erste Drucke prüfen um zu sehen ob ein anderer Name verwendet wird
+                    const existingNames = new Set();
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        log(`📄 Druck gefunden: Name="${data.name}", Kennung="${data.kennung}"`);
+                        if (data.name && data.name.toLowerCase() !== currentName.toLowerCase()) {
+                            existingNames.add(data.name);
+                        }
+                    });
+                    
+                    if (existingNames.size > 0) {
+                        const conflictName = Array.from(existingNames)[0];
+                        log(`⚠️ Konflikt gefunden: Kennung bereits für "${conflictName}" verwendet`, 'error');
+                        return { name: conflictName };
+                    } else {
+                        log(`✅ Keine Konflikte: Alle Drucke gehören zu "${currentName}"`);
+                    }
+                } else {
+                    log(`✅ Keine Drucke gefunden: Kennung ist neu`);
+                }
+                
+                return null; // Keine Konflikte gefunden
+            } catch (error) {
+                log(`❌ Fehler beim Prüfen der FH-Kennung: ${error.message}`, 'error');
+                return null;
+            }
+        }
+
+        async function debugLogin() {
+            const name = document.getElementById('loginName').value.trim();
+            const kennung = document.getElementById('loginKennung').value.trim();
+            
+            log(`🚀 Starte Login-Test für: ${name} (${kennung})`);
+            
+            if (!name || !kennung) {
+                log('❌ Name oder Kennung fehlt', 'error');
+                if (typeof toast !== 'undefined') {
+                    toast.warning('Bitte Name und FH-Kennung eingeben!');
+                } else {
+                    log('❌ Toast-System nicht verfügbar', 'error');
+                }
+                return;
+            }
+
+            try {
+                log('🔄 Prüfe bestehende Kennung...');
+                const existingUser = await checkExistingKennung(kennung.toLowerCase(), name);
+                
+                if (existingUser) {
+                    log(`⚠️ Bestehender Nutzer gefunden: ${existingUser.name}`, 'error');
+                    
+                    const userChoice = confirm(
+                        `⚠️ FH-Kennung bereits registriert!\n\n` +
+                        `Die Kennung "${kennung}" ist bereits für "${existingUser.name}" registriert.\n\n` +
+                        `Möchtest du:\n` +
+                        `✅ OK = Als "${existingUser.name}" anmelden\n` +
+                        `❌ Abbrechen = Andere Kennung verwenden`
+                    );
+                    
+                    if (userChoice) {
+                        log(`✅ Benutzer wählt: Anmelden als "${existingUser.name}"`, 'success');
+                    } else {
+                        log(`❌ Benutzer bricht ab`);
+                    }
+                } else {
+                    log(`✅ Keine Konflikte: Neuer Benutzer "${name}" kann angelegt werden`, 'success');
+                }
+                
+            } catch (error) {
+                log(`❌ Login-Fehler: ${error.message}`, 'error');
+                console.error('Login error:', error);
+            }
+        }
+
+        // Test UX-Helpers
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof toast !== 'undefined') {
+                log('✅ Toast-System geladen');
+            } else {
+                log('❌ Toast-System NICHT geladen', 'error');
+            }
+            
+            if (typeof loading !== 'undefined') {
+                log('✅ Loading-System geladen');
+            } else {
+                log('❌ Loading-System NICHT geladen', 'error');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple Test</title>
+    <!-- Load modular CSS for testing -->
+    <link rel="stylesheet" href="styles-modular.css">
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
         .test-result { padding: 10px; margin: 10px 0; border-radius: 5px; }
@@ -17,6 +19,9 @@
     
     <h2>Test Results:</h2>
     <div id="results"></div>
+    
+    <h2>Login Test:</h2>
+    <button onclick="testLoginDialog()">Test Login Confirmation Dialog</button>
     
     <h2>Button Tests:</h2>
     <button onclick="testButton('Button 1')">Test Button 1</button>
@@ -73,6 +78,42 @@
             } catch (error) {
                 addResult('Firebase Test', false, `Firebase error: ${error.message}`);
             }
+        }
+
+        // Test login confirmation dialog
+        async function testLoginDialog() {
+            // Load the toast system first
+            if (!window.toast) {
+                try {
+                    await loadScript('ux-helpers.js');
+                    addResult('UX Helpers', true, 'UX helpers loaded successfully!');
+                } catch (error) {
+                    addResult('UX Helpers', false, 'Failed to load UX helpers: ' + error.message);
+                    return;
+                }
+            }
+            
+            try {
+                const result = await toast.confirm(
+                    'FH-Kennung bereits registriert!\n\nDie Kennung "test123" ist bereits für "Max Mustermann" registriert.\n\nMöchtest du dich als "Max Mustermann" anmelden?',
+                    'Als "Max Mustermann" anmelden',
+                    'Andere Kennung verwenden'
+                );
+                
+                addResult('Login Dialog Test', true, `User choice: ${result ? 'Login as existing user' : 'Use different kennung'}`);
+            } catch (error) {
+                addResult('Login Dialog Test', false, 'Dialog test failed: ' + error.message);
+            }
+        }
+        
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
         }
 
         // Test file loading

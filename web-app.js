@@ -60,12 +60,17 @@ async function loginAsUser() {
     if (existingUser) {
       loading.hide(loadingId);
       
-      const userChoice = confirm(
-        `⚠️ FH-Kennung bereits registriert!\n\n` +
-        `Die Kennung "${kennung}" ist bereits für "${existingUser.name}" registriert.\n\n` +
-        `Möchtest du:\n` +
-        `✅ OK = Als "${existingUser.name}" anmelden\n` +
-        `❌ Abbrechen = Andere Kennung verwenden`
+      // Moderne Bestätigung verwenden
+      const confirmMessage = `FH-Kennung bereits registriert!
+
+Die Kennung "${kennung}" ist bereits für "${existingUser.name}" registriert.
+
+Möchtest du dich als "${existingUser.name}" anmelden?`;
+      
+      const userChoice = await toast.confirm(
+        confirmMessage,
+        `Als "${existingUser.name}" anmelden`,
+        'Andere Kennung verwenden'
       );
       
       if (userChoice) {

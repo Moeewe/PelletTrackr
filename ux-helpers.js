@@ -68,6 +68,64 @@ class ToastManager {
     info(message, duration = 4000) {
         return this.show(message, 'info', duration);
     }
+
+    // Neue Bestätigungsdialog-Funktion
+    confirm(message, confirmText = 'OK', cancelText = 'Abbrechen') {
+        return new Promise((resolve) => {
+            const overlay = document.createElement('div');
+            overlay.className = 'confirmation-overlay';
+            
+            const dialog = document.createElement('div');
+            dialog.className = 'confirmation-dialog';
+            
+            dialog.innerHTML = `
+                <div class="confirmation-content">
+                    <div class="confirmation-icon">⚠️</div>
+                    <div class="confirmation-message">${message}</div>
+                    <div class="confirmation-buttons">
+                        <button class="btn btn-primary confirm-yes">${confirmText}</button>
+                        <button class="btn btn-secondary confirm-no">${cancelText}</button>
+                    </div>
+                </div>
+            `;
+            
+            overlay.appendChild(dialog);
+            document.body.appendChild(overlay);
+            
+            // Animation
+            setTimeout(() => {
+                overlay.classList.add('show');
+                dialog.classList.add('show');
+            }, 10);
+            
+            const cleanup = (result) => {
+                overlay.classList.remove('show');
+                dialog.classList.remove('show');
+                setTimeout(() => {
+                    if (overlay.parentElement) {
+                        overlay.remove();
+                    }
+                }, 300);
+                resolve(result);
+            };
+            
+            // Event listeners
+            dialog.querySelector('.confirm-yes').onclick = () => cleanup(true);
+            dialog.querySelector('.confirm-no').onclick = () => cleanup(false);
+            overlay.onclick = (e) => {
+                if (e.target === overlay) cleanup(false);
+            };
+            
+            // ESC key support
+            const escHandler = (e) => {
+                if (e.key === 'Escape') {
+                    document.removeEventListener('keydown', escHandler);
+                    cleanup(false);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
+        });
+    }
 }
 
 // Loading Indicator System
