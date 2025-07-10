@@ -29,8 +29,14 @@ async function calculateCostPreview() {
   });
   
   // Prüfe ob mindestens ein Material ausgewählt ist
-  const hasMaterial = materialValue && materialMengeValue;
-  const hasMasterbatch = masterbatchValue && masterbatchMengeValue;
+  const hasMaterial = materialValue && materialMengeValue && 
+    materialValue !== "Material auswählen... (optional)" && 
+    materialValue !== "Material auswählen..." && 
+    materialValue !== "Lade Materialien...";
+  const hasMasterbatch = masterbatchValue && masterbatchMengeValue && 
+    masterbatchValue !== "Masterbatch auswählen... (optional)" && 
+    masterbatchValue !== "Masterbatch auswählen..." && 
+    masterbatchValue !== "Lade Masterbatches...";
   
   if (!hasMaterial && !hasMasterbatch) {
     console.log("⚠️ Weder Material noch Masterbatch ausgefüllt");

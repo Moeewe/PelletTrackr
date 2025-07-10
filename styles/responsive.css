@@ -602,11 +602,56 @@
     overflow-x: auto !important;
     overflow-y: visible !important;
     max-width: 100% !important;
+    width: 100% !important;
   }
   
   .data-table table {
-    min-width: 800px !important;
-    width: 100% !important;
+    width: auto !important; /* Automatische Breite basierend auf Inhalt */
+    min-width: 100% !important; /* Mindestens so breit wie der Container */
+    table-layout: auto !important; /* Automatische Spaltenbreite */
+  }
+  
+  .data-table th,
+  .data-table td {
+    white-space: nowrap !important; /* Verhindert Zeilenumbrüche */
+  }
+  
+  /* Nur Notizen-Spalte darf umbrechen */
+  .data-table td[data-label="Notizen"],
+  .data-table td:nth-child(9), /* Notizen-Zelle in Entry-Tabellen */
+  .data-table td:nth-child(11) /* Notizen-Zelle in Admin-Tabellen */ {
+    white-space: normal !important;
+    max-width: 200px !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+  
+  /* Alle anderen Zellen bleiben einzeilig */
+  .data-table td[data-label="Datum"],
+  .data-table td[data-label="Job"],
+  .data-table td[data-label="Material"],
+  .data-table td[data-label="Menge"],
+  .data-table td[data-label="Mat. Menge"],
+  .data-table td[data-label="MB Menge"],
+  .data-table td[data-label="Masterbatch"],
+  .data-table td[data-label="Kosten"],
+  .data-table td[data-label="Status"],
+  .data-table td[data-label="Name"],
+  .data-table td[data-label="Kennung"],
+  .data-table td[data-label="FH-Kennung"],
+  .data-table td[data-label="E-Mail"],
+  .data-table td[data-label="Drucke"],
+  .data-table td[data-label="Gesamtkosten"],
+  .data-table td[data-label="Bezahlt"],
+  .data-table td[data-label="Offen"],
+  .data-table td[data-label="Letzter Druck"],
+  .data-table td[data-label="Hersteller"],
+  .data-table td[data-label="EK Netto €/kg"],
+  .data-table td[data-label="EK Brutto €/kg"],
+  .data-table td[data-label="VK €/kg"],
+  .data-table td[data-label="Gemeinkosten %"],
+  .data-table td[data-label="Aktionen"] {
+    white-space: nowrap !important;
   }
 }
 

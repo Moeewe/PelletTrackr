@@ -13,15 +13,21 @@ async function addEntry() {
   const jobName = document.getElementById("jobName").value.trim();
   const jobNotes = document.getElementById("jobNotes").value.trim();
 
-  // Validierung
-  if (!material || !materialMenge || !masterbatch || !masterbatchMenge) {
-    toast.warning("⚠️ Bitte alle Felder ausfüllen!");
+  // Validierung - nur Job-Name ist erforderlich
+  if (!jobName) {
+    toast.warning("⚠️ Bitte einen Job-Namen eingeben!");
     return;
   }
 
   // Prüfe ob mindestens ein Material ausgewählt ist
-  const hasMaterial = material && materialMenge;
-  const hasMasterbatch = masterbatch && masterbatchMenge;
+  const hasMaterial = material && materialMenge && 
+    material !== "Material auswählen... (optional)" && 
+    material !== "Material auswählen..." && 
+    material !== "Lade Materialien...";
+  const hasMasterbatch = masterbatch && masterbatchMenge && 
+    masterbatch !== "Masterbatch auswählen... (optional)" && 
+    masterbatch !== "Masterbatch auswählen..." && 
+    masterbatch !== "Lade Masterbatches...";
   
   if (!hasMaterial && !hasMasterbatch) {
     toast.warning("⚠️ Bitte wählen Sie mindestens Material oder Masterbatch aus!");

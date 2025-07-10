@@ -10,14 +10,16 @@
   overflow-x: auto;
   overflow-y: visible;
   max-width: 100%;
+  width: 100%;
 }
 
 .data-table table {
-  width: 100%;
-  min-width: 800px; /* Mindestbreite für Desktop */
+  width: auto; /* Automatische Breite basierend auf Inhalt */
+  min-width: 100%; /* Mindestens so breit wie der Container */
   border-collapse: collapse;
   font-size: 14px;
   border: none;
+  table-layout: auto; /* Automatische Spaltenbreite */
 }
 
 .data-table thead {
@@ -34,6 +36,7 @@
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  white-space: nowrap; /* Verhindert Zeilenumbrüche in Headers */
 }
 
 .data-table th:last-child {
@@ -55,10 +58,42 @@
   border-right: 1px solid #f0f0f0;
   color: #000000;
   line-height: 1.4;
+  white-space: nowrap; /* Verhindert Zeilenumbrüche in normalen Zellen */
 }
 
 .data-table td:last-child {
   border-right: none;
+}
+
+/* Spezielle Behandlung für Notizen-Spalte */
+.data-table td[data-label="Notizen"],
+.data-table th:has(+ th + th + th + th + th + th + th + th), /* Notizen-Header */
+.data-table td:nth-child(9) { /* Notizen-Zelle (9. Spalte) */
+  white-space: normal; /* Erlaubt Zeilenumbrüche nur in Notizen */
+  max-width: 200px; /* Begrenzt die Breite der Notizen-Spalte */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Aktionen-Spalte spezielle Behandlung */
+.data-table td.actions,
+.data-table td:last-child {
+  white-space: nowrap !important;
+  min-width: 200px; /* Genug Platz für Buttons */
+}
+
+.data-table .actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+  align-items: center;
+  flex-wrap: nowrap; /* Verhindert Button-Umbruch */
+}
+
+.data-table .actions .btn,
+.data-table .actions .btn-small {
+  flex-shrink: 0; /* Buttons behalten ihre Größe */
+  min-width: auto;
 }
 
 /* Responsive Card Layout für Mobile */
@@ -828,7 +863,7 @@
   line-height: 1.2;
 }
 
-/* Section Titles - Gelb hinterlegt wie Logo */
+/* Section Titles - Nur fett */
 .section-title,
 .stats-section h2,
 .entries-section h2 {
@@ -838,16 +873,14 @@
   margin-bottom: 24px;
   text-align: left;
   position: relative;
-  padding: 12px 20px;
-  background: #FFEB00;
-  border-left: 4px solid #000000;
-  display: inline-block;
-  min-width: 200px;
+  padding: 0;
+  background: none;
+  border: none;
+  display: block;
+  min-width: auto;
 }
 
-/* Entfernt - kein Icon/Punkt mehr nötig da gelb hinterlegt */
-
-/* Control Titles für Admin-Bereiche - auch gelb hinterlegt */
+/* Control Titles für Admin-Bereiche - auch nur fett */
 .control-title {
   font-size: 20px;
   font-weight: 600;
@@ -855,14 +888,12 @@
   margin-bottom: 16px;
   text-align: left;
   position: relative;
-  padding: 10px 16px;
-  background: #FFEB00;
-  border-left: 3px solid #000000;
-  display: inline-block;
-  min-width: 150px;
+  padding: 0;
+  background: none;
+  border: none;
+  display: block;
+  min-width: auto;
 }
-
-/* Entfernt - kein Icon mehr nötig */
 
 /* Header Actions */
 .header-actions {
@@ -902,4 +933,104 @@
 
 .data-table th[onclick]:hover:after {
   color: #999;
+}
+
+/* Spezielle Zellen-Behandlung für alle Tabellen */
+.data-table td[data-label="Datum"] {
+  min-width: 100px;
+  white-space: nowrap !important;
+}
+
+.data-table td[data-label="Job"] {
+  min-width: 120px;
+  white-space: nowrap !important;
+}
+
+.data-table td[data-label="Material"] {
+  min-width: 120px;
+  white-space: nowrap !important;
+}
+
+.data-table td[data-label="Menge"],
+.data-table td[data-label="Mat. Menge"],
+.data-table td[data-label="MB Menge"] {
+  min-width: 80px;
+  white-space: nowrap !important;
+  text-align: right;
+}
+
+.data-table td[data-label="Masterbatch"] {
+  min-width: 120px;
+  white-space: nowrap !important;
+}
+
+.data-table td[data-label="Kosten"] {
+  min-width: 90px;
+  white-space: nowrap !important;
+  text-align: right;
+  font-weight: 600;
+}
+
+.data-table td[data-label="Status"] {
+  min-width: 80px;
+  white-space: nowrap !important;
+  text-align: center;
+}
+
+/* Nutzer-Tabelle spezifische Zellen */
+.data-table td[data-label="Name"] {
+  min-width: 120px;
+  white-space: nowrap !important;
+}
+
+.data-table td[data-label="Kennung"],
+.data-table td[data-label="FH-Kennung"] {
+  min-width: 100px;
+  white-space: nowrap !important;
+}
+
+.data-table td[data-label="E-Mail"] {
+  min-width: 150px;
+  white-space: nowrap !important;
+}
+
+.data-table td[data-label="Drucke"] {
+  min-width: 60px;
+  white-space: nowrap !important;
+  text-align: center;
+}
+
+.data-table td[data-label="Gesamtkosten"],
+.data-table td[data-label="Bezahlt"],
+.data-table td[data-label="Offen"] {
+  min-width: 90px;
+  white-space: nowrap !important;
+  text-align: right;
+  font-weight: 600;
+}
+
+.data-table td[data-label="Letzter Druck"] {
+  min-width: 100px;
+  white-space: nowrap !important;
+}
+
+/* Material-/Masterbatch-Tabelle spezifische Zellen */
+.data-table td[data-label="Hersteller"] {
+  min-width: 120px;
+  white-space: nowrap !important;
+}
+
+.data-table td[data-label="EK Netto €/kg"],
+.data-table td[data-label="EK Brutto €/kg"],
+.data-table td[data-label="VK €/kg"] {
+  min-width: 90px;
+  white-space: nowrap !important;
+  text-align: right;
+  font-weight: 600;
+}
+
+.data-table td[data-label="Gemeinkosten %"] {
+  min-width: 80px;
+  white-space: nowrap !important;
+  text-align: center;
 }

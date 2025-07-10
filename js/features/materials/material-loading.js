@@ -14,7 +14,7 @@ async function loadMaterials() {
     const snapshot = await window.db.collection("materials").get();
     console.log("📊 Materials-Snapshot:", snapshot.size, "Dokumente");
     
-    select.innerHTML = '<option value="">Material auswählen...</option>';
+    select.innerHTML = '<option value="">Material auswählen... (optional)</option>';
     
     if (snapshot.empty) {
       console.log("⚠️ Keine Materialien gefunden");
@@ -52,7 +52,7 @@ async function loadMasterbatches() {
     const snapshot = await window.db.collection("masterbatches").get();
     console.log("📊 Masterbatches-Snapshot:", snapshot.size, "Dokumente");
     
-    select.innerHTML = '<option value="">Masterbatch auswählen...</option>';
+    select.innerHTML = '<option value="">Masterbatch auswählen... (optional)</option>';
     
     if (snapshot.empty) {
       console.log("⚠️ Keine Masterbatches gefunden");
