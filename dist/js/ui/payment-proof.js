@@ -161,11 +161,15 @@ Diese E-Mail wurde automatisch von PelletTrackr generiert am ${new Date().toLoca
   window.open(mailtoLink, '_blank');
 }
 
-// ==================== EXPORTS ====================
+// Modal beim Klick außerhalb schließen
+document.addEventListener('click', function(event) {
+  const modal = document.getElementById('paymentProofModal');
+  if (event.target === modal) {
+    closePaymentProofModal();
+  }
+});
 
-export const PaymentProof = {
-  showPaymentProof,
-  closePaymentProofModal,
-  printPaymentProof,
-  emailPaymentProof
-};
+// ==================== PAYMENT PROOF MODULE ====================
+
+// Alle Funktionen sind bereits global verfügbar
+console.log("💳 Payment Proof Module geladen");

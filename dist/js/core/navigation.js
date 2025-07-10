@@ -13,18 +13,49 @@ function showScreen(screenId) {
 
 // Dashboard-Initialisierung
 function initializeUserDashboard() {
-  loadMaterials().then(() => {
-    loadMasterbatches().then(() => {
-      setupEventListeners();
+  // Warten bis alle Funktionen verfügbar sind
+  if (typeof loadMaterials === 'function' && typeof loadMasterbatches === 'function') {
+    loadMaterials().then(() => {
+      loadMasterbatches().then(() => {
+        setupEventListeners();
+      });
     });
-  });
-  loadUserStats();
-  loadUserEntries();
+  } else {
+    console.warn("⚠️ Material-Loading-Funktionen noch nicht verfügbar, versuche in 500ms erneut");
+    setTimeout(() => {
+      initializeUserDashboard();
+    }, 500);
+    return;
+  }
+  
+  // Stats und Entries laden (diese sind weniger kritisch)
+  if (typeof loadUserStats === 'function') {
+    loadUserStats();
+  }
+  if (typeof loadUserEntries === 'function') {
+    loadUserEntries();
+  }
 }
 
 function initializeAdminDashboard() {
-  loadAdminStats();
-  loadAllEntries();
+  // Warten bis Admin-Funktionen verfügbar sind
+  if (typeof loadAdminStats === 'function') {
+    loadAdminStats();
+  } else {
+    console.warn("⚠️ Admin-Stats-Funktion noch nicht verfügbar");
+    setTimeout(() => {
+      if (typeof loadAdminStats === 'function') loadAdminStats();
+    }, 500);
+  }
+  
+  if (typeof loadAllEntries === 'function') {
+    loadAllEntries();
+  } else {
+    console.warn("⚠️ LoadAllEntries-Funktion noch nicht verfügbar");
+    setTimeout(() => {
+      if (typeof loadAllEntries === 'function') loadAllEntries();
+    }, 500);
+  }
 }
 
 // Event Listeners einrichten

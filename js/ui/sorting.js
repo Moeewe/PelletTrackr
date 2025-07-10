@@ -237,10 +237,7 @@ function sortAdminEntries() {
   window.renderAdminEntries(sortedEntries);
 }
 
-// ==================== EXPORTS ====================
+// ==================== SORTING MODULE ====================
 
-export const Sorting = {
-  sortUserEntries,
-  sortAdminEntriesBy,
-  searchAdmins
-};
+// Alle Funktionen sind bereits global verfügbar
+console.log("🔀 Sorting Module geladen");

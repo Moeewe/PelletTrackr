@@ -36,11 +36,15 @@
     font-weight: 400;
     transition: color 0.2s ease;
     padding: 4px 8px;
+    cursor: pointer;
+    pointer-events: auto;
+    position: relative;
+    z-index: 1;
 }
 
 .global-footer-links a:hover {
     color: #000;
-    text-decoration: none;
+    text-decoration: underline;
 }
 
 /* ===== LEGACY FOOTER LINKS ===== */

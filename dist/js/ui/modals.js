@@ -374,14 +374,8 @@ async function editNote(entryId, currentNote) {
   }
 }
 
-export const Modals = {
-  showModal,
-  showModalWithContent,
-  closeModal,
-  viewEntryDetails,
-  editUserEntry,
-  saveUserEntryChanges,
-  editEntry,
-  saveEntryChanges,
-  editNote
-};
+// ==================== MODALS MODULE ====================
+// Modal-Verwaltung und Entry-Details/Bearbeitung
+
+// Alle Funktionen sind bereits global verfügbar
+console.log("📋 Modals Module geladen");

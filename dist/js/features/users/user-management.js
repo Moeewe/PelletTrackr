@@ -480,10 +480,16 @@ function showAddUserDialog() {
   
   window.showModal(modalHtml);
   
-  // Event Listener für Kennung-Validierung
+  // Event Listener für Kennung-Validierung und Auto-Email-Generierung
   document.getElementById('newUserKennung').addEventListener('input', function() {
     const kennung = this.value.trim().toLowerCase();
     const checkDiv = document.getElementById('kennungCheck');
+    const emailField = document.getElementById('newUserEmail');
+    
+    // Auto-generate email when kennung changes
+    if (kennung && !emailField.value) {
+      emailField.value = `${kennung}@fh-muenster.de`;
+    }
     
     if (kennung && window.allUsers.find(u => u.kennung === kennung)) {
       checkDiv.innerHTML = '<span style="color: #dc3545;">⚠️ Diese Kennung existiert bereits!</span>';
@@ -530,20 +536,7 @@ async function createNewUser() {
   }
 }
 
-// ==================== EXPORTS ====================
+// ==================== USER MANAGEMENT MODULE ====================
 
-export const UserManagement = {
-  showUserManager,
-  closeUserManager,
-  loadUsersForManagement,
-  renderUsersTable,
-  sortUsersBy,
-  searchUsers,
-  showUserDetails,
-  sendPaymentReminder,
-  deleteUser,
-  editUser,
-  updateUser,
-  showAddUserDialog,
-  createNewUser
-};
+// Alle Funktionen sind bereits global verfügbar
+console.log("👥 User Management Module geladen");

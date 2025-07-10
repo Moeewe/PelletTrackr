@@ -393,6 +393,14 @@
     <!-- Main App (Coordinator) -->
     <script src="web-app-modular.js"></script>
 
+    <!-- Global Footer - Always visible at bottom -->
+    <div class="global-footer">
+        <div class="global-footer-links">
+            <a href="impressum.html?from=app" target="_blank" onclick="console.log('Impressum Link clicked!'); sessionStorage.setItem('openedFromApp', 'true');">Impressum</a>
+            <a href="datenschutz.html?from=app" target="_blank" onclick="console.log('Datenschutz Link clicked!'); sessionStorage.setItem('openedFromApp', 'true');">Datenschutz</a>
+        </div>
+    </div>
+
     <!-- App Initialization -->
     <script>
         // Initialize app when DOM is ready
@@ -401,13 +409,5 @@
             initializeApp();
         });
     </script>
-
-    <!-- Global Footer - Always visible at bottom -->
-    <div class="global-footer">
-        <div class="global-footer-links">
-            <a href="impressum.html?from=app" target="_blank" onclick="sessionStorage.setItem('openedFromApp', 'true')">Impressum</a>
-            <a href="datenschutz.html?from=app" target="_blank" onclick="sessionStorage.setItem('openedFromApp', 'true')">Datenschutz</a>
-        </div>
-    </div>
 </body>
 </html>

@@ -4,6 +4,15 @@
 // Warten bis Firebase SDK geladen ist
 function initializeFirebase() {
   if (typeof firebase !== 'undefined') {
+    // Prüfen ob Firebase bereits initialisiert ist
+    if (firebase.apps.length > 0) {
+      console.log("🔥 Firebase bereits initialisiert, verwende existierende App");
+      const db = firebase.firestore();
+      window.db = db;
+      window.firebase = firebase;
+      return true;
+    }
+
     // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyBaaMwmjxyytxHLinmigccF30-1Wl0tzD0",

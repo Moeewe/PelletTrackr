@@ -539,23 +539,7 @@ async function updateMasterbatch(masterbatchId) {
   }
 }
 
-// ==================== EXPORTS ====================
+// ==================== MATERIAL LOADING MODULE ====================
 
-export const MaterialLoading = {
-  loadMaterials,
-  loadMasterbatches,
-  showMaterialManager,
-  closeMaterialManager,
-  showMasterbatchManager,
-  closeMasterbatchManager,
-  loadMaterialsForManagement,
-  loadMasterbatchesForManagement,
-  addMaterial,
-  addMasterbatch,
-  deleteMaterial,
-  deleteMasterbatch,
-  editMaterial,
-  editMasterbatch,
-  updateMaterial,
-  updateMasterbatch
-};
+// Alle Funktionen sind bereits global verfügbar
+console.log("🏭 Material Loading Module geladen");
