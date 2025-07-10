@@ -94,9 +94,9 @@
 .data-table .actions .btn-small {
   flex-shrink: 0; /* Buttons behalten ihre Größe */
   min-width: 110px;
-  min-height: 40px; /* Better touch targets on desktop too */
-  padding: 10px 14px;
-  font-size: 13px;
+  min-height: 44px; /* Better touch targets on desktop */
+  padding: 12px 16px;
+  font-size: 14px;
   font-weight: 600;
   border: 2px solid #000000;
   border-radius: 0;
@@ -161,8 +161,8 @@
 
 .data-table .actions .btn-tertiary {
   background: white;
-  color: #666666;
-  border: 2px solid #cccccc;
+  color: #000000;
+  border: 2px solid #000000;
 }
 
 .data-table .actions .btn-tertiary:hover {
@@ -483,8 +483,8 @@
 
   .data-table .actions .btn-tertiary {
     background: white;
-    color: #666666;
-    border: 2px solid #cccccc;
+    color: #000000;
+    border: 2px solid #000000;
   }
 
   .data-table .actions .btn-tertiary:hover {
@@ -657,14 +657,14 @@
 }
 
 .data-table td.actions .btn-tertiary {
-  background: #f8f9fa;
-  border-color: #dee2e6;
-  color: #495057;
+  background: white;
+  border-color: #000000;
+  color: #000000;
 }
 
 .data-table td.actions .btn-tertiary:hover {
-  background: #e9ecef;
-  border-color: #adb5bd;
+  background: #f8f8f8;
+  border-color: #000000;
 }
 
 .data-table td.actions .btn-success {
@@ -846,14 +846,14 @@
 }
 
 .actions-cell .actions .btn-tertiary {
-  background: #f8f9fa;
-  border-color: #dee2e6;
-  color: #495057;
+  background: white;
+  border-color: #000000;
+  color: #000000;
 }
 
 .actions-cell .actions .btn-tertiary:hover {
-  background: #e9ecef;
-  border-color: #adb5bd;
+  background: #f8f8f8;
+  border-color: #000000;
 }
 
 .actions-cell .actions .btn-success {
