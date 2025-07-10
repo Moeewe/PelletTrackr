@@ -121,10 +121,12 @@ function renderUsersTable(users) {
         <td data-label="Offen" class="${statusClass}"><span class="cell-value">${window.formatCurrency(user.unpaidAmount)}</span></td>
         <td data-label="Letzter Druck"><span class="cell-value">${lastEntryDate}</span></td>
         <td data-label="Aktionen" class="actions">
-          <button class="btn-small btn-secondary" onclick="editUser('${user.kennung}')">Bearbeiten</button>
-          <button class="btn-small btn-tertiary" onclick="showUserDetails('${user.kennung}')">Details</button>
-          <button class="btn-small btn-warning" onclick="sendPaymentReminder('${user.kennung}')">Mahnung</button>
-          <button class="btn-small btn-danger" onclick="deleteUser('${user.kennung}')">Löschen</button>
+          <div class="action-group">
+            <button class="btn btn-secondary" onclick="editUser('${user.kennung}')">Bearbeiten</button>
+            <button class="btn btn-tertiary" onclick="showUserDetails('${user.kennung}')">Details</button>
+            <button class="btn btn-warning" onclick="sendPaymentReminder('${user.kennung}')">Mahnung</button>
+            <button class="btn btn-danger" onclick="deleteUser('${user.kennung}')">Löschen</button>
+          </div>
         </td>
       </tr>
     `;
@@ -449,32 +451,39 @@ function showAddUserDialog() {
   
   const modalHtml = `
     <div class="modal-header">
-      <h3>Neuen Benutzer hinzufügen</h3>
+      <h3>Neuen Benutzer Hinzufügen</h3>
       <button class="close-btn" onclick="closeModal()">&times;</button>
     </div>
     <div class="modal-body">
-      <div class="form-group">
-        <label class="form-label">Name</label>
-        <input type="text" id="newUserName" class="form-input" required>
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Benutzer Registrierung</h3>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Vollständiger Name</label>
+            <input type="text" id="newUserName" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">FH-Kennung</label>
+            <input type="text" id="newUserKennung" class="form-input" required>
+            <div id="kennungCheck" style="margin-top: 8px;"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">E-Mail Adresse</label>
+            <input type="email" id="newUserEmail" class="form-input">
+            <small>Optional - Standard: kennung@fh-muenster.de</small>
+          </div>
+        </div>
+        <div class="card-footer">
+          <button class="btn btn-primary" onclick="createNewUser()">BENUTZER HINZUFÜGEN</button>
+          <button class="btn btn-secondary" onclick="closeModal()">ABBRECHEN</button>
+        </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">FH-Kennung</label>
-        <input type="text" id="newUserKennung" class="form-input" required>
-        <div id="kennungCheck" style="margin-top: 8px;"></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">E-Mail</label>
-        <input type="email" id="newUserEmail" class="form-input">
-        <small>Optional - Standard: kennung@fh-muenster.de</small>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
-      <button class="btn btn-primary" onclick="createNewUser()">Hinzufügen</button>
     </div>
   `;
   
-  window.showModal(modalHtml);
+  showModal(modalHtml);
   
   // Event Listener für Kennung-Validierung und Auto-Email-Generierung
   document.getElementById('newUserKennung').addEventListener('input', function() {
@@ -531,6 +540,19 @@ async function createNewUser() {
     alert('Fehler beim Erstellen: ' + error.message);
   }
 }
+
+// ==================== GLOBAL EXPORTS ====================
+// Funktionen global verfügbar machen
+window.showAddUserDialog = showAddUserDialog;
+window.editUser = editUser;
+window.showUserDetails = showUserDetails;
+window.sendPaymentReminder = sendPaymentReminder;
+window.deleteUser = deleteUser;
+window.createNewUser = createNewUser;
+window.showUserManager = showUserManager;
+window.closeUserManager = closeUserManager;
+window.loadUsersForManagement = loadUsersForManagement;
+window.sortUsersBy = sortUsersBy;
 
 // ==================== USER MANAGEMENT MODULE ====================
 

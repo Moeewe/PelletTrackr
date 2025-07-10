@@ -85,57 +85,72 @@ async function viewEntryDetails(entryId) {
         <button class="close-btn" onclick="closeModal()">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="mobile-detail-layout">
-          <div class="detail-name">${entry.name}</div>
-          
-          <div class="detail-row">
-            <span class="detail-label">Datum:</span>
-            <span class="detail-value">${date} ${time}</span>
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">${entry.name}</h3>
           </div>
-          
-          <div class="detail-row">
-            <span class="detail-label">Material:</span>
-            <span class="detail-value">${entry.material}</span>
-          </div>
-          
-          <div class="detail-row">
-            <span class="detail-label">Menge:</span>
-            <span class="detail-value">${(entry.materialMenge || 0).toFixed(2)} kg</span>
-          </div>
-          
-          <div class="detail-row">
-            <span class="detail-label">Masterbatch:</span>
-            <span class="detail-value">${entry.masterbatch}</span>
-          </div>
-          
-          <div class="detail-row">
-            <span class="detail-label">MB Menge:</span>
-            <span class="detail-value">${(entry.masterbatchMenge || 0).toFixed(2)} kg</span>
-          </div>
-          
-          <div class="detail-cost-status">
-            <div class="cost-section">
-              <span class="cost-label">Gesamtkosten:</span>
-              <span class="cost-value">${window.formatCurrency(entry.totalCost)}</span>
+          <div class="card-body">
+            <div class="detail-row">
+              <span class="detail-label">Datum:</span>
+              <span class="detail-value">${date} ${time}</span>
             </div>
-            <div class="status-badge ${isPaid ? 'status-paid' : 'status-unpaid'}">${status}</div>
+            
+            <div class="detail-row">
+              <span class="detail-label">Material:</span>
+              <span class="detail-value">${entry.material}</span>
+            </div>
+            
+            <div class="detail-row">
+              <span class="detail-label">Material-Menge:</span>
+              <span class="detail-value">${(entry.materialMenge || 0).toFixed(2)} kg</span>
+            </div>
+            
+            <div class="detail-row">
+              <span class="detail-label">Masterbatch:</span>
+              <span class="detail-value">${entry.masterbatch}</span>
+            </div>
+            
+            <div class="detail-row">
+              <span class="detail-label">MB-Menge:</span>
+              <span class="detail-value">${(entry.masterbatchMenge || 0).toFixed(2)} kg</span>
+            </div>
+            
+            <div class="detail-row highlight-total">
+              <span class="detail-label">Gesamtkosten:</span>
+              <span class="detail-value">${window.formatCurrency(entry.totalCost)}</span>
+            </div>
+            
+            ${isPaid ? 
+              `<div class="detail-row highlight-green">
+                <span class="detail-label">Status:</span>
+                <span class="detail-value">BEZAHLT</span>
+              </div>` :
+              `<div class="detail-row highlight-yellow">
+                <span class="detail-label">Status:</span>
+                <span class="detail-value">OFFEN</span>
+              </div>`
+            }
+            
+            ${jobName !== "3D-Druck Auftrag" ? 
+              `<div class="detail-row">
+                <span class="detail-label">Job-Name:</span>
+                <span class="detail-value">${jobName}</span>
+              </div>` : ''
+            }
+            
+            ${jobNotes ? 
+              `<div class="detail-row">
+                <span class="detail-label">Notizen:</span>
+                <span class="detail-value">${jobNotes}</span>
+              </div>` : ''
+            }
           </div>
-          
-          <div class="notes-section">
-            <div class="notes-header">Job-Name</div>
-            <div class="notes-content">${jobName}</div>
-          </div>
-          
-          <div class="notes-section">
-            <div class="notes-header">Notizen</div>
-            <div class="notes-content">${jobNotes}</div>
+          <div class="card-footer">
+            ${isPaid ? '<button class="btn btn-success" onclick="showPaymentProof(\'' + entry.id + '\')">NACHWEIS ANZEIGEN</button>' : ''}
+            <button class="btn btn-primary" onclick="editUserEntry('${entry.id}')">BEARBEITEN</button>
+            <button class="btn btn-secondary" onclick="closeModal()">SCHLIEßEN</button>
           </div>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
-        ${isPaid ? `<button class="btn btn-nachweis" onclick="showPaymentProof('${entry.id}')">Nachweis</button>` : ''}
-        <button class="btn btn-primary" onclick="editUserEntry('${entry.id}')">Bearbeiten</button>
       </div>
     `;
     
@@ -180,25 +195,32 @@ async function editUserEntry(entryId) {
         <button class="close-btn" onclick="closeModal()">&times;</button>
       </div>
       <div class="modal-body">
-        <form id="editUserEntryForm">
-          <div class="form-group">
-            <label class="form-label">Job-Name *</label>
-            <input type="text" id="editUserJobName" class="form-input" value="${jobName}" required>
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Mein Eintrag Bearbeiten</h3>
           </div>
-          
-          <div class="form-group">
-            <label class="form-label">Notizen (optional)</label>
-            <textarea id="editUserJobNotes" class="form-textarea" rows="4" placeholder="Optionale Notizen zu diesem Druck...">${jobNotes}</textarea>
+          <div class="card-body">
+            <form id="editUserEntryForm">
+              <div class="form-group">
+                <label class="form-label">Job-Name</label>
+                <input type="text" id="editUserJobName" class="form-input" value="${jobName}" required>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Notizen (optional)</label>
+                <textarea id="editUserJobNotes" class="form-textarea" rows="4" placeholder="Optionale Notizen zu diesem Druck...">${jobNotes}</textarea>
+              </div>
+              
+              <div class="detail-row" style="margin-top: 24px; padding: 16px; background: #f8f9fa; border: 1px solid #dee2e6; color: #666; font-size: 14px; line-height: 1.5;">
+                <strong>Hinweis:</strong> Als Benutzer kannst du nur Job-Name und Notizen bearbeiten. Material-Mengen können nur von Admins geändert werden.
+              </div>
+            </form>
           </div>
-          
-          <div style="margin-top: 24px; padding: 16px; background: #f8f9fa; border: 1px solid #dee2e6; color: #666; font-size: 14px; line-height: 1.5;">
-            <strong>Hinweis:</strong> Als Benutzer kannst du nur Job-Name und Notizen bearbeiten. Material-Mengen können nur von Admins geändert werden.
+          <div class="card-footer">
+            <button class="btn btn-primary" onclick="saveUserEntryChanges('${entryId}')">SPEICHERN</button>
+            <button class="btn btn-secondary" onclick="closeModal()">ABBRECHEN</button>
           </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
-        <button class="btn btn-primary" onclick="saveUserEntryChanges('${entryId}')">Speichern</button>
+        </div>
       </div>
     `;
     
@@ -254,40 +276,47 @@ async function editEntry(entryId) {
     
     const modalHtml = `
       <div class="modal-header">
-        <h2>Eintrag Bearbeiten (Admin)</h2>
+        <h2>Admin Bearbeitung</h2>
         <button class="close-btn" onclick="closeModal()">&times;</button>
       </div>
       <div class="modal-body">
-        <form id="editEntryForm">
-          <div class="form-group">
-            <label class="form-label">Job-Name *</label>
-            <input type="text" id="editJobName" class="form-input" value="${jobName}" required>
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Eintrag Bearbeiten (Admin)</h3>
           </div>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Material-Menge (kg) *</label>
-              <input type="number" id="editMaterialMenge" class="form-input" value="${(entry.materialMenge || 0).toFixed(2)}" step="0.01" min="0" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Masterbatch-Menge (kg) *</label>
-              <input type="number" id="editMasterbatchMenge" class="form-input" value="${(entry.masterbatchMenge || 0).toFixed(2)}" step="0.01" min="0" required>
-            </div>
+          <div class="card-body">
+            <form id="editEntryForm">
+              <div class="form-group">
+                <label class="form-label">Job-Name</label>
+                <input type="text" id="editJobName" class="form-input" value="${jobName}" required>
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Material-Menge (kg)</label>
+                  <input type="number" id="editMaterialMenge" class="form-input" value="${(entry.materialMenge || 0).toFixed(2)}" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Masterbatch-Menge (kg)</label>
+                  <input type="number" id="editMasterbatchMenge" class="form-input" value="${(entry.masterbatchMenge || 0).toFixed(2)}" step="0.01" min="0" required>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Notizen (optional)</label>
+                <textarea id="editJobNotes" class="form-textarea" rows="4" placeholder="Optionale Notizen zu diesem Druck...">${jobNotes}</textarea>
+              </div>
+              
+              <div class="detail-row highlight-yellow" style="margin-top: 24px;">
+                <strong>Admin-Berechtigung:</strong> Du kannst alle Felder dieses Eintrags bearbeiten. Kosten werden automatisch neu berechnet.
+              </div>
+            </form>
           </div>
-          
-          <div class="form-group">
-            <label class="form-label">Notizen (optional)</label>
-            <textarea id="editJobNotes" class="form-textarea" rows="4" placeholder="Optionale Notizen zu diesem Druck...">${jobNotes}</textarea>
+          <div class="card-footer">
+            <button class="btn btn-primary" onclick="saveEntryChanges('${entryId}')">ÄNDERUNGEN SPEICHERN</button>
+            <button class="btn btn-secondary" onclick="closeModal()">ABBRECHEN</button>
           </div>
-          
-          <div style="margin-top: 24px; padding: 16px; background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; font-size: 14px; line-height: 1.5;">
-            <strong>Admin-Berechtigung:</strong> Du kannst alle Felder dieses Eintrags bearbeiten. Kosten werden automatisch neu berechnet.
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
-        <button class="btn btn-primary" onclick="saveEntryChanges('${entryId}')">Speichern</button>
+        </div>
       </div>
     `;
     

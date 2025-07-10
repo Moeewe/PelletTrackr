@@ -1,0 +1,381 @@
+/* ===== KONSISTENTES CARD DESIGN ===== */
+/* Einheitliches Design für alle Karten in Admin und User-Bereich */
+
+/* ==================== BASE CARD STRUCTURE ==================== */
+
+/* Universal Card Container */
+.card,
+.detail-card,
+.user-card,
+.material-card,
+.masterbatch-card,
+.entry-card {
+  background: white;
+  border: 2px solid #000000;
+  border-radius: 0;
+  padding: 0;
+  margin-bottom: 24px;
+  position: relative;
+  width: 100%;
+}
+
+/* Card Header */
+.card-header {
+  padding: 24px 32px;
+  border-bottom: 2px solid #000000;
+  background: white;
+}
+
+.card-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #000000;
+  margin: 0;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Card Body */
+.card-body {
+  padding: 32px;
+  background: white;
+}
+
+/* Card Footer */
+.card-footer {
+  padding: 24px 32px;
+  border-top: 2px solid #000000;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ==================== DETAIL ROWS ==================== */
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid #e0e0e0;
+  min-height: 50px;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #666666;
+  min-width: 140px;
+  text-align: left;
+}
+
+.detail-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #000000;
+  text-align: right;
+  flex: 1;
+  margin-left: 24px;
+}
+
+/* ==================== SPECIAL HIGHLIGHT ROWS ==================== */
+
+/* Offener Betrag - Gelb hervorgehoben */
+.detail-row.highlight-yellow {
+  background: #FFEB00;
+  color: #000000;
+  border: none;
+  margin: 0 -32px;
+  padding: 20px 32px;
+  font-weight: 700;
+}
+
+.detail-row.highlight-yellow .detail-label,
+.detail-row.highlight-yellow .detail-value {
+  color: #000000;
+  font-weight: 700;
+}
+
+/* Bezahlter Betrag - Grün hervorgehoben */
+.detail-row.highlight-green {
+  background: #28a745;
+  color: white;
+  border: none;
+  margin: 0 -32px;
+  padding: 20px 32px;
+  font-weight: 700;
+}
+
+.detail-row.highlight-green .detail-label,
+.detail-row.highlight-green .detail-value {
+  color: white;
+  font-weight: 700;
+}
+
+/* Gesamtkosten - Schwarz hervorgehoben */
+.detail-row.highlight-total {
+  background: #000000;
+  color: white;
+  border: none;
+  margin: 0 -32px;
+  padding: 20px 32px;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.detail-row.highlight-total .detail-label,
+.detail-row.highlight-total .detail-value {
+  color: white;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+/* ==================== BUTTON LAYOUT ==================== */
+
+/* Alle Buttons in Cards */
+.card-footer .btn,
+.card-actions .btn {
+  width: 100%;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+  border-radius: 0;
+  transition: all 0.2s ease;
+}
+
+/* Button Varianten */
+.card-footer .btn-primary {
+  background: #000000;
+  color: white;
+  border: 2px solid #000000;
+}
+
+.card-footer .btn-primary:hover {
+  background: #333333;
+  border-color: #333333;
+}
+
+.card-footer .btn-secondary {
+  background: white;
+  color: #000000;
+  border: 2px solid #000000;
+}
+
+.card-footer .btn-secondary:hover {
+  background: #f8f8f8;
+}
+
+.card-footer .btn-success {
+  background: #28a745;
+  color: white;
+  border: 2px solid #28a745;
+}
+
+.card-footer .btn-success:hover {
+  background: #218838;
+  border-color: #218838;
+}
+
+.card-footer .btn-warning {
+  background: #FFEB00;
+  color: #000000;
+  border: 2px solid #000000;
+}
+
+.card-footer .btn-warning:hover {
+  background: #e6d200;
+}
+
+.card-footer .btn-danger {
+  background: #dc3545;
+  color: white;
+  border: 2px solid #dc3545;
+}
+
+.card-footer .btn-danger:hover {
+  background: #c82333;
+  border-color: #c82333;
+}
+
+/* ==================== STATUS INDICATORS ==================== */
+
+.status-indicator {
+  display: inline-block;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-radius: 0;
+  border: 2px solid;
+}
+
+.status-paid {
+  background: #28a745;
+  color: white;
+  border-color: #28a745;
+}
+
+.status-unpaid {
+  background: #FFEB00;
+  color: #000000;
+  border-color: #000000;
+}
+
+.status-overdue {
+  background: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
+
+/* ==================== RESPONSIVE DESIGN ==================== */
+
+@media (max-width: 768px) {
+  .card-header {
+    padding: 20px 24px;
+  }
+  
+  .card-title {
+    font-size: 20px;
+  }
+  
+  .card-body {
+    padding: 24px;
+  }
+  
+  .card-footer {
+    padding: 20px 24px;
+  }
+  
+  .detail-label {
+    font-size: 14px;
+    min-width: 120px;
+  }
+  
+  .detail-value {
+    font-size: 14px;
+  }
+  
+  .detail-row.highlight-yellow,
+  .detail-row.highlight-green,
+  .detail-row.highlight-total {
+    margin: 0 -24px;
+    padding: 16px 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-header {
+    padding: 16px 20px;
+  }
+  
+  .card-title {
+    font-size: 18px;
+  }
+  
+  .card-body {
+    padding: 20px;
+  }
+  
+  .card-footer {
+    padding: 16px 20px;
+  }
+  
+  .detail-row.highlight-yellow,
+  .detail-row.highlight-green,
+  .detail-row.highlight-total {
+    margin: 0 -20px;
+    padding: 16px 20px;
+  }
+}
+
+/* ==================== ADMIN FORM CARDS ==================== */
+
+/* Entferne graue Hintergründe von Form-Sections */
+.entry-form,
+.form-section {
+  background: white;
+  border: 2px solid #000000;
+  border-radius: 0;
+  padding: 32px;
+  margin-bottom: 24px;
+}
+
+.form-section h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 24px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #000000;
+}
+
+/* Admin Controls - Einheitliche Karten */
+.admin-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.control-section {
+  background: white;
+  border: 2px solid #000000;
+  border-radius: 0;
+  padding: 0;
+}
+
+.control-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #000000;
+  margin: 0;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 20px 24px;
+  border-bottom: 2px solid #000000;
+  background: white;
+}
+
+.control-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+}
+
+.control-buttons .btn {
+  width: 100%;
+  padding: 16px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+  border-radius: 0;
+  border-top: 1px solid #e0e0e0;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+}
+
+.control-buttons .btn:first-child {
+  border-top: none;
+}
+
+.control-buttons .btn:hover {
+  background: #f8f8f8;
+}
