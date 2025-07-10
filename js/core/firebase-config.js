@@ -1,8 +1,16 @@
 // ==================== FIREBASE CONFIGURATION ====================
 // Firebase-Initialisierung und globale DB-Referenz
 
+// Firebase-Initialisierung bereits erfolgt?
+let firebaseInitialized = false;
+
 // Warten bis Firebase SDK geladen ist
 function initializeFirebase() {
+  if (firebaseInitialized) {
+    console.log("🔥 Firebase bereits initialisiert, verwende existierende Konfiguration");
+    return true;
+  }
+
   if (typeof firebase !== 'undefined') {
     // Prüfen ob Firebase bereits initialisiert ist
     if (firebase.apps.length > 0) {
@@ -10,6 +18,7 @@ function initializeFirebase() {
       const db = firebase.firestore();
       window.db = db;
       window.firebase = firebase;
+      firebaseInitialized = true;
       return true;
     }
 
@@ -31,6 +40,7 @@ function initializeFirebase() {
     // Global DB-Referenz für alle Module verfügbar machen
     window.db = db;
     window.firebase = firebase;
+    firebaseInitialized = true;
 
     console.log("🔥 Firebase erfolgreich initialisiert");
     return true;

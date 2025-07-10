@@ -48,14 +48,10 @@ function renderUserEntries(entries) {
       `<button class="${nachweisBtnClass}" disabled title="Nachweis nach Zahlung verfügbar">Nachweis</button>`;
       
     const actions = `
-      <div class="action-group">
-        <div class="payment-actions">
-          ${nachweisBtn}
-        </div>
-        <div class="entry-actions">
-          <button class="btn btn-tertiary" onclick="viewEntryDetails('${entry.id}')">Details</button>
-          <button class="btn btn-secondary" onclick="editUserEntry('${entry.id}')">Bearbeiten</button>
-        </div>
+      <div class="actions">
+        ${nachweisBtn}
+        <button class="btn btn-tertiary" onclick="viewEntryDetails('${entry.id}')">Details</button>
+        <button class="btn btn-secondary" onclick="editUserEntry('${entry.id}')">Bearbeiten</button>
       </div>`;
     
     // Responsive Tabellen-Zeile mit Zwei-Zeilen-Layout

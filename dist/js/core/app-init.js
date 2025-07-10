@@ -1,9 +1,18 @@
 // ==================== APP INITIALIZATION MODULE ====================
 // Zentrale App-Initialisierung und Firebase-Verbindung
 
+// App-Initialisierung bereits erfolgt?
+let appInitialized = false;
+
 // App initialisieren
 function initializeApp() {
+  if (appInitialized) {
+    console.log("🚀 PelletTrackr bereits initialisiert, überspringe...");
+    return;
+  }
+
   console.log("🚀 PelletTrackr wird initialisiert...");
+  appInitialized = true;
   
   // Firebase-Verbindung testen
   testFirebaseConnection();
