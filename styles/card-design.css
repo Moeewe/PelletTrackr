@@ -31,7 +31,7 @@
   font-weight: 700;
   color: #000000;
   margin: 0;
-  text-align: center;
+  text-align: left; /* Job name should be left-aligned */
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -79,7 +79,7 @@
   font-size: 16px;
   font-weight: 700;
   color: #000000;
-  text-align: right;
+  text-align: left; /* All values should be left-aligned */
   flex: 1;
   margin-left: 24px;
 }
@@ -137,6 +137,19 @@
 }
 
 /* ==================== BUTTON LAYOUT ==================== */
+
+/* Button Group Layout for Cards */
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.button-group .btn {
+  width: 100%;
+  margin: 0;
+}
 
 /* Alle Buttons in Cards */
 .card-footer .btn,

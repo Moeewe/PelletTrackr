@@ -87,9 +87,14 @@ async function viewEntryDetails(entryId) {
       <div class="modal-body">
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">${entry.name}</h3>
+            <h3 class="card-title">${jobName}</h3>
           </div>
           <div class="card-body">
+            <div class="detail-row">
+              <span class="detail-label">Name:</span>
+              <span class="detail-value">${entry.name}</span>
+            </div>
+            
             <div class="detail-row">
               <span class="detail-label">Datum:</span>
               <span class="detail-value">${date} ${time}</span>
@@ -131,14 +136,7 @@ async function viewEntryDetails(entryId) {
               </div>`
             }
             
-            ${jobName !== "3D-Druck Auftrag" ? 
-              `<div class="detail-row">
-                <span class="detail-label">Job-Name:</span>
-                <span class="detail-value">${jobName}</span>
-              </div>` : ''
-            }
-            
-            ${jobNotes ? 
+            ${jobNotes && jobNotes !== "Keine Notizen" ? 
               `<div class="detail-row">
                 <span class="detail-label">Notizen:</span>
                 <span class="detail-value">${jobNotes}</span>
@@ -146,9 +144,11 @@ async function viewEntryDetails(entryId) {
             }
           </div>
           <div class="card-footer">
-            ${isPaid ? '<button class="btn btn-success" onclick="showPaymentProof(\'' + entry.id + '\')">NACHWEIS ANZEIGEN</button>' : ''}
-            <button class="btn btn-primary" onclick="editUserEntry('${entry.id}')">BEARBEITEN</button>
-            <button class="btn btn-secondary" onclick="closeModal()">SCHLIEßEN</button>
+            <div class="button-group">
+              ${isPaid ? `<button class="btn btn-success" onclick="showPaymentProof('${entryId}')">NACHWEIS ANZEIGEN</button>` : ''}
+              <button class="btn btn-primary" onclick="editUserEntry('${entryId}')">BEARBEITEN</button>
+              <button class="btn btn-secondary" onclick="closeModal()">SCHLIEßEN</button>
+            </div>
           </div>
         </div>
       </div>
@@ -217,8 +217,10 @@ async function editUserEntry(entryId) {
             </form>
           </div>
           <div class="card-footer">
-            <button class="btn btn-primary" onclick="saveUserEntryChanges('${entryId}')">SPEICHERN</button>
-            <button class="btn btn-secondary" onclick="closeModal()">ABBRECHEN</button>
+            <div class="button-group">
+              <button class="btn btn-primary" onclick="saveUserEntryChanges('${entryId}')">SPEICHERN</button>
+              <button class="btn btn-secondary" onclick="closeModal()">ABBRECHEN</button>
+            </div>
           </div>
         </div>
       </div>

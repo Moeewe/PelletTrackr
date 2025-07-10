@@ -93,7 +93,82 @@
 .data-table .actions .btn,
 .data-table .actions .btn-small {
   flex-shrink: 0; /* Buttons behalten ihre Größe */
-  min-width: auto;
+  min-width: 110px;
+  min-height: 40px; /* Better touch targets on desktop too */
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 2px solid #000000;
+  border-radius: 0;
+  background: white;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.data-table .actions .btn:hover,
+.data-table .actions .btn-small:hover {
+  background: #000000;
+  color: white;
+}
+
+.data-table .actions .btn-primary {
+  background: #000000;
+  color: white;
+}
+
+.data-table .actions .btn-primary:hover {
+  background: #333333;
+}
+
+.data-table .actions .btn-success {
+  background: #28a745;
+  border-color: #28a745;
+  color: white;
+}
+
+.data-table .actions .btn-success:hover {
+  background: #1e7e34;
+  border-color: #1e7e34;
+}
+
+.data-table .actions .btn-danger {
+  background: #dc3545;
+  border-color: #dc3545;
+  color: white;
+}
+
+.data-table .actions .btn-danger:hover {
+  background: #c82333;
+  border-color: #c82333;
+}
+
+.data-table .actions .btn-nachweis {
+  background: #FFEB00;
+  border-color: #000000;
+  color: #000000;
+}
+
+.data-table .actions .btn-nachweis:hover {
+  background: #e6d200;
+}
+
+.data-table .actions .btn-tertiary {
+  background: white;
+  color: #666666;
+  border: 2px solid #cccccc;
+}
+
+.data-table .actions .btn-tertiary:hover {
+  border-color: #000000;
+  color: #000000;
+  background: #f8f8f8;
 }
 
 /* Responsive Card Layout für Mobile */
@@ -333,15 +408,17 @@
   
   .data-table .actions {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column; /* Stack buttons vertically on mobile */
     gap: 12px;
     justify-content: flex-start;
+    width: 100%;
   }
   
   .data-table .actions .btn {
     flex: 1;
     min-width: 120px;
-    padding: 12px 16px;
+    min-height: 48px; /* Improved touch target size for mobile */
+    padding: 14px 16px;
     font-size: 14px;
     font-weight: 600;
     border: 2px solid #000000;
@@ -352,53 +429,68 @@
     letter-spacing: 0.5px;
     cursor: pointer;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
   }
   
   .data-table .actions .btn:hover {
     background: #000000;
     color: white;
   }
-  
-  .data-table .actions .btn-primary {
+   .data-table .actions .btn-primary {
     background: #000000;
     color: white;
   }
-  
+
   .data-table .actions .btn-primary:hover {
     background: #333333;
   }
-  
+
   .data-table .actions .btn-success {
     background: #28a745;
     border-color: #28a745;
     color: white;
   }
-  
+
   .data-table .actions .btn-success:hover {
     background: #1e7e34;
     border-color: #1e7e34;
   }
-  
+
   .data-table .actions .btn-danger {
     background: #dc3545;
     border-color: #dc3545;
     color: white;
   }
-  
+
   .data-table .actions .btn-danger:hover {
     background: #c82333;
     border-color: #c82333;
   }
-  
+
   /* Nachweis Button */
   .data-table .actions .btn-nachweis {
     background: #FFEB00;
     border-color: #000000;
     color: #000000;
   }
-  
+
   .data-table .actions .btn-nachweis:hover {
     background: #e6d200;
+  }
+
+  .data-table .actions .btn-tertiary {
+    background: white;
+    color: #666666;
+    border: 2px solid #cccccc;
+  }
+
+  .data-table .actions .btn-tertiary:hover {
+    border-color: #000000;
+    color: #000000;
+    background: #f8f8f8;
   }
 }
 
