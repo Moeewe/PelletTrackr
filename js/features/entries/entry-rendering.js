@@ -50,7 +50,7 @@ function renderUserEntries(entries) {
       <div class="actions">
         ${nachweisBtn}
         <button class="btn btn-tertiary" onclick="viewEntryDetails('${entry.id}')">Details</button>
-        <button class="btn btn-secondary" onclick="editUserEntry('${entry.id}')">Bearbeiten</button>
+        <button class="btn btn-primary" onclick="editUserEntry('${entry.id}')">Bearbeiten</button>
       </div>`;
     
     // Responsive Tabellen-Zeile mit Zwei-Zeilen-Layout
@@ -133,7 +133,7 @@ function renderAdminEntries(entries) {
            <button class="btn btn-success" onclick="showPaymentProof('${entry.id}')">Nachweis</button>`
         }
         <button class="btn btn-tertiary" onclick="viewEntryDetails('${entry.id}')">Details</button>
-        <button class="btn btn-secondary" onclick="editEntry('${entry.id}')">Bearbeiten</button>
+        <button class="btn btn-primary" onclick="editEntry('${entry.id}')">Bearbeiten</button>
         <button class="btn btn-danger" onclick="deleteEntry('${entry.id}')">Löschen</button>
       </div>
     `;

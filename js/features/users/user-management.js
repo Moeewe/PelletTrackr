@@ -122,7 +122,7 @@ function renderUsersTable(users) {
         <td data-label="Letzter Druck"><span class="cell-value">${lastEntryDate}</span></td>
         <td data-label="Aktionen" class="actions">
           <div class="action-group">
-            <button class="btn btn-secondary" onclick="editUser('${user.kennung}')">Bearbeiten</button>
+            <button class="btn btn-primary" onclick="editUser('${user.kennung}')">Bearbeiten</button>
             <button class="btn btn-tertiary" onclick="showUserDetails('${user.kennung}')">Details</button>
             <button class="btn btn-warning" onclick="sendPaymentReminder('${user.kennung}')">Mahnung</button>
             <button class="btn btn-danger" onclick="deleteUser('${user.kennung}')">Löschen</button>
