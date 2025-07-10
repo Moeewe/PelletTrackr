@@ -18,6 +18,21 @@ cp impressum.html dist/
 cp datenschutz.html dist/
 cp favicon.svg dist/
 
+# UX-Helpers und andere JavaScript-Module kopieren
+echo "🔧 Kopiere JavaScript-Module..."
+if [ -f ux-helpers.js ]; then
+  cp ux-helpers.js dist/
+  echo "   ✅ ux-helpers.js kopiert"
+fi
+
+# Prüfe auf weitere JS-Module (falls sie existieren)
+for js_file in core-functions.js user-functions.js admin-functions.js; do
+  if [ -f "$js_file" ]; then
+    cp "$js_file" dist/
+    echo "   ✅ $js_file kopiert"
+  fi
+done
+
 # Modular CSS kopieren
 echo "🎨 Kopiere modular CSS..."
 if [ -f styles-modular.css ]; then
@@ -53,22 +68,6 @@ fi
 # Netlify-Konfiguration kopieren
 if [ -f netlify.toml ]; then
   cp netlify.toml dist/
-fi
-
-# Modulare Version auch kopieren (für Tests/Entwicklung)
-if [ -f web-app-modular.js ]; then
-  echo "📦 Kopiere modulare Version..."
-  cp web-app-modular.js dist/
-fi
-
-if [ -f index-modular-complete.html ]; then
-  cp index-modular-complete.html dist/
-fi
-
-# Module kopieren (falls vorhanden)
-if [ -d modules ]; then
-  echo "📂 Kopiere Module..."
-  cp -r modules dist/
 fi
 
 echo "✅ Build erfolgreich abgeschlossen!"
