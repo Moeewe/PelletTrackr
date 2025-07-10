@@ -807,12 +807,12 @@
 }
 
 .stat-number {
-  font-size: 48px;
+  font-size: 32px;
   font-weight: 700;
   color: #000000;
-  margin-bottom: 12px;
-  letter-spacing: -1px;
-  line-height: 1;
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
 }
 
 .stat-label {
@@ -823,7 +823,7 @@
   line-height: 1.2;
 }
 
-/* Section Titles - Clean, Modern Style */
+/* Section Titles - Gelb hinterlegt wie Logo */
 .section-title,
 .stats-section h2,
 .entries-section h2 {
@@ -833,25 +833,16 @@
   margin-bottom: 24px;
   text-align: left;
   position: relative;
-  padding-left: 20px;
-  border-left: 4px solid #FFEB00;
-}
-
-.section-title::before,
-.stats-section h2::before,
-.entries-section h2::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 12px;
-  height: 12px;
+  padding: 12px 20px;
   background: #FFEB00;
-  border-radius: 50%;
+  border-left: 4px solid #000000;
+  display: inline-block;
+  min-width: 200px;
 }
 
-/* Control Titles für Admin-Bereiche */
+/* Entfernt - kein Icon/Punkt mehr nötig da gelb hinterlegt */
+
+/* Control Titles für Admin-Bereiche - auch gelb hinterlegt */
 .control-title {
   font-size: 20px;
   font-weight: 600;
@@ -859,21 +850,14 @@
   margin-bottom: 16px;
   text-align: left;
   position: relative;
-  padding-left: 20px;
-  border-left: 3px solid #FFEB00;
+  padding: 10px 16px;
+  background: #FFEB00;
+  border-left: 3px solid #000000;
+  display: inline-block;
+  min-width: 150px;
 }
 
-.control-title::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 8px;
-  height: 8px;
-  background: #FFEB00;
-  border-radius: 50%;
-}
+/* Entfernt - kein Icon mehr nötig */
 
 /* Header Actions */
 .header-actions {
