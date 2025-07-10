@@ -870,3 +870,31 @@
 .header-actions .btn {
   min-width: 120px;
 }
+
+/* ==================== SORTIERUNGSPFEILE ==================== */
+
+/* Sortierungspfeile nur für sortierbare Spalten */
+.data-table th[onclick] {
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+}
+
+.data-table th[onclick]:after {
+  content: '↕';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #ccc;
+  font-size: 10px;
+  pointer-events: none;
+}
+
+.data-table th[onclick]:hover {
+  background: #e8e8e8;
+}
+
+.data-table th[onclick]:hover:after {
+  color: #999;
+}

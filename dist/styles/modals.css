@@ -144,12 +144,18 @@
 
 .modal-header h2,
 .modal-header h3 {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 600;
-  color: #000000;
+  margin: 0 !important;
+  font-size: 24px !important;
+  font-weight: 600 !important;
+  color: #000000 !important;
   flex: 1;
-  padding-right: 16px;
+  padding: 0 16px 0 0 !important;
+  background: none !important;
+  border: none !important;
+  display: block !important;
+  min-width: auto !important;
+  text-align: left !important;
+  position: static !important;
 }
 
 /* Modal Body */
@@ -186,4 +192,22 @@
 
 .modal-actions .btn {
   min-width: 100px;
+}
+
+/* ==================== MODAL CONTENT STYLES ==================== */
+
+/* Alle Headings innerhalb von Modals normalisieren */
+.modal-body h3,
+.proof-section h3 {
+  margin: 0 0 16px 0 !important;
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  color: #000000 !important;
+  padding: 0 !important;
+  background: none !important;
+  border: none !important;
+  display: block !important;
+  min-width: auto !important;
+  text-align: left !important;
+  position: static !important;
 }
