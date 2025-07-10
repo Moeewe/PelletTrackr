@@ -16,14 +16,14 @@ function renderUserEntries(entries) {
     <table>
       <thead>
         <tr>
-          <th onclick="sortUserEntries('date')">Datum ↕</th>
-          <th onclick="sortUserEntries('jobName')">Job ↕</th>
-          <th onclick="sortUserEntries('material')">Material ↕</th>
-          <th onclick="sortUserEntries('materialMenge')">Menge ↕</th>
-          <th onclick="sortUserEntries('masterbatch')">Masterbatch ↕</th>
-          <th onclick="sortUserEntries('masterbatchMenge')">Menge ↕</th>
-          <th onclick="sortUserEntries('cost')">Kosten ↕</th>
-          <th onclick="sortUserEntries('status')">Status ↕</th>
+          <th onclick="sortUserEntries('date')">Datum</th>
+          <th onclick="sortUserEntries('jobName')">Job</th>
+          <th onclick="sortUserEntries('material')">Material</th>
+          <th onclick="sortUserEntries('materialMenge')">Menge</th>
+          <th onclick="sortUserEntries('masterbatch')">Masterbatch</th>
+          <th onclick="sortUserEntries('masterbatchMenge')">Menge</th>
+          <th onclick="sortUserEntries('cost')">Kosten</th>
+          <th onclick="sortUserEntries('status')">Status</th>
           <th>Notizen</th>
           <th>Aktionen</th>
         </tr>
@@ -42,10 +42,9 @@ function renderUserEntries(entries) {
     const truncatedNotes = jobNotes.length > 30 ? jobNotes.substring(0, 30) + "..." : jobNotes;
     
     // Aktionen für User (Zahlungsnachweis, Details und Bearbeiten gruppiert)
-    const nachweisBtnClass = isPaid ? 'btn-nachweis' : 'btn-nachweis disabled';
     const nachweisBtn = isPaid ? 
-      `<button class="${nachweisBtnClass}" onclick="showPaymentProof('${entry.id}')">Nachweis</button>` :
-      `<button class="${nachweisBtnClass}" disabled title="Nachweis nach Zahlung verfügbar">Nachweis</button>`;
+      `<button class="btn btn-nachweis" onclick="showPaymentProof('${entry.id}')">Nachweis</button>` :
+      `<button class="btn btn-nachweis disabled" disabled title="Nachweis nach Zahlung verfügbar">Nachweis</button>`;
       
     const actions = `
       <div class="actions">
@@ -69,7 +68,7 @@ function renderUserEntries(entries) {
           ${truncatedNotes}
           ${jobNotes.length > 0 ? `<button class="btn-edit-note" onclick="editNote('${entry.id}', '${escapeQuotes(jobNotes)}')">✏️</button>` : ''}
         </td>
-        <td data-label="Aktionen" class="actions-cell">${actions}</td>
+        <td data-label="Aktionen" class="actions">${actions}</td>
       </tr>
     `;
   });
@@ -97,16 +96,16 @@ function renderAdminEntries(entries) {
     <table>
       <thead>
         <tr>
-          <th onclick="sortAdminEntriesBy('date')">Datum ↕</th>
-          <th onclick="sortAdminEntriesBy('name')">Name ↕</th>
-          <th onclick="sortAdminEntriesBy('kennung')">Kennung ↕</th>
-          <th onclick="sortAdminEntriesBy('jobName')">Job ↕</th>
-          <th onclick="sortAdminEntriesBy('material')">Material ↕</th>
-          <th onclick="sortAdminEntriesBy('materialMenge')">Mat. Menge ↕</th>
-          <th onclick="sortAdminEntriesBy('masterbatch')">Masterbatch ↕</th>
-          <th onclick="sortAdminEntriesBy('masterbatchMenge')">MB Menge ↕</th>
-          <th onclick="sortAdminEntriesBy('cost')">Kosten ↕</th>
-          <th onclick="sortAdminEntriesBy('status')">Status ↕</th>
+          <th onclick="sortAdminEntriesBy('date')">Datum</th>
+          <th onclick="sortAdminEntriesBy('name')">Name</th>
+          <th onclick="sortAdminEntriesBy('kennung')">Kennung</th>
+          <th onclick="sortAdminEntriesBy('jobName')">Job</th>
+          <th onclick="sortAdminEntriesBy('material')">Material</th>
+          <th onclick="sortAdminEntriesBy('materialMenge')">Mat. Menge</th>
+          <th onclick="sortAdminEntriesBy('masterbatch')">Masterbatch</th>
+          <th onclick="sortAdminEntriesBy('masterbatchMenge')">MB Menge</th>
+          <th onclick="sortAdminEntriesBy('cost')">Kosten</th>
+          <th onclick="sortAdminEntriesBy('status')">Status</th>
           <th>Notizen</th>
           <th>Aktionen</th>
         </tr>

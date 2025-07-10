@@ -95,14 +95,14 @@ function renderUsersTable(users) {
     <table>
       <thead>
         <tr>
-          <th onclick="sortUsersBy('name')">Name ↕</th>
-          <th onclick="sortUsersBy('kennung')">FH-Kennung ↕</th>
-          <th onclick="sortUsersBy('email')">E-Mail ↕</th>
-          <th onclick="sortUsersBy('entries')">Drucke ↕</th>
-          <th onclick="sortUsersBy('totalCost')">Gesamtkosten ↕</th>
-          <th onclick="sortUsersBy('paidAmount')">Bezahlt ↕</th>
-          <th onclick="sortUsersBy('unpaidAmount')">Offen ↕</th>
-          <th onclick="sortUsersBy('lastEntry')">Letzter Druck ↕</th>
+          <th onclick="sortUsersBy('name')">Name</th>
+          <th onclick="sortUsersBy('kennung')">FH-Kennung</th>
+          <th onclick="sortUsersBy('email')">E-Mail</th>
+          <th onclick="sortUsersBy('entries')">Drucke</th>
+          <th onclick="sortUsersBy('totalCost')">Gesamtkosten</th>
+          <th onclick="sortUsersBy('paidAmount')">Bezahlt</th>
+          <th onclick="sortUsersBy('unpaidAmount')">Offen</th>
+          <th onclick="sortUsersBy('lastEntry')">Letzter Druck</th>
           <th>Aktionen</th>
         </tr>
       </thead>

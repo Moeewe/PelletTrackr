@@ -10,9 +10,6 @@ function sortUserEntries(column) {
   userSortDirection[column] = userSortDirection[column] === 'asc' ? 'desc' : 'asc';
   const direction = userSortDirection[column];
   
-  // Update visual indicators
-  updateSortIndicators('user', column, direction);
-  
   window.allUserEntries.sort((a, b) => {
     let valueA, valueB;
     
@@ -67,9 +64,6 @@ function sortAdminEntriesBy(column) {
   // Toggle sort direction
   adminSortDirection[column] = adminSortDirection[column] === 'asc' ? 'desc' : 'asc';
   const direction = adminSortDirection[column];
-  
-  // Update visual indicators
-  updateSortIndicators('admin', column, direction);
   
   window.allAdminEntries.sort((a, b) => {
     let valueA, valueB;
@@ -244,45 +238,4 @@ function sortAdminEntries() {
 }
 
 // ==================== VISUAL SORT INDICATORS ====================
-
-function updateSortIndicators(tableType, column, direction) {
-  // Remove previous sort indicators
-  const headers = document.querySelectorAll(`.data-table th`);
-  headers.forEach(th => {
-    th.classList.remove('sorted-asc', 'sorted-desc');
-  });
-  
-  // Add new sort indicator
-  const columnMap = {
-    'user': {
-      'date': 'th[onclick="sortUserEntries(\'date\')"]',
-      'jobName': 'th[onclick="sortUserEntries(\'jobName\')"]',
-      'material': 'th[onclick="sortUserEntries(\'material\')"]',
-      'materialMenge': 'th[onclick="sortUserEntries(\'materialMenge\')"]',
-      'masterbatch': 'th[onclick="sortUserEntries(\'masterbatch\')"]',
-      'masterbatchMenge': 'th[onclick="sortUserEntries(\'masterbatchMenge\')"]',
-      'cost': 'th[onclick="sortUserEntries(\'cost\')"]',
-      'status': 'th[onclick="sortUserEntries(\'status\')"]'
-    },
-    'admin': {
-      'date': 'th[onclick="sortAdminEntriesBy(\'date\')"]',
-      'name': 'th[onclick="sortAdminEntriesBy(\'name\')"]',
-      'kennung': 'th[onclick="sortAdminEntriesBy(\'kennung\')"]',
-      'jobName': 'th[onclick="sortAdminEntriesBy(\'jobName\')"]',
-      'material': 'th[onclick="sortAdminEntriesBy(\'material\')"]',
-      'materialMenge': 'th[onclick="sortAdminEntriesBy(\'materialMenge\')"]',
-      'masterbatch': 'th[onclick="sortAdminEntriesBy(\'masterbatch\')"]',
-      'masterbatchMenge': 'th[onclick="sortAdminEntriesBy(\'masterbatchMenge\')"]',
-      'cost': 'th[onclick="sortAdminEntriesBy(\'cost\')"]',
-      'status': 'th[onclick="sortAdminEntriesBy(\'status\')"]'
-    }
-  };
-  
-  const selector = columnMap[tableType] && columnMap[tableType][column];
-  if (selector) {
-    const targetHeader = document.querySelector(selector);
-    if (targetHeader) {
-      targetHeader.classList.add(direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
-    }
-  }
-}
+// Removed - using only gray arrows in CSS

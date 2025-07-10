@@ -117,12 +117,12 @@ async function loadMaterialsForManagement() {
       <table>
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Hersteller</th>
-            <th>EK Netto €/kg</th>
-            <th>EK Brutto €/kg</th>
-            <th>Gemeinkosten %</th>
-            <th>VK €/kg</th>
+            <th onclick="sortMaterials('name')">Name</th>
+            <th onclick="sortMaterials('manufacturer')">Hersteller</th>
+            <th onclick="sortMaterials('netPrice')">EK Netto €/kg</th>
+            <th onclick="sortMaterials('grossPrice')">EK Brutto €/kg</th>
+            <th onclick="sortMaterials('markup')">Gemeinkosten %</th>
+            <th onclick="sortMaterials('sellingPrice')">VK €/kg</th>
             <th>Aktionen</th>
           </tr>
         </thead>
@@ -184,12 +184,12 @@ async function loadMasterbatchesForManagement() {
       <table>
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Hersteller</th>
-            <th>EK Netto €/kg</th>
-            <th>EK Brutto €/kg</th>
-            <th>Gemeinkosten %</th>
-            <th>VK €/kg</th>
+            <th onclick="sortMasterbatches('name')">Name</th>
+            <th onclick="sortMasterbatches('manufacturer')">Hersteller</th>
+            <th onclick="sortMasterbatches('netPrice')">EK Netto €/kg</th>
+            <th onclick="sortMasterbatches('grossPrice')">EK Brutto €/kg</th>
+            <th onclick="sortMasterbatches('markup')">Gemeinkosten %</th>
+            <th onclick="sortMasterbatches('sellingPrice')">VK €/kg</th>
             <th>Aktionen</th>
           </tr>
         </thead>
@@ -538,6 +538,112 @@ async function updateMasterbatch(masterbatchId) {
     alert('Fehler beim Aktualisieren: ' + error.message);
   }
 }
+
+// ==================== MATERIAL SORTING ====================
+
+function sortMaterials(column) {
+  const materialTable = document.querySelector('#materialTable table tbody');
+  if (!materialTable) return;
+  
+  const rows = Array.from(materialTable.querySelectorAll('tr'));
+  
+  rows.sort((a, b) => {
+    let valueA, valueB;
+    
+    switch(column) {
+      case 'name':
+        valueA = a.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
+        valueB = b.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
+        break;
+      case 'manufacturer':
+        valueA = a.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
+        valueB = b.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
+        break;
+      case 'netPrice':
+        valueA = parseFloat(a.querySelector('td:nth-child(3)')?.textContent.replace(/[€,]/g, '').replace(',', '.')) || 0;
+        valueB = parseFloat(b.querySelector('td:nth-child(3)')?.textContent.replace(/[€,]/g, '').replace(',', '.')) || 0;
+        break;
+      case 'grossPrice':
+        valueA = parseFloat(a.querySelector('td:nth-child(4)')?.textContent.replace(/[€,]/g, '').replace(',', '.')) || 0;
+        valueB = parseFloat(b.querySelector('td:nth-child(4)')?.textContent.replace(/[€,]/g, '').replace(',', '.')) || 0;
+        break;
+      case 'markup':
+        valueA = parseFloat(a.querySelector('td:nth-child(5)')?.textContent.replace('%', '')) || 0;
+        valueB = parseFloat(b.querySelector('td:nth-child(5)')?.textContent.replace('%', '')) || 0;
+        break;
+      case 'sellingPrice':
+        valueA = parseFloat(a.querySelector('td:nth-child(6)')?.textContent.replace(/[€,]/g, '').replace(',', '.')) || 0;
+        valueB = parseFloat(b.querySelector('td:nth-child(6)')?.textContent.replace(/[€,]/g, '').replace(',', '.')) || 0;
+        break;
+      default:
+        return 0;
+    }
+    
+    if (typeof valueA === 'string') {
+      return valueA.localeCompare(valueB);
+    } else {
+      return valueA - valueB;
+    }
+  });
+  
+  // Clear and re-append sorted rows
+  materialTable.innerHTML = '';
+  rows.forEach(row => materialTable.appendChild(row));
+}
+
+function sortMasterbatches(column) {
+  const masterbatchTable = document.querySelector('#masterbatchTable table tbody');
+  if (!masterbatchTable) return;
+  
+  const rows = Array.from(masterbatchTable.querySelectorAll('tr'));
+  
+  rows.sort((a, b) => {
+    let valueA, valueB;
+    
+    switch(column) {
+      case 'name':
+        valueA = a.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
+        valueB = b.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
+        break;
+      case 'manufacturer':
+        valueA = a.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
+        valueB = b.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
+        break;
+      case 'netPrice':
+        valueA = parseFloat(a.querySelector('td:nth-child(3)')?.textContent.replace(/[€,]/g, '').replace(',', '.')) || 0;
+        valueB = parseFloat(b.querySelector('td:nth-child(3)')?.textContent.replace(/[€,]/g, '').replace(',', '.')) || 0;
+        break;
+      case 'grossPrice':
+        valueA = parseFloat(a.querySelector('td:nth-child(4)')?.textContent.replace(/[€,]/g, '').replace(',', '.')) || 0;
+        valueB = parseFloat(b.querySelector('td:nth-child(4)')?.textContent.replace(/[€,]/g, '').replace(',', '.')) || 0;
+        break;
+      case 'markup':
+        valueA = parseFloat(a.querySelector('td:nth-child(5)')?.textContent.replace('%', '')) || 0;
+        valueB = parseFloat(b.querySelector('td:nth-child(5)')?.textContent.replace('%', '')) || 0;
+        break;
+      case 'sellingPrice':
+        valueA = parseFloat(a.querySelector('td:nth-child(6)')?.textContent.replace(/[€,]/g, '').replace(',', '.')) || 0;
+        valueB = parseFloat(b.querySelector('td:nth-child(6)')?.textContent.replace(/[€,]/g, '').replace(',', '.')) || 0;
+        break;
+      default:
+        return 0;
+    }
+    
+    if (typeof valueA === 'string') {
+      return valueA.localeCompare(valueB);
+    } else {
+      return valueA - valueB;
+    }
+  });
+  
+  // Clear and re-append sorted rows
+  masterbatchTable.innerHTML = '';
+  rows.forEach(row => masterbatchTable.appendChild(row));
+}
+
+// Global exposure
+window.sortMaterials = sortMaterials;
+window.sortMasterbatches = sortMasterbatches;
 
 // ==================== MATERIAL LOADING MODULE ====================
 
