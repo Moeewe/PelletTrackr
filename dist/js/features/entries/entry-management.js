@@ -15,7 +15,7 @@ async function addEntry() {
 
   // Validierung - nur Job-Name ist erforderlich
   if (!jobName) {
-    toast.warning("⚠️ Bitte einen Job-Namen eingeben!");
+    toast.warning("Bitte einen Job-Namen eingeben!");
     return;
   }
 
@@ -30,7 +30,7 @@ async function addEntry() {
     masterbatch !== "Lade Masterbatches...";
   
   if (!hasMaterial && !hasMasterbatch) {
-    toast.warning("⚠️ Bitte wählen Sie mindestens Material oder Masterbatch aus!");
+    toast.warning("Bitte wählen Sie mindestens Material oder Masterbatch aus!");
     return;
   }
 
@@ -39,12 +39,12 @@ async function addEntry() {
   const masterbatchMengeNum = hasMasterbatch ? parseGermanNumber(masterbatchMenge) : 0;
 
   if (hasMaterial && (isNaN(materialMengeNum) || materialMengeNum <= 0)) {
-    toast.warning("⚠️ Bitte eine gültige Materialmenge eingeben!");
+    toast.warning("Bitte eine gültige Materialmenge eingeben!");
     return;
   }
 
   if (hasMasterbatch && (isNaN(masterbatchMengeNum) || masterbatchMengeNum <= 0)) {
-    toast.warning("⚠️ Bitte eine gültige Masterbatch-Menge eingeben!");
+    toast.warning("Bitte eine gültige Masterbatch-Menge eingeben!");
     return;
   }
 
@@ -111,7 +111,7 @@ async function addEntry() {
       }
     }, 
     'Druck wird gespeichert...', 
-    '✅ Druck erfolgreich gespeichert!', 
+    'Druck erfolgreich gespeichert!', 
     'Fehler beim Speichern des Drucks');
     
   } catch (error) {
@@ -139,7 +139,7 @@ async function deleteEntry(entryId) {
       loadAllEntries();
     }, 
     'Druck wird gelöscht...', 
-    '✅ Druck gelöscht!', 
+    'Druck gelöscht!', 
     'Fehler beim Löschen');
     
   } catch (error) {
@@ -158,7 +158,7 @@ async function markEntryAsPaid(entryId) {
       loadAllEntries();
     }, 
     'Status wird aktualisiert...', 
-    '✅ Als bezahlt markiert!', 
+    'Als bezahlt markiert!', 
     'Fehler beim Aktualisieren');
     
   } catch (error) {
@@ -177,7 +177,7 @@ async function markEntryAsUnpaid(entryId) {
       loadAllEntries();
     }, 
     'Status wird aktualisiert...', 
-    '✅ Als unbezahlt markiert!', 
+    'Als unbezahlt markiert!', 
     'Fehler beim Aktualisieren');
     
   } catch (error) {

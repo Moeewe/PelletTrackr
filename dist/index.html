@@ -161,7 +161,7 @@
                     <span class="admin-badge">Admin</span>
                 </h1>
                 <div class="user-info">
-                    <span id="adminWelcome">Admin Dashboard</span>
+                    <span id="adminWelcome">Admin Dashboard - Moritz</span>
                     <button class="btn btn-link" onclick="logout()">Abmelden</button>
                 </div>
             </div>
@@ -241,7 +241,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Materialien verwalten</h3>
-                <button class="btn btn-link" onclick="closeMaterialManager()">Schließen</button>
+                <button class="close-btn" onclick="closeMaterialManager()">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -254,12 +254,15 @@
                         <input type="number" id="newMaterialNetPrice" class="form-input" placeholder="EK Netto €/kg" step="0.01">
                         <input type="number" id="newMaterialTaxRate" class="form-input" placeholder="Mehrwertsteuer %" value="19" step="0.01">
                         <input type="number" id="newMaterialMarkup" class="form-input" placeholder="Gemeinkosten % (Strom, Versand, etc.)" value="30" step="0.01">
-                        <button class="btn btn-primary" onclick="addMaterial()">Hinzufügen</button>
                     </div>
                 </div>
                 <div class="materials-container">
                     <div id="materialsTable" class="data-table data-table-responsive"></div>
                 </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="addMaterial()">Material hinzufügen</button>
+                <button class="btn btn-secondary" onclick="closeMaterialManager()">Schließen</button>
             </div>
         </div>
     </div>
@@ -269,7 +272,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Masterbatches verwalten</h3>
-                <button class="btn btn-link" onclick="closeMasterbatchManager()">Schließen</button>
+                <button class="close-btn" onclick="closeMasterbatchManager()">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -282,12 +285,15 @@
                         <input type="number" id="newMasterbatchNetPrice" class="form-input" placeholder="EK Netto €/kg" step="0.01">
                         <input type="number" id="newMasterbatchTaxRate" class="form-input" placeholder="Mehrwertsteuer %" value="19" step="0.01">
                         <input type="number" id="newMasterbatchMarkup" class="form-input" placeholder="Gemeinkosten % (Strom, Versand, etc.)" value="30" step="0.01">
-                        <button class="btn btn-primary" onclick="addMasterbatch()">Hinzufügen</button>
                     </div>
                 </div>
                 <div class="masterbatches-container">
                     <div id="masterbatchesTable" class="data-table data-table-responsive"></div>
                 </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="addMasterbatch()">Masterbatch hinzufügen</button>
+                <button class="btn btn-secondary" onclick="closeMasterbatchManager()">Schließen</button>
             </div>
         </div>
     </div>
@@ -297,11 +303,10 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Nutzer verwalten</h3>
-                <button class="btn btn-link" onclick="closeUserManager()">Schließen</button>
+                <button class="close-btn" onclick="closeUserManager()">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="table-controls">
-                    <button class="btn btn-primary" onclick="showAddUserDialog()">+ Neuen Nutzer hinzufügen</button>
                     <input type="text" id="userManagerSearchInput" placeholder="Suchen nach Name oder FH-Kennung..." class="search-input" onkeyup="searchUsers()">
                     <select id="userManagerSortSelect" class="sort-select" onchange="sortUsers()">
                         <option value="name-asc">Name (A-Z)</option>
@@ -318,6 +323,12 @@
                     <div id="usersTable" class="data-table data-table-responsive"></div>
                 </div>
             </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="showAddUserDialog()">Neuen Nutzer hinzufügen</button>
+                <button class="btn btn-secondary" onclick="closeUserManager()">Schließen</button>
+            </div>
+        </div>
+    </div>
         </div>
     </div>
 

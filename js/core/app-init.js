@@ -55,7 +55,7 @@ async function testFirebaseConnection() {
     return true;
   } catch (error) {
     console.error("❌ Firebase-Verbindung fehlgeschlagen:", error);
-    alert("⚠️ Datenbankverbindung fehlgeschlagen!\n\nBitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.");
+    alert("Datenbankverbindung fehlgeschlagen!\n\nBitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.");
     return false;
   }
 }

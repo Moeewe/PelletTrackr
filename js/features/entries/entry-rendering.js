@@ -56,17 +56,19 @@ function renderUserEntries(entries) {
     // Responsive Tabellen-Zeile mit Zwei-Zeilen-Layout
     tableHtml += `
       <tr class="entry-row">
-        <td data-label="Datum">${date}</td>
-        <td data-label="Job">${jobName}</td>
-        <td data-label="Material">${entry.material}</td>
-        <td data-label="Menge">${entry.materialMenge.toFixed(2)} kg</td>
-        <td data-label="Masterbatch">${entry.masterbatch}</td>
-        <td data-label="MB Menge">${entry.masterbatchMenge.toFixed(2)} kg</td>
-        <td data-label="Kosten"><strong>${formatCurrency(entry.totalCost)}</strong></td>
-        <td data-label="Status" class="status-cell">${status}</td>
+        <td data-label="Datum"><span class="cell-value">${date}</span></td>
+        <td data-label="Job"><span class="cell-value">${jobName}</span></td>
+        <td data-label="Material"><span class="cell-value">${entry.material}</span></td>
+        <td data-label="Menge"><span class="cell-value">${entry.materialMenge.toFixed(2)} kg</span></td>
+        <td data-label="Masterbatch"><span class="cell-value">${entry.masterbatch}</span></td>
+        <td data-label="MB Menge"><span class="cell-value">${entry.masterbatchMenge.toFixed(2)} kg</span></td>
+        <td data-label="Kosten"><span class="cell-value"><strong>${formatCurrency(entry.totalCost)}</strong></span></td>
+        <td data-label="Status" class="status-cell"><span class="cell-value">${status}</span></td>
         <td data-label="Notizen" class="notes-cell" title="${jobNotes}">
-          ${truncatedNotes}
-          ${jobNotes.length > 0 ? `<button class="btn-edit-note" onclick="editNote('${entry.id}', '${escapeQuotes(jobNotes)}')">✏️</button>` : ''}
+          <span class="cell-value">
+            ${truncatedNotes}
+            ${jobNotes.length > 0 ? `<button class="btn-edit-note" onclick="editNote('${entry.id}', '${escapeQuotes(jobNotes)}')">✏️</button>` : ''}
+          </span>
         </td>
         <td data-label="Aktionen" class="actions">${actions}</td>
       </tr>
@@ -139,19 +141,21 @@ function renderAdminEntries(entries) {
     // Responsive Tabellen-Zeile mit data-label Attributen
     tableHtml += `
       <tr id="entry-${entry.id}">
-        <td data-label="Datum">${date}</td>
-        <td data-label="Name">${entry.name}</td>
-        <td data-label="Kennung">${entry.kennung}</td>
-        <td data-label="Job">${jobName}</td>
-        <td data-label="Material">${entry.material}</td>
-        <td data-label="Mat. Menge">${(entry.materialMenge || 0).toFixed(2)} kg</td>
-        <td data-label="Masterbatch">${entry.masterbatch}</td>
-        <td data-label="MB Menge">${(entry.masterbatchMenge || 0).toFixed(2)} kg</td>
-        <td data-label="Kosten"><strong>${formatCurrency(entry.totalCost)}</strong></td>
-        <td data-label="Status">${status}</td>
+        <td data-label="Datum"><span class="cell-value">${date}</span></td>
+        <td data-label="Name"><span class="cell-value">${entry.name}</span></td>
+        <td data-label="Kennung"><span class="cell-value">${entry.kennung}</span></td>
+        <td data-label="Job"><span class="cell-value">${jobName}</span></td>
+        <td data-label="Material"><span class="cell-value">${entry.material}</span></td>
+        <td data-label="Mat. Menge"><span class="cell-value">${(entry.materialMenge || 0).toFixed(2)} kg</span></td>
+        <td data-label="Masterbatch"><span class="cell-value">${entry.masterbatch}</span></td>
+        <td data-label="MB Menge"><span class="cell-value">${(entry.masterbatchMenge || 0).toFixed(2)} kg</span></td>
+        <td data-label="Kosten"><span class="cell-value"><strong>${formatCurrency(entry.totalCost)}</strong></span></td>
+        <td data-label="Status"><span class="cell-value">${status}</span></td>
         <td data-label="Notizen" class="notes-cell" title="${jobNotes}">
-          ${truncatedNotes}
-          ${jobNotes.length > 0 ? `<button class="btn-edit-note" onclick="editNote('${entry.id}', '${escapeQuotes(jobNotes)}')">✏️</button>` : ''}
+          <span class="cell-value">
+            ${truncatedNotes}
+            ${jobNotes.length > 0 ? `<button class="btn-edit-note" onclick="editNote('${entry.id}', '${escapeQuotes(jobNotes)}')">✏️</button>` : ''}
+          </span>
         </td>
         <td class="actions" data-label="Aktionen">${actions}</td>
       </tr>

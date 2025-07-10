@@ -1,5 +1,6 @@
 /* ===== MODAL STYLES ===== */
 /* Modal-Overlays und Popup-Fenster */
+/* Einheitliche Modal-Struktur für alle Modal-Typen */
 
 /* Confirmation Dialog Styles */
 .confirmation-overlay {
@@ -94,7 +95,9 @@
   }
 }
 
-/* Modal Container */
+/* ==================== EINHEITLICHE MODAL-STRUKTUR ==================== */
+
+/* Modal Container - Alle Modals verwenden dieselbe Struktur */
 .modal {
   display: none;
   position: fixed;
@@ -115,7 +118,7 @@
   padding: 20px;
 }
 
-/* Modal Content */
+/* Modal Content - Basis für alle Modals */
 .modal-content {
   background: white;
   border: 2px solid #000000;
@@ -130,7 +133,7 @@
   overflow: hidden;
 }
 
-/* Modal Header */
+/* Modal Header - Einheitlich für alle Modals */
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -140,6 +143,8 @@
   background: white;
   flex-shrink: 0;
   z-index: 10;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .modal-header h2,
@@ -149,16 +154,19 @@
   font-weight: 600 !important;
   color: #000000 !important;
   flex: 1;
-  padding: 0 16px 0 0 !important;
+  padding: 0 !important;
   background: none !important;
   border: none !important;
   display: block !important;
   min-width: auto !important;
   text-align: left !important;
   position: static !important;
+  width: auto !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
 }
 
-/* Modal Body */
+/* Modal Body - Einheitlich für alle Modals */
 .modal-body {
   padding: 32px;
   line-height: 1.6;
@@ -168,7 +176,7 @@
   background: white;
 }
 
-/* Modal Footer */
+/* Modal Footer - Einheitlich für alle Modals */
 .modal-footer {
   padding: 24px 32px;
   border-top: 2px solid #000000;
@@ -180,7 +188,7 @@
   flex-wrap: wrap;
 }
 
-/* Modal Actions */
+/* Modal Actions - Für Buttons innerhalb des Modal-Body */
 .modal-actions {
   display: flex;
   gap: 12px;
@@ -196,9 +204,8 @@
 
 /* ==================== MODAL CONTENT STYLES ==================== */
 
-/* Alle Headings innerhalb von Modals normalisieren */
-.modal-body h3,
-.proof-section h3 {
+/* Alle Headings innerhalb von Modal-Body normalisieren */
+.modal-body h3 {
   margin: 0 0 16px 0 !important;
   font-size: 18px !important;
   font-weight: 600 !important;
@@ -210,4 +217,344 @@
   min-width: auto !important;
   text-align: left !important;
   position: static !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+
+/* ==================== MOBILE DETAIL LAYOUT ==================== */
+
+.mobile-detail-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 14px;
+  background: transparent;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-weight: 500;
+  color: #666666;
+  min-width: 80px;
+  flex-shrink: 0;
+  text-align: left;
+}
+
+.detail-value {
+  font-weight: 600;
+  color: #000000;
+  text-align: left;
+  flex: 1;
+  margin-left: 16px;
+}
+
+.detail-name {
+  font-size: 24px;
+  font-weight: 700;
+  color: #000000;
+  text-align: left;
+  margin: 16px 0;
+  padding: 0;
+}
+
+.detail-cost-status {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin: 20px 0;
+  padding: 16px 0;
+  gap: 32px;
+}
+
+.cost-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.cost-label {
+  font-weight: 500;
+  color: #666666;
+  font-size: 14px;
+  margin-bottom: 4px;
+  text-align: left;
+}
+
+.cost-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #000000;
+  text-align: left;
+}
+
+.status-badge {
+  padding: 8px 16px;
+  border: 2px solid #000000;
+  border-radius: 0;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+.status-badge.status-paid {
+  background: #28a745;
+  color: white;
+  border-color: #28a745;
+}
+
+.status-badge.status-unpaid {
+  background: #FFEB00;
+  color: #000000;
+  border-color: #000000;
+}
+
+.notes-section {
+  margin-top: 24px;
+  width: 100%;
+}
+
+.notes-header {
+  font-weight: 600;
+  color: #000000;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.notes-content {
+  width: 100%;
+  min-height: 100px;
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 0;
+  background: transparent;
+  color: #333333;
+  font-size: 14px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* ==================== MODAL BUTTON STYLES ==================== */
+
+/* Spezielle Button-Styles für Modal-Aktionen */
+.btn-nachweis {
+  background: #FFEB00 !important;
+  color: #000000 !important;
+  border: 2px solid #000000 !important;
+}
+
+.btn-details {
+  background: white !important;
+  color: #000000 !important;
+  border: 2px solid #000000 !important;
+}
+
+.btn-edit {
+  background: #000000 !important;
+  color: white !important;
+  border: 2px solid #000000 !important;
+}
+
+/* ==================== ANIMATIONS ==================== */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { 
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to { 
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ==================== MODAL CLOSE BUTTON ==================== */
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #666666;
+  cursor: pointer;
+  padding: 8px;
+  line-height: 1;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border-radius: 0;
+  flex-shrink: 0;
+}
+
+.close-btn:hover {
+  background: #f0f0f0;
+  color: #000000;
+}
+
+.close-btn:active {
+  background: #e0e0e0;
+}
+
+/* ==================== MODAL FORMS ==================== */
+
+/* Form-Styles innerhalb von Modals */
+.modal .form-group {
+  margin-bottom: 24px;
+}
+
+.modal .form-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .modal .form-row {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
+.modal .form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #000000;
+  font-size: 14px;
+}
+
+.modal .form-input,
+.modal .form-select,
+.modal .form-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #000000;
+  border-radius: 0;
+  font-size: 14px;
+  background: white;
+  transition: border-color 0.2s ease;
+}
+
+.modal .form-input:focus,
+.modal .form-select:focus,
+.modal .form-textarea:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.modal .form-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* ==================== TABLE CONTROLS IN MODALS ==================== */
+
+.modal .table-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+  align-items: center;
+}
+
+.modal .search-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 10px 16px;
+  border: 2px solid #000000;
+  border-radius: 0;
+  font-size: 14px;
+}
+
+.modal .sort-select {
+  min-width: 200px;
+  padding: 10px 16px;
+  border: 2px solid #000000;
+  border-radius: 0;
+  font-size: 14px;
+  background: white;
+}
+
+/* ==================== RESPONSIVE MODAL ADJUSTMENTS ==================== */
+
+/* Diese Styles werden von responsive.css überschrieben, aber hier als Fallback */
+@media (max-width: 768px) {
+  .modal {
+    padding: 0;
+    align-items: stretch;
+    justify-content: stretch;
+  }
+  
+  .modal-content {
+    max-width: 100%;
+    width: 100%;
+    max-height: 100vh;
+    height: 100vh;
+    border-radius: 0;
+    border: none;
+    margin: 0;
+  }
+  
+  .modal-header {
+    padding: 20px 24px;
+  }
+  
+  .modal-header h2,
+  .modal-header h3 {
+    font-size: 18px !important;
+  }
+  
+  .modal-body {
+    padding: 20px;
+  }
+  
+  .modal-footer {
+    padding: 20px;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .modal-footer .btn {
+    width: 100%;
+    margin: 0;
+    padding: 16px 20px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-header {
+    padding: 16px 20px;
+  }
+  
+  .modal-header h2,
+  .modal-header h3 {
+    font-size: 16px !important;
+  }
+  
+  .modal-body {
+    padding: 16px 20px;
+  }
+  
+  .modal-footer {
+    padding: 16px 20px;
+  }
 }

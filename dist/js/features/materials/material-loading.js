@@ -142,12 +142,12 @@ async function loadMaterialsForManagement() {
       // Responsive Tabellen-Zeile mit data-label Attributen
       tableHtml += `
         <tr id="material-row-${doc.id}">
-          <td data-label="Name" id="material-name-${doc.id}">${material.name}</td>
-          <td data-label="Hersteller" id="material-manufacturer-${doc.id}">${material.manufacturer || 'Unbekannt'}</td>
-          <td data-label="EK Netto €/kg" id="material-netprice-${doc.id}">${window.formatCurrency(netPrice)}</td>
-          <td data-label="EK Brutto €/kg" id="material-grossprice-${doc.id}">${window.formatCurrency(grossPrice)}</td>
-          <td data-label="Gemeinkosten %" id="material-markup-${doc.id}">${markup}%</td>
-          <td data-label="VK €/kg" id="material-price-${doc.id}">${window.formatCurrency(sellingPrice)}</td>
+          <td data-label="Name" id="material-name-${doc.id}"><span class="cell-value">${material.name}</span></td>
+          <td data-label="Hersteller" id="material-manufacturer-${doc.id}"><span class="cell-value">${material.manufacturer || 'Unbekannt'}</span></td>
+          <td data-label="EK Netto €/kg" id="material-netprice-${doc.id}"><span class="cell-value">${window.formatCurrency(netPrice)}</span></td>
+          <td data-label="EK Brutto €/kg" id="material-grossprice-${doc.id}"><span class="cell-value">${window.formatCurrency(grossPrice)}</span></td>
+          <td data-label="Gemeinkosten %" id="material-markup-${doc.id}"><span class="cell-value">${markup}%</span></td>
+          <td data-label="VK €/kg" id="material-price-${doc.id}"><span class="cell-value">${window.formatCurrency(sellingPrice)}</span></td>
           <td class="actions" data-label="Aktionen">
             <button class="btn btn-secondary" onclick="editMaterial('${doc.id}')">Bearbeiten</button>
             <button class="btn btn-danger" onclick="deleteMaterial('${doc.id}')">Löschen</button>
@@ -209,12 +209,12 @@ async function loadMasterbatchesForManagement() {
       // Responsive Tabellen-Zeile mit data-label Attributen
       tableHtml += `
         <tr id="masterbatch-row-${doc.id}">
-          <td data-label="Name" id="masterbatch-name-${doc.id}">${masterbatch.name}</td>
-          <td data-label="Hersteller" id="masterbatch-manufacturer-${doc.id}">${masterbatch.manufacturer || 'Unbekannt'}</td>
-          <td data-label="EK Netto €/kg" id="masterbatch-netprice-${doc.id}">${window.formatCurrency(netPrice)}</td>
-          <td data-label="EK Brutto €/kg" id="masterbatch-grossprice-${doc.id}">${window.formatCurrency(grossPrice)}</td>
-          <td data-label="Gemeinkosten %" id="masterbatch-markup-${doc.id}">${markup}%</td>
-          <td data-label="VK €/kg" id="masterbatch-price-${doc.id}">${window.formatCurrency(sellingPrice)}</td>
+          <td data-label="Name" id="masterbatch-name-${doc.id}"><span class="cell-value">${masterbatch.name}</span></td>
+          <td data-label="Hersteller" id="masterbatch-manufacturer-${doc.id}"><span class="cell-value">${masterbatch.manufacturer || 'Unbekannt'}</span></td>
+          <td data-label="EK Netto €/kg" id="masterbatch-netprice-${doc.id}"><span class="cell-value">${window.formatCurrency(netPrice)}</span></td>
+          <td data-label="EK Brutto €/kg" id="masterbatch-grossprice-${doc.id}"><span class="cell-value">${window.formatCurrency(grossPrice)}</span></td>
+          <td data-label="Gemeinkosten %" id="masterbatch-markup-${doc.id}"><span class="cell-value">${markup}%</span></td>
+          <td data-label="VK €/kg" id="masterbatch-price-${doc.id}"><span class="cell-value">${window.formatCurrency(sellingPrice)}</span></td>
           <td class="actions" data-label="Aktionen">
             <button class="btn btn-secondary" onclick="editMasterbatch('${doc.id}')">Bearbeiten</button>
             <button class="btn btn-danger" onclick="deleteMasterbatch('${doc.id}')">Löschen</button>

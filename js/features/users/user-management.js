@@ -112,14 +112,14 @@ function renderUsersTable(users) {
     
     tableHtml += `
       <tr>
-        <td data-label="Name">${user.name}</td>
-        <td data-label="FH-Kennung">${user.kennung}</td>
-        <td data-label="E-Mail">${email}</td>
-        <td data-label="Drucke">${user.entries.length}</td>
-        <td data-label="Gesamtkosten"><strong>${window.formatCurrency(user.totalCost)}</strong></td>
-        <td data-label="Bezahlt">${window.formatCurrency(user.paidAmount)}</td>
-        <td data-label="Offen" class="${statusClass}">${window.formatCurrency(user.unpaidAmount)}</td>
-        <td data-label="Letzter Druck">${lastEntryDate}</td>
+        <td data-label="Name"><span class="cell-value">${user.name}</span></td>
+        <td data-label="FH-Kennung"><span class="cell-value">${user.kennung}</span></td>
+        <td data-label="E-Mail"><span class="cell-value">${email}</span></td>
+        <td data-label="Drucke"><span class="cell-value">${user.entries.length}</span></td>
+        <td data-label="Gesamtkosten"><span class="cell-value"><strong>${window.formatCurrency(user.totalCost)}</strong></span></td>
+        <td data-label="Bezahlt"><span class="cell-value">${window.formatCurrency(user.paidAmount)}</span></td>
+        <td data-label="Offen" class="${statusClass}"><span class="cell-value">${window.formatCurrency(user.unpaidAmount)}</span></td>
+        <td data-label="Letzter Druck"><span class="cell-value">${lastEntryDate}</span></td>
         <td data-label="Aktionen" class="actions">
           <button class="btn-small btn-secondary" onclick="editUser('${user.kennung}')">Bearbeiten</button>
           <button class="btn-small btn-tertiary" onclick="showUserDetails('${user.kennung}')">Details</button>
@@ -327,7 +327,7 @@ async function deleteUser(kennung) {
     
     await batch.commit();
     
-    alert('✅ Benutzer und alle zugehörigen Daten wurden gelöscht.');
+    alert('Benutzer und alle zugehörigen Daten wurden gelöscht.');
     loadUsersForManagement();
     window.loadAdminStats();
     window.loadAllEntries();
@@ -430,7 +430,7 @@ async function updateUser(oldKennung) {
     
     await batch.commit();
     
-    alert('✅ Benutzer erfolgreich aktualisiert!');
+    alert('Benutzer erfolgreich aktualisiert!');
     window.closeModal();
     loadUsersForManagement();
     window.loadAdminStats();
@@ -488,7 +488,7 @@ function showAddUserDialog() {
     }
     
     if (kennung && window.allUsers.find(u => u.kennung === kennung)) {
-      checkDiv.innerHTML = '<span style="color: #dc3545;">⚠️ Diese Kennung existiert bereits!</span>';
+      checkDiv.innerHTML = '<span style="color: #dc3545;">Diese Kennung existiert bereits!</span>';
     } else if (kennung) {
       checkDiv.innerHTML = '<span style="color: #28a745;">✅ Kennung verfügbar</span>';
     } else {
@@ -522,7 +522,7 @@ async function createNewUser() {
       createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
     });
     
-    alert('✅ Benutzer erfolgreich hinzugefügt!');
+    alert('Benutzer erfolgreich hinzugefügt!');
     window.closeModal();
     loadUsersForManagement();
     

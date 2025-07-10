@@ -45,67 +45,52 @@ async function viewEntryDetails(entryId) {
         <button class="close-btn" onclick="closeModal()">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="proof-details">
-          <div class="proof-section">
-            <h3>Allgemeine Informationen</h3>
-            <div class="proof-item">
-              <span class="proof-label">Name:</span>
-              <span class="proof-value">${entry.name}</span>
-            </div>
-            <div class="proof-item">
-              <span class="proof-label">FH-Kennung:</span>
-              <span class="proof-value">${entry.kennung}</span>
-            </div>
-            <div class="proof-item">
-              <span class="proof-label">Datum:</span>
-              <span class="proof-value">${date}</span>
-            </div>
-            <div class="proof-item">
-              <span class="proof-label">Uhrzeit:</span>
-              <span class="proof-value">${time}</span>
-            </div>
-            <div class="proof-item">
-              <span class="proof-label">Job-Name:</span>
-              <span class="proof-value">${jobName}</span>
-            </div>
-            <div class="proof-item">
-              <span class="proof-label">Status:</span>
-              <span class="proof-value">${status}</span>
-            </div>
+        <div class="mobile-detail-layout">
+          <div class="detail-row">
+            <span class="detail-label">Datum:</span>
+            <span class="detail-value">${date}</span>
           </div>
           
-          <div class="proof-section">
-            <h3>Material & Kosten</h3>
-            <div class="proof-item">
-              <span class="proof-label">Material:</span>
-              <span class="proof-value">${entry.material}</span>
-            </div>
-            <div class="proof-item">
-              <span class="proof-label">Material-Menge:</span>
-              <span class="proof-value">${(entry.materialMenge || 0).toFixed(2)} kg</span>
-            </div>
-            <div class="proof-item">
-              <span class="proof-label">Masterbatch:</span>
-              <span class="proof-value">${entry.masterbatch}</span>
-            </div>
-            <div class="proof-item">
-              <span class="proof-label">Masterbatch-Menge:</span>
-              <span class="proof-value">${(entry.masterbatchMenge || 0).toFixed(2)} kg</span>
-            </div>
+          <div class="detail-name">${entry.name}</div>
+          
+          <div class="detail-row">
+            <span class="detail-label">Material:</span>
+            <span class="detail-value">${entry.material}</span>
           </div>
-        </div>
-        
-        <div class="proof-total">
-          <div class="proof-total-amount">${window.formatCurrency(entry.totalCost)}</div>
-        </div>
-        
-        <div class="proof-section">
-          <h3>Notizen</h3>
-          <p style="padding: 16px; background: #f8f8f8; border: 1px solid #e0e0e0; border-radius: 0; white-space: pre-wrap;">${jobNotes}</p>
+          
+          <div class="detail-row">
+            <span class="detail-label">Menge:</span>
+            <span class="detail-value">${(entry.materialMenge || 0).toFixed(2)} kg</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">Masterbatch:</span>
+            <span class="detail-value">${entry.masterbatch}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">MB Menge:</span>
+            <span class="detail-value">${(entry.masterbatchMenge || 0).toFixed(2)} kg</span>
+          </div>
+          
+          <div class="detail-cost-status">
+            <div class="cost-section">
+              <span class="cost-label">Kosten:</span>
+              <span class="cost-value">${window.formatCurrency(entry.totalCost)}</span>
+            </div>
+            <div class="status-badge ${isPaid ? 'status-paid' : 'status-unpaid'}">${status.toUpperCase()}</div>
+          </div>
+          
+          <div class="notes-section">
+            <div class="notes-header">◆ Notizen:</div>
+            <div class="notes-content">${jobNotes}</div>
+          </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
+        <button class="btn btn-nachweis" ${!isPaid ? 'disabled' : ''} ${isPaid ? `onclick="showPaymentProof('${entry.id}')"` : ''}>Nachweis</button>
+        <button class="btn btn-details" onclick="closeModal()">Details</button>
+        <button class="btn btn-edit" onclick="editUserEntry('${entry.id}')">Bearbeiten</button>
       </div>
     `;
     
@@ -196,7 +181,7 @@ async function saveUserEntryChanges(entryId) {
       updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
     });
     
-    alert('✅ Eintrag erfolgreich aktualisiert!');
+    alert('Eintrag erfolgreich aktualisiert!');
     closeModal();
     
     // User Dashboard aktualisieren
@@ -204,7 +189,7 @@ async function saveUserEntryChanges(entryId) {
     
   } catch (error) {
     console.error('Fehler beim Aktualisieren des Eintrags:', error);
-    alert('❌ Fehler beim Speichern: ' + error.message);
+    alert('Fehler beim Speichern: ' + error.message);
   }
 }
 
@@ -337,7 +322,7 @@ async function saveEntryChanges(entryId) {
       updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
     });
     
-    alert('✅ Eintrag erfolgreich aktualisiert!');
+    alert('Eintrag erfolgreich aktualisiert!');
     closeModal();
     
     // Admin Dashboard aktualisieren
@@ -346,7 +331,7 @@ async function saveEntryChanges(entryId) {
     
   } catch (error) {
     console.error('Fehler beim Aktualisieren des Eintrags:', error);
-    alert('❌ Fehler beim Speichern: ' + error.message);
+    alert('Fehler beim Speichern: ' + error.message);
   }
 }
 

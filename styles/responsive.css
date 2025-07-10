@@ -79,53 +79,65 @@
     border: 2px solid #000000;
     border-radius: 0;
     padding: 16px;
-    margin: 0 0 12px 0;
+    margin: 0 0 16px 0;
     width: 100%;
     box-sizing: border-box;
     transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
   
   .data-table tr:hover {
     background: #f8f8f8;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   }
 
   .data-table td {
-    display: block;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
     border: none;
-    padding: 6px 0;
+    padding: 8px 0;
     text-align: left;
     position: relative;
-    padding-left: 80px;
     min-height: 20px;
     width: 100%;
     box-sizing: border-box;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
+    border-bottom: 1px solid #e0e0e0;
     font-size: 14px;
     line-height: 1.4;
   }
   
+  .data-table td:last-child {
+    border-bottom: none;
+  }
+  
   .data-table td:before {
-    content: attr(data-label) ": ";
-    position: absolute;
-    left: 0;
-    top: 6px;
+    content: attr(data-label) ":";
+    font-weight: 500;
+    color: #666666;
+    font-size: 13px;
+    text-transform: none;
+    letter-spacing: 0;
+    flex-shrink: 0;
+    margin-right: 16px;
+    min-width: 80px;
+  }
+  
+  .data-table td .cell-value {
     font-weight: 600;
     color: #000000;
-    width: 75px;
-    font-size: 11px;
-    text-transform: uppercase;
-    line-height: 1.2;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    letter-spacing: 0.5px;
+    text-align: right;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    flex: 1;
   }
 
   .data-table td[data-label="Aktionen"] {
-    padding-left: 0;
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid #ccc;
+    display: block;
+    padding: 16px 0 0 0;
+    margin-top: 16px;
+    border-top: 1px solid #000000;
+    background: transparent;
   }
   
   .data-table td[data-label="Aktionen"]:before {
@@ -135,7 +147,7 @@
   .data-table .actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 8px;
     justify-content: flex-start;
   }
   
@@ -145,8 +157,8 @@
     align-items: center;
     justify-content: center;
     margin: 0;
-    padding: 8px 12px;
-    font-size: 11px;
+    padding: 10px 14px;
+    font-size: 12px;
     min-width: auto;
     flex: 1;
     white-space: nowrap;
@@ -154,6 +166,7 @@
     overflow: hidden;
     border-radius: 0;
     border-width: 2px;
+    font-weight: 500;
   }
   
   /* Status Field spezifisch */
@@ -186,7 +199,7 @@
   
   .dashboard-header {
     flex-direction: column;
-    gap: 12px;
+    gap: 20px;
     text-align: center;
     margin-bottom: 20px;
     padding: 12px;
@@ -199,7 +212,7 @@
   .user-info {
     position: static;
     text-align: center;
-    margin-top: 8px;
+    margin-top: 0;
     transform: none;
     right: auto;
     top: auto;
@@ -207,7 +220,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
   }
 
   .login-container {
@@ -564,6 +577,32 @@
 
 /* Desktop Modal Styles - Wichtig dass diese nach den Mobile-Styles kommen */
 @media (min-width: 769px) {
+  .modal-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 24px 32px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  
+  .modal-header h2,
+  .modal-header h3 {
+    margin: 0 !important;
+    font-size: 24px !important;
+    font-weight: 600 !important;
+    color: #000000 !important;
+    flex: 1 !important;
+    padding: 0 !important;
+    background: none !important;
+    border: none !important;
+    display: block !important;
+    min-width: auto !important;
+    text-align: left !important;
+    position: static !important;
+    width: auto !important;
+  }
+  
   .modal-footer {
     flex-direction: row !important;
     justify-content: flex-end !important;
@@ -575,10 +614,6 @@
     width: auto !important;
     min-width: 100px !important;
     padding: 12px 24px !important;
-  }
-  
-  .modal-header {
-    padding: 24px 32px !important;
   }
   
   .modal-body {
@@ -593,6 +628,8 @@
     border-radius: 0 !important;
     border: 2px solid #000000 !important;
     margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 }
 
