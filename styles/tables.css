@@ -73,6 +73,35 @@
   white-space: normal;
 }
 
+/* Move status button after the date column */
+.data-table td[data-label="Status"] {
+  position: relative;
+  order: 2; /* Adjust order to place after date */
+  padding: 8px 12px;
+  text-align: center;
+}
+
+.data-table td[data-label="Datum"] {
+  order: 1; /* Ensure date column comes before status */
+}
+
+/* Style status button consistently */
+.data-table .status-button {
+  background: #FFEB00;
+  color: #000000;
+  border: 2px solid #000000;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.data-table .status-button:hover {
+  background: #e6d200;
+}
+
 /* Desktop Table Column Widths */
 @media (min-width: 769px) {
   .data-table th:nth-child(1),
@@ -316,6 +345,16 @@
     font-weight: 600;
   }
   
+  /* Update notiz-edit icon to a simple black icon */
+.notiz-edit-icon {
+  background-image: url('/assets/black-icon.svg'); /* Replace with the path to the black icon */
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
   /* Details in kompakter Form */
   .data-table td[data-label="Datum"],
   .data-table td[data-label="Material"],

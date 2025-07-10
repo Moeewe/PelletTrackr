@@ -2221,17 +2221,31 @@ function sortUsersBy(field) {
 // Benutzer suchen
 function searchUsers() {
   if (!window.allUsers) return;
-  
+
   const searchTerm = document.getElementById('userManagerSearchInput').value.toLowerCase();
-  
+
   const filteredUsers = window.allUsers.filter(user => {
     const email = user.email || `${user.kennung}@fh-muenster.de`;
     return user.name.toLowerCase().includes(searchTerm) ||
            user.kennung.toLowerCase().includes(searchTerm) ||
            email.toLowerCase().includes(searchTerm);
   });
-  
+
   renderUsersTable(filteredUsers);
+}
+
+// Benutzer suchen
+function searchAdmins() {
+  if (!window.allAdmins) return;
+
+  const searchTerm = document.getElementById('adminManagerSearchInput').value.toLowerCase();
+
+  const filteredAdmins = window.allAdmins.filter(admin => {
+    return admin.name.toLowerCase().includes(searchTerm) ||
+           admin.kennung.toLowerCase().includes(searchTerm);
+  });
+
+  renderAdminsTable(filteredAdmins);
 }
 
 // Benutzer-Details anzeigen
@@ -2608,7 +2622,7 @@ function sortUserEntries(column) {
   allUserEntries.sort((a, b) => {
     let valueA, valueB;
     
-    switch (column) {
+    switch(column) {
       case 'date':
         valueA = new Date(a.date);
         valueB = new Date(b.date);
