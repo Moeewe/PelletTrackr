@@ -133,7 +133,7 @@
   overflow: hidden;
 }
 
-/* Modal Header - Einheitlich für alle Modals */
+/* Modal Header - Einheitlich für alle Modals - IMMER OBEN */
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -145,6 +145,7 @@
   z-index: 10;
   width: 100%;
   box-sizing: border-box;
+  order: 1; /* Explizite Reihenfolge - Header ist immer oben */
 }
 
 .modal-header h2,
@@ -166,7 +167,7 @@
   letter-spacing: normal !important;
 }
 
-/* Modal Body - Einheitlich für alle Modals */
+/* Modal Body - Einheitlich für alle Modals - MITTE */
 .modal-body {
   padding: 32px;
   line-height: 1.6;
@@ -174,9 +175,10 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   background: white;
+  order: 2; /* Explizite Reihenfolge - Body ist in der Mitte */
 }
 
-/* Modal Footer - Einheitlich für alle Modals */
+/* Modal Footer - Einheitlich für alle Modals - IMMER UNTEN */
 .modal-footer {
   padding: 24px 32px;
   border-top: 2px solid #000000;
@@ -186,6 +188,7 @@
   background: white;
   flex-shrink: 0;
   flex-wrap: wrap;
+  order: 3; /* Explizite Reihenfolge - Footer ist immer unten */
 }
 
 /* Modal Actions - Für Buttons innerhalb des Modal-Body */
@@ -511,10 +514,14 @@
     border-radius: 0;
     border: none;
     margin: 0;
+    display: flex !important;
+    flex-direction: column !important;
   }
   
   .modal-header {
     padding: 20px 24px;
+    order: 1 !important; /* Header immer oben */
+    flex-shrink: 0 !important;
   }
   
   .modal-header h2,
@@ -524,12 +531,16 @@
   
   .modal-body {
     padding: 20px;
+    order: 2 !important; /* Body in der Mitte */
+    flex: 1 !important;
   }
   
   .modal-footer {
     padding: 20px;
     flex-direction: column;
     gap: 12px;
+    order: 3 !important; /* Footer immer unten */
+    flex-shrink: 0 !important;
   }
   
   .modal-footer .btn {
@@ -543,6 +554,7 @@
 @media (max-width: 480px) {
   .modal-header {
     padding: 16px 20px;
+    order: 1 !important; /* Header immer oben */
   }
   
   .modal-header h2,
@@ -552,9 +564,31 @@
   
   .modal-body {
     padding: 16px 20px;
+    order: 2 !important; /* Body in der Mitte */
   }
   
   .modal-footer {
     padding: 16px 20px;
+    order: 3 !important; /* Footer immer unten */
   }
+}
+
+/* ==================== MODAL STRUCTURE ENFORCEMENT ==================== */
+
+/* Stellt sicher, dass Modal-Elemente immer in der richtigen Reihenfolge sind */
+.modal-content > * {
+  flex-shrink: 0; /* Verhindert Schrumpfen von Header und Footer */
+}
+
+.modal-content > .modal-header {
+  order: 1 !important;
+}
+
+.modal-content > .modal-body {
+  order: 2 !important;
+  flex: 1 !important; /* Body nimmt verfügbaren Platz ein */
+}
+
+.modal-content > .modal-footer {
+  order: 3 !important;
 }
