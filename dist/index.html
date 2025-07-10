@@ -10,18 +10,6 @@
     <link rel="alternate icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%23FFEB00'/><rect width='16' height='16' fill='none' stroke='%23000' stroke-width='1'/><rect x='2' y='2' width='12' height='1' fill='%23000'/><rect x='2' y='2' width='1' height='10' fill='%23000'/><rect x='13' y='2' width='1' height='10' fill='%23000'/><rect x='1' y='12' width='14' height='2' fill='%23000'/><rect x='5' y='9' width='6' height='3' fill='%23333'/><text x='8' y='8' text-anchor='middle' font-family='Arial' font-size='5' font-weight='bold' fill='%23000'>P</text></svg>">
     
     <link rel="stylesheet" href="styles.css">
-    
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    
-    <!-- Core Modules -->
-    <script src="js/core/firebase-config.js"></script>
-    <script src="js/core/globals.js"></script>
-    <script src="js/core/app-init.js"></script>
-    <script src="js/core/utils.js"></script>
-    <script src="js/core/auth.js"></script>
-    <script src="js/core/navigation.js"></script>
 </head>
 <body>
     <!-- Login Screen -->
@@ -33,7 +21,7 @@
                 </h1>
             </div>
             
-            <div class="login-form">
+            <form class="login-form" id="loginForm">
                 <div class="form-group">
                     <input type="text" id="loginName" class="form-input" placeholder="Vorname Nachname">
                 </div>
@@ -47,15 +35,14 @@
                 </div>
                 
                 <div class="button-group">
-                    <button id="loginBtn" class="btn btn-primary" onclick="loginAsUser()">
+                    <button type="button" id="loginBtn" class="btn btn-primary" onclick="loginAsUser()">
                         Login
                     </button>
-                    <button id="adminBtn" class="btn btn-secondary" onclick="showAdminLogin()">
+                    <button type="button" id="adminBtn" class="btn btn-secondary" onclick="showAdminLogin()">
                         Als Admin anmelden
                     </button>
                 </div>
-                
-            </div>
+            </form>
         </div>
     </div>
 
@@ -371,6 +358,7 @@
     <script src="ux-helpers.js"></script>
     
     <!-- Core Modules -->
+    <script src="js/core/firebase-config.js"></script>
     <script src="js/core/globals.js"></script>
     <script src="js/core/utils.js"></script>
     <script src="js/core/app-init.js"></script>
