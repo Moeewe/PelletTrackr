@@ -592,3 +592,36 @@
 .modal-content > .modal-footer {
   order: 3 !important;
 }
+
+/* ==================== MODAL Z-INDEX MANAGEMENT ==================== */
+
+/* Verhindere Modal-Überlagerungen */
+.modal {
+  z-index: 1000;
+}
+
+.modal.active {
+  z-index: 1001;
+}
+
+/* Wenn ein zweites Modal geöffnet wird, sollte das erste geschlossen werden */
+.modal.active ~ .modal.active {
+  display: none !important;
+}
+
+/* Manager-Modals haben niedrigere z-index */
+#materialManager.modal.active,
+#masterbatchManager.modal.active,
+#userManager.modal.active {
+  z-index: 1000;
+}
+
+/* Generic Modal (für Edit-Funktionen) hat höhere z-index */
+#modal.modal.active {
+  z-index: 1002;
+}
+
+/* Payment Proof Modal hat höchste z-index */
+#paymentProofModal.modal.active {
+  z-index: 1003;
+}

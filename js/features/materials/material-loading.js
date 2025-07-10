@@ -357,6 +357,9 @@ async function deleteMasterbatch(masterbatchId) {
 
 async function editMaterial(materialId) {
   try {
+    // Erst das Material-Manager-Modal schließen
+    document.getElementById('materialManager').classList.remove('active');
+    
     const doc = await window.db.collection('materials').doc(materialId).get();
     if (!doc.exists) {
       alert('Material nicht gefunden!');
@@ -368,7 +371,7 @@ async function editMaterial(materialId) {
     const modalHtml = `
       <div class="modal-header">
         <h3>Material bearbeiten</h3>
-        <button class="close-btn" onclick="closeModal()">&times;</button>
+        <button class="close-btn" onclick="closeEditMaterialModal()">&times;</button>
       </div>
       <div class="modal-body">
         <div class="form-group">
@@ -393,10 +396,10 @@ async function editMaterial(materialId) {
             <input type="number" id="editMaterialMarkup" class="form-input" value="${material.markup || 30}" step="0.01">
           </div>
         </div>
-        <div class="modal-actions">
-          <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
-          <button class="btn btn-primary" onclick="updateMaterial('${materialId}')">Speichern</button>
-        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeEditMaterialModal()">Abbrechen</button>
+        <button class="btn btn-primary" onclick="updateMaterial('${materialId}')">Speichern</button>
       </div>
     `;
     
@@ -410,6 +413,9 @@ async function editMaterial(materialId) {
 
 async function editMasterbatch(masterbatchId) {
   try {
+    // Erst das Masterbatch-Manager-Modal schließen
+    document.getElementById('masterbatchManager').classList.remove('active');
+    
     const doc = await window.db.collection('masterbatches').doc(masterbatchId).get();
     if (!doc.exists) {
       alert('Masterbatch nicht gefunden!');
@@ -421,7 +427,7 @@ async function editMasterbatch(masterbatchId) {
     const modalHtml = `
       <div class="modal-header">
         <h3>Masterbatch bearbeiten</h3>
-        <button class="close-btn" onclick="closeModal()">&times;</button>
+        <button class="close-btn" onclick="closeEditMasterbatchModal()">&times;</button>
       </div>
       <div class="modal-body">
         <div class="form-group">
@@ -446,19 +452,40 @@ async function editMasterbatch(masterbatchId) {
             <input type="number" id="editMasterbatchMarkup" class="form-input" value="${masterbatch.markup || 30}" step="0.01">
           </div>
         </div>
-        <div class="modal-actions">
-          <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
-          <button class="btn btn-primary" onclick="updateMasterbatch('${masterbatchId}')">Speichern</button>
-        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeEditMasterbatchModal()">Abbrechen</button>
+        <button class="btn btn-primary" onclick="updateMasterbatch('${masterbatchId}')">Speichern</button>
       </div>
     `;
     
     window.showModal(modalHtml);
     
   } catch (error) {
-    console.error('Fehler beim Laden des Masterbatch:', error);
-    alert('Fehler beim Laden des Masterbatch: ' + error.message);
+    console.error('Fehler beim Laden des Masterbatches:', error);
+    alert('Fehler beim Laden des Masterbatches: ' + error.message);
   }
+}
+
+// ==================== SPECIAL CLOSE FUNCTIONS ====================
+
+// Close-Funktionen für Edit-Modals, die zurück zum Manager-Modal führen
+function closeEditMaterialModal() {
+  window.closeModal();
+  // Nach dem Schließen des Edit-Modals, Material-Manager wieder öffnen
+  setTimeout(() => {
+    document.getElementById('materialManager').classList.add('active');
+    loadMaterialsForManagement();
+  }, 100);
+}
+
+function closeEditMasterbatchModal() {
+  window.closeModal();
+  // Nach dem Schließen des Edit-Modals, Masterbatch-Manager wieder öffnen
+  setTimeout(() => {
+    document.getElementById('masterbatchManager').classList.add('active');
+    loadMasterbatchesForManagement();
+  }, 100);
 }
 
 // ==================== UPDATE FUNCTIONS ====================
@@ -491,8 +518,7 @@ async function updateMaterial(materialId) {
     });
     
     alert('Material erfolgreich aktualisiert!');
-    window.closeModal();
-    loadMaterialsForManagement();
+    closeEditMaterialModal(); // Verwende die spezielle Close-Funktion
     loadMaterials(); // Dropdown aktualisieren
     
   } catch (error) {
@@ -529,8 +555,7 @@ async function updateMasterbatch(masterbatchId) {
     });
     
     alert('Masterbatch erfolgreich aktualisiert!');
-    window.closeModal();
-    loadMasterbatchesForManagement();
+    closeEditMasterbatchModal(); // Verwende die spezielle Close-Funktion
     loadMasterbatches(); // Dropdown aktualisieren
     
   } catch (error) {
@@ -640,6 +665,16 @@ function sortMasterbatches(column) {
   masterbatchTable.innerHTML = '';
   rows.forEach(row => masterbatchTable.appendChild(row));
 }
+
+// ==================== GLOBAL FUNCTION EXPOSURE ====================
+
+// Expose functions globally for event handlers
+window.editMaterial = editMaterial;
+window.editMasterbatch = editMasterbatch;
+window.updateMaterial = updateMaterial;
+window.updateMasterbatch = updateMasterbatch;
+window.closeEditMaterialModal = closeEditMaterialModal;
+window.closeEditMasterbatchModal = closeEditMasterbatchModal;
 
 // Global exposure
 window.sortMaterials = sortMaterials;

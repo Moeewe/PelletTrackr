@@ -5,6 +5,15 @@
 // Alle wichtigen Funktionen sind bereits in den einzelnen Modulen definiert
 // Dieser Koordinator stellt sicher, dass alles richtig initialisiert wird
 
+// Expose additional modal close functions
+window.closeEditMaterialModal = window.closeEditMaterialModal || function() {
+  console.warn("closeEditMaterialModal nicht verfügbar");
+};
+
+window.closeEditMasterbatchModal = window.closeEditMasterbatchModal || function() {
+  console.warn("closeEditMasterbatchModal nicht verfügbar");
+};
+
 // ==================== APP INITIALIZATION ====================
 
 // App automatisch initialisieren wenn DOM geladen ist
