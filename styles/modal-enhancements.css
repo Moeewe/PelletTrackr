@@ -11,7 +11,6 @@
 .modal .form-select:focus,
 .modal .form-textarea:focus {
   border-color: #007bff !important;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1) !important;
 }
 
 /* Loading State für Modal-Buttons */
@@ -40,23 +39,11 @@
   100% { transform: translateY(-50%) rotate(360deg); }
 }
 
-/* Bessere Hover-States für Modal-Buttons */
-.modal .btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.modal .btn:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-}
-
 /* Verbesserte Form-Validierung */
 .modal .form-input:invalid,
 .modal .form-select:invalid,
 .modal .form-textarea:invalid {
   border-color: #dc3545;
-  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
 }
 
 .modal .form-input:valid,

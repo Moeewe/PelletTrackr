@@ -469,7 +469,7 @@
   border-radius: 0;
   font-size: 15px;
   background: white;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease;
   color: #000;
 }
 
@@ -478,7 +478,6 @@
 .modal .form-textarea:focus {
   outline: none;
   border-color: #007bff;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
 .modal .form-textarea {
@@ -519,7 +518,6 @@
 .modal .search-input:focus {
   outline: none;
   border-color: #007bff;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
 .modal .sort-select {
@@ -534,7 +532,6 @@
 .modal .sort-select:focus {
   outline: none;
   border-color: #007bff;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
 /* ==================== RESPONSIVE MODAL ADJUSTMENTS ==================== */

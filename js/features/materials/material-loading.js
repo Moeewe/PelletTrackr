@@ -372,38 +372,53 @@ async function editMaterial(materialId) {
     
     const material = doc.data();
     
+    // Berechnungen für die Anzeige
+    const netPrice = material.netPrice || material.price || 0;
+    const taxRate = material.taxRate || 19;
+    const markup = material.markup || 30;
+    const grossPrice = netPrice * (1 + taxRate / 100);
+    const sellingPrice = grossPrice * (1 + markup / 100);
+    
     const modalHtml = `
       <div class="modal-header">
-        <h3>Material bearbeiten</h3>
+        <h2>${material.name}</h2>
         <button class="close-btn" onclick="closeEditMaterialModal()">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="form-group">
-          <label class="form-label">Material Name</label>
-          <input type="text" id="editMaterialName" class="form-input" value="${material.name}">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Hersteller</label>
-          <input type="text" id="editMaterialManufacturer" class="form-input" value="${material.manufacturer || ''}">
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">EK Netto €/kg</label>
-            <input type="number" id="editMaterialNetPrice" class="form-input" value="${material.netPrice || material.price || 0}" step="0.01">
+        <div class="card">
+          <div class="card-body">
+            <div class="detail-row">
+              <span class="detail-label">HERSTELLER</span>
+              <span class="detail-value">${material.manufacturer || 'Unbekannt'}</span>
+            </div>
+            
+            <div class="detail-row">
+              <span class="detail-label">EK NETTO €/KG</span>
+              <span class="detail-value">${window.formatCurrency(netPrice)}</span>
+            </div>
+            
+            <div class="detail-row">
+              <span class="detail-label">EK BRUTTO €/KG</span>
+              <span class="detail-value">${window.formatCurrency(grossPrice)}</span>
+            </div>
+            
+            <div class="detail-row">
+              <span class="detail-label">GEMEINKOSTEN %</span>
+              <span class="detail-value">${markup}%</span>
+            </div>
+            
+            <div class="detail-row highlight-total">
+              <span class="detail-label">VK €/KG:</span>
+              <span class="detail-value">${window.formatCurrency(sellingPrice)}</span>
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Mehrwertsteuer %</label>
-            <input type="number" id="editMaterialTaxRate" class="form-input" value="${material.taxRate || 19}" step="0.01">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Gemeinkosten % (Strom, Versand, etc.)</label>
-            <input type="number" id="editMaterialMarkup" class="form-input" value="${material.markup || 30}" step="0.01">
+          <div class="card-footer">
+            <div class="button-group">
+              ${ButtonFactory.primary('BEARBEITEN', `showEditMaterialForm('${materialId}')`)}
+              ${ButtonFactory.danger('LÖSCHEN', `deleteMaterial('${materialId}')`)}
+            </div>
           </div>
         </div>
-      </div>
-      <div class="modal-footer">
-        ${ButtonFactory.cancelMaterialModal()}
-        ${ButtonFactory.saveChanges(`updateMaterial('${materialId}')`)}
       </div>
     `;
     
@@ -428,38 +443,53 @@ async function editMasterbatch(masterbatchId) {
     
     const masterbatch = doc.data();
     
+    // Berechnungen für die Anzeige
+    const netPrice = masterbatch.netPrice || masterbatch.price || 0;
+    const taxRate = masterbatch.taxRate || 19;
+    const markup = masterbatch.markup || 30;
+    const grossPrice = netPrice * (1 + taxRate / 100);
+    const sellingPrice = grossPrice * (1 + markup / 100);
+    
     const modalHtml = `
       <div class="modal-header">
-        <h3>Masterbatch bearbeiten</h3>
+        <h2>${masterbatch.name}</h2>
         <button class="close-btn" onclick="closeEditMasterbatchModal()">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="form-group">
-          <label class="form-label">Masterbatch Name</label>
-          <input type="text" id="editMasterbatchName" class="form-input" value="${masterbatch.name}">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Hersteller</label>
-          <input type="text" id="editMasterbatchManufacturer" class="form-input" value="${masterbatch.manufacturer || ''}">
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">EK Netto €/kg</label>
-            <input type="number" id="editMasterbatchNetPrice" class="form-input" value="${masterbatch.netPrice || masterbatch.price || 0}" step="0.01">
+        <div class="card">
+          <div class="card-body">
+            <div class="detail-row">
+              <span class="detail-label">HERSTELLER</span>
+              <span class="detail-value">${masterbatch.manufacturer || 'Unbekannt'}</span>
+            </div>
+            
+            <div class="detail-row">
+              <span class="detail-label">EK NETTO €/KG</span>
+              <span class="detail-value">${window.formatCurrency(netPrice)}</span>
+            </div>
+            
+            <div class="detail-row">
+              <span class="detail-label">EK BRUTTO €/KG</span>
+              <span class="detail-value">${window.formatCurrency(grossPrice)}</span>
+            </div>
+            
+            <div class="detail-row">
+              <span class="detail-label">GEMEINKOSTEN %</span>
+              <span class="detail-value">${markup}%</span>
+            </div>
+            
+            <div class="detail-row highlight-total">
+              <span class="detail-label">VK €/KG:</span>
+              <span class="detail-value">${window.formatCurrency(sellingPrice)}</span>
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Mehrwertsteuer %</label>
-            <input type="number" id="editMasterbatchTaxRate" class="form-input" value="${masterbatch.taxRate || 19}" step="0.01">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Gemeinkosten % (Strom, Versand, etc.)</label>
-            <input type="number" id="editMasterbatchMarkup" class="form-input" value="${masterbatch.markup || 30}" step="0.01">
+          <div class="card-footer">
+            <div class="button-group">
+              ${ButtonFactory.primary('BEARBEITEN', `showEditMasterbatchForm('${masterbatchId}')`)}
+              ${ButtonFactory.danger('LÖSCHEN', `deleteMasterbatch('${masterbatchId}')`)}
+            </div>
           </div>
         </div>
-      </div>
-      <div class="modal-footer">
-        ${ButtonFactory.cancelMasterbatchModal()}
-        ${ButtonFactory.saveChanges(`updateMasterbatch('${masterbatchId}')`)}
       </div>
     `;
     
@@ -468,6 +498,126 @@ async function editMasterbatch(masterbatchId) {
   } catch (error) {
     console.error('Fehler beim Laden des Masterbatches:', error);
     alert('Fehler beim Laden des Masterbatches: ' + error.message);
+  }
+}
+
+// Neue Funktion für das Masterbatch-Bearbeitungsformular erstellen
+async function showEditMasterbatchForm(masterbatchId) {
+  try {
+    const doc = await window.db.collection('masterbatches').doc(masterbatchId).get();
+    if (!doc.exists) {
+      alert('Masterbatch nicht gefunden!');
+      return;
+    }
+    
+    const masterbatch = doc.data();
+    
+    const modalHtml = `
+      <div class="modal-header">
+        <h2>${masterbatch.name} - Bearbeiten</h2>
+        <button class="close-btn" onclick="closeEditMasterbatchModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="card">
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label">Masterbatch Name</label>
+              <input type="text" id="editMasterbatchName" class="form-input" value="${masterbatch.name}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Hersteller</label>
+              <input type="text" id="editMasterbatchManufacturer" class="form-input" value="${masterbatch.manufacturer || ''}">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">EK Netto €/kg</label>
+                <input type="number" id="editMasterbatchNetPrice" class="form-input" value="${masterbatch.netPrice || masterbatch.price || 0}" step="0.01">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Mehrwertsteuer %</label>
+                <input type="number" id="editMasterbatchTaxRate" class="form-input" value="${masterbatch.taxRate || 19}" step="0.01">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Gemeinkosten % (Strom, Versand, etc.)</label>
+                <input type="number" id="editMasterbatchMarkup" class="form-input" value="${masterbatch.markup || 30}" step="0.01">
+              </div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <div class="button-group">
+              ${ButtonFactory.saveChanges(`updateMasterbatch('${masterbatchId}')`)}
+              ${ButtonFactory.cancelMasterbatchModal()}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    showModalWithContent(modalHtml);
+    
+  } catch (error) {
+    console.error('Fehler beim Laden des Masterbatch-Formulars:', error);
+    alert('Fehler beim Laden des Formulars: ' + error.message);
+  }
+}
+
+// Neue Funktion für das Material-Bearbeitungsformular erstellen
+async function showEditMaterialForm(materialId) {
+  try {
+    const doc = await window.db.collection('materials').doc(materialId).get();
+    if (!doc.exists) {
+      alert('Material nicht gefunden!');
+      return;
+    }
+    
+    const material = doc.data();
+    
+    const modalHtml = `
+      <div class="modal-header">
+        <h2>${material.name} - Bearbeiten</h2>
+        <button class="close-btn" onclick="closeEditMaterialModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="card">
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label">Material Name</label>
+              <input type="text" id="editMaterialName" class="form-input" value="${material.name}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Hersteller</label>
+              <input type="text" id="editMaterialManufacturer" class="form-input" value="${material.manufacturer || ''}">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">EK Netto €/kg</label>
+                <input type="number" id="editMaterialNetPrice" class="form-input" value="${material.netPrice || material.price || 0}" step="0.01">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Mehrwertsteuer %</label>
+                <input type="number" id="editMaterialTaxRate" class="form-input" value="${material.taxRate || 19}" step="0.01">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Gemeinkosten % (Strom, Versand, etc.)</label>
+                <input type="number" id="editMaterialMarkup" class="form-input" value="${material.markup || 30}" step="0.01">
+              </div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <div class="button-group">
+              ${ButtonFactory.saveChanges(`updateMaterial('${materialId}')`)}
+              ${ButtonFactory.cancelMaterialModal()}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    showModalWithContent(modalHtml);
+    
+  } catch (error) {
+    console.error('Fehler beim Laden des Material-Formulars:', error);
+    alert('Fehler beim Laden des Formulars: ' + error.message);
   }
 }
 
@@ -683,6 +833,10 @@ window.closeEditMasterbatchModal = closeEditMasterbatchModal;
 // Global exposure
 window.sortMaterials = sortMaterials;
 window.sortMasterbatches = sortMasterbatches;
+
+// Neue Formular-Funktionen hinzufügen
+window.showEditMaterialForm = showEditMaterialForm;
+window.showEditMasterbatchForm = showEditMasterbatchForm;
 
 // ==================== MATERIAL LOADING MODULE ====================
 
