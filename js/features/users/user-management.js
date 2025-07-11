@@ -1,174 +1,4 @@
 // ==================== USER MANAGEMENT SYSTEM ====================
-// User management with lazy loading support
-
-// Global user management state
-let allUsers = [];
-
-// Lazy loading instance
-let usersLoader = null;
-
-/**
- * Initialize user management with lazy loading
- */
-function initializeUserManagement() {
-    usersLoader = new LazyLoader('usersTable', {
-        mobilePageSize: 5,
-        desktopPageSize: 20,
-        renderFunction: createUserElement,
-        emptyStateMessage: 'Keine Benutzer gefunden.',
-        searchFunction: createUserSearchFunction()
-    });
-}
-
-/**
- * Create user element (responsive)
- */
-function createUserElement(user) {
-    const container = document.createElement('div');
-    
-    if (window.innerWidth <= 768) {
-        // Mobile card layout
-        container.innerHTML = createUserCard(user);
-        container.className = 'lazy-item';
-    } else {
-        // Desktop table row
-        container.innerHTML = createUserRow(user);
-        container.className = 'lazy-item';
-        
-        // Ensure table structure exists
-        ensureUserTableStructure();
-    }
-    
-    return container;
-}
-
-/**
- * Ensure user table structure exists
- */
-function ensureUserTableStructure() {
-    const container = document.getElementById('usersTable');
-    if (!container.querySelector('.data-table')) {
-        const tableHtml = `
-            <div class="data-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th onclick="sortUsersBy('name')">Name</th>
-                            <th onclick="sortUsersBy('kennung')">FH-Kennung</th>
-                            <th onclick="sortUsersBy('email')">E-Mail</th>
-                            <th onclick="sortUsersBy('entries')">Drucke</th>
-                            <th onclick="sortUsersBy('totalCost')">Gesamtkosten</th>
-                            <th onclick="sortUsersBy('paidAmount')">Bezahlt</th>
-                            <th onclick="sortUsersBy('unpaidAmount')">Offen</th>
-                            <th onclick="sortUsersBy('status')">Status</th>
-                            <th onclick="sortUsersBy('lastEntry')">Letzter Druck</th>
-                            <th>Aktionen</th>
-                        </tr>
-                    </thead>
-                    <tbody class="lazy-items-container"></tbody>
-                </table>
-            </div>
-        `;
-        container.insertAdjacentHTML('afterbegin', tableHtml);
-    }
-}
-
-/**
- * Create user card for mobile
- */
-function createUserCard(user) {
-    const lastEntryDate = user.lastEntry.toLocaleDateString('de-DE');
-    const email = user.email || `${user.kennung}@fh-muenster.de`;
-    
-    const statusBadgeClass = user.unpaidAmount > 0 ? 'status-unpaid' : 'status-paid';
-    const statusBadgeText = user.unpaidAmount > 0 ? 'OFFEN' : 'BEZAHLT';
-    
-    return `
-        <div class="entry-card">
-            <div class="entry-card-header">
-                <h3 class="entry-job-title">${user.name}</h3>
-                <span class="entry-status-badge ${statusBadgeClass}">${statusBadgeText}</span>
-            </div>
-            
-            <div class="entry-card-body">
-                <div class="entry-detail-row">
-                    <span class="entry-detail-label">FH-Kennung</span>
-                    <span class="entry-detail-value">${user.kennung}</span>
-                </div>
-                
-                <div class="entry-detail-row">
-                    <span class="entry-detail-label">E-Mail</span>
-                    <span class="entry-detail-value">${email}</span>
-                </div>
-                
-                <div class="entry-detail-row">
-                    <span class="entry-detail-label">Anzahl Drucke</span>
-                    <span class="entry-detail-value">${user.entries.length}</span>
-                </div>
-                
-                <div class="entry-detail-row">
-                    <span class="entry-detail-label">Gesamtkosten</span>
-                    <span class="entry-detail-value cost-value">${window.formatCurrency(user.totalCost)}</span>
-                </div>
-                
-                <div class="entry-detail-row">
-                    <span class="entry-detail-label">Bezahlt</span>
-                    <span class="entry-detail-value">${window.formatCurrency(user.paidAmount)}</span>
-                </div>
-                
-                <div class="entry-detail-row">
-                    <span class="entry-detail-label">Offen</span>
-                    <span class="entry-detail-value">${window.formatCurrency(user.unpaidAmount)}</span>
-                </div>
-                
-                <div class="entry-detail-row">
-                    <span class="entry-detail-label">Letzter Druck</span>
-                    <span class="entry-detail-value">${lastEntryDate}</span>
-                </div>
-            </div>
-            
-            <div class="entry-card-footer">
-                ${ButtonFactory.editUser(user.kennung)}
-                ${user.unpaidAmount > 0 ? ButtonFactory.sendReminder(user.kennung) : ''}
-                ${ButtonFactory.deleteUser(user.kennung)}
-            </div>
-        </div>
-    `;
-}
-
-/**
- * Create user table row for desktop
- */
-function createUserRow(user) {
-    const lastEntryDate = user.lastEntry.toLocaleDateString('de-DE');
-    const email = user.email || `${user.kennung}@fh-muenster.de`;
-    
-    const statusBadge = user.unpaidAmount > 0 ? 
-        '<span class="entry-status-badge status-unpaid">OFFEN</span>' : 
-        '<span class="entry-status-badge status-paid">BEZAHLT</span>';
-    
-    return `
-        <tr>
-            <td><span class="cell-value">${user.name}</span></td>
-            <td><span class="cell-value">${user.kennung}</span></td>
-            <td><span class="cell-value">${email}</span></td>
-            <td><span class="cell-value">${user.entries.length}</span></td>
-            <td><span class="cell-value"><strong>${window.formatCurrency(user.totalCost)}</strong></span></td>
-            <td><span class="cell-value">${window.formatCurrency(user.paidAmount)}</span></td>
-            <td><span class="cell-value">${window.formatCurrency(user.unpaidAmount)}</span></td>
-            <td>${statusBadge}</td>
-            <td><span class="cell-value">${lastEntryDate}</span></td>
-            <td class="actions">
-                <div class="entry-actions">
-                    ${ButtonFactory.editUser(user.kennung)}
-                    ${user.unpaidAmount > 0 ? ButtonFactory.sendReminder(user.kennung) : ''}
-                    ${user.unpaidAmount > 0 ? ButtonFactory.sendUrgentReminder(user.kennung) : ''}
-                    ${ButtonFactory.deleteUser(user.kennung)}
-                </div>
-            </td>
-        </tr>
-    `;
-}
 
 function showUserManager() {
   if (!window.checkAdminAccess()) return;
@@ -183,10 +13,6 @@ function closeUserManager() {
 async function loadUsersForManagement() {
   try {
     console.log("🔄 Lade Benutzer für Verwaltung...");
-    
-    if (!usersLoader) {
-        initializeUserManagement();
-    }
     
     // Alle Einträge laden, um Benutzer zu extrahieren
     const snapshot = await window.db.collection("entries").get();
@@ -243,15 +69,13 @@ async function loadUsersForManagement() {
     const users = Array.from(userMap.values());
     
     // Global speichern für Suche und Sortierung
-    allUsers = [...users];
-    window.allUsers = users; // Backwards compatibility
+    window.allUsers = users;
     
-    // Use lazy loading instead of direct rendering
-    usersLoader.setData(users);
+    renderUsersTable(users);
     
   } catch (error) {
     console.error("Fehler beim Laden der Benutzer:", error);
-    showToast('Fehler beim Laden der Benutzer', 'error');
+    document.getElementById("usersTable").innerHTML = '<p>Fehler beim Laden der Benutzer.</p>';
   }
 }
 

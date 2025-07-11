@@ -37,7 +37,7 @@ async function loadReservations() {
         const weekEnd = new Date(currentWeekStart);
         weekEnd.setDate(currentWeekStart.getDate() + 7);
         
-        const querySnapshot = await window.db.collection('reservations')
+        const querySnapshot = await db.collection('reservations')
             .where('startTime', '>=', currentWeekStart)
             .where('startTime', '<', weekEnd)
             .get();
@@ -238,7 +238,7 @@ function showNewReservationForm() {
                 <form id="reservationForm" class="form">
                     <div class="form-group">
                         <label class="form-label">Nutzer</label>
-                        <input type="text" id="reservationUser" class="form-input" placeholder="Name" value="${window.currentUser?.name || localStorage.getItem('userName') || ''}">
+                        <input type="text" id="reservationUser" class="form-input" placeholder="Name" value="${currentUser?.name || ''}">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Drucker</label>
@@ -322,7 +322,7 @@ function populatePrinterDropdown() {
 async function saveReservation() {
     const formData = {
         userName: document.getElementById('reservationUser').value.trim(),
-        userKennung: window.currentUser?.kennung || localStorage.getItem('userKennung') || '',
+        userKennung: currentUser?.kennung || '',
         printerId: document.getElementById('reservationPrinter').value,
         date: document.getElementById('reservationDate').value,
         startTimeStr: document.getElementById('reservationStartTime').value,
@@ -363,7 +363,7 @@ async function saveReservation() {
     const printerName = printer ? printer.name : 'Unbekannter Drucker';
     
     try {
-        await window.db.collection('reservations').add({
+        await db.collection('reservations').add({
             userName: formData.userName,
             userKennung: formData.userKennung,
             printerId: formData.printerId,

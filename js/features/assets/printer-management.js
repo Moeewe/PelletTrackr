@@ -19,7 +19,7 @@ function initializePrinterManagement() {
  */
 async function loadPrinters() {
     try {
-        const querySnapshot = await window.db.collection('printers').get();
+        const querySnapshot = await db.collection('printers').get();
         printers = [];
         
         querySnapshot.forEach((doc) => {
@@ -55,34 +55,25 @@ function closePrinterManager() {
     document.getElementById('printerManagerModal').style.display = 'none';
 }
 
-// Initialize printer lazy loader
-let printerLoader = null;
-
 /**
- * Initialize printer lazy loading
+ * Render printer grid
  */
-function initializePrinterLazyLoading() {
-    printerLoader = new LazyLoader('printerGrid', {
-        mobilePageSize: 5,
-        desktopPageSize: 20,
-        renderFunction: createPrinterElement,
-        emptyStateMessage: 'Noch keine Drucker hinzugefügt.',
-        searchFunction: (printer, searchTerm) => {
-            return printer.name.toLowerCase().includes(searchTerm) ||
-                   (printer.model && printer.model.toLowerCase().includes(searchTerm)) ||
-                   (printer.materials && printer.materials.toLowerCase().includes(searchTerm)) ||
-                   (printer.notes && printer.notes.toLowerCase().includes(searchTerm));
-        }
-    });
-}
-
-/**
- * Create printer element for lazy loading
- */
-function createPrinterElement(printer) {
-    const container = document.createElement('div');
-    container.className = 'lazy-item';
-    container.innerHTML = `
+function renderPrinterGrid() {
+    const grid = document.getElementById('printerGrid');
+    
+    if (printers.length === 0) {
+        grid.innerHTML = `
+            <div class="empty-state">
+                <p>Noch keine Drucker hinzugefügt.</p>
+                <button class="btn btn-primary" onclick="showAddPrinterForm()">
+                    Ersten Drucker hinzufügen
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    grid.innerHTML = printers.map(printer => `
         <div class="printer-card">
             <div class="printer-header">
                 <div>
@@ -121,19 +112,7 @@ function createPrinterElement(printer) {
                 </button>
             </div>
         </div>
-    `;
-    return container;
-}
-
-/**
- * Render printer grid with lazy loading
- */
-function renderPrinterGrid() {
-    if (!printerLoader) {
-        initializePrinterLazyLoading();
-    }
-    
-    printerLoader.setData(printers);
+    `).join('');
 }
 
 /**
@@ -218,12 +197,12 @@ async function savePrinter() {
     try {
         if (currentEditingPrinter) {
             // Update existing printer
-            await window.db.collection('printers').doc(currentEditingPrinter.id).update(formData);
+            await db.collection('printers').doc(currentEditingPrinter.id).update(formData);
             showToast('Drucker erfolgreich aktualisiert', 'success');
         } else {
             // Add new printer
             formData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-            await window.db.collection('printers').add(formData);
+            await db.collection('printers').add(formData);
             showToast('Drucker erfolgreich hinzugefügt', 'success');
         }
         
@@ -256,7 +235,7 @@ async function changePrinterStatus(printerId) {
     const newStatus = statusOptions[nextIndex].value;
     
     try {
-        await window.db.collection('printers').doc(printerId).update({
+        await db.collection('printers').doc(printerId).update({
             status: newStatus,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
@@ -283,7 +262,7 @@ async function deletePrinter(printerId) {
     }
     
     try {
-        await window.db.collection('printers').doc(printerId).delete();
+        await db.collection('printers').doc(printerId).delete();
         showToast('Drucker erfolgreich gelöscht', 'success');
         await loadPrinters();
         renderPrinterGrid();
@@ -299,16 +278,6 @@ async function deletePrinter(printerId) {
  */
 function getAvailablePrinters() {
     return printers.filter(p => p.status === 'available');
-}
-
-/**
- * Search printers
- */
-function searchPrinters() {
-    const searchInput = document.getElementById('printerSearchInput');
-    if (searchInput && printerLoader) {
-        printerLoader.search(searchInput.value);
-    }
 }
 
 // Initialize when DOM is loaded

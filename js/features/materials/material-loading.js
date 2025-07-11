@@ -1,264 +1,5 @@
 // ==================== MATERIAL LOADING MODULE ====================
-// Laden von Materialien und Masterbatches aus Firestore mit Lazy Loading
-
-// Global material management state
-let materials = [];
-let masterbatches = [];
-
-// Lazy loading instances
-let materialsLoader = null;
-let masterbatchesLoader = null;
-
-/**
- * Initialize material management with lazy loading
- */
-function initializeMaterialManagement() {
-    // Initialize materials lazy loader
-    materialsLoader = new LazyLoader('materialsTable', {
-        mobilePageSize: 5,
-        desktopPageSize: 20,
-        renderFunction: createMaterialElement,
-        emptyStateMessage: 'Keine Materialien vorhanden.',
-        searchFunction: createMaterialSearchFunction()
-    });
-    
-    // Initialize masterbatches lazy loader  
-    masterbatchesLoader = new LazyLoader('masterbatchesTable', {
-        mobilePageSize: 5,
-        desktopPageSize: 20,
-        renderFunction: createMasterbatchElement,
-        emptyStateMessage: 'Keine Masterbatches vorhanden.',
-        searchFunction: createMaterialSearchFunction()
-    });
-}
-
-/**
- * Create material element (responsive)
- */
-function createMaterialElement(material) {
-    const container = document.createElement('div');
-    
-    if (window.innerWidth <= 768) {
-        // Mobile card layout
-        container.innerHTML = createMaterialCard(material);
-        container.className = 'lazy-item';
-    } else {
-        // Desktop table row
-        container.innerHTML = createMaterialRow(material);
-        container.className = 'lazy-item';
-        
-        // Ensure table structure exists
-        ensureMaterialTableStructure();
-    }
-    
-    return container;
-}
-
-/**
- * Create masterbatch element (responsive)
- */
-function createMasterbatchElement(masterbatch) {
-    const container = document.createElement('div');
-    
-    if (window.innerWidth <= 768) {
-        // Mobile card layout
-        container.innerHTML = createMasterbatchCard(masterbatch);
-        container.className = 'lazy-item';
-    } else {
-        // Desktop table row
-        container.innerHTML = createMasterbatchRow(masterbatch);
-        container.className = 'lazy-item';
-        
-        // Ensure table structure exists
-        ensureMasterbatchTableStructure();
-    }
-    
-    return container;
-}
-
-/**
- * Ensure material table structure exists
- */
-function ensureMaterialTableStructure() {
-    const container = document.getElementById('materialsTable');
-    if (!container.querySelector('.data-table')) {
-        const tableHtml = `
-            <div class="data-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th onclick="sortMaterials('name')">Name</th>
-                            <th onclick="sortMaterials('manufacturer')">Hersteller</th>
-                            <th onclick="sortMaterials('netPrice')">EK Netto €/kg</th>
-                            <th onclick="sortMaterials('grossPrice')">EK Brutto €/kg</th>
-                            <th onclick="sortMaterials('markup')">Gemeinkosten %</th>
-                            <th onclick="sortMaterials('sellingPrice')">VK €/kg</th>
-                            <th>Aktionen</th>
-                        </tr>
-                    </thead>
-                    <tbody class="lazy-items-container"></tbody>
-                </table>
-            </div>
-        `;
-        container.insertAdjacentHTML('afterbegin', tableHtml);
-    }
-}
-
-/**
- * Ensure masterbatch table structure exists
- */
-function ensureMasterbatchTableStructure() {
-    const container = document.getElementById('masterbatchesTable');
-    if (!container.querySelector('.data-table')) {
-        const tableHtml = `
-            <div class="data-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th onclick="sortMasterbatches('name')">Name</th>
-                            <th onclick="sortMasterbatches('manufacturer')">Hersteller</th>
-                            <th onclick="sortMasterbatches('netPrice')">EK Netto €/g</th>
-                            <th onclick="sortMasterbatches('grossPrice')">EK Brutto €/g</th>
-                            <th onclick="sortMasterbatches('markup')">Gemeinkosten %</th>
-                            <th onclick="sortMasterbatches('sellingPrice')">VK €/g</th>
-                            <th>Aktionen</th>
-                        </tr>
-                    </thead>
-                    <tbody class="lazy-items-container"></tbody>
-                </table>
-            </div>
-        `;
-        container.insertAdjacentHTML('afterbegin', tableHtml);
-    }
-}
-
-/**
- * Create material card for mobile
- */
-function createMaterialCard(material) {
-    return `
-        <div class="entry-card">
-            <div class="entry-card-header">
-                <h3 class="entry-job-title">${material.name}</h3>
-                <span class="entry-detail-value">${material.manufacturer}</span>
-            </div>
-            
-            <div class="entry-card-body">
-                <div class="entry-detail-row">
-                    <span class="entry-detail-label">EK Netto</span>
-                    <span class="entry-detail-value">${window.formatCurrency(material.netPrice)}/kg</span>
-                </div>
-                
-                <div class="entry-detail-row">
-                    <span class="entry-detail-label">EK Brutto</span>
-                    <span class="entry-detail-value">${window.formatCurrency(material.grossPrice)}/kg</span>
-                </div>
-                
-                <div class="entry-detail-row">
-                    <span class="entry-detail-label">Gemeinkosten</span>
-                    <span class="entry-detail-value">${material.markup}%</span>
-                </div>
-                
-                <div class="entry-detail-row">
-                    <span class="entry-detail-label">VK</span>
-                    <span class="entry-detail-value cost-value">${window.formatCurrency(material.sellingPrice)}/kg</span>
-                </div>
-            </div>
-            
-            <div class="entry-card-footer">
-                ${ButtonFactory.editMaterial(material.id)}
-                ${ButtonFactory.deleteMaterial(material.id)}
-            </div>
-        </div>
-    `;
-}
-
-/**
- * Create material table row for desktop
- */
-function createMaterialRow(material) {
-    return `
-        <tr id="material-row-${material.id}">
-            <td><span class="cell-value">${material.name}</span></td>
-            <td><span class="cell-value">${material.manufacturer || 'Unbekannt'}</span></td>
-            <td><span class="cell-value">${window.formatCurrency(material.netPrice)}</span></td>
-            <td><span class="cell-value">${window.formatCurrency(material.grossPrice)}</span></td>
-            <td><span class="cell-value">${material.markup}%</span></td>
-            <td><span class="cell-value">${window.formatCurrency(material.sellingPrice)}</span></td>
-            <td class="actions">
-                <div class="action-group">
-                    ${ButtonFactory.editMaterial(material.id)}
-                    ${ButtonFactory.deleteMaterial(material.id)}
-                </div>
-            </td>
-        </tr>
-    `;
-}
-
-/**
- * Create masterbatch card for mobile
- */
-function createMasterbatchCard(masterbatch) {
-    return `
-        <div class="entry-card">
-            <div class="entry-card-header">
-                <h3 class="entry-job-title">${masterbatch.name}</h3>
-                <span class="entry-detail-value">${masterbatch.manufacturer}</span>
-            </div>
-            
-            <div class="entry-card-body">
-                <div class="entry-detail-row">
-                    <span class="entry-detail-label">EK Netto</span>
-                    <span class="entry-detail-value">${window.formatCurrency(masterbatch.netPrice)}/g</span>
-                </div>
-                
-                <div class="entry-detail-row">
-                    <span class="entry-detail-label">EK Brutto</span>
-                    <span class="entry-detail-value">${window.formatCurrency(masterbatch.grossPrice)}/g</span>
-                </div>
-                
-                <div class="entry-detail-row">
-                    <span class="entry-detail-label">Gemeinkosten</span>
-                    <span class="entry-detail-value">${masterbatch.markup}%</span>
-                </div>
-                
-                <div class="entry-detail-row">
-                    <span class="entry-detail-label">VK</span>
-                    <span class="entry-detail-value cost-value">${window.formatCurrency(masterbatch.sellingPrice)}/g</span>
-                </div>
-            </div>
-            
-            <div class="entry-card-footer">
-                ${ButtonFactory.editMasterbatch(masterbatch.id)}
-                ${ButtonFactory.deleteMasterbatch(masterbatch.id)}
-            </div>
-        </div>
-    `;
-}
-
-/**
- * Create masterbatch table row for desktop
- */
-function createMasterbatchRow(masterbatch) {
-    return `
-        <tr id="masterbatch-row-${masterbatch.id}">
-            <td><span class="cell-value">${masterbatch.name}</span></td>
-            <td><span class="cell-value">${masterbatch.manufacturer || 'Unbekannt'}</span></td>
-            <td><span class="cell-value">${window.formatCurrency(masterbatch.netPrice)}</span></td>
-            <td><span class="cell-value">${window.formatCurrency(masterbatch.grossPrice)}</span></td>
-            <td><span class="cell-value">${masterbatch.markup}%</span></td>
-            <td><span class="cell-value">${window.formatCurrency(masterbatch.sellingPrice)}</span></td>
-            <td class="actions">
-                <div class="action-group">
-                    ${ButtonFactory.editMasterbatch(masterbatch.id)}
-                    ${ButtonFactory.deleteMasterbatch(masterbatch.id)}
-                </div>
-            </td>
-        </tr>
-    `;
-}
-
-// ==================== ORIGINAL DROPDOWN LOADING FUNCTIONS ====================
+// Laden von Materialien und Masterbatches aus Firestore
 
 // Materialien laden (direkt aus Firestore)
 async function loadMaterials() {
@@ -358,16 +99,40 @@ function closeMasterbatchManager() {
   document.getElementById('masterbatchManager').classList.remove('active');
 }
 
-// ==================== LOAD FOR MANAGEMENT WITH LAZY LOADING ====================
+// ==================== LOAD FOR MANAGEMENT ====================
 
 async function loadMaterialsForManagement() {
   try {
     const snapshot = await window.db.collection("materials").get();
     
-    if (!materialsLoader) {
-        initializeMaterialManagement();
-    }
+    const tableDiv = document.getElementById("materialsTable");
     
+    if (snapshot.empty) {
+      const message = '<p>Keine Materialien vorhanden.</p>';
+      tableDiv.innerHTML = message;
+      return;
+    }
+
+    // Container mit Tabelle UND Cards erstellen
+    let containerHtml = `
+      <div class="entries-container">
+        <!-- Desktop Tabelle -->
+        <div class="data-table">
+          <table>
+            <thead>
+              <tr>
+                <th onclick="sortMaterials('name')">Name</th>
+                <th onclick="sortMaterials('manufacturer')">Hersteller</th>
+                <th onclick="sortMaterials('netPrice')">EK Netto €/kg</th>
+                <th onclick="sortMaterials('grossPrice')">EK Brutto €/kg</th>
+                <th onclick="sortMaterials('markup')">Gemeinkosten %</th>
+                <th onclick="sortMaterials('sellingPrice')">VK €/kg</th>
+                <th>Aktionen</th>
+              </tr>
+            </thead>
+            <tbody>
+    `;
+
     const materialData = [];
 
     snapshot.forEach(doc => {
@@ -389,14 +154,86 @@ async function loadMaterialsForManagement() {
         markup,
         sellingPrice
       });
+
+      // Tabellen-Zeile für Desktop
+      containerHtml += `
+        <tr id="material-row-${doc.id}">
+          <td><span class="cell-value">${material.name}</span></td>
+          <td><span class="cell-value">${material.manufacturer || 'Unbekannt'}</span></td>
+          <td><span class="cell-value">${window.formatCurrency(netPrice)}</span></td>
+          <td><span class="cell-value">${window.formatCurrency(grossPrice)}</span></td>
+          <td><span class="cell-value">${markup}%</span></td>
+          <td><span class="cell-value">${window.formatCurrency(sellingPrice)}</span></td>
+          <td class="actions">
+            <div class="action-group">
+              ${ButtonFactory.editMaterial(doc.id)}
+              ${ButtonFactory.deleteMaterial(doc.id)}
+            </div>
+          </td>
+        </tr>
+      `;
     });
 
-    materials = [...materialData];
-    materialsLoader.setData(materialData);
+    containerHtml += `
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Mobile Cards -->
+        <div class="entry-cards">
+    `;
 
-  } catch (e) {
-    console.error("❌ Fehler beim Laden der Materialien:", e);
-    showToast('Fehler beim Laden der Materialien', 'error');
+    // Card-Struktur für Mobile
+    materialData.forEach(material => {
+      containerHtml += `
+        <div class="entry-card">
+          <!-- Card Header mit Material-Name -->
+          <div class="entry-card-header">
+            <h3 class="entry-job-title">${material.name}</h3>
+            <span class="entry-detail-value">${material.manufacturer}</span>
+          </div>
+          
+          <!-- Card Body mit Detail-Zeilen -->
+          <div class="entry-card-body">
+            <div class="entry-detail-row">
+              <span class="entry-detail-label">EK Netto</span>
+              <span class="entry-detail-value">${window.formatCurrency(material.netPrice)}/kg</span>
+            </div>
+            
+            <div class="entry-detail-row">
+              <span class="entry-detail-label">EK Brutto</span>
+              <span class="entry-detail-value">${window.formatCurrency(material.grossPrice)}/kg</span>
+            </div>
+            
+            <div class="entry-detail-row">
+              <span class="entry-detail-label">Gemeinkosten</span>
+              <span class="entry-detail-value">${material.markup}%</span>
+            </div>
+            
+            <div class="entry-detail-row">
+              <span class="entry-detail-label">Verkaufspreis</span>
+              <span class="entry-detail-value cost-value">${window.formatCurrency(material.sellingPrice)}/kg</span>
+            </div>
+          </div>
+          
+          <!-- Card Footer mit Buttons -->
+          <div class="entry-card-footer">
+            ${ButtonFactory.editMaterial(material.id)}
+            ${ButtonFactory.deleteMaterial(material.id)}
+          </div>
+        </div>
+      `;
+    });
+
+    containerHtml += `
+        </div>
+      </div>
+    `;
+    
+    tableDiv.innerHTML = containerHtml;
+    
+  } catch (error) {
+    console.error("Fehler beim Laden der Materialien:", error);
   }
 }
 
@@ -404,10 +241,34 @@ async function loadMasterbatchesForManagement() {
   try {
     const snapshot = await window.db.collection("masterbatches").get();
     
-    if (!masterbatchesLoader) {
-        initializeMaterialManagement();
-    }
+    const tableDiv = document.getElementById("masterbatchesTable");
     
+    if (snapshot.empty) {
+      const message = '<p>Keine Masterbatches vorhanden.</p>';
+      tableDiv.innerHTML = message;
+      return;
+    }
+
+    // Container mit Tabelle UND Cards erstellen
+    let containerHtml = `
+      <div class="entries-container">
+        <!-- Desktop Tabelle -->
+        <div class="data-table">
+          <table>
+            <thead>
+              <tr>
+                <th onclick="sortMasterbatches('name')">Name</th>
+                <th onclick="sortMasterbatches('manufacturer')">Hersteller</th>
+                <th onclick="sortMasterbatches('netPrice')">EK Netto €/g</th>
+                <th onclick="sortMasterbatches('grossPrice')">EK Brutto €/g</th>
+                <th onclick="sortMasterbatches('markup')">Gemeinkosten %</th>
+                <th onclick="sortMasterbatches('sellingPrice')">VK €/g</th>
+                <th>Aktionen</th>
+              </tr>
+            </thead>
+            <tbody>
+    `;
+
     const masterbatchData = [];
 
     snapshot.forEach(doc => {
@@ -429,35 +290,87 @@ async function loadMasterbatchesForManagement() {
         markup,
         sellingPrice
       });
+
+      // Tabellen-Zeile für Desktop
+      containerHtml += `
+        <tr id="masterbatch-row-${doc.id}">
+          <td><span class="cell-value">${masterbatch.name}</span></td>
+          <td><span class="cell-value">${masterbatch.manufacturer || 'Unbekannt'}</span></td>
+          <td><span class="cell-value">${window.formatCurrency(netPrice, 4)}</span></td>
+          <td><span class="cell-value">${window.formatCurrency(grossPrice, 4)}</span></td>
+          <td><span class="cell-value">${markup}%</span></td>
+          <td><span class="cell-value">${window.formatCurrency(sellingPrice, 4)}</span></td>
+          <td class="actions">
+            <div class="action-group">
+              ${ButtonFactory.editMasterbatch(doc.id)}
+              ${ButtonFactory.deleteMasterbatch(doc.id)}
+            </div>
+          </td>
+        </tr>
+      `;
     });
 
-    masterbatches = [...masterbatchData];
-    masterbatchesLoader.setData(masterbatchData);
+    containerHtml += `
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Mobile Cards -->
+        <div class="entry-cards">
+    `;
 
-  } catch (e) {
-    console.error("❌ Fehler beim Laden der Masterbatches:", e);
-    showToast('Fehler beim Laden der Masterbatches', 'error');
+    // Card-Struktur für Mobile
+    masterbatchData.forEach(masterbatch => {
+      containerHtml += `
+        <div class="entry-card">
+          <!-- Card Header mit Masterbatch-Name -->
+          <div class="entry-card-header">
+            <h3 class="entry-job-title">${masterbatch.name}</h3>
+            <span class="entry-detail-value">${masterbatch.manufacturer}</span>
+          </div>
+          
+          <!-- Card Body mit Detail-Zeilen -->
+          <div class="entry-card-body">
+            <div class="entry-detail-row">
+              <span class="entry-detail-label">EK Netto</span>
+              <span class="entry-detail-value">${window.formatCurrency(masterbatch.netPrice, 4)}/g</span>
+            </div>
+            
+            <div class="entry-detail-row">
+              <span class="entry-detail-label">EK Brutto</span>
+              <span class="entry-detail-value">${window.formatCurrency(masterbatch.grossPrice, 4)}/g</span>
+            </div>
+            
+            <div class="entry-detail-row">
+              <span class="entry-detail-label">Gemeinkosten</span>
+              <span class="entry-detail-value">${masterbatch.markup}%</span>
+            </div>
+            
+            <div class="entry-detail-row">
+              <span class="entry-detail-label">Verkaufspreis</span>
+              <span class="entry-detail-value cost-value">${window.formatCurrency(masterbatch.sellingPrice, 4)}/g</span>
+            </div>
+          </div>
+          
+          <!-- Card Footer mit Buttons -->
+          <div class="entry-card-footer">
+            ${ButtonFactory.editMasterbatch(masterbatch.id)}
+            ${ButtonFactory.deleteMasterbatch(masterbatch.id)}
+          </div>
+        </div>
+      `;
+    });
+
+    containerHtml += `
+        </div>
+      </div>
+    `;
+    
+    tableDiv.innerHTML = containerHtml;
+    
+  } catch (error) {
+    console.error("Fehler beim Laden der Masterbatches:", error);
   }
-}
-
-/**
- * Search materials
- */
-function searchMaterials() {
-    const searchInput = document.getElementById('materialSearchInput');
-    if (searchInput && materialsLoader) {
-        materialsLoader.search(searchInput.value);
-    }
-}
-
-/**
- * Search masterbatches  
- */
-function searchMasterbatches() {
-    const searchInput = document.getElementById('masterbatchSearchInput');
-    if (searchInput && masterbatchesLoader) {
-        masterbatchesLoader.search(searchInput.value);
-    }
 }
 
 // ==================== ADD FUNCTIONS ====================
