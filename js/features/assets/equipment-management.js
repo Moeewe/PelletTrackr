@@ -7,6 +7,9 @@
 let equipment = [];
 let currentEquipmentCategory = 'keys';
 
+// Lazy loader for equipment
+let equipmentLoader = null;
+
 /**
  * Show equipment manager modal
  */
@@ -66,24 +69,29 @@ function showEquipmentCategory(category) {
 }
 
 /**
- * Render equipment list
+ * Initialize equipment lazy loading
  */
-function renderEquipmentList(equipmentList) {
-    const container = document.getElementById('equipmentList');
-    
-    if (equipmentList.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <p>Keine Ausrüstung in dieser Kategorie.</p>
-                <button class="btn btn-primary" onclick="showAddEquipmentForm()">
-                    Equipment hinzufügen
-                </button>
-            </div>
-        `;
-        return;
-    }
-    
-    container.innerHTML = equipmentList.map(item => `
+function initializeEquipmentLazyLoading() {
+    equipmentLoader = new LazyLoader('equipmentList', {
+        mobilePageSize: 5,
+        desktopPageSize: 20,
+        renderFunction: createEquipmentElement,
+        emptyStateMessage: 'Keine Ausrüstung in dieser Kategorie.',
+        searchFunction: (equipment, searchTerm) => {
+            return equipment.name.toLowerCase().includes(searchTerm) ||
+                   (equipment.description && equipment.description.toLowerCase().includes(searchTerm)) ||
+                   (equipment.borrowedBy && equipment.borrowedBy.toLowerCase().includes(searchTerm));
+        }
+    });
+}
+
+/**
+ * Create equipment element for lazy loading
+ */
+function createEquipmentElement(item) {
+    const container = document.createElement('div');
+    container.className = 'lazy-item';
+    container.innerHTML = `
         <div class="equipment-item">
             <div class="equipment-header">
                 <div class="equipment-name">${item.name}</div>
@@ -105,7 +113,19 @@ function renderEquipmentList(equipmentList) {
                 <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
             </div>
         </div>
-    `).join('');
+    `;
+    return container;
+}
+
+/**
+ * Render equipment list with lazy loading
+ */
+function renderEquipmentList(equipmentList) {
+    if (!equipmentLoader) {
+        initializeEquipmentLazyLoading();
+    }
+    
+    equipmentLoader.setData(equipmentList);
 }
 
 /**
@@ -146,4 +166,14 @@ function borrowEquipment(equipmentId) {
  */
 function returnEquipment(equipmentId) {
     showToast('Rückgabe-System wird noch implementiert', 'info');
+}
+
+/**
+ * Search equipment
+ */
+function searchEquipment() {
+    const searchInput = document.getElementById('equipmentSearchInput');
+    if (searchInput && equipmentLoader) {
+        equipmentLoader.search(searchInput.value);
+    }
 } 

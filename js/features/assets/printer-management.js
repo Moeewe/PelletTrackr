@@ -55,25 +55,34 @@ function closePrinterManager() {
     document.getElementById('printerManagerModal').style.display = 'none';
 }
 
+// Initialize printer lazy loader
+let printerLoader = null;
+
 /**
- * Render printer grid
+ * Initialize printer lazy loading
  */
-function renderPrinterGrid() {
-    const grid = document.getElementById('printerGrid');
-    
-    if (printers.length === 0) {
-        grid.innerHTML = `
-            <div class="empty-state">
-                <p>Noch keine Drucker hinzugefügt.</p>
-                <button class="btn btn-primary" onclick="showAddPrinterForm()">
-                    Ersten Drucker hinzufügen
-                </button>
-            </div>
-        `;
-        return;
-    }
-    
-    grid.innerHTML = printers.map(printer => `
+function initializePrinterLazyLoading() {
+    printerLoader = new LazyLoader('printerGrid', {
+        mobilePageSize: 5,
+        desktopPageSize: 20,
+        renderFunction: createPrinterElement,
+        emptyStateMessage: 'Noch keine Drucker hinzugefügt.',
+        searchFunction: (printer, searchTerm) => {
+            return printer.name.toLowerCase().includes(searchTerm) ||
+                   (printer.model && printer.model.toLowerCase().includes(searchTerm)) ||
+                   (printer.materials && printer.materials.toLowerCase().includes(searchTerm)) ||
+                   (printer.notes && printer.notes.toLowerCase().includes(searchTerm));
+        }
+    });
+}
+
+/**
+ * Create printer element for lazy loading
+ */
+function createPrinterElement(printer) {
+    const container = document.createElement('div');
+    container.className = 'lazy-item';
+    container.innerHTML = `
         <div class="printer-card">
             <div class="printer-header">
                 <div>
@@ -112,7 +121,19 @@ function renderPrinterGrid() {
                 </button>
             </div>
         </div>
-    `).join('');
+    `;
+    return container;
+}
+
+/**
+ * Render printer grid with lazy loading
+ */
+function renderPrinterGrid() {
+    if (!printerLoader) {
+        initializePrinterLazyLoading();
+    }
+    
+    printerLoader.setData(printers);
 }
 
 /**
@@ -278,6 +299,16 @@ async function deletePrinter(printerId) {
  */
 function getAvailablePrinters() {
     return printers.filter(p => p.status === 'available');
+}
+
+/**
+ * Search printers
+ */
+function searchPrinters() {
+    const searchInput = document.getElementById('printerSearchInput');
+    if (searchInput && printerLoader) {
+        printerLoader.search(searchInput.value);
+    }
 }
 
 // Initialize when DOM is loaded
