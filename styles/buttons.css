@@ -29,7 +29,7 @@
 }
 
 .btn:hover {
-  background: #f8f8f8;
+    /* Remove hover effects for cleaner design */
 }
 
 .btn:disabled {
@@ -41,8 +41,10 @@
 }
 
 .btn:disabled:hover {
-  background: #f5f5f5;
-  color: #999999;
+    background: #e5e5e5;
+    color: #999;
+    cursor: not-allowed;
+    border-color: #ccc;
 }
 
 /* ==================== BUTTON VARIANTS ==================== */
@@ -55,8 +57,7 @@
 }
 
 .btn-primary:hover {
-  background: #333333;
-  border-color: #333333;
+    /* Remove hover effects */
 }
 
 /* SECONDARY - Weiß mit schwarzer Outline (Sekundäre Aktionen: Schließen, Abbrechen) */
@@ -67,7 +68,7 @@
 }
 
 .btn-secondary:hover {
-  background: #f8f8f8;
+    /* Remove hover effects */
 }
 
 /* TERTIARY - Weiß mit schwarzer Outline (Tertiäre Aktionen: Details) */
@@ -78,7 +79,7 @@
 }
 
 .btn-tertiary:hover {
-  background: #f8f8f8;
+    /* Remove hover effects */
 }
 
 /* SUCCESS - Harmonisches Grün (Erfolg: Nachweis anzeigen, Bezahlt) */
@@ -89,8 +90,7 @@
 }
 
 .btn-success:hover {
-  background: #45a049;
-  border-color: #45a049;
+    /* Remove hover effects */
 }
 
 /* WARNING - Gelb (Warnungen: Mahnung) */
@@ -101,7 +101,7 @@
 }
 
 .btn-warning:hover {
-  background: #e6d200;
+    /* Remove hover effects */
 }
 
 /* DANGER - Harmonisches Rot (Gefährliche Aktionen: Löschen) */
@@ -112,8 +112,7 @@
 }
 
 .btn-danger:hover {
-  background: #e64a19;
-  border-color: #e64a19;
+    /* Remove hover effects */
 }
 
 /* UNDO/RÜCKGÄNGIG - Neues Grau für Rückgängig-Aktionen */
@@ -124,8 +123,7 @@
 }
 
 .btn-undo:hover {
-  background: #616161;
-  border-color: #616161;
+    /* Remove hover effects */
 }
 
 /* NACHWEIS - Spezial Gelb für Nachweis-Buttons */
@@ -136,7 +134,7 @@
 }
 
 .btn-nachweis:hover {
-  background: #e6d200;
+    /* Remove hover effects */
 }
 
 .btn-nachweis:disabled {

@@ -123,3 +123,153 @@ async function loadAllEntries() {
     console.error('Fehler beim Laden der Admin-Drucke:', error);
   }
 }
+
+// ==================== ASSET STATISTICS ====================
+
+/**
+ * Load and display asset statistics for adminAssets screen
+ */
+async function loadAssetStats() {
+    try {
+        if (!window.db) {
+            console.warn("❌ Firebase not available for asset stats");
+            return;
+        }
+
+        // Load printer statistics
+        const printersSnapshot = await window.db.collection('printers').get();
+        let totalPrinters = 0;
+        let activePrinters = 0;
+        
+        printersSnapshot.forEach((doc) => {
+            totalPrinters++;
+            const printer = doc.data();
+            if (printer.status === 'printing' || printer.status === 'available') {
+                activePrinters++;
+            }
+        });
+
+        // Load reservation statistics
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+        
+        const reservationsSnapshot = await window.db.collection('reservations')
+            .where('startTime', '>=', today)
+            .where('startTime', '<', tomorrow)
+            .where('status', '==', 'pending')
+            .get();
+        const pendingReservations = reservationsSnapshot.size;
+
+        // Load pending requests (equipment + material)
+        const equipmentRequestsSnapshot = await window.db.collection('equipmentRequests')
+            .where('status', '==', 'pending')
+            .get();
+        const materialRequestsSnapshot = await window.db.collection('materialOrders')
+            .where('status', '==', 'pending')
+            .get();
+        const pendingRequests = equipmentRequestsSnapshot.size + materialRequestsSnapshot.size;
+
+        // Update UI
+        updateElementText('totalPrinters', totalPrinters);
+        updateElementText('activePrinters', activePrinters);
+        updateElementText('pendingReservations', pendingReservations);
+        updateElementText('pendingRequests', pendingRequests);
+
+        console.log('✅ Asset statistics loaded');
+        
+    } catch (error) {
+        console.error('❌ Error loading asset statistics:', error);
+        showToast('Fehler beim Laden der Asset-Statistiken', 'error');
+    }
+}
+
+// ==================== USER MANAGEMENT STATISTICS ====================
+
+/**
+ * Load and display user management statistics for userManager screen
+ */
+async function loadUserManagementStats() {
+    try {
+        if (!window.db) {
+            console.warn("❌ Firebase not available for user management stats");
+            return;
+        }
+
+        // Load user statistics
+        const usersSnapshot = await window.db.collection('users').get();
+        let totalUsers = 0;
+        let adminUsers = 0;
+        
+        usersSnapshot.forEach((doc) => {
+            totalUsers++;
+            const user = doc.data();
+            if (user.isAdmin) {
+                adminUsers++;
+            }
+        });
+
+        // Calculate active users (users with entries in last 30 days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        
+        const entriesSnapshot = await window.db.collection('entries')
+            .where('timestamp', '>=', thirtyDaysAgo)
+            .get();
+        
+        const activeUserSet = new Set();
+        entriesSnapshot.forEach((doc) => {
+            const entry = doc.data();
+            if (entry.kennung) {
+                activeUserSet.add(entry.kennung);
+            }
+        });
+        const activeUsers = activeUserSet.size;
+
+        // Update UI
+        updateElementText('totalUsers', totalUsers);
+        updateElementText('activeUsers', activeUsers);
+        updateElementText('adminUsers', adminUsers);
+
+        console.log('✅ User management statistics loaded');
+        
+    } catch (error) {
+        console.error('❌ Error loading user management statistics:', error);
+        showToast('Fehler beim Laden der Nutzer-Statistiken', 'error');
+    }
+}
+
+/**
+ * Load users for management interface
+ */
+async function loadUsersForManagement() {
+    try {
+        if (!window.db) {
+            console.warn("❌ Firebase not available for user management");
+            return;
+        }
+
+        // This function exists in user-management.js, just call it
+        if (typeof loadUsers === 'function') {
+            await loadUsers();
+            console.log('✅ Users loaded for management');
+        } else {
+            console.warn("⚠️ loadUsers function not available");
+        }
+        
+    } catch (error) {
+        console.error('❌ Error loading users for management:', error);
+        showToast('Fehler beim Laden der Nutzer', 'error');
+    }
+}
+
+/**
+ * Helper function to safely update element text content
+ */
+function updateElementText(elementId, value) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.textContent = value || '0';
+    }
+}

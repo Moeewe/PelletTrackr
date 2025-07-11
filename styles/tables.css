@@ -49,7 +49,7 @@
 }
 
 .data-table tbody tr:hover {
-  background: #f8f8f8;
+    /* Remove row hover effects */
 }
 
 .data-table td {
@@ -946,7 +946,7 @@
 }
 
 .stat-card:hover {
-  background: #f8f8f8;
+    /* Remove hover effects */
 }
 
 .stat-number {
@@ -1136,4 +1136,239 @@
   min-width: 80px;
   white-space: nowrap !important;
   text-align: center;
+}
+
+/* ===== ENHANCED SEARCH & FILTER CONTROLS ===== */
+
+.advanced-search-controls {
+    background: white;
+    border: 2px solid #000;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 0;
+}
+
+/* Search Bar */
+.search-bar {
+    position: relative;
+    margin-bottom: 16px;
+}
+
+.search-bar .search-input {
+    width: 100%;
+    padding-right: 40px;
+}
+
+.search-clear-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #666;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.search-clear-btn:hover {
+    background: #f0f0f0;
+    color: #000;
+}
+
+/* Quick Filters */
+.quick-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.filter-btn {
+    background: white;
+    border: 1px solid #ccc;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.filter-btn:hover {
+    border-color: #000;
+    background: #f8f8f8;
+}
+
+.filter-btn.active {
+    background: #000;
+    color: white;
+    border-color: #000;
+}
+
+/* Advanced Filters Toggle */
+.advanced-filters {
+    border-top: 1px solid #e0e0e0;
+    padding-top: 16px;
+}
+
+.advanced-toggle {
+    background: none;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #666;
+    padding: 8px 0;
+}
+
+.advanced-toggle:hover {
+    color: #000;
+}
+
+.toggle-arrow {
+    transition: transform 0.3s ease;
+    font-size: 12px;
+}
+
+.advanced-toggle.expanded .toggle-arrow {
+    transform: rotate(180deg);
+}
+
+/* Filters Panel */
+.filters-panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    padding-top: 0;
+}
+
+.filters-panel.expanded {
+    max-height: 500px;
+    padding-top: 16px;
+}
+
+.filter-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.filter-group label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.filter-group select {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    background: white;
+    font-size: 14px;
+    border-radius: 0;
+}
+
+.filter-group select:focus {
+    outline: none;
+    border-color: #000;
+}
+
+/* Filter Actions */
+.filter-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 16px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.results-counter {
+    font-size: 12px;
+    color: #666;
+    font-weight: 500;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+/* Legacy Sort */
+.legacy-sort {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.legacy-sort .sort-select {
+    width: 100%;
+    max-width: 300px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .advanced-search-controls {
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .quick-filters {
+        gap: 6px;
+    }
+    
+    .filter-btn {
+        padding: 8px 10px;
+        font-size: 11px;
+    }
+    
+    .filter-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .filter-actions {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+    
+    .results-counter {
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .advanced-search-controls {
+        padding: 12px;
+    }
+    
+    .quick-filters {
+        justify-content: center;
+    }
+    
+    .filter-btn {
+        flex: 1;
+        text-align: center;
+        min-width: 70px;
+    }
 }

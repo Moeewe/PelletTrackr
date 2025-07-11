@@ -51,32 +51,23 @@
 /* Diagnostic Trigger Button */
 .diagnostic-trigger {
     background: none;
-    border: 1px solid #ddd;
+    border: none;
     border-radius: 0;
     color: #666;
-    font-size: 14px;
-    padding: 6px 8px;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 400;
+    transition: color 0.2s ease;
+    padding: 4px 8px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    margin-left: 8px;
+    pointer-events: auto;
     position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 30px;
-    height: 28px;
+    z-index: 1;
 }
 
 .diagnostic-trigger:hover {
-    background: #f5f5f5;
-    border-color: #999;
-    color: #333;
-    transform: translateY(-1px);
-}
-
-.diagnostic-trigger:active {
-    transform: translateY(0);
-    background: #e0e0e0;
+    color: #000;
+    text-decoration: underline;
 }
 
 /* ===== LEGACY FOOTER LINKS ===== */
@@ -122,11 +113,8 @@
     }
     
     .diagnostic-trigger {
-        font-size: 12px;
-        padding: 4px 6px;
-        min-width: 26px;
-        height: 24px;
-        margin-left: 6px;
+        font-size: 11px;
+        padding: 6px 8px;
     }
     
     body {
