@@ -475,6 +475,50 @@
   background: #f8f8f8;
 }
 
+/* ==================== DETAIL ROWS & EINRÜCKUNG (Vereinheitlichung) ==================== */
+.detail-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.detail-label {
+  flex: 0 0 140px;
+  color: #888;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-align: left;
+}
+
+.detail-value {
+  flex: 1;
+  font-weight: bold;
+  color: #111;
+  padding-left: 16px;
+  font-size: 15px;
+  word-break: break-word;
+  text-align: left;
+}
+
+@media screen and (max-width: 768px) {
+  .detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+  .detail-label {
+    margin-bottom: 2px;
+    padding-left: 0;
+    font-size: 14px;
+  }
+  .detail-value {
+    padding-left: 8px;
+    font-size: 15px;
+  }
+}
+
 /* ==================== MATERIAL/MASTERBATCH SPECIFIC STYLING ==================== */
 
 /* Material/Masterbatch Titel - Größer und prominenter */
