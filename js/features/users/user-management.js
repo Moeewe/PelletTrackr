@@ -87,22 +87,26 @@ function renderUsersTable(users) {
     return;
   }
   
-  let tableHtml = `
-    <table>
-      <thead>
-        <tr>
-          <th onclick="sortUsersBy('name')">Name</th>
-          <th onclick="sortUsersBy('kennung')">FH-Kennung</th>
-          <th onclick="sortUsersBy('email')">E-Mail</th>
-          <th onclick="sortUsersBy('entries')">Drucke</th>
-          <th onclick="sortUsersBy('totalCost')">Gesamtkosten</th>
-          <th onclick="sortUsersBy('paidAmount')">Bezahlt</th>
-          <th onclick="sortUsersBy('unpaidAmount')">Offen</th>
-          <th onclick="sortUsersBy('lastEntry')">Letzter Druck</th>
-          <th>Aktionen</th>
-        </tr>
-      </thead>
-      <tbody>
+  // Container mit Tabelle UND Cards erstellen
+  let containerHtml = `
+    <div class="entries-container">
+      <!-- Desktop Tabelle -->
+      <div class="data-table">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="sortUsersBy('name')">Name</th>
+              <th onclick="sortUsersBy('kennung')">FH-Kennung</th>
+              <th onclick="sortUsersBy('email')">E-Mail</th>
+              <th onclick="sortUsersBy('entries')">Drucke</th>
+              <th onclick="sortUsersBy('totalCost')">Gesamtkosten</th>
+              <th onclick="sortUsersBy('paidAmount')">Bezahlt</th>
+              <th onclick="sortUsersBy('unpaidAmount')">Offen</th>
+              <th onclick="sortUsersBy('lastEntry')">Letzter Druck</th>
+              <th>Aktionen</th>
+            </tr>
+          </thead>
+          <tbody>
   `;
   
   users.forEach(user => {
@@ -110,17 +114,18 @@ function renderUsersTable(users) {
     const statusClass = user.unpaidAmount > 0 ? 'status-unpaid' : 'status-paid';
     const email = user.email || `${user.kennung}@fh-muenster.de`;
     
-    tableHtml += `
+    // Tabellen-Zeile für Desktop
+    containerHtml += `
       <tr>
-        <td data-label="Name"><span class="cell-value">${user.name}</span></td>
-        <td data-label="FH-Kennung"><span class="cell-value">${user.kennung}</span></td>
-        <td data-label="E-Mail"><span class="cell-value">${email}</span></td>
-        <td data-label="Drucke"><span class="cell-value">${user.entries.length}</span></td>
-        <td data-label="Gesamtkosten"><span class="cell-value"><strong>${window.formatCurrency(user.totalCost)}</strong></span></td>
-        <td data-label="Bezahlt"><span class="cell-value">${window.formatCurrency(user.paidAmount)}</span></td>
-        <td data-label="Offen" class="${statusClass}"><span class="cell-value">${window.formatCurrency(user.unpaidAmount)}</span></td>
-        <td data-label="Letzter Druck"><span class="cell-value">${lastEntryDate}</span></td>
-        <td data-label="Aktionen" class="actions">
+        <td><span class="cell-value">${user.name}</span></td>
+        <td><span class="cell-value">${user.kennung}</span></td>
+        <td><span class="cell-value">${email}</span></td>
+        <td><span class="cell-value">${user.entries.length}</span></td>
+        <td><span class="cell-value"><strong>${window.formatCurrency(user.totalCost)}</strong></span></td>
+        <td><span class="cell-value">${window.formatCurrency(user.paidAmount)}</span></td>
+        <td class="${statusClass}"><span class="cell-value">${window.formatCurrency(user.unpaidAmount)}</span></td>
+        <td><span class="cell-value">${lastEntryDate}</span></td>
+        <td class="actions">
           <div class="entry-actions">
             ${ButtonFactory.editUser(user.kennung)}
             ${ButtonFactory.userDetails(user.kennung)}
@@ -132,12 +137,87 @@ function renderUsersTable(users) {
     `;
   });
   
-  tableHtml += `
-      </tbody>
-    </table>
+  containerHtml += `
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Mobile Cards -->
+      <div class="entry-cards">
+  `;
+
+  // Card-Struktur für Mobile
+  users.forEach(user => {
+    const lastEntryDate = user.lastEntry.toLocaleDateString('de-DE');
+    const email = user.email || `${user.kennung}@fh-muenster.de`;
+    
+    // Status Badge basierend auf offenen Beträgen
+    const statusBadgeClass = user.unpaidAmount > 0 ? 'status-unpaid' : 'status-paid';
+    const statusBadgeText = user.unpaidAmount > 0 ? 'OFFEN' : 'BEZAHLT';
+    
+    containerHtml += `
+      <div class="entry-card">
+        <!-- Card Header mit User-Name und Status -->
+        <div class="entry-card-header">
+          <h3 class="entry-job-title">${user.name}</h3>
+          <span class="entry-status-badge ${statusBadgeClass}">${statusBadgeText}</span>
+        </div>
+        
+        <!-- Card Body mit Detail-Zeilen -->
+        <div class="entry-card-body">
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">FH-Kennung</span>
+            <span class="entry-detail-value">${user.kennung}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">E-Mail</span>
+            <span class="entry-detail-value">${email}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Anzahl Drucke</span>
+            <span class="entry-detail-value">${user.entries.length}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Gesamtkosten</span>
+            <span class="entry-detail-value cost-value">${window.formatCurrency(user.totalCost)}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Bezahlt</span>
+            <span class="entry-detail-value">${window.formatCurrency(user.paidAmount)}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Offen</span>
+            <span class="entry-detail-value ${user.unpaidAmount > 0 ? 'cost-value' : ''}">${window.formatCurrency(user.unpaidAmount)}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Letzter Druck</span>
+            <span class="entry-detail-value">${lastEntryDate}</span>
+          </div>
+        </div>
+        
+        <!-- Card Footer mit Admin-Buttons -->
+        <div class="entry-card-footer">
+          ${ButtonFactory.editUser(user.kennung)}
+          ${ButtonFactory.userDetails(user.kennung)}
+          ${ButtonFactory.sendReminder(user.kennung)}
+          ${ButtonFactory.deleteUser(user.kennung)}
+        </div>
+      </div>
+    `;
+  });
+  
+  containerHtml += `
+      </div>
+    </div>
   `;
   
-  tableDiv.innerHTML = tableHtml;
+  tableDiv.innerHTML = containerHtml;
 }
 
 // ==================== SORTING & SEARCHING ====================

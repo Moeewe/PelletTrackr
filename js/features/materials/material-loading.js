@@ -113,21 +113,27 @@ async function loadMaterialsForManagement() {
       return;
     }
 
-    let tableHtml = `
-      <table>
-        <thead>
-          <tr>
-            <th onclick="sortMaterials('name')">Name</th>
-            <th onclick="sortMaterials('manufacturer')">Hersteller</th>
-            <th onclick="sortMaterials('netPrice')">EK Netto €/kg</th>
-            <th onclick="sortMaterials('grossPrice')">EK Brutto €/kg</th>
-            <th onclick="sortMaterials('markup')">Gemeinkosten %</th>
-            <th onclick="sortMaterials('sellingPrice')">VK €/kg</th>
-            <th>Aktionen</th>
-          </tr>
-        </thead>
-        <tbody>
+    // Container mit Tabelle UND Cards erstellen
+    let containerHtml = `
+      <div class="entries-container">
+        <!-- Desktop Tabelle -->
+        <div class="data-table">
+          <table>
+            <thead>
+              <tr>
+                <th onclick="sortMaterials('name')">Name</th>
+                <th onclick="sortMaterials('manufacturer')">Hersteller</th>
+                <th onclick="sortMaterials('netPrice')">EK Netto €/kg</th>
+                <th onclick="sortMaterials('grossPrice')">EK Brutto €/kg</th>
+                <th onclick="sortMaterials('markup')">Gemeinkosten %</th>
+                <th onclick="sortMaterials('sellingPrice')">VK €/kg</th>
+                <th>Aktionen</th>
+              </tr>
+            </thead>
+            <tbody>
     `;
+
+    const materialData = [];
 
     snapshot.forEach(doc => {
       const material = doc.data();
@@ -139,16 +145,26 @@ async function loadMaterialsForManagement() {
       const grossPrice = netPrice * (1 + taxRate / 100);
       const sellingPrice = grossPrice * (1 + markup / 100);
       
-      // Responsive Tabellen-Zeile mit data-label Attributen
-      tableHtml += `
+      materialData.push({
+        id: doc.id,
+        name: material.name,
+        manufacturer: material.manufacturer || 'Unbekannt',
+        netPrice,
+        grossPrice,
+        markup,
+        sellingPrice
+      });
+
+      // Tabellen-Zeile für Desktop
+      containerHtml += `
         <tr id="material-row-${doc.id}">
-          <td data-label="Name" id="material-name-${doc.id}"><span class="cell-value">${material.name}</span></td>
-          <td data-label="Hersteller" id="material-manufacturer-${doc.id}"><span class="cell-value">${material.manufacturer || 'Unbekannt'}</span></td>
-          <td data-label="EK Netto €/kg" id="material-netprice-${doc.id}"><span class="cell-value">${window.formatCurrency(netPrice)}</span></td>
-          <td data-label="EK Brutto €/kg" id="material-grossprice-${doc.id}"><span class="cell-value">${window.formatCurrency(grossPrice)}</span></td>
-          <td data-label="Gemeinkosten %" id="material-markup-${doc.id}"><span class="cell-value">${markup}%</span></td>
-          <td data-label="VK €/kg" id="material-price-${doc.id}"><span class="cell-value">${window.formatCurrency(sellingPrice)}</span></td>
-          <td class="actions" data-label="Aktionen">
+          <td><span class="cell-value">${material.name}</span></td>
+          <td><span class="cell-value">${material.manufacturer || 'Unbekannt'}</span></td>
+          <td><span class="cell-value">${window.formatCurrency(netPrice)}</span></td>
+          <td><span class="cell-value">${window.formatCurrency(grossPrice)}</span></td>
+          <td><span class="cell-value">${markup}%</span></td>
+          <td><span class="cell-value">${window.formatCurrency(sellingPrice)}</span></td>
+          <td class="actions">
             <div class="action-group">
               ${ButtonFactory.editMaterial(doc.id)}
               ${ButtonFactory.deleteMaterial(doc.id)}
@@ -158,12 +174,63 @@ async function loadMaterialsForManagement() {
       `;
     });
 
-    tableHtml += `
-        </tbody>
-      </table>
+    containerHtml += `
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Mobile Cards -->
+        <div class="entry-cards">
+    `;
+
+    // Card-Struktur für Mobile
+    materialData.forEach(material => {
+      containerHtml += `
+        <div class="entry-card">
+          <!-- Card Header mit Material-Name -->
+          <div class="entry-card-header">
+            <h3 class="entry-job-title">${material.name}</h3>
+            <span class="entry-detail-value">${material.manufacturer}</span>
+          </div>
+          
+          <!-- Card Body mit Detail-Zeilen -->
+          <div class="entry-card-body">
+            <div class="entry-detail-row">
+              <span class="entry-detail-label">EK Netto</span>
+              <span class="entry-detail-value">${window.formatCurrency(material.netPrice)}/kg</span>
+            </div>
+            
+            <div class="entry-detail-row">
+              <span class="entry-detail-label">EK Brutto</span>
+              <span class="entry-detail-value">${window.formatCurrency(material.grossPrice)}/kg</span>
+            </div>
+            
+            <div class="entry-detail-row">
+              <span class="entry-detail-label">Gemeinkosten</span>
+              <span class="entry-detail-value">${material.markup}%</span>
+            </div>
+            
+            <div class="entry-detail-row">
+              <span class="entry-detail-label">Verkaufspreis</span>
+              <span class="entry-detail-value cost-value">${window.formatCurrency(material.sellingPrice)}/kg</span>
+            </div>
+          </div>
+          
+          <!-- Card Footer mit Buttons -->
+          <div class="entry-card-footer">
+            ${ButtonFactory.editMaterial(material.id)}
+            ${ButtonFactory.deleteMaterial(material.id)}
+          </div>
+        </div>
+      `;
+    });
+
+    containerHtml += `
+        </div>
+      </div>
     `;
     
-    tableDiv.innerHTML = tableHtml;
+    tableDiv.innerHTML = containerHtml;
     
   } catch (error) {
     console.error("Fehler beim Laden der Materialien:", error);
@@ -182,21 +249,27 @@ async function loadMasterbatchesForManagement() {
       return;
     }
 
-    let tableHtml = `
-      <table>
-        <thead>
-          <tr>
-            <th onclick="sortMasterbatches('name')">Name</th>
-            <th onclick="sortMasterbatches('manufacturer')">Hersteller</th>
-            <th onclick="sortMasterbatches('netPrice')">EK Netto €/g</th>
-            <th onclick="sortMasterbatches('grossPrice')">EK Brutto €/g</th>
-            <th onclick="sortMasterbatches('markup')">Gemeinkosten %</th>
-            <th onclick="sortMasterbatches('sellingPrice')">VK €/g</th>
-            <th>Aktionen</th>
-          </tr>
-        </thead>
-        <tbody>
+    // Container mit Tabelle UND Cards erstellen
+    let containerHtml = `
+      <div class="entries-container">
+        <!-- Desktop Tabelle -->
+        <div class="data-table">
+          <table>
+            <thead>
+              <tr>
+                <th onclick="sortMasterbatches('name')">Name</th>
+                <th onclick="sortMasterbatches('manufacturer')">Hersteller</th>
+                <th onclick="sortMasterbatches('netPrice')">EK Netto €/g</th>
+                <th onclick="sortMasterbatches('grossPrice')">EK Brutto €/g</th>
+                <th onclick="sortMasterbatches('markup')">Gemeinkosten %</th>
+                <th onclick="sortMasterbatches('sellingPrice')">VK €/g</th>
+                <th>Aktionen</th>
+              </tr>
+            </thead>
+            <tbody>
     `;
+
+    const masterbatchData = [];
 
     snapshot.forEach(doc => {
       const masterbatch = doc.data();
@@ -208,16 +281,26 @@ async function loadMasterbatchesForManagement() {
       const grossPrice = netPrice * (1 + taxRate / 100);
       const sellingPrice = grossPrice * (1 + markup / 100);
       
-      // Responsive Tabellen-Zeile mit data-label Attributen
-      tableHtml += `
+      masterbatchData.push({
+        id: doc.id,
+        name: masterbatch.name,
+        manufacturer: masterbatch.manufacturer || 'Unbekannt',
+        netPrice,
+        grossPrice,
+        markup,
+        sellingPrice
+      });
+
+      // Tabellen-Zeile für Desktop
+      containerHtml += `
         <tr id="masterbatch-row-${doc.id}">
-          <td data-label="Name" id="masterbatch-name-${doc.id}"><span class="cell-value">${masterbatch.name}</span></td>
-          <td data-label="Hersteller" id="masterbatch-manufacturer-${doc.id}"><span class="cell-value">${masterbatch.manufacturer || 'Unbekannt'}</span></td>
-          <td data-label="EK Netto €/g" id="masterbatch-netprice-${doc.id}"><span class="cell-value">${window.formatCurrency(netPrice, 4)}</span></td>
-          <td data-label="EK Brutto €/g" id="masterbatch-grossprice-${doc.id}"><span class="cell-value">${window.formatCurrency(grossPrice, 4)}</span></td>
-          <td data-label="Gemeinkosten %" id="masterbatch-markup-${doc.id}"><span class="cell-value">${markup}%</span></td>
-          <td data-label="VK €/g" id="masterbatch-price-${doc.id}"><span class="cell-value">${window.formatCurrency(sellingPrice, 4)}</span></td>
-          <td class="actions" data-label="Aktionen">
+          <td><span class="cell-value">${masterbatch.name}</span></td>
+          <td><span class="cell-value">${masterbatch.manufacturer || 'Unbekannt'}</span></td>
+          <td><span class="cell-value">${window.formatCurrency(netPrice, 4)}</span></td>
+          <td><span class="cell-value">${window.formatCurrency(grossPrice, 4)}</span></td>
+          <td><span class="cell-value">${markup}%</span></td>
+          <td><span class="cell-value">${window.formatCurrency(sellingPrice, 4)}</span></td>
+          <td class="actions">
             <div class="action-group">
               ${ButtonFactory.editMasterbatch(doc.id)}
               ${ButtonFactory.deleteMasterbatch(doc.id)}
@@ -227,12 +310,63 @@ async function loadMasterbatchesForManagement() {
       `;
     });
 
-    tableHtml += `
-        </tbody>
-      </table>
+    containerHtml += `
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Mobile Cards -->
+        <div class="entry-cards">
+    `;
+
+    // Card-Struktur für Mobile
+    masterbatchData.forEach(masterbatch => {
+      containerHtml += `
+        <div class="entry-card">
+          <!-- Card Header mit Masterbatch-Name -->
+          <div class="entry-card-header">
+            <h3 class="entry-job-title">${masterbatch.name}</h3>
+            <span class="entry-detail-value">${masterbatch.manufacturer}</span>
+          </div>
+          
+          <!-- Card Body mit Detail-Zeilen -->
+          <div class="entry-card-body">
+            <div class="entry-detail-row">
+              <span class="entry-detail-label">EK Netto</span>
+              <span class="entry-detail-value">${window.formatCurrency(masterbatch.netPrice, 4)}/g</span>
+            </div>
+            
+            <div class="entry-detail-row">
+              <span class="entry-detail-label">EK Brutto</span>
+              <span class="entry-detail-value">${window.formatCurrency(masterbatch.grossPrice, 4)}/g</span>
+            </div>
+            
+            <div class="entry-detail-row">
+              <span class="entry-detail-label">Gemeinkosten</span>
+              <span class="entry-detail-value">${masterbatch.markup}%</span>
+            </div>
+            
+            <div class="entry-detail-row">
+              <span class="entry-detail-label">Verkaufspreis</span>
+              <span class="entry-detail-value cost-value">${window.formatCurrency(masterbatch.sellingPrice, 4)}/g</span>
+            </div>
+          </div>
+          
+          <!-- Card Footer mit Buttons -->
+          <div class="entry-card-footer">
+            ${ButtonFactory.editMasterbatch(masterbatch.id)}
+            ${ButtonFactory.deleteMasterbatch(masterbatch.id)}
+          </div>
+        </div>
+      `;
+    });
+
+    containerHtml += `
+        </div>
+      </div>
     `;
     
-    tableDiv.innerHTML = tableHtml;
+    tableDiv.innerHTML = containerHtml;
     
   } catch (error) {
     console.error("Fehler beim Laden der Masterbatches:", error);
