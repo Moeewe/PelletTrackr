@@ -144,18 +144,70 @@ function loginAsAdmin() {
 }
 
 function logout() {
-  // Clean up any active listeners
+  console.log("👋 User logout initiated...");
+  
+  // Global cleanup of all listeners and components
+  if (typeof window.globalCleanup === 'function') {
+    window.globalCleanup();
+  }
+  
+  // Legacy cleanup for specific components
   if (typeof cleanupUserDashboard === 'function') {
     cleanupUserDashboard();
   }
   
+  // Clear user state
   window.currentUser = { name: '', kennung: '', isAdmin: false };
+  
+  // Reset app initialization flags
+  if (typeof window.appInitialized !== 'undefined') {
+    window.appInitialized = false;
+  }
+  
+  // Clear form data
+  const fieldsToReset = [
+    'loginName', 'loginKennung', 'adminPassword',
+    'material', 'materialMenge', 'masterbatch', 'masterbatchMenge',
+    'jobName', 'jobNotes'
+  ];
+  
+  fieldsToReset.forEach(fieldId => {
+    const field = document.getElementById(fieldId);
+    if (field) {
+      field.value = '';
+    }
+  });
+  
+  // Reset cost preview
+  const costPreview = document.getElementById('costPreview');
+  if (costPreview) {
+    costPreview.textContent = '0,00 €';
+  }
+  
+  // Close all modals
+  if (typeof closeAllModals === 'function') {
+    closeAllModals();
+  }
+  
+  // Clear any stored data
+  try {
+    sessionStorage.removeItem('currentUser');
+    localStorage.removeItem('lastLogin');
+  } catch (error) {
+    console.warn("Could not clear storage:", error);
+  }
+  
+  // Return to login screen
   showScreen('loginScreen');
   
-  // Felder zurücksetzen
-  document.getElementById('loginName').value = '';
-  document.getElementById('loginKennung').value = '';
-  document.getElementById('adminPassword').value = '';
+  // Re-initialize app for next login
+  setTimeout(() => {
+    if (typeof window.retryAppInitialization === 'function') {
+      window.retryAppInitialization();
+    }
+  }, 500);
+  
+  console.log("✅ Logout completed successfully");
 }
 
 // Benutzer-Validierung

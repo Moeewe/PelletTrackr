@@ -12,32 +12,68 @@ let printersListener = null;
  * Initialize printer management system
  */
 function initializePrinterManagement() {
-    loadPrinters();
+    try {
+        if (!window.db) {
+            console.warn("❌ Firebase not available for printer management");
+            return false;
+        }
+        
+        console.log("🖨️ Initializing printer management...");
+        loadPrinters();
+        
+        // Register component cleanup
+        if (typeof window.registerComponentCleanup === 'function') {
+            window.registerComponentCleanup('printer-management', () => {
+                if (printersListener) {
+                    printersListener();
+                    printersListener = null;
+                }
+            });
+        }
+        
+        return true;
+    } catch (error) {
+        console.error("❌ Printer management initialization failed:", error);
+        return false;
+    }
 }
 
 /**
  * Setup real-time listener for printers
  */
 function setupPrintersListener() {
+    // Clean up existing listener
     if (printersListener) {
         printersListener();
+        printersListener = null;
     }
     
-    printersListener = window.db.collection('printers').onSnapshot((snapshot) => {
-        printers = [];
-        snapshot.forEach((doc) => {
-            printers.push({
-                id: doc.id,
-                ...doc.data()
+    try {
+        printersListener = window.db.collection('printers').onSnapshot((snapshot) => {
+            printers = [];
+            snapshot.forEach((doc) => {
+                printers.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
             });
+            
+            console.log('Live update: Loaded printers:', printers.length);
+            renderPrinterGrid();
+        }, (error) => {
+            console.error('Error in printers listener:', error);
+            showToast('Fehler beim Live-Update der Drucker', 'error');
         });
         
-        console.log('Live update: Loaded printers:', printers.length);
-        renderPrinterGrid();
-    }, (error) => {
-        console.error('Error in printers listener:', error);
-        showToast('Fehler beim Live-Update der Drucker', 'error');
-    });
+        // Register listener for global cleanup
+        if (typeof window.registerFirebaseListener === 'function') {
+            window.registerFirebaseListener('printer-management', printersListener);
+        }
+        
+        console.log("✅ Printer listener registered");
+    } catch (error) {
+        console.error("❌ Failed to setup printer listener:", error);
+    }
 }
 
 /**
@@ -77,13 +113,21 @@ function showPrinterManager() {
  * Close printer manager modal
  */
 function closePrinterManager() {
-    document.getElementById('overlay').style.display = 'none';
-    document.getElementById('printerManagerModal').style.display = 'none';
-    
-    // Clean up real-time listener
-    if (printersListener) {
-        printersListener();
-        printersListener = null;
+    try {
+        const overlay = document.getElementById('overlay');
+        const modal = document.getElementById('printerManagerModal');
+        
+        if (overlay) overlay.style.display = 'none';
+        if (modal) modal.style.display = 'none';
+        
+        // Clean up real-time listener
+        if (printersListener) {
+            printersListener();
+            printersListener = null;
+            console.log("🧹 Printer listener cleaned up on modal close");
+        }
+    } catch (error) {
+        console.error("Error closing printer manager:", error);
     }
 }
 
