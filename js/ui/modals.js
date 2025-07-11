@@ -87,64 +87,49 @@ async function viewEntryDetails(entryId) {
     
     const modalHtml = `
       <div class="modal-header">
-        <h2>Druck Details</h2>
+        <h2>${jobName}</h2>
+        ${isPaid ? 
+          '<div class="status-badge paid">BEZAHLT</div>' :
+          '<div class="status-badge unpaid">OFFEN</div>'
+        }
         <button class="close-btn" onclick="closeModal()">&times;</button>
       </div>
       <div class="modal-body">
         <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">${jobName}</h3>
-          </div>
           <div class="card-body">
             <div class="detail-row">
-              <span class="detail-label">Name:</span>
-              <span class="detail-value">${entry.name}</span>
+              <span class="detail-label">DATUM</span>
+              <span class="detail-value">${date}</span>
             </div>
             
             <div class="detail-row">
-              <span class="detail-label">Datum:</span>
-              <span class="detail-value">${date} ${time}</span>
-            </div>
-            
-            <div class="detail-row">
-              <span class="detail-label">Material:</span>
+              <span class="detail-label">MATERIAL</span>
               <span class="detail-value">${entry.material}</span>
             </div>
             
             <div class="detail-row">
-              <span class="detail-label">Material-Menge:</span>
+              <span class="detail-label">MENGE</span>
               <span class="detail-value">${(entry.materialMenge || 0).toFixed(2)} kg</span>
             </div>
             
             <div class="detail-row">
-              <span class="detail-label">Masterbatch:</span>
+              <span class="detail-label">MASTERBATCH</span>
               <span class="detail-value">${entry.masterbatch}</span>
             </div>
             
             <div class="detail-row">
-              <span class="detail-label">MB-Menge:</span>
+              <span class="detail-label">MB MENGE</span>
               <span class="detail-value">${(entry.masterbatchMenge || 0).toFixed(2)} kg</span>
             </div>
             
             <div class="detail-row highlight-total">
-              <span class="detail-label">Gesamtkosten:</span>
+              <span class="detail-label">KOSTEN:</span>
               <span class="detail-value">${window.formatCurrency(entry.totalCost)}</span>
             </div>
             
-            ${isPaid ? 
-              `<div class="detail-row highlight-green">
-                <span class="detail-label">Status:</span>
-                <span class="detail-value">BEZAHLT</span>
-              </div>` :
-              `<div class="detail-row highlight-yellow">
-                <span class="detail-label">Status:</span>
-                <span class="detail-value">OFFEN</span>
-              </div>`
-            }
-            
             ${jobNotes && jobNotes !== "Keine Notizen" ? 
-              `<div class="detail-row">
-                <span class="detail-label">Notizen:</span>
+              `<div class="detail-row notes-row">
+                <span class="detail-label">♦ NOTIZEN:</span>
                 <span class="detail-value">${jobNotes}</span>
               </div>` : ''
             }
@@ -196,14 +181,11 @@ async function editUserEntry(entryId) {
     
     const modalHtml = `
       <div class="modal-header">
-        <h2>Eintrag Bearbeiten</h2>
+        <h2>${jobName}</h2>
         <button class="close-btn" onclick="closeModal()">&times;</button>
       </div>
       <div class="modal-body">
         <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">Mein Eintrag Bearbeiten</h3>
-          </div>
           <div class="card-body">
             <form id="editUserEntryForm">
               <div class="form-group">
@@ -283,14 +265,11 @@ async function editEntry(entryId) {
     
     const modalHtml = `
       <div class="modal-header">
-        <h2>Admin Bearbeitung</h2>
+        <h2>${jobName} (Admin)</h2>
         <button class="close-btn" onclick="closeModal()">&times;</button>
       </div>
       <div class="modal-body">
         <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">Eintrag Bearbeiten (Admin)</h3>
-          </div>
           <div class="card-body">
             <form id="editEntryForm">
               <div class="form-group">
@@ -320,8 +299,10 @@ async function editEntry(entryId) {
             </form>
           </div>
           <div class="card-footer">
-            <button class="btn btn-primary" onclick="saveEntryChanges('${entryId}')">ÄNDERUNGEN SPEICHERN</button>
-            <button class="btn btn-secondary" onclick="closeModal()">ABBRECHEN</button>
+            <div class="button-group">
+              ${ButtonFactory.saveChanges(`saveEntryChanges('${entryId}')`)}
+              ${ButtonFactory.cancelModal()}
+            </div>
           </div>
         </div>
       </div>

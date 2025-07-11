@@ -224,46 +224,53 @@ function showUserDetails(kennung) {
   
   const modalHtml = `
     <div class="modal-header">
-      <h2>Benutzer Details: ${user.name}</h2>
+      <h2>${user.name}</h2>
       <button class="close-btn" onclick="closeModal()">&times;</button>
     </div>
     <div class="modal-body">
-      <div class="user-details">
-        <div class="detail-section">
-          <h3>Basisinformationen</h3>
-          <p><strong>Name:</strong> ${user.name}</p>
-          <p><strong>FH-Kennung:</strong> ${user.kennung}</p>
-          <p><strong>Erster Druck:</strong> ${user.firstEntry.toLocaleDateString('de-DE')}</p>
-          <p><strong>Letzter Druck:</strong> ${user.lastEntry.toLocaleDateString('de-DE')}</p>
+      <div class="card">
+        <div class="card-body">
+          <div class="detail-row">
+            <span class="detail-label">FH-KENNUNG</span>
+            <span class="detail-value">${user.kennung}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">ERSTER DRUCK</span>
+            <span class="detail-value">${user.firstEntry.toLocaleDateString('de-DE')}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">LETZTER DRUCK</span>
+            <span class="detail-value">${user.lastEntry.toLocaleDateString('de-DE')}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">ANZAHL DRUCKE</span>
+            <span class="detail-value">${user.entries.length}</span>
+          </div>
+          
+          <div class="detail-row highlight-total">
+            <span class="detail-label">GESAMTKOSTEN:</span>
+            <span class="detail-value">${window.formatCurrency(user.totalCost)}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">BEZAHLT</span>
+            <span class="detail-value">${window.formatCurrency(user.paidAmount)}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">OFFEN</span>
+            <span class="detail-value">${window.formatCurrency(user.unpaidAmount)}</span>
+          </div>
         </div>
-        
-        <div class="detail-section">
-          <h3>Statistiken</h3>
-          <p><strong>Anzahl Drucke:</strong> ${user.entries.length}</p>
-          <p><strong>Gesamtkosten:</strong> ${window.formatCurrency(user.totalCost)}</p>
-          <p><strong>Bezahlt:</strong> ${window.formatCurrency(user.paidAmount)}</p>
-          <p><strong>Offen:</strong> ${window.formatCurrency(user.unpaidAmount)}</p>
-        </div>
-        
-        <div class="detail-section">
-          <h3>Letzte Drucke</h3>
-          <div class="recent-entries">
-            ${user.entries.slice(0, 5).map(entry => `
-              <div class="entry-item">
-                <span>${entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt'}</span>
-                <span>${entry.jobName || '3D-Druck'}</span>
-                <span>${window.formatCurrency(entry.totalCost)}</span>
-                <span class="${entry.paid || entry.isPaid ? 'status-paid' : 'status-unpaid'}">
-                  ${entry.paid || entry.isPaid ? 'Bezahlt' : 'Offen'}
-                </span>
-              </div>
-            `).join('')}
+        <div class="card-footer">
+          <div class="button-group">
+            ${ButtonFactory.closeModal()}
           </div>
         </div>
       </div>
-    </div>
-    <div class="modal-footer">
-      ${ButtonFactory.closeModal()}
     </div>
   `;
   
@@ -453,14 +460,11 @@ function showAddUserDialog() {
   
   const modalHtml = `
     <div class="modal-header">
-      <h3>Neuen Benutzer Hinzufügen</h3>
+      <h2>Neuen Benutzer Hinzufügen</h2>
       <button class="close-btn" onclick="closeModal()">&times;</button>
     </div>
     <div class="modal-body">
       <div class="card">
-        <div class="card-header">
-          <h3 class="card-title">Benutzer Registrierung</h3>
-        </div>
         <div class="card-body">
           <div class="form-group">
             <label class="form-label">Vollständiger Name</label>

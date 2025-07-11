@@ -54,86 +54,124 @@
 
 /* ==================== DETAIL ROWS ==================== */
 
+/* ==================== DETAIL ROWS - VEREINHEITLICHT ==================== */
+
+/* Neue minimalistische Detail-Rows ohne Container-Styling */
 .detail-row {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 0;
-  border-bottom: 1px solid #e0e0e0;
-  min-height: 50px;
+  justify-content: flex-start;
+  align-items: baseline;
+  padding: 8px 0;
+  border-bottom: none; /* Kein Border mehr */
+  min-height: auto;
+  line-height: 1.4;
 }
 
 .detail-row:last-child {
   border-bottom: none;
 }
 
+/* Labels - Normal gewichtet, linksbündig */
 .detail-label {
   font-size: 16px;
-  font-weight: 600;
-  color: #666666;
+  font-weight: 400; /* Normal weight */
+  color: #000000;
   min-width: 140px;
   text-align: left;
+  margin-right: 16px;
+  flex-shrink: 0;
 }
 
+/* Values - Bold gewichtet, linksbündig */
 .detail-value {
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 700; /* Bold weight */
   color: #000000;
-  text-align: left; /* All values should be left-aligned */
+  text-align: left;
   flex: 1;
-  margin-left: 24px;
 }
 
 /* ==================== SPECIAL HIGHLIGHT ROWS ==================== */
 
-/* Offener Betrag - Gelb hervorgehoben */
-.detail-row.highlight-yellow {
-  background: #FFEB00;
-  color: #000000;
-  border: none;
-  margin: 0 -32px;
-  padding: 20px 32px;
-  font-weight: 700;
-}
-
-.detail-row.highlight-yellow .detail-label,
-.detail-row.highlight-yellow .detail-value {
-  color: #000000;
-  font-weight: 700;
-}
-
-/* Bezahlter Betrag - Grün hervorgehoben */
-.detail-row.highlight-green {
-  background: #28a745;
-  color: white;
-  border: none;
-  margin: 0 -32px;
-  padding: 20px 32px;
-  font-weight: 700;
-}
-
-.detail-row.highlight-green .detail-label,
-.detail-row.highlight-green .detail-value {
-  color: white;
-  font-weight: 700;
-}
-
-/* Gesamtkosten - Schwarz hervorgehoben */
+/* Gesamtkosten - Hervorgehoben wie im Design */
 .detail-row.highlight-total {
-  background: #000000;
-  color: white;
+  background: none;
+  color: #000000;
   border: none;
-  margin: 0 -32px;
-  padding: 20px 32px;
+  margin: 16px 0 8px 0;
+  padding: 0;
   font-weight: 700;
   font-size: 18px;
 }
 
 .detail-row.highlight-total .detail-label,
 .detail-row.highlight-total .detail-value {
-  color: white;
+  color: #000000;
   font-weight: 700;
   font-size: 18px;
+}
+
+/* Status - Bezahlt (Grün) */
+.detail-row.highlight-green {
+  background: none;
+  color: #000000;
+  border: none;
+  margin: 8px 0;
+  padding: 0;
+  font-weight: 700;
+}
+
+.detail-row.highlight-green .detail-label {
+  color: #000000;
+  font-weight: 400;
+}
+
+.detail-row.highlight-green .detail-value {
+  color: #4CAF50; /* Harmonisches Grün */
+  font-weight: 700;
+}
+
+/* Status - Offen (Gelb) */
+.detail-row.highlight-yellow {
+  background: none;
+  color: #000000;
+  border: none;
+  margin: 8px 0;
+  padding: 0;
+  font-weight: 700;
+}
+
+.detail-row.highlight-yellow .detail-label {
+  color: #000000;
+  font-weight: 400;
+}
+
+.detail-row.highlight-yellow .detail-value {
+  color: #FFEB00;
+  font-weight: 700;
+  background: #000000;
+  padding: 4px 8px;
+  display: inline-block;
+}
+
+/* ==================== NOTIZEN SPEZIAL-STYLING ==================== */
+
+/* Notizen-Zeile - flexibel in der Höhe, gleiche Breite */
+.detail-row.notes-row {
+  align-items: flex-start;
+  padding: 12px 0;
+}
+
+.detail-row.notes-row .detail-label {
+  padding-top: 0;
+  align-self: flex-start;
+}
+
+.detail-row.notes-row .detail-value {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.5;
+  max-width: 100%;
 }
 
 /* ==================== BUTTON LAYOUT ==================== */
@@ -250,6 +288,35 @@
   border-color: #dc3545;
 }
 
+/* ==================== BEZAHLT-STATUS BADGE ==================== */
+
+/* Status-Badge für das Modal - erscheint oben rechts */
+.status-badge {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 2px solid;
+  border-radius: 0;
+  background: white;
+}
+
+.status-badge.paid {
+  color: #4CAF50;
+  border-color: #4CAF50;
+  background: white;
+}
+
+.status-badge.unpaid {
+  color: #000000;
+  border-color: #000000;
+  background: #FFEB00;
+}
+
 /* ==================== RESPONSIVE DESIGN ==================== */
 
 @media (max-width: 768px) {
@@ -269,20 +336,29 @@
     padding: 20px 24px;
   }
   
+  /* Responsive Detail-Rows - Stack vertikal auf Mobile */
+  .detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px 0;
+  }
+  
   .detail-label {
+    margin-bottom: 4px;
+    margin-right: 0;
+    min-width: auto;
     font-size: 14px;
-    min-width: 120px;
+    color: #666;
   }
   
   .detail-value {
-    font-size: 14px;
+    font-size: 16px;
+    margin-left: 0;
   }
   
-  .detail-row.highlight-yellow,
-  .detail-row.highlight-green,
-  .detail-row.highlight-total {
-    margin: 0 -24px;
-    padding: 16px 24px;
+  .detail-row.highlight-total .detail-label,
+  .detail-row.highlight-total .detail-value {
+    font-size: 16px;
   }
 }
 
@@ -303,11 +379,17 @@
     padding: 16px 20px;
   }
   
-  .detail-row.highlight-yellow,
-  .detail-row.highlight-green,
-  .detail-row.highlight-total {
-    margin: 0 -20px;
-    padding: 16px 20px;
+  .detail-label {
+    font-size: 13px;
+  }
+  
+  .detail-value {
+    font-size: 15px;
+  }
+  
+  .detail-row.highlight-total .detail-label,
+  .detail-row.highlight-total .detail-value {
+    font-size: 15px;
   }
 }
 

@@ -148,6 +148,7 @@
   z-index: 10;
   width: 100%;
   box-sizing: border-box;
+  position: relative; /* Für Status-Badge Positionierung */
 }
 
 .modal-header h2,
