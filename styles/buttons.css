@@ -191,7 +191,9 @@
   border: none;
   color: #000000;
   text-decoration: underline;
-  padding: 8px 16px;
+  padding: 0 16px;
+  height: auto;
+  line-height: inherit;
 }
 
 .btn-link:hover {
