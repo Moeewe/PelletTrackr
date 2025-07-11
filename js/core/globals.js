@@ -6,9 +6,6 @@ const CONFIG = {
     // Any global config settings
 };
 
-// Global state
-let currentUser = null;
-
 /**
  * Close all modals and overlays
  */

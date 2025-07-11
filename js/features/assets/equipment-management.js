@@ -29,7 +29,7 @@ function closeEquipmentManager() {
  */
 async function loadEquipment() {
     try {
-        const querySnapshot = await db.collection('equipment').get();
+        const querySnapshot = await window.db.collection('equipment').get();
         equipment = [];
         
         querySnapshot.forEach((doc) => {

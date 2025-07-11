@@ -88,10 +88,10 @@ async function submitMaterialRequest() {
     }
     
     try {
-        await db.collection('materialOrders').add({
+        await window.db.collection('materialOrders').add({
             type: 'request',
-            userName: currentUser?.name || 'Unbekannter User',
-            userKennung: currentUser?.kennung || '',
+            userName: window.currentUser?.name || 'Unbekannter User',
+            userKennung: window.currentUser?.kennung || '',
             materialName: formData.materialName,
             manufacturer: formData.manufacturer,
             reason: formData.reason,
@@ -133,7 +133,7 @@ function closeMaterialOrders() {
  */
 async function loadMaterialOrders() {
     try {
-        const querySnapshot = await db.collection('materialOrders').get();
+        const querySnapshot = await window.db.collection('materialOrders').get();
         materialOrders = [];
         
         querySnapshot.forEach((doc) => {
@@ -318,7 +318,7 @@ function renderOrderHistory() {
  */
 async function approveOrderRequest(requestId) {
     try {
-        await db.collection('materialOrders').doc(requestId).update({
+        await window.db.collection('materialOrders').doc(requestId).update({
             status: 'approved',
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
@@ -340,7 +340,7 @@ async function rejectOrderRequest(requestId) {
     const reason = prompt('Grund für Ablehnung (optional):');
     
     try {
-        await db.collection('materialOrders').doc(requestId).update({
+        await window.db.collection('materialOrders').doc(requestId).update({
             status: 'rejected',
             rejectionReason: reason || '',
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
