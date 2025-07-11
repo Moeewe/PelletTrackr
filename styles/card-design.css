@@ -77,7 +77,7 @@
   font-weight: 700;
   padding: 6px 12px;
   border: 1px solid #000;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.5px;
   flex-shrink: 0;
 }
@@ -163,7 +163,7 @@
   padding: 14px 20px;
   font-size: 15px;
   font-weight: 600;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.5px;
   margin: 0;
 }
@@ -243,7 +243,7 @@
   color: #000000;
   margin: 0;
   text-align: left;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.5px;
 }
 
@@ -434,7 +434,7 @@
   padding: 16px 24px;
   font-size: 16px;
   font-weight: 600;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.5px;
 }
 
@@ -445,7 +445,7 @@
   padding: 4px 8px;
   font-size: 12px;
   font-weight: 600;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.5px;
 }
 
@@ -565,7 +565,7 @@
   font-size: 18px;
   font-weight: 600;
   color: #666;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 1px;
 }
 
@@ -585,7 +585,7 @@
   font-weight: 700;
   color: #000;
   margin: 0 0 15px 0;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.5px;
   border-bottom: 2px solid #000;
   padding-bottom: 8px;
@@ -757,7 +757,7 @@
     font-size: 14pt !important;
     font-weight: bold !important;
     color: #666 !important;
-    text-transform: uppercase !important;
+    text-transform: none !important;
   }
   
   .proof-section {
@@ -921,19 +921,36 @@
 /* Printer Management */
 .printer-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 24px;
     margin-top: 20px;
+    max-width: 100%;
+}
+
+@media (min-width: 1200px) {
+    .printer-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 32px;
+    }
+}
+
+@media (min-width: 1600px) {
+    .printer-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
 }
 
 .printer-card {
     background: white;
     border: 2px solid #000000;
     border-radius: 0;
-    padding: 20px;
+    padding: 24px;
     box-shadow: none;
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
     position: relative;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
 }
 
 .printer-card:hover {
@@ -966,7 +983,7 @@
     border-radius: 0;
     font-size: 0.8em;
     font-weight: bold;
-    text-transform: uppercase;
+    text-transform: none;
     position: absolute;
     top: 20px;
     right: 20px;
@@ -1019,21 +1036,37 @@
 
 .printer-actions {
     display: flex;
-    gap: 10px;
-    margin-top: 15px;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: auto;
     padding-top: 15px;
     border-top: 2px solid #000000;
 }
 
 .printer-actions .btn {
     flex: 1;
-    padding: 8px 12px;
-    font-size: 0.85em;
+    min-width: 0;
+    padding: 6px 8px;
+    font-size: 0.8em;
     border: 2px solid #000000;
     border-radius: 0;
     font-weight: 600;
-    text-transform: uppercase;
+    text-transform: none;
     letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+@media (max-width: 1400px) {
+    .printer-actions {
+        flex-direction: column;
+    }
+    
+    .printer-actions .btn {
+        flex: none;
+        width: 100%;
+        padding: 8px 12px;
+        font-size: 0.85em;
+    }
 }
 
 /* Reservation Calendar */
@@ -1173,7 +1206,7 @@
     font-weight: 600;
     color: #000000;
     transition: all 0.2s ease;
-    text-transform: uppercase;
+    text-transform: none;
     letter-spacing: 0.5px;
     border-radius: 0;
 }
@@ -1247,7 +1280,7 @@
     border-radius: 0;
     font-size: 0.8em;
     font-weight: bold;
-    text-transform: uppercase;
+    text-transform: none;
 }
 
 .equipment-status.available {
@@ -1441,7 +1474,7 @@
     border-radius: 0;
     font-size: 0.8em;
     font-weight: bold;
-    text-transform: uppercase;
+    text-transform: none;
     display: inline-block;
 }
 
@@ -1660,7 +1693,7 @@
     font-weight: bold;
     color: #000000;
     margin: 0;
-    text-transform: uppercase;
+    text-transform: none;
     letter-spacing: 0.5px;
 }
 
@@ -1689,7 +1722,7 @@
 .card-action {
     font-weight: bold;
     color: #000000;
-    text-transform: uppercase;
+    text-transform: none;
     letter-spacing: 0.5px;
     font-size: 0.9em;
     margin-top: 10px;

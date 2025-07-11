@@ -80,7 +80,10 @@ class ToastManager {
             
             dialog.innerHTML = `
                 <div class="confirmation-content">
-                    <div class="confirmation-icon">⚠️</div>
+                    <div class="confirmation-header">
+                        <div class="confirmation-icon">⚠️</div>
+                        <h3>FH-Kennung bereits registriert!</h3>
+                    </div>
                     <div class="confirmation-message">${message}</div>
                     <div class="confirmation-buttons">
                         <button class="btn btn-primary confirm-yes">${confirmText}</button>

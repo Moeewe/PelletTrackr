@@ -336,7 +336,7 @@
     color: #000000;
     margin: 0;
     text-align: left;
-    text-transform: uppercase;
+    text-transform: none;
     letter-spacing: 0.5px;
     flex: 1;
   }

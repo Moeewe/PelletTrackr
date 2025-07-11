@@ -24,7 +24,7 @@
   overflow-wrap: break-word;
   max-width: 100%;
   box-sizing: border-box;
-  text-transform: uppercase;
+      text-transform: none;
   letter-spacing: 0.5px;
 }
 
@@ -345,4 +345,16 @@
     width: 100%;
     min-width: 140px;
   }
+}
+
+/* Info Button Style */
+.btn-info {
+    background: #00BCD4;
+    color: white;
+    border-color: #00BCD4;
+}
+
+.btn-info:hover {
+    background: #0097A7;
+    border-color: #0097A7;
 }

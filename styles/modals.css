@@ -319,7 +319,7 @@
   font-weight: 600;
   font-size: 12px;
   letter-spacing: 1px;
-  text-transform: uppercase;
+      text-transform: none;
   white-space: nowrap;
 }
 

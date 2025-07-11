@@ -39,9 +39,7 @@ async function loginAsUser() {
       loading.hide(loadingId);
       
       // Moderne Bestätigung verwenden
-      const confirmMessage = `FH-Kennung bereits registriert!
-
-Die Kennung "${kennung}" ist bereits für "${existingUser.name}" registriert.
+      const confirmMessage = `Die Kennung "${kennung}" ist bereits für "${existingUser.name}" registriert.
 
 Möchtest du dich als "${existingUser.name}" anmelden?`;
       

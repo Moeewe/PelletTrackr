@@ -18,7 +18,8 @@ let currentAdminFilters = {
     user: '',
     material: '',
     status: '',
-    dateRange: ''
+    dateRange: '',
+    costRange: ''
 };
 
 // ==================== ENHANCED SEARCH FUNCTIONS ====================
@@ -48,7 +49,10 @@ function performAdvancedUserSearch() {
 
 // Advanced Admin Search
 function performAdvancedAdminSearch() {
-    if (!window.allAdminEntries || window.allAdminEntries.length === 0) return;
+    if (!window.allAdminEntries || window.allAdminEntries.length === 0) {
+        console.log('🔍 Admin search: No entries available');
+        return;
+    }
     
     // Update search term
     const searchInput = document.getElementById('adminSearchInput');
@@ -60,14 +64,22 @@ function performAdvancedAdminSearch() {
     currentAdminFilters.status = document.getElementById('adminStatusFilter')?.value || '';
     currentAdminFilters.dateRange = document.getElementById('adminDateFilter')?.value || '';
     
+    console.log('🔍 Admin search filters:', currentAdminFilters);
+    
     // Apply all filters
     let filteredEntries = applyAdminFilters(window.allAdminEntries);
+    
+    console.log(`🔍 Admin search: ${filteredEntries.length} of ${window.allAdminEntries.length} entries match filters`);
     
     // Update results counter
     updateAdminResultsCounter(filteredEntries.length, window.allAdminEntries.length);
     
     // Render filtered results
-    window.renderAdminEntries(filteredEntries);
+    if (typeof window.renderAdminEntries === 'function') {
+        window.renderAdminEntries(filteredEntries);
+    } else {
+        console.error('❌ renderAdminEntries function not found');
+    }
 }
 
 // Apply User Filters
@@ -151,6 +163,11 @@ function applyAdminFilters(entries) {
             return false;
         }
         
+        // Cost range filter
+        if (currentAdminFilters.costRange && !matchesCostRange(entry, currentAdminFilters.costRange)) {
+            return false;
+        }
+        
         return true;
     });
 }
@@ -220,7 +237,7 @@ function setAdminQuickFilter(filter) {
             currentAdminFilters.dateRange = 'today';
             break;
         case 'high-value':
-            // Filter for entries > 25€
+            currentAdminFilters.costRange = '25+';
             break;
     }
     
@@ -269,6 +286,8 @@ function matchesCostRange(entry, range) {
             return cost > 5 && cost <= 15;
         case '15-30':
             return cost > 15 && cost <= 30;
+        case '25+':
+            return cost > 25;
         case '30+':
             return cost > 30;
         default:
@@ -409,7 +428,8 @@ function resetAdminFilters(performSearch = true) {
         user: '',
         material: '',
         status: '',
-        dateRange: ''
+        dateRange: '',
+        costRange: ''
     };
     
     // Reset UI elements
@@ -627,17 +647,33 @@ function searchAdmins() {
 
 // Initialize filter dropdowns when data is loaded
 function initializeAdvancedFilters() {
+    console.log('🔧 Initializing advanced filters...');
+    
     // Set default active filter
-    document.querySelector('#userAdvancedFilters .filter-btn[data-filter="all"]')?.classList.add('active');
-    document.querySelector('#adminAdvancedFilters .filter-btn[data-filter="all"]')?.classList.add('active');
+    const userAllFilter = document.querySelector('#userAdvancedFilters .filter-btn[data-filter="all"]');
+    const adminAllFilter = document.querySelector('#adminAdvancedFilters .filter-btn[data-filter="all"]');
+    
+    if (userAllFilter) {
+        userAllFilter.classList.add('active');
+        console.log('✅ User "all" filter activated');
+    }
+    
+    if (adminAllFilter) {
+        adminAllFilter.classList.add('active');
+        console.log('✅ Admin "all" filter activated');
+    }
     
     // Initialize counters
     if (window.allUserEntries) {
         updateUserResultsCounter(window.allUserEntries.length, window.allUserEntries.length);
+        console.log(`📊 User counter: ${window.allUserEntries.length} entries`);
     }
     if (window.allAdminEntries) {
         updateAdminResultsCounter(window.allAdminEntries.length, window.allAdminEntries.length);
+        console.log(`📊 Admin counter: ${window.allAdminEntries.length} entries`);
     }
+    
+    console.log('✅ Advanced filters initialized');
 }
 
 // Call initialization when entries are loaded

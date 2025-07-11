@@ -12,19 +12,7 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Top App Bar -->
-    <div class="app-bar">
-        <div class="app-bar-content">
-            <div class="app-title-section">
-                <h1 class="app-title">
-                    PelletTracker
-                </h1>
-                <div class="user-info" id="userInfo">
-                    <!-- Wird von auth.js befüllt -->
-                </div>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Login Screen -->
     <div id="loginScreen" class="screen active">
@@ -240,23 +228,19 @@
                         <div class="stat-label">Drucker</div>
                         <div class="status-indicators">
                             <div class="status-indicator">
-                                <span class="status-dot status-available"></span>
-                                <span class="status-count" id="availablePrintersCount">0</span>
+                                <span class="status-dot status-available" data-count="1"></span>
                                 <span class="status-label">Verfügbar</span>
                             </div>
                             <div class="status-indicator">
-                                <span class="status-dot status-printing"></span>
-                                <span class="status-count" id="printingPrintersCount">0</span>
+                                <span class="status-dot status-printing" data-count="0"></span>
                                 <span class="status-label">In Betrieb</span>
                             </div>
                             <div class="status-indicator">
-                                <span class="status-dot status-maintenance"></span>
-                                <span class="status-count" id="maintenancePrintersCount">0</span>
+                                <span class="status-dot status-maintenance" data-count="0"></span>
                                 <span class="status-label">Wartung</span>
                             </div>
                             <div class="status-indicator">
-                                <span class="status-dot status-broken"></span>
-                                <span class="status-count" id="brokenPrintersCount">0</span>
+                                <span class="status-dot status-broken" data-count="0"></span>
                                 <span class="status-label">Defekt</span>
                             </div>
                         </div>
@@ -264,21 +248,40 @@
 
                     <!-- Termin buchen -->
                     <div class="stat-card clickable" onclick="showUserReservationForm()">
-                        <div class="stat-number">T</div>
+                        <div class="service-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                <line x1="16" y1="2" x2="16" y2="6"/>
+                                <line x1="8" y1="2" x2="8" y2="6"/>
+                                <line x1="3" y1="10" x2="21" y2="10"/>
+                            </svg>
+                        </div>
                         <div class="stat-label">Termine</div>
                         <div class="stat-description">Drucker reservieren</div>
                     </div>
 
                     <!-- Equipment ausleihen -->
                     <div class="stat-card clickable" onclick="showUserEquipmentRequest()">
-                        <div class="stat-number">E</div>
+                        <div class="service-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                                <polyline points="3.27,6.96 12,12.01 20.73,6.96"/>
+                                <line x1="12" y1="22.08" x2="12" y2="12"/>
+                            </svg>
+                        </div>
                         <div class="stat-label">Leihe</div>
                         <div class="stat-description">Equipment anfragen</div>
                     </div>
 
                     <!-- Problem melden -->
                     <div class="stat-card clickable" onclick="showProblemReportForm()">
-                        <div class="stat-number">!</div>
+                        <div class="service-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="12" y1="8" x2="12" y2="12"/>
+                                <line x1="12" y1="16" x2="12.01" y2="16"/>
+                            </svg>
+                        </div>
                         <div class="stat-label">Problem</div>
                         <div class="stat-description">Defekte melden</div>
                     </div>
@@ -471,19 +474,17 @@
 
     <!-- Admin Assets Screen -->
     <div id="adminAssets" class="screen">
-        <div class="container">
-            <!-- Navigation Header -->
-            <div class="app-header">
-                <div class="header-left">
-                    <button class="btn btn-secondary" onclick="showScreen('adminDashboard')" title="Zurück zum Admin Dashboard">
-                        ← Zurück
-                    </button>
-                </div>
-                <div class="header-center">
-                    <h1 class="header-title">Asset Management</h1>
-                </div>
-                <div class="header-right">
-                    <!-- Space for future actions -->
+        <div class="admin-container">
+            <!-- Header with logout -->
+            <div class="dashboard-header">
+                <h1 class="logo" onclick="navigateToHome()" style="cursor: pointer;" title="Zur Hauptseite">
+                    <span class="highlight">Pellet</span>Trackr
+                    <span class="admin-badge">Admin</span>
+                </h1>
+                <div class="user-info">
+                    <span id="assetWelcome">Asset Management</span>
+                    <button class="btn btn-link" onclick="showScreen('adminDashboard')">← Dashboard</button>
+                    <button class="btn btn-link" onclick="logout()">Abmelden</button>
                 </div>
             </div>
 
@@ -594,19 +595,17 @@
 
     <!-- User Manager Screen -->
     <div id="userManager" class="screen">
-        <div class="container">
-            <!-- Navigation Header -->
-            <div class="app-header">
-                <div class="header-left">
-                    <button class="btn btn-secondary" onclick="showScreen('adminDashboard')" title="Zurück zum Admin Dashboard">
-                        ← Zurück
-                    </button>
-                </div>
-                <div class="header-center">
-                    <h1 class="header-title">Nutzer-Verwaltung</h1>
-                </div>
-                <div class="header-right">
-                    <!-- Space for future actions -->
+        <div class="admin-container">
+            <!-- Header with logout -->
+            <div class="dashboard-header">
+                <h1 class="logo" onclick="navigateToHome()" style="cursor: pointer;" title="Zur Hauptseite">
+                    <span class="highlight">Pellet</span>Trackr
+                    <span class="admin-badge">Admin</span>
+                </h1>
+                <div class="user-info">
+                    <span id="userManagerWelcome">Nutzer-Verwaltung</span>
+                    <button class="btn btn-link" onclick="showScreen('adminDashboard')">← Dashboard</button>
+                    <button class="btn btn-link" onclick="logout()">Abmelden</button>
                 </div>
             </div>
 

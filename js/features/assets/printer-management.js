@@ -180,6 +180,9 @@ function renderPrinterGrid() {
                 <button class="btn btn-secondary" onclick="editPrinter('${printer.id}')">
                     Bearbeiten
                 </button>
+                <button class="btn btn-info" onclick="duplicatePrinter('${printer.id}')">
+                    Duplizieren
+                </button>
                 <button class="btn btn-primary" onclick="changePrinterStatus('${printer.id}')">
                     Status ändern
                 </button>
@@ -202,6 +205,42 @@ function getStatusText(status) {
         'broken': 'Defekt'
     };
     return statusMap[status] || status;
+}
+
+/**
+ * Duplicate a printer
+ */
+async function duplicatePrinter(printerId) {
+    const printer = printers.find(p => p.id === printerId);
+    if (!printer) {
+        showToast('Drucker nicht gefunden', 'error');
+        return;
+    }
+    
+    try {
+        // Create duplicate with modified name
+        const duplicateData = {
+            ...printer,
+            name: `${printer.name} (Kopie)`,
+            status: 'available', // Reset status to available
+            notes: printer.notes ? `${printer.notes}\n\nDupliziert von: ${printer.name}` : `Dupliziert von: ${printer.name}`,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        // Remove the original ID
+        delete duplicateData.id;
+        
+        await window.db.collection('printers').add(duplicateData);
+        
+        showToast(`Drucker "${printer.name}" erfolgreich dupliziert`, 'success');
+        
+        // Real-time listener will automatically update the UI
+        
+    } catch (error) {
+        console.error('Error duplicating printer:', error);
+        showToast('Fehler beim Duplizieren des Druckers', 'error');
+    }
 }
 
 /**

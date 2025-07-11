@@ -52,11 +52,24 @@ function updatePrinterStatusCard(printers) {
     };
     
     // Update UI elements
-    document.getElementById('totalPrintersCount').textContent = statusCounts.total;
-    document.getElementById('availablePrintersCount').textContent = statusCounts.available;
-    document.getElementById('printingPrintersCount').textContent = statusCounts.printing;
-    document.getElementById('maintenancePrintersCount').textContent = statusCounts.maintenance;
-    document.getElementById('brokenPrintersCount').textContent = statusCounts.broken;
+    const totalElement = document.getElementById('totalPrintersCount');
+    if (totalElement) {
+        totalElement.textContent = statusCounts.total;
+    }
+    
+    // Update status dots with data-count attributes
+    const statusDots = {
+        available: document.querySelector('.status-dot.status-available'),
+        printing: document.querySelector('.status-dot.status-printing'),
+        maintenance: document.querySelector('.status-dot.status-maintenance'),
+        broken: document.querySelector('.status-dot.status-broken')
+    };
+    
+    Object.keys(statusDots).forEach(status => {
+        if (statusDots[status]) {
+            statusDots[status].setAttribute('data-count', statusCounts[status]);
+        }
+    });
 }
 
 /**

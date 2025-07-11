@@ -55,6 +55,16 @@ async function loadUserEntries() {
     
     renderUserEntries(entries);
     
+    // Initialize advanced filters after entries are loaded
+    if (typeof initializeAdvancedFilters === 'function') {
+      initializeAdvancedFilters();
+    }
+    
+    // Trigger entriesLoaded event for any listeners
+    if (typeof window.dispatchEvent === 'function') {
+      window.dispatchEvent(new CustomEvent('entriesLoaded', { detail: { entries } }));
+    }
+    
   } catch (error) {
     console.error("Fehler beim Laden der User-Drucke:", error);
     document.getElementById("userEntriesTable").innerHTML = '<p>Fehler beim Laden der Drucke.</p>';
@@ -98,6 +108,112 @@ async function loadAdminStats() {
   }
 }
 
+// Asset-Statistiken laden
+async function loadAssetStats() {
+  try {
+    console.log('🔄 Loading asset statistics...');
+    
+    // Drucker-Statistiken
+    const printersSnapshot = await window.db.collection('printers').get();
+    let totalPrinters = 0;
+    let activePrinters = 0;
+    
+    printersSnapshot.forEach(doc => {
+      const printer = doc.data();
+      totalPrinters++;
+      if (printer.status === 'printing' || printer.status === 'available') {
+        activePrinters++;
+      }
+    });
+    
+    // Reservierungs-Statistiken
+    const reservationsSnapshot = await window.db.collection('reservations')
+      .where('status', '==', 'pending')
+      .get();
+    const pendingReservations = reservationsSnapshot.size;
+    
+    // Equipment-Anfragen-Statistiken
+    const requestsSnapshot = await window.db.collection('equipmentRequests')
+      .where('status', '==', 'pending')
+      .get();
+    const pendingRequests = requestsSnapshot.size;
+    
+    // Stats anzeigen
+    const totalPrintersElement = document.getElementById('totalPrinters');
+    const activePrintersElement = document.getElementById('activePrinters');
+    const pendingReservationsElement = document.getElementById('pendingReservations');
+    const pendingRequestsElement = document.getElementById('pendingRequests');
+    
+    if (totalPrintersElement) totalPrintersElement.textContent = totalPrinters;
+    if (activePrintersElement) activePrintersElement.textContent = activePrinters;
+    if (pendingReservationsElement) pendingReservationsElement.textContent = pendingReservations;
+    if (pendingRequestsElement) pendingRequestsElement.textContent = pendingRequests;
+    
+    console.log('✅ Asset statistics loaded successfully');
+    
+  } catch (error) {
+    console.error('❌ Fehler beim Laden der Asset-Stats:', error);
+    
+    // Fallback-Werte setzen
+    const fallbackElements = ['totalPrinters', 'activePrinters', 'pendingReservations', 'pendingRequests'];
+    fallbackElements.forEach(id => {
+      const element = document.getElementById(id);
+      if (element) element.textContent = '0';
+    });
+  }
+}
+
+// User Management Statistiken laden
+async function loadUserManagementStats() {
+  try {
+    console.log('🔄 Loading user management statistics...');
+    
+    // Alle Einträge laden um Nutzer zu zählen
+    const entriesSnapshot = await window.db.collection('entries').get();
+    const users = new Set();
+    const activeUsers = new Set();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    entriesSnapshot.forEach(doc => {
+      const entry = doc.data();
+      if (entry.name && entry.kennung) {
+        const userKey = `${entry.name}_${entry.kennung}`;
+        users.add(userKey);
+        
+        // Prüfe ob in den letzten 30 Tagen aktiv
+        if (entry.timestamp && entry.timestamp.toDate() > thirtyDaysAgo) {
+          activeUsers.add(userKey);
+        }
+      }
+    });
+    
+    // Admin-Benutzer zählen (vereinfacht - nur ein Admin im System)
+    const adminUsers = 1;
+    
+    // Stats anzeigen
+    const totalUsersElement = document.getElementById('totalUsers');
+    const activeUsersElement = document.getElementById('activeUsers');
+    const adminUsersElement = document.getElementById('adminUsers');
+    
+    if (totalUsersElement) totalUsersElement.textContent = users.size;
+    if (activeUsersElement) activeUsersElement.textContent = activeUsers.size;
+    if (adminUsersElement) adminUsersElement.textContent = adminUsers;
+    
+    console.log('✅ User management statistics loaded successfully');
+    
+  } catch (error) {
+    console.error('❌ Fehler beim Laden der User Management Stats:', error);
+    
+    // Fallback-Werte setzen
+    const fallbackElements = ['totalUsers', 'activeUsers', 'adminUsers'];
+    fallbackElements.forEach(id => {
+      const element = document.getElementById(id);
+      if (element) element.textContent = '0';
+    });
+  }
+}
+
 // Alle Drucke für Admin laden
 async function loadAllEntries() {
   try {
@@ -118,6 +234,16 @@ async function loadAllEntries() {
     window.allAdminEntries = entries;
     
     renderAdminEntries(entries);
+    
+    // Initialize advanced filters after entries are loaded
+    if (typeof initializeAdvancedFilters === 'function') {
+      initializeAdvancedFilters();
+    }
+    
+    // Trigger entriesLoaded event for any listeners
+    if (typeof window.dispatchEvent === 'function') {
+      window.dispatchEvent(new CustomEvent('entriesLoaded', { detail: { entries } }));
+    }
     
   } catch (error) {
     console.error('Fehler beim Laden der Admin-Drucke:', error);
