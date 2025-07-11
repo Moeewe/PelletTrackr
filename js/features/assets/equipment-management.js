@@ -54,11 +54,25 @@ async function loadEquipment() {
 function showEquipmentCategory(category) {
     currentEquipmentCategory = category;
     
-    // Update tab buttons
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    event?.target?.classList.add('active');
+    // Update tab buttons - search within equipment modal only
+    const equipmentModal = document.getElementById('equipmentModal');
+    if (equipmentModal) {
+        equipmentModal.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Find the clicked tab button or set first one as active
+        const clickedBtn = event?.target;
+        if (clickedBtn && clickedBtn.classList.contains('tab-btn')) {
+            clickedBtn.classList.add('active');
+        } else {
+            // Set the tab for the current category as active
+            const categoryTab = equipmentModal.querySelector(`.tab-btn[onclick*="${category}"]`);
+            if (categoryTab) {
+                categoryTab.classList.add('active');
+            }
+        }
+    }
     
     // Filter equipment by category
     const categoryEquipment = equipment.filter(item => item.category === category);
@@ -121,29 +135,153 @@ function getEquipmentStatusText(status) {
 }
 
 /**
- * Show add equipment form (placeholder)
+ * Show add equipment form
  */
 function showAddEquipmentForm() {
-    showToast('Equipment-Formular wird noch implementiert', 'info');
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Equipment hinzufügen</h3>
+                <button class="modal-close" onclick="closeAddEquipmentForm()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="equipmentForm" class="form">
+                    <div class="form-group">
+                        <label class="form-label">Name</label>
+                        <input type="text" id="equipmentName" class="form-input" placeholder="z.B. Schlüssel Labor 1, Zangensatz, etc.">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Kategorie</label>
+                        <select id="equipmentCategory" class="form-select">
+                            <option value="keys">Schlüssel</option>
+                            <option value="tools">Werkzeuge</option>
+                            <option value="accessories">Zubehör</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Beschreibung</label>
+                        <textarea id="equipmentDescription" class="form-textarea" placeholder="Beschreibung des Equipment..." rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select id="equipmentStatus" class="form-select">
+                            <option value="available">Verfügbar</option>
+                            <option value="maintenance">Wartung</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeAddEquipmentForm()">Abbrechen</button>
+                        <button type="button" class="btn btn-primary" onclick="saveEquipment()">Speichern</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    modal.id = 'addEquipmentModal';
+    
+    // Set default category
+    document.getElementById('equipmentCategory').value = currentEquipmentCategory;
 }
 
 /**
- * Edit equipment (placeholder)
+ * Close add equipment form
+ */
+function closeAddEquipmentForm() {
+    const modal = document.getElementById('addEquipmentModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+/**
+ * Save equipment
+ */
+async function saveEquipment() {
+    const formData = {
+        name: document.getElementById('equipmentName').value.trim(),
+        category: document.getElementById('equipmentCategory').value,
+        description: document.getElementById('equipmentDescription').value.trim(),
+        status: document.getElementById('equipmentStatus').value
+    };
+    
+    if (!formData.name) {
+        showToast('Bitte geben Sie einen Namen ein', 'error');
+        return;
+    }
+    
+    try {
+        await window.db.collection('equipment').add({
+            ...formData,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        showToast('Equipment erfolgreich hinzugefügt', 'success');
+        closeAddEquipmentForm();
+        await loadEquipment(); // Reload to show new equipment immediately
+        
+    } catch (error) {
+        console.error('Error saving equipment:', error);
+        showToast('Fehler beim Speichern', 'error');
+    }
+}
+
+/**
+ * Edit equipment
  */
 function editEquipment(equipmentId) {
-    showToast('Equipment-Bearbeitung wird noch implementiert', 'info');
+    showToast('Equipment-Bearbeitung wird in einer späteren Version implementiert', 'info');
 }
 
 /**
- * Borrow equipment (placeholder)
+ * Borrow equipment
  */
-function borrowEquipment(equipmentId) {
-    showToast('Ausleih-System wird noch implementiert', 'info');
+async function borrowEquipment(equipmentId) {
+    const userName = prompt('Name des Entleihers:');
+    if (!userName) return;
+    
+    try {
+        await window.db.collection('equipment').doc(equipmentId).update({
+            status: 'borrowed',
+            borrowedBy: userName,
+            borrowedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        showToast(`Equipment erfolgreich an ${userName} ausgeliehen`, 'success');
+        await loadEquipment(); // Reload to show updated status
+        
+    } catch (error) {
+        console.error('Error borrowing equipment:', error);
+        showToast('Fehler beim Ausleihen', 'error');
+    }
 }
 
 /**
- * Return equipment (placeholder)
+ * Return equipment
  */
-function returnEquipment(equipmentId) {
-    showToast('Rückgabe-System wird noch implementiert', 'info');
+async function returnEquipment(equipmentId) {
+    if (!confirm('Equipment als zurückgegeben markieren?')) return;
+    
+    try {
+        await window.db.collection('equipment').doc(equipmentId).update({
+            status: 'available',
+            borrowedBy: firebase.firestore.FieldValue.delete(),
+            borrowedAt: firebase.firestore.FieldValue.delete(),
+            returnedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        showToast('Equipment erfolgreich zurückgegeben', 'success');
+        await loadEquipment(); // Reload to show updated status
+        
+    } catch (error) {
+        console.error('Error returning equipment:', error);
+        showToast('Fehler bei der Rückgabe', 'error');
+    }
 } 

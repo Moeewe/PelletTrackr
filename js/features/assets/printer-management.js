@@ -6,6 +6,7 @@
 // Global printer management state
 let printers = [];
 let currentEditingPrinter = null;
+let printersListener = null;
 
 /**
  * Initialize printer management system
@@ -15,7 +16,32 @@ function initializePrinterManagement() {
 }
 
 /**
- * Load printers from Firebase
+ * Setup real-time listener for printers
+ */
+function setupPrintersListener() {
+    if (printersListener) {
+        printersListener();
+    }
+    
+    printersListener = window.db.collection('printers').onSnapshot((snapshot) => {
+        printers = [];
+        snapshot.forEach((doc) => {
+            printers.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+        
+        console.log('Live update: Loaded printers:', printers.length);
+        renderPrinterGrid();
+    }, (error) => {
+        console.error('Error in printers listener:', error);
+        showToast('Fehler beim Live-Update der Drucker', 'error');
+    });
+}
+
+/**
+ * Load printers from Firebase (fallback)
  */
 async function loadPrinters() {
     try {
@@ -42,9 +68,9 @@ async function loadPrinters() {
 function showPrinterManager() {
     document.getElementById('overlay').style.display = 'block';
     document.getElementById('printerManagerModal').style.display = 'block';
-    loadPrinters().then(() => {
-        renderPrinterGrid();
-    });
+    
+    // Setup real-time listener
+    setupPrintersListener();
 }
 
 /**
@@ -53,6 +79,12 @@ function showPrinterManager() {
 function closePrinterManager() {
     document.getElementById('overlay').style.display = 'none';
     document.getElementById('printerManagerModal').style.display = 'none';
+    
+    // Clean up real-time listener
+    if (printersListener) {
+        printersListener();
+        printersListener = null;
+    }
 }
 
 /**
@@ -207,8 +239,7 @@ async function savePrinter() {
         }
         
         closePrinterForm();
-        await loadPrinters();
-        renderPrinterGrid();
+        // Real-time listener will automatically update the UI
         
     } catch (error) {
         console.error('Error saving printer:', error);
@@ -241,8 +272,7 @@ async function changePrinterStatus(printerId) {
         });
         
         showToast(`Status auf "${statusOptions[nextIndex].label}" geändert`, 'success');
-        await loadPrinters();
-        renderPrinterGrid();
+        // Real-time listener will automatically update the UI
         
     } catch (error) {
         console.error('Error updating printer status:', error);
@@ -264,8 +294,7 @@ async function deletePrinter(printerId) {
     try {
         await window.db.collection('printers').doc(printerId).delete();
         showToast('Drucker erfolgreich gelöscht', 'success');
-        await loadPrinters();
-        renderPrinterGrid();
+        // Real-time listener will automatically update the UI
         
     } catch (error) {
         console.error('Error deleting printer:', error);

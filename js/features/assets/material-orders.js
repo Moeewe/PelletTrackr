@@ -6,6 +6,7 @@
 // Global order state
 let materialOrders = [];
 let currentOrderTab = 'requests';
+let materialOrdersListener = null;
 
 /**
  * Show material request form for users
@@ -117,7 +118,9 @@ async function submitMaterialRequest() {
 function showMaterialOrders() {
     document.getElementById('overlay').style.display = 'block';
     document.getElementById('materialOrdersModal').style.display = 'block';
-    loadMaterialOrders();
+    
+    // Setup real-time listener
+    setupMaterialOrdersListener();
 }
 
 /**
@@ -126,10 +129,42 @@ function showMaterialOrders() {
 function closeMaterialOrders() {
     document.getElementById('overlay').style.display = 'none';
     document.getElementById('materialOrdersModal').style.display = 'none';
+    
+    // Clean up real-time listener
+    if (materialOrdersListener) {
+        materialOrdersListener();
+        materialOrdersListener = null;
+    }
 }
 
 /**
- * Load material orders from Firebase
+ * Setup real-time listener for material orders
+ */
+function setupMaterialOrdersListener() {
+    if (materialOrdersListener) {
+        materialOrdersListener();
+    }
+    
+    materialOrdersListener = window.db.collection('materialOrders').onSnapshot((snapshot) => {
+        materialOrders = [];
+        snapshot.forEach((doc) => {
+            materialOrders.push({
+                id: doc.id,
+                ...doc.data(),
+                createdAt: doc.data().createdAt?.toDate()
+            });
+        });
+        
+        console.log('Live update: Loaded material orders:', materialOrders.length);
+        showOrderTab(currentOrderTab);
+    }, (error) => {
+        console.error('Error in material orders listener:', error);
+        showToast('Fehler beim Live-Update der Bestellungen', 'error');
+    });
+}
+
+/**
+ * Load material orders from Firebase (fallback)
  */
 async function loadMaterialOrders() {
     try {
@@ -159,22 +194,36 @@ async function loadMaterialOrders() {
 function showOrderTab(tab) {
     currentOrderTab = tab;
     
-    // Update tab buttons
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    event?.target?.classList.add('active');
-    
-    // Hide all tab content
-    document.querySelectorAll('.order-tab-content').forEach(content => {
-        content.classList.remove('active');
-    });
-    
-    // Show selected tab
-    const tabContent = document.getElementById(getTabContentId(tab));
-    if (tabContent) {
-        tabContent.classList.add('active');
-        renderTabContent(tab);
+    // Update tab buttons - search within material orders modal only
+    const materialOrdersModal = document.getElementById('materialOrdersModal');
+    if (materialOrdersModal) {
+        materialOrdersModal.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Find the clicked tab button or set first one as active
+        const clickedBtn = event?.target;
+        if (clickedBtn && clickedBtn.classList.contains('tab-btn')) {
+            clickedBtn.classList.add('active');
+        } else {
+            // Set the tab for the current content as active
+            const activeTab = materialOrdersModal.querySelector(`.tab-btn[onclick*="${tab}"]`);
+            if (activeTab) {
+                activeTab.classList.add('active');
+            }
+        }
+        
+        // Hide all tab content
+        materialOrdersModal.querySelectorAll('.order-tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        
+        // Show selected tab
+        const tabContent = document.getElementById(getTabContentId(tab));
+        if (tabContent) {
+            tabContent.classList.add('active');
+            renderTabContent(tab);
+        }
     }
 }
 
@@ -238,8 +287,14 @@ function renderOrderRequests() {
                 <div class="order-actions">
                     <button class="btn btn-success" onclick="approveOrderRequest('${request.id}')">Genehmigen</button>
                     <button class="btn btn-danger" onclick="rejectOrderRequest('${request.id}')">Ablehnen</button>
+                    <button class="btn btn-secondary" onclick="deleteOrderRequest('${request.id}')">Löschen</button>
                 </div>
-            ` : `<div class="order-status">Status: ${getStatusText(request.status)}</div>`}
+            ` : `
+                <div class="order-status">Status: ${getStatusText(request.status)}</div>
+                <div class="order-actions">
+                    <button class="btn btn-danger" onclick="deleteOrderRequest('${request.id}')">Löschen</button>
+                </div>
+            `}
         </div>
     `).join('');
 }
@@ -324,8 +379,7 @@ async function approveOrderRequest(requestId) {
         });
         
         showToast('Anfrage genehmigt', 'success');
-        await loadMaterialOrders();
-        renderOrderRequests();
+        // Real-time listener will automatically update the UI
         
     } catch (error) {
         console.error('Error approving request:', error);
@@ -347,11 +401,29 @@ async function rejectOrderRequest(requestId) {
         });
         
         showToast('Anfrage abgelehnt', 'success');
-        await loadMaterialOrders();
-        renderOrderRequests();
+        // Real-time listener will automatically update the UI
         
     } catch (error) {
         console.error('Error rejecting request:', error);
         showToast('Fehler beim Ablehnen', 'error');
+    }
+}
+
+/**
+ * Delete order request permanently
+ */
+async function deleteOrderRequest(requestId) {
+    if (!confirm('Möchten Sie diese Bestellung wirklich dauerhaft löschen?')) {
+        return;
+    }
+    
+    try {
+        await window.db.collection('materialOrders').doc(requestId).delete();
+        showToast('Bestellung erfolgreich gelöscht', 'success');
+        // Real-time listener will automatically update the UI
+        
+    } catch (error) {
+        console.error('Error deleting request:', error);
+        showToast('Fehler beim Löschen', 'error');
     }
 } 
