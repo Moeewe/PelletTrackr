@@ -1,6 +1,40 @@
 // ==================== NAVIGATION MODULE ====================
 // Screen-Management und Event-Listener Setup
 
+/**
+ * Navigate to appropriate home screen based on user type
+ */
+function navigateToHome() {
+    try {
+        if (!window.currentUser) {
+            // Not logged in - go to login
+            showScreen('loginScreen');
+            console.log("🏠 Navigated to login (no user)");
+            return;
+        }
+        
+        if (window.currentUser.isAdmin) {
+            // Admin user - go to admin dashboard
+            showScreen('adminDashboard');
+            console.log("🏠 Navigated to admin dashboard");
+        } else {
+            // Regular user - go to user dashboard
+            showScreen('userDashboard');
+            console.log("🏠 Navigated to user dashboard");
+        }
+        
+        // Trigger haptic feedback on mobile
+        if (window.mobileEnhancements) {
+            window.mobileEnhancements.triggerHapticFeedback('light');
+        }
+        
+    } catch (error) {
+        console.error("❌ Error in home navigation:", error);
+        // Fallback to login screen
+        showScreen('loginScreen');
+    }
+}
+
 function showScreen(screenId) {
   try {
     if (!screenId || typeof screenId !== 'string') {

@@ -12,6 +12,20 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- Top App Bar -->
+    <div class="app-bar">
+        <div class="app-bar-content">
+            <div class="app-title-section">
+                <h1 class="app-title" onclick="navigateToHome()" style="cursor: pointer;" title="Zur Hauptseite">
+                    PelletTracker
+                </h1>
+                <div class="user-info" id="userInfo">
+                    <!-- Wird von auth.js befüllt -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Login Screen -->
     <div id="loginScreen" class="screen active">
         <div class="login-container">
@@ -458,106 +472,120 @@
     <!-- Admin Assets Screen -->
     <div id="adminAssets" class="screen">
         <div class="container">
-            <!-- Header -->
-            <div class="screen-header">
-                <h1>Asset Management</h1>
-                <p>Drucker, Reservierungen, Equipment und Material-Bestellungen verwalten</p>
+            <!-- Navigation Header -->
+            <div class="app-header">
+                <div class="header-left">
+                    <button class="btn btn-secondary" onclick="showScreen('adminDashboard')" title="Zurück zum Admin Dashboard">
+                        ← Zurück
+                    </button>
+                </div>
+                <div class="header-center">
+                    <h1 class="header-title">Asset Management</h1>
+                </div>
+                <div class="header-right">
+                    <!-- Space for future actions -->
+                </div>
             </div>
 
-            <!-- Asset Management Dashboard -->
-            <div class="assets-dashboard">
-                <!-- Quick Stats -->
-                <div class="assets-stats">
-                    <div class="stat-card">
-                        <div class="stat-number" id="totalPrinters">0</div>
-                        <div class="stat-label">Drucker</div>
-                        <div class="stat-description">Gesamt verfügbar</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="activePrinters">0</div>
-                        <div class="stat-label">Aktiv</div>
-                        <div class="stat-description">In Betrieb</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="pendingReservations">0</div>
-                        <div class="stat-label">Reservierungen</div>
-                        <div class="stat-description">Ausstehend</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="pendingRequests">0</div>
-                        <div class="stat-label">Anfragen</div>
-                        <div class="stat-description">Zu bearbeiten</div>
-                    </div>
-                </div>
+            <!-- Content -->
+            <div class="screen-content">
+                <p class="screen-subtitle">Drucker, Reservierungen, Equipment und Material-Bestellungen verwalten</p>
 
-                <!-- Asset Management Sections -->
-                <div class="asset-sections">
-                    <!-- Printer Management -->
-                    <div class="asset-section">
-                        <h2 class="section-title">Drucker-Verwaltung</h2>
-                        <div class="section-buttons">
-                            <button class="btn btn-primary" onclick="showPrinterManager()">
-                                <span>Drucker verwalten</span>
-                                <small>Status, Wartung, Konfiguration</small>
-                            </button>
-                            <button class="btn btn-secondary" onclick="showReservationCalendar()">
-                                <span>Reservierungen</span>
-                                <small>Kalender und Buchungen</small>
-                            </button>
+                <!-- Asset Management Dashboard -->
+                <div class="assets-dashboard">
+                    <!-- Quick Stats -->
+                    <div class="assets-stats">
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalPrinters">0</div>
+                            <div class="stat-label">Drucker</div>
+                            <div class="stat-description">Gesamt verfügbar</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="activePrinters">0</div>
+                            <div class="stat-label">Aktiv</div>
+                            <div class="stat-description">In Betrieb</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="pendingReservations">0</div>
+                            <div class="stat-label">Reservierungen</div>
+                            <div class="stat-description">Ausstehend</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="pendingRequests">0</div>
+                            <div class="stat-label">Anfragen</div>
+                            <div class="stat-description">Zu bearbeiten</div>
                         </div>
                     </div>
 
-                    <!-- Equipment Management -->
-                    <div class="asset-section">
-                        <h2 class="section-title">Equipment & Ausleih</h2>
-                        <div class="section-buttons">
-                            <button class="btn btn-primary" onclick="showEquipmentManager()">
-                                <span>Ausleih-System</span>
-                                <small>Schlüssel, Werkzeuge, Zubehör</small>
-                            </button>
-                            <button class="btn btn-secondary" onclick="showEquipmentRequests()">
-                                <span>Ausleih-Anfragen</span>
-                                <small>Bearbeitung ausstehender Anfragen</small>
-                            </button>
+                    <!-- Asset Management Sections -->
+                    <div class="asset-sections">
+                        <!-- Printer Management -->
+                        <div class="asset-section">
+                            <h2 class="section-title">Drucker-Verwaltung</h2>
+                            <div class="section-buttons">
+                                <button class="btn btn-primary" onclick="showPrinterManager()">
+                                    <span>Drucker verwalten</span>
+                                    <small>Status, Wartung, Konfiguration</small>
+                                </button>
+                                <button class="btn btn-secondary" onclick="showReservationCalendar()">
+                                    <span>Reservierungen</span>
+                                    <small>Kalender und Buchungen</small>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Equipment Management -->
+                        <div class="asset-section">
+                            <h2 class="section-title">Equipment & Ausleih</h2>
+                            <div class="section-buttons">
+                                <button class="btn btn-primary" onclick="showEquipmentManager()">
+                                    <span>Ausleih-System</span>
+                                    <small>Schlüssel, Werkzeuge, Zubehör</small>
+                                </button>
+                                <button class="btn btn-secondary" onclick="showEquipmentRequests()">
+                                    <span>Ausleih-Anfragen</span>
+                                    <small>Bearbeitung ausstehender Anfragen</small>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Material Management -->
+                        <div class="asset-section">
+                            <h2 class="section-title">Material-Bestellungen</h2>
+                            <div class="section-buttons">
+                                <button class="btn btn-primary" onclick="showMaterialOrders()">
+                                    <span>Material-Bestellungen</span>
+                                    <small>Anfragen, Einkaufsliste, Bestellungen</small>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Problem Reports -->
+                        <div class="asset-section">
+                            <h2 class="section-title">Problem-Management</h2>
+                            <div class="section-buttons">
+                                <button class="btn btn-warning" onclick="showProblemReports()">
+                                    <span>Problem-Meldungen</span>
+                                    <small>Defekte und Störungen bearbeiten</small>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Material Management -->
-                    <div class="asset-section">
-                        <h2 class="section-title">Material-Bestellungen</h2>
-                        <div class="section-buttons">
-                            <button class="btn btn-primary" onclick="showMaterialOrders()">
-                                <span>Material-Bestellungen</span>
-                                <small>Anfragen, Einkaufsliste, Bestellungen</small>
+                    <!-- Quick Actions -->
+                    <div class="quick-actions">
+                        <h2 class="section-title">Schnellaktionen</h2>
+                        <div class="quick-action-buttons">
+                            <button class="btn btn-success" onclick="showNewReservationForm()">
+                                + Neue Reservierung
+                            </button>
+                            <button class="btn btn-info" onclick="showAddEquipmentForm()">
+                                + Equipment hinzufügen
+                            </button>
+                            <button class="btn btn-primary" onclick="showAddPrinterForm()">
+                                + Neuer Drucker
                             </button>
                         </div>
-                    </div>
-
-                    <!-- Problem Reports -->
-                    <div class="asset-section">
-                        <h2 class="section-title">Problem-Management</h2>
-                        <div class="section-buttons">
-                            <button class="btn btn-warning" onclick="showProblemReports()">
-                                <span>Problem-Meldungen</span>
-                                <small>Defekte und Störungen bearbeiten</small>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Actions -->
-                <div class="quick-actions">
-                    <h2 class="section-title">Schnellaktionen</h2>
-                    <div class="quick-action-buttons">
-                        <button class="btn btn-success" onclick="showNewReservationForm()">
-                            + Neue Reservierung
-                        </button>
-                        <button class="btn btn-info" onclick="showAddEquipmentForm()">
-                            + Equipment hinzufügen
-                        </button>
-                        <button class="btn btn-primary" onclick="showAddPrinterForm()">
-                            + Neuer Drucker
-                        </button>
                     </div>
                 </div>
             </div>
@@ -567,59 +595,73 @@
     <!-- User Manager Screen -->
     <div id="userManager" class="screen">
         <div class="container">
-            <!-- Header -->
-            <div class="screen-header">
-                <h1>Nutzer-Verwaltung</h1>
-                <p>Benutzerkonten und Zugriffsrechte verwalten</p>
+            <!-- Navigation Header -->
+            <div class="app-header">
+                <div class="header-left">
+                    <button class="btn btn-secondary" onclick="showScreen('adminDashboard')" title="Zurück zum Admin Dashboard">
+                        ← Zurück
+                    </button>
+                </div>
+                <div class="header-center">
+                    <h1 class="header-title">Nutzer-Verwaltung</h1>
+                </div>
+                <div class="header-right">
+                    <!-- Space for future actions -->
+                </div>
             </div>
 
-            <!-- User Management Content -->
-            <div class="user-management">
-                <!-- User Stats -->
-                <div class="user-stats">
-                    <div class="stat-card">
-                        <div class="stat-number" id="totalUsers">0</div>
-                        <div class="stat-label">Nutzer</div>
-                        <div class="stat-description">Gesamt registriert</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="activeUsers">0</div>
-                        <div class="stat-label">Aktiv</div>
-                        <div class="stat-description">Letzte 30 Tage</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="adminUsers">0</div>
-                        <div class="stat-label">Admins</div>
-                        <div class="stat-description">Administratoren</div>
-                    </div>
-                </div>
+            <!-- Content -->
+            <div class="screen-content">
+                <p class="screen-subtitle">Benutzerkonten und Zugriffsrechte verwalten</p>
 
-                <!-- User Management Controls -->
-                <div class="user-controls">
-                    <button class="btn btn-primary" onclick="showUserManager()">
-                        Nutzer verwalten
-                    </button>
-                    <button class="btn btn-secondary" onclick="showAddUserDialog()">
-                        Neuen Nutzer hinzufügen
-                    </button>
-                </div>
-
-                <!-- User Table Container -->
-                <div class="user-table-container">
-                    <div class="table-controls">
-                        <input type="text" id="userManagerSearchInput" placeholder="Suchen nach Name oder FH-Kennung..." class="search-input" onkeyup="searchUsers()">
-                        <select id="userManagerSortSelect" class="sort-select" onchange="sortUsers()">
-                            <option value="name-asc">Name (A-Z)</option>
-                            <option value="name-desc">Name (Z-A)</option>
-                            <option value="kennung-asc">Kennung (A-Z)</option>
-                            <option value="kennung-desc">Kennung (Z-A)</option>
-                            <option value="entries-desc">Meiste Drucke</option>
-                            <option value="entries-asc">Wenigste Drucke</option>
-                            <option value="revenue-desc">Höchster Umsatz</option>
-                            <option value="revenue-asc">Niedrigster Umsatz</option>
-                        </select>
+                <!-- User Management Content -->
+                <div class="user-management">
+                    <!-- User Stats -->
+                    <div class="user-stats">
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalUsers">0</div>
+                            <div class="stat-label">Nutzer</div>
+                            <div class="stat-description">Gesamt registriert</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="activeUsers">0</div>
+                            <div class="stat-label">Aktiv</div>
+                            <div class="stat-description">Letzte 30 Tage</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="adminUsers">0</div>
+                            <div class="stat-label">Admins</div>
+                            <div class="stat-description">Administratoren</div>
+                        </div>
                     </div>
-                    <div id="usersTable" class="data-table data-table-responsive"></div>
+
+                    <!-- User Management Controls -->
+                    <div class="user-controls">
+                                        <button class="btn btn-primary" onclick="showScreen('userManager')">
+                    Nutzer verwalten
+                </button>
+                        <button class="btn btn-secondary" onclick="showAddUserDialog()">
+                            Neuen Nutzer hinzufügen
+                        </button>
+                    </div>
+
+                    <!-- User Table Container -->
+                    <div class="user-table-container">
+                        <div class="table-controls">
+                            <input type="text" id="userManagerSearchInput" placeholder="Suchen nach Name oder FH-Kennung..." class="search-input" onkeyup="searchUsers()">
+                            <select id="userManagerSortSelect" class="sort-select" onchange="sortUsers()">
+                                <option value="name-asc">Name (A-Z)</option>
+                                <option value="name-desc">Name (Z-A)</option>
+                                <option value="kennung-asc">Kennung (A-Z)</option>
+                                <option value="kennung-desc">Kennung (Z-A)</option>
+                                <option value="entries-desc">Meiste Drucke</option>
+                                <option value="entries-asc">Wenigste Drucke</option>
+                                <option value="revenue-desc">Höchster Umsatz</option>
+                                <option value="revenue-asc">Niedrigster Umsatz</option>
+                            </select>
+                        </div>
+                        <div id="usersTable" class="data-table data-table-responsive"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -687,37 +729,7 @@
         </div>
     </div>
 
-    <!-- User Manager Modal -->
-    <div id="userManager" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Nutzer verwalten</h3>
-                <button class="close-btn" onclick="closeUserManager()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="table-controls">
-                    <input type="text" id="userManagerSearchInput" placeholder="Suchen nach Name oder FH-Kennung..." class="search-input" onkeyup="searchUsers()">
-                    <select id="userManagerSortSelect" class="sort-select" onchange="sortUsers()">
-                        <option value="name-asc">Name (A-Z)</option>
-                        <option value="name-desc">Name (Z-A)</option>
-                        <option value="kennung-asc">Kennung (A-Z)</option>
-                        <option value="kennung-desc">Kennung (Z-A)</option>
-                        <option value="entries-desc">Meiste Drucke</option>
-                        <option value="entries-asc">Wenigste Drucke</option>
-                        <option value="revenue-desc">Höchster Umsatz</option>
-                        <option value="revenue-asc">Niedrigster Umsatz</option>
-                    </select>
-                </div>
-                <div class="users-container">
-                    <div id="usersTable" class="data-table data-table-responsive"></div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary" onclick="showAddUserDialog()">Neuen Nutzer hinzufügen</button>
-                <button class="btn btn-secondary" onclick="closeUserManager()">Schließen</button>
-            </div>
-        </div>
-    </div>
+
         </div>
     </div>
 
