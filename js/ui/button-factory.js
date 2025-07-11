@@ -104,7 +104,9 @@ const ButtonFactory = {
   
   userDetails: (kennung) => createButton('DETAILS', `showUserDetails('${kennung}')`),
   
-  sendReminder: (kennung) => createButton('REMINDER', `sendPaymentReminder('${kennung}')`),
+  sendReminder: (kennung) => createButton('REMINDER', `sendPaymentReminder('${kennung}')`, { text: 'Erinnerung' }),
+  
+  sendUrgentReminder: (kennung) => createButton('DELETE', `sendUrgentReminder('${kennung}')`, { text: 'Dringende Mahnung' }),
   
   // Material Management Buttons
   editMaterial: (materialId) => createButton('EDIT', `editMaterial('${materialId}')`),

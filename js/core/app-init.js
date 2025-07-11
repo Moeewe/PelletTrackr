@@ -54,8 +54,14 @@ async function testFirebaseConnection() {
     
     return true;
   } catch (error) {
-    console.error("❌ Firebase-Verbindung fehlgeschlagen:", error);
-    alert("Datenbankverbindung fehlgeschlagen!\n\nBitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.");
+    console.error("Datenbankverbindung fehlgeschlagen:", error);
+    document.getElementById('loadingIndicator').style.display = 'none';
+    
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error("Datenbankverbindung fehlgeschlagen!\n\nBitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.");
+    } else {
+      alert("Datenbankverbindung fehlgeschlagen!\n\nBitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.");
+    }
     return false;
   }
 }

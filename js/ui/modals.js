@@ -152,7 +152,11 @@ async function viewEntryDetails(entryId) {
     
   } catch (error) {
     console.error("Fehler beim Laden der Druck-Details:", error);
-    alert("Fehler beim Laden der Details!");
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error("Fehler beim Laden der Details!");
+    } else {
+      alert("Fehler beim Laden der Details!");
+    }
   }
 }
 
@@ -246,7 +250,11 @@ async function saveUserEntryChanges(entryId) {
   const jobNotes = document.getElementById('editUserJobNotes').value.trim();
   
   if (!jobName) {
-    alert('Job-Name darf nicht leer sein!');
+    if (window.toast && typeof window.toast.warning === 'function') {
+      window.toast.warning('Job-Name darf nicht leer sein!');
+    } else {
+      alert('Job-Name darf nicht leer sein!');
+    }
     return;
   }
   
@@ -257,7 +265,11 @@ async function saveUserEntryChanges(entryId) {
       updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
     });
     
-    alert('Eintrag erfolgreich aktualisiert!');
+    if (window.toast && typeof window.toast.success === 'function') {
+      window.toast.success('Eintrag erfolgreich aktualisiert!');
+    } else {
+      alert('Eintrag erfolgreich aktualisiert!');
+    }
     closeModal();
     
     // User Dashboard aktualisieren
@@ -265,7 +277,11 @@ async function saveUserEntryChanges(entryId) {
     
   } catch (error) {
     console.error('Fehler beim Aktualisieren des Eintrags:', error);
-    alert('Fehler beim Speichern: ' + error.message);
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Fehler beim Speichern: ' + error.message);
+    } else {
+      alert('Fehler beim Speichern: ' + error.message);
+    }
   }
 }
 
@@ -275,7 +291,11 @@ async function editEntry(entryId) {
   try {
     const doc = await window.db.collection('entries').doc(entryId).get();
     if (!doc.exists) {
-      alert('Druck nicht gefunden!');
+      if (window.toast && typeof window.toast.error === 'function') {
+        window.toast.error('Druck nicht gefunden!');
+      } else {
+        alert('Druck nicht gefunden!');
+      }
       return;
     }
     
@@ -347,17 +367,29 @@ async function saveEntryChanges(entryId) {
   const jobNotes = document.getElementById('editJobNotes').value.trim();
   
   if (!jobName) {
-    alert('Job-Name darf nicht leer sein!');
+    if (window.toast && typeof window.toast.warning === 'function') {
+      window.toast.warning('Job-Name darf nicht leer sein!');
+    } else {
+      alert('Job-Name darf nicht leer sein!');
+    }
     return;
   }
   
   if (isNaN(materialMenge) || materialMenge < 0) {
-    alert('Bitte gültige Material-Menge eingeben!');
+    if (window.toast && typeof window.toast.warning === 'function') {
+      window.toast.warning('Bitte gültige Material-Menge eingeben!');
+    } else {
+      alert('Bitte gültige Material-Menge eingeben!');
+    }
     return;
   }
   
   if (isNaN(masterbatchMenge) || masterbatchMenge < 0) {
-    alert('Bitte gültige Masterbatch-Menge eingeben!');
+    if (window.toast && typeof window.toast.warning === 'function') {
+      window.toast.warning('Bitte gültige Masterbatch-Menge eingeben!');
+    } else {
+      alert('Bitte gültige Masterbatch-Menge eingeben!');
+    }
     return;
   }
   

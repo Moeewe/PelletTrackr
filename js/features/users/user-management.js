@@ -134,8 +134,8 @@ function renderUsersTable(users) {
         <td class="actions">
           <div class="entry-actions">
             ${ButtonFactory.editUser(user.kennung)}
-            ${ButtonFactory.userDetails(user.kennung)}
-            ${ButtonFactory.sendReminder(user.kennung)}
+            ${user.unpaidAmount > 0 ? ButtonFactory.sendReminder(user.kennung) : ''}
+            ${user.unpaidAmount > 0 ? ButtonFactory.sendUrgentReminder(user.kennung) : ''}
             ${ButtonFactory.deleteUser(user.kennung)}
           </div>
         </td>
@@ -210,8 +210,8 @@ function renderUsersTable(users) {
         <!-- Card Footer mit Admin-Buttons -->
         <div class="entry-card-footer">
           ${ButtonFactory.editUser(user.kennung)}
-          ${ButtonFactory.userDetails(user.kennung)}
-          ${ButtonFactory.sendReminder(user.kennung)}
+          ${user.unpaidAmount > 0 ? ButtonFactory.sendReminder(user.kennung) : ''}
+          ${user.unpaidAmount > 0 ? ButtonFactory.sendUrgentReminder(user.kennung) : ''}
           ${ButtonFactory.deleteUser(user.kennung)}
         </div>
       </div>
@@ -390,29 +390,179 @@ function sendPaymentReminder(kennung) {
     return;
   }
   
-  const subject = encodeURIComponent(`Zahlungserinnerung FGF 3D-Druck - ${user.name}`);
+  const subject = encodeURIComponent(`🔔 Zahlungserinnerung - FGF 3D-Druck Service | ${user.name}`);
   const openEntries = user.entries.filter(e => !(e.paid || e.isPaid));
+  const currentDate = new Date().toLocaleDateString('de-DE');
   
-  const body = encodeURIComponent(`Hallo ${user.name},
+  // Professionelle E-Mail Vorlage im Zahlungsnachweis-Stil
+  const body = encodeURIComponent(`Sehr geehrte/r ${user.name},
 
-hiermit möchten wir Sie freundlich an die offenen Beträge für Ihre 3D-Drucke erinnern:
+═════════════════════════════════════════════════════════
+               🟨 PelletTrackr - ZAHLUNGSERINNERUNG 🟨
+═════════════════════════════════════════════════════════
 
-OFFENE DRUCKE:
-${openEntries.map(entry => 
-  `- ${entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt'}: ${entry.jobName || '3D-Druck'} - ${window.formatCurrency(entry.totalCost)}`
-).join('\n')}
+Datum: ${currentDate}
+FH-Kennung: ${user.kennung}
+E-Mail: ${user.email || `${user.kennung}@fh-muenster.de`}
 
-GESAMTBETRAG: ${window.formatCurrency(user.unpaidAmount)}
+─────────────────────────────────────────────────────────
+📋 OFFENE DRUCKAUFTRÄGE
+─────────────────────────────────────────────────────────
 
-Bitte überweisen Sie den Betrag zeitnah oder melden Sie sich bei Fragen.
-
-Mit freundlichen Grüßen
-Ihr FGF 3D-Druck Team
-
----
-Diese E-Mail wurde automatisch generiert von PelletTrackr.`);
+${openEntries.map((entry, index) => {
+  const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
+  const jobName = entry.jobName || '3D-Druck Auftrag';
+  const material = entry.material || 'Material';
+  const amount = entry.materialMenge ? `${entry.materialMenge.toFixed(2)} kg` : 'N/A';
   
-  const mailtoLink = `mailto:${user.kennung}@fh-muenster.de?subject=${subject}&body=${body}`;
+  return `${index + 1}. ${jobName}
+   Datum: ${date}
+   Material: ${material} (${amount})
+   Betrag: ${window.formatCurrency(entry.totalCost)}`;
+}).join('\n\n')}
+
+─────────────────────────────────────────────────────────
+💰 ZUSAMMENFASSUNG
+─────────────────────────────────────────────────────────
+
+Anzahl offener Drucke: ${openEntries.length}
+Bereits bezahlt: ${window.formatCurrency(user.paidAmount)}
+
+🟨 GESAMTBETRAG OFFEN: ${window.formatCurrency(user.unpaidAmount)} 🟨
+
+═════════════════════════════════════════════════════════
+📞 KONTAKT & INFORMATION
+═════════════════════════════════════════════════════════
+
+Bitte überweisen Sie den offenen Betrag zeitnah oder melden 
+Sie sich bei Fragen an das FGF Team.
+
+💡 Zahlungshinweis:
+Nach erfolgter Zahlung erhalten Sie automatisch einen 
+Zahlungsnachweis über das PelletTrackr System.
+
+─────────────────────────────────────────────────────────
+🏢 Mit freundlichen Grüßen
+FGF 3D-Druck Service Team
+Fachhochschule Münster
+
+🤖 Diese E-Mail wurde automatisch generiert von PelletTrackr
+   Generiert am: ${currentDate}
+═════════════════════════════════════════════════════════`);
+  
+  const email = user.email || `${user.kennung}@fh-muenster.de`;
+  const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
+  window.open(mailtoLink, '_blank');
+}
+
+function sendUrgentReminder(kennung) {
+  const user = window.allUsers.find(u => u.kennung === kennung);
+  if (!user) {
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Benutzer nicht gefunden!');
+    } else {
+      alert('Benutzer nicht gefunden!');
+    }
+    return;
+  }
+  
+  if (user.unpaidAmount <= 0) {
+    if (window.toast && typeof window.toast.info === 'function') {
+      window.toast.info('Dieser Benutzer hat keine offenen Beträge.');
+    } else {
+      alert('Dieser Benutzer hat keine offenen Beträge.');
+    }
+    return;
+  }
+  
+  const subject = encodeURIComponent(`🚨 DRINGENDE MAHNUNG - FGF 3D-Druck Service | ${user.name}`);
+  const openEntries = user.entries.filter(e => !(e.paid || e.isPaid));
+  const currentDate = new Date().toLocaleDateString('de-DE');
+  const oldestEntry = openEntries.reduce((oldest, entry) => {
+    const entryDate = entry.timestamp ? entry.timestamp.toDate() : new Date();
+    const oldestDate = oldest.timestamp ? oldest.timestamp.toDate() : new Date();
+    return entryDate < oldestDate ? entry : oldest;
+  }, openEntries[0]);
+  
+  const daysSinceOldest = oldestEntry ? Math.floor((new Date() - (oldestEntry.timestamp ? oldestEntry.timestamp.toDate() : new Date())) / (1000 * 60 * 60 * 24)) : 0;
+  
+  // Dringende Mahnung mit stärkerem Ton
+  const body = encodeURIComponent(`Sehr geehrte/r ${user.name},
+
+🚨═════════════════════════════════════════════════════════🚨
+                   DRINGENDE ZAHLUNGSMAHNUNG
+                    FGF 3D-Druck Service
+🚨═════════════════════════════════════════════════════════🚨
+
+⚠️  WICHTIGER HINWEIS: ZAHLUNGSRÜCKSTAND  ⚠️
+
+Datum: ${currentDate}
+FH-Kennung: ${user.kennung}
+E-Mail: ${user.email || `${user.kennung}@fh-muenster.de`}
+
+─────────────────────────────────────────────────────────
+⏰ ZAHLUNGSRÜCKSTAND INFORMATION
+─────────────────────────────────────────────────────────
+
+Ältester offener Eintrag: ${daysSinceOldest} Tage überfällig
+Erste Zahlungserinnerung: Bereits versendet
+
+📋 OFFENE DRUCKAUFTRÄGE (${openEntries.length} Stück):
+
+${openEntries.map((entry, index) => {
+  const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
+  const jobName = entry.jobName || '3D-Druck Auftrag';
+  const material = entry.material || 'Material';
+  const amount = entry.materialMenge ? `${entry.materialMenge.toFixed(2)} kg` : 'N/A';
+  const daysOld = entry.timestamp ? Math.floor((new Date() - entry.timestamp.toDate()) / (1000 * 60 * 60 * 24)) : 0;
+  
+  return `${index + 1}. ${jobName} (${daysOld} Tage alt)
+   📅 Datum: ${date}
+   🧱 Material: ${material} (${amount})
+   💰 Betrag: ${window.formatCurrency(entry.totalCost)}`;
+}).join('\n\n')}
+
+─────────────────────────────────────────────────────────
+💸 FINANZIELLE ZUSAMMENFASSUNG
+─────────────────────────────────────────────────────────
+
+Bereits bezahlt: ${window.formatCurrency(user.paidAmount)}
+Anzahl offener Drucke: ${openEntries.length}
+
+🚨 GESAMTBETRAG ÜBERFÄLLIG: ${window.formatCurrency(user.unpaidAmount)} 🚨
+
+═════════════════════════════════════════════════════════
+⚡ SOFORTIGE ZAHLUNG ERFORDERLICH ⚡
+═════════════════════════════════════════════════════════
+
+Bitte begleichen Sie den überfälligen Betrag UMGEHEND.
+
+🔴 Bei weiterer Zahlungsverzögerung können folgende 
+   Maßnahmen eingeleitet werden:
+   • Sperrung des 3D-Druck Services
+   • Weiterleitung an die Verwaltung
+   • Zusätzliche Verwaltungsgebühren
+
+💡 So begleichen Sie Ihre Rechnung:
+   1. Sofortige Überweisung des Gesamtbetrags
+   2. Bei Fragen: Kontakt mit dem FGF Team
+   3. Zahlungsnachweis wird automatisch erstellt
+
+─────────────────────────────────────────────────────────
+📞 DRINGENDER KONTAKT
+─────────────────────────────────────────────────────────
+
+Bei Zahlungsschwierigkeiten oder Fragen kontaktieren Sie 
+SOFORT das FGF Team zur Klärung der Situation.
+
+🏢 FGF 3D-Druck Service Team
+   Fachhochschule Münster
+
+🤖 DRINGENDE MAHNUNG - Generiert am: ${currentDate}
+🚨═════════════════════════════════════════════════════════🚨`);
+  
+  const email = user.email || `${user.kennung}@fh-muenster.de`;
+  const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
   window.open(mailtoLink, '_blank');
 }
 
@@ -440,14 +590,22 @@ async function deleteUser(kennung) {
     
     await batch.commit();
     
-    alert('Benutzer und alle zugehörigen Daten wurden gelöscht.');
+    if (window.toast && typeof window.toast.success === 'function') {
+      window.toast.success('Benutzer und alle zugehörigen Daten wurden gelöscht.');
+    } else {
+      alert('Benutzer und alle zugehörigen Daten wurden gelöscht.');
+    }
     loadUsersForManagement();
     window.loadAdminStats();
     window.loadAllEntries();
     
   } catch (error) {
     console.error('Fehler beim Löschen des Benutzers:', error);
-    alert('Fehler beim Löschen: ' + error.message);
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Fehler beim Löschen: ' + error.message);
+    } else {
+      alert('Fehler beim Löschen: ' + error.message);
+    }
   }
 }
 
@@ -458,18 +616,29 @@ async function editUser(kennung) {
   
   const user = window.allUsers.find(u => u.kennung === kennung);
   if (!user) {
-    alert('Benutzer nicht gefunden!');
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Benutzer nicht gefunden!');
+    } else {
+      alert('Benutzer nicht gefunden!');
+    }
     return;
   }
   
-  // Direkt das Bearbeitungsformular anzeigen
+  // Erst das User-Manager-Modal schließen (wie bei Material/Masterbatch)
+  document.getElementById('userManager').classList.remove('active');
+  
+  // Direkt das Edit-Modal öffnen
   showEditUserForm(kennung);
 }
 
 async function showEditUserForm(kennung) {
   const user = window.allUsers.find(u => u.kennung === kennung);
   if (!user) {
-    alert('Benutzer nicht gefunden!');
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Benutzer nicht gefunden!');
+    } else {
+      alert('Benutzer nicht gefunden!');
+    }
     return;
   }
   
@@ -478,7 +647,7 @@ async function showEditUserForm(kennung) {
   const modalHtml = `
     <div class="modal-header">
       <h2>${user.name} - Bearbeiten</h2>
-      <button class="close-btn" onclick="closeModal()">&times;</button>
+      <button class="close-btn" onclick="closeEditUserModal()">&times;</button>
     </div>
     <div class="modal-body">
       <div class="card">
@@ -499,7 +668,7 @@ async function showEditUserForm(kennung) {
         </div>
         <div class="card-footer">
           ${ButtonFactory.primary('ÄNDERUNGEN SPEICHERN', `updateUser('${kennung}')`)}
-          ${ButtonFactory.cancelModal()}
+          <button class="btn btn-secondary" onclick="closeEditUserModal()">Abbrechen</button>
         </div>
       </div>
     </div>
@@ -514,13 +683,21 @@ async function updateUser(oldKennung) {
   const newEmail = document.getElementById('editUserEmail').value.trim();
   
   if (!newName || !newKennung) {
-    alert('Name und FH-Kennung sind erforderlich!');
+    if (window.toast && typeof window.toast.warning === 'function') {
+      window.toast.warning('Name und FH-Kennung sind erforderlich!');
+    } else {
+      alert('Name und FH-Kennung sind erforderlich!');
+    }
     return;
   }
   
   // Prüfen ob neue Kennung bereits existiert (außer bei unveränderter Kennung)
   if (newKennung !== oldKennung && window.allUsers && window.allUsers.find(u => u.kennung === newKennung)) {
-    alert('Diese FH-Kennung wird bereits verwendet!');
+    if (window.toast && typeof window.toast.warning === 'function') {
+      window.toast.warning('Diese FH-Kennung wird bereits verwendet!');
+    } else {
+      alert('Diese FH-Kennung wird bereits verwendet!');
+    }
     return;
   }
   
@@ -564,9 +741,12 @@ async function updateUser(oldKennung) {
     
     await batch.commit();
     
-    alert('Benutzer erfolgreich aktualisiert!');
-    window.closeModal();
-    loadUsersForManagement();
+    if (window.toast && typeof window.toast.success === 'function') {
+      window.toast.success('Benutzer erfolgreich aktualisiert!');
+    } else {
+      alert('Benutzer erfolgreich aktualisiert!');
+    }
+    closeEditUserModal(); // Verwende die spezielle Close-Funktion
     
     // Admin Dashboard aktualisieren falls verfügbar
     if (window.loadAdminStats) window.loadAdminStats();
@@ -574,7 +754,11 @@ async function updateUser(oldKennung) {
     
   } catch (error) {
     console.error('Fehler beim Aktualisieren des Benutzers:', error);
-    alert('Fehler beim Speichern: ' + error.message);
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Fehler beim Speichern: ' + error.message);
+    } else {
+      alert('Fehler beim Speichern: ' + error.message);
+    }
   }
 }
 
@@ -649,13 +833,21 @@ async function createNewUser() {
   const email = document.getElementById('newUserEmail').value.trim();
   
   if (!name || !kennung) {
-    alert('Name und FH-Kennung sind erforderlich!');
+    if (window.toast && typeof window.toast.warning === 'function') {
+      window.toast.warning('Name und FH-Kennung sind erforderlich!');
+    } else {
+      alert('Name und FH-Kennung sind erforderlich!');
+    }
     return;
   }
   
   // Prüfen ob Kennung bereits existiert
   if (window.allUsers && window.allUsers.find(u => u.kennung === kennung)) {
-    alert('Diese FH-Kennung wird bereits verwendet!');
+    if (window.toast && typeof window.toast.warning === 'function') {
+      window.toast.warning('Diese FH-Kennung wird bereits verwendet!');
+    } else {
+      alert('Diese FH-Kennung wird bereits verwendet!');
+    }
     return;
   }
   
@@ -670,7 +862,11 @@ async function createNewUser() {
     });
     
     console.log('Neuer Benutzer erstellt mit ID:', userRef.id);
-    alert('Benutzer erfolgreich hinzugefügt!');
+    if (window.toast && typeof window.toast.success === 'function') {
+      window.toast.success('Benutzer erfolgreich hinzugefügt!');
+    } else {
+      alert('Benutzer erfolgreich hinzugefügt!');
+    }
     window.closeModal();
     
     // Nutzer-Liste neu laden
@@ -678,8 +874,24 @@ async function createNewUser() {
     
   } catch (error) {
     console.error('Fehler beim Erstellen des Benutzers:', error);
-    alert('Fehler beim Erstellen: ' + error.message);
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Fehler beim Erstellen: ' + error.message);
+    } else {
+      alert('Fehler beim Erstellen: ' + error.message);
+    }
   }
+}
+
+// ==================== SPECIAL CLOSE FUNCTIONS ====================
+
+// Close-Funktion für Edit-User-Modal, die zurück zum User-Manager führt
+function closeEditUserModal() {
+  window.closeModal();
+  // Nach dem Schließen des Edit-Modals, User-Manager wieder öffnen
+  setTimeout(() => {
+    document.getElementById('userManager').classList.add('active');
+    loadUsersForManagement();
+  }, 100);
 }
 
 // ==================== GLOBAL EXPORTS ====================
@@ -688,6 +900,7 @@ window.showAddUserDialog = showAddUserDialog;
 window.editUser = editUser;
 window.showUserDetails = showUserDetails;
 window.sendPaymentReminder = sendPaymentReminder;
+window.sendUrgentReminder = sendUrgentReminder;
 window.deleteUser = deleteUser;
 window.createNewUser = createNewUser;
 window.showUserManager = showUserManager;
@@ -695,6 +908,7 @@ window.closeUserManager = closeUserManager;
 window.loadUsersForManagement = loadUsersForManagement;
 window.sortUsersBy = sortUsersBy;
 window.showEditUserForm = showEditUserForm; // Export the function
+window.closeEditUserModal = closeEditUserModal;
 
 // ==================== USER MANAGEMENT MODULE ====================
 

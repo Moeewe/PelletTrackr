@@ -383,7 +383,11 @@ async function addMaterial() {
   const markup = parseFloat(document.getElementById('newMaterialMarkup').value) || 30;
   
   if (!name || isNaN(netPrice) || netPrice <= 0) {
-    alert('Bitte gültigen Namen und EK-Netto-Preis eingeben!');
+    if (window.toast && typeof window.toast.warning === 'function') {
+      window.toast.warning('Bitte gültigen Namen und EK-Netto-Preis eingeben!');
+    } else {
+      alert('Bitte gültigen Namen und EK-Netto-Preis eingeben!');
+    }
     return;
   }
   
@@ -402,7 +406,11 @@ async function addMaterial() {
       currency: '€'
     });
     
-    alert('Material erfolgreich hinzugefügt!');
+    if (window.toast && typeof window.toast.success === 'function') {
+      window.toast.success('Material erfolgreich hinzugefügt!');
+    } else {
+      alert('Material erfolgreich hinzugefügt!');
+    }
     document.getElementById('newMaterialName').value = '';
     document.getElementById('newMaterialManufacturer').value = '';
     document.getElementById('newMaterialNetPrice').value = '';
@@ -414,7 +422,11 @@ async function addMaterial() {
     
   } catch (error) {
     console.error('Fehler beim Hinzufügen:', error);
-    alert('Fehler beim Hinzufügen: ' + error.message);
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Fehler beim Hinzufügen: ' + error.message);
+    } else {
+      alert('Fehler beim Hinzufügen: ' + error.message);
+    }
   }
 }
 
@@ -426,7 +438,11 @@ async function addMasterbatch() {
   const markup = parseFloat(document.getElementById('newMasterbatchMarkup').value) || 30;
   
   if (!name || isNaN(netPrice) || netPrice <= 0) {
-    alert('Bitte gültigen Namen und EK-Netto-Preis eingeben!');
+    if (window.toast && typeof window.toast.warning === 'function') {
+      window.toast.warning('Bitte gültigen Namen und EK-Netto-Preis eingeben!');
+    } else {
+      alert('Bitte gültigen Namen und EK-Netto-Preis eingeben!');
+    }
     return;
   }
   
@@ -445,7 +461,11 @@ async function addMasterbatch() {
       currency: '€'
     });
     
-    alert('Masterbatch erfolgreich hinzugefügt!');
+    if (window.toast && typeof window.toast.success === 'function') {
+      window.toast.success('Masterbatch erfolgreich hinzugefügt!');
+    } else {
+      alert('Masterbatch erfolgreich hinzugefügt!');
+    }
     document.getElementById('newMasterbatchName').value = '';
     document.getElementById('newMasterbatchManufacturer').value = '';
     document.getElementById('newMasterbatchNetPrice').value = '';
@@ -457,7 +477,11 @@ async function addMasterbatch() {
     
   } catch (error) {
     console.error('Fehler beim Hinzufügen:', error);
-    alert('Fehler beim Hinzufügen: ' + error.message);
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Fehler beim Hinzufügen: ' + error.message);
+    } else {
+      alert('Fehler beim Hinzufügen: ' + error.message);
+    }
   }
 }
 
@@ -468,12 +492,20 @@ async function deleteMaterial(materialId) {
   
   try {
     await window.db.collection('materials').doc(materialId).delete();
-    alert('Material gelöscht!');
+    if (window.toast && typeof window.toast.success === 'function') {
+      window.toast.success('Material gelöscht!');
+    } else {
+      alert('Material gelöscht!');
+    }
     loadMaterialsForManagement();
     loadMaterials(); // Dropdown aktualisieren
   } catch (error) {
     console.error('Fehler beim Löschen:', error);
-    alert('Fehler beim Löschen: ' + error.message);
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Fehler beim Löschen: ' + error.message);
+    } else {
+      alert('Fehler beim Löschen: ' + error.message);
+    }
   }
 }
 
@@ -482,12 +514,20 @@ async function deleteMasterbatch(masterbatchId) {
   
   try {
     await window.db.collection('masterbatches').doc(masterbatchId).delete();
-    alert('Masterbatch gelöscht!');
+    if (window.toast && typeof window.toast.success === 'function') {
+      window.toast.success('Masterbatch gelöscht!');
+    } else {
+      alert('Masterbatch gelöscht!');
+    }
     loadMasterbatchesForManagement();
     loadMasterbatches(); // Dropdown aktualisieren
   } catch (error) {
     console.error('Fehler beim Löschen:', error);
-    alert('Fehler beim Löschen: ' + error.message);
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Fehler beim Löschen: ' + error.message);
+    } else {
+      alert('Fehler beim Löschen: ' + error.message);
+    }
   }
 }
 
@@ -500,7 +540,11 @@ async function editMaterial(materialId) {
     
     const doc = await window.db.collection('materials').doc(materialId).get();
     if (!doc.exists) {
-      alert('Material nicht gefunden!');
+      if (window.toast && typeof window.toast.error === 'function') {
+        window.toast.error('Material nicht gefunden!');
+      } else {
+        alert('Material nicht gefunden!');
+      }
       return;
     }
     
@@ -528,7 +572,11 @@ async function editMasterbatch(masterbatchId) {
     
     const doc = await window.db.collection('masterbatches').doc(masterbatchId).get();
     if (!doc.exists) {
-      alert('Masterbatch nicht gefunden!');
+      if (window.toast && typeof window.toast.error === 'function') {
+        window.toast.error('Masterbatch nicht gefunden!');
+      } else {
+        alert('Masterbatch nicht gefunden!');
+      }
       return;
     }
     
@@ -554,7 +602,11 @@ async function showEditMasterbatchForm(masterbatchId) {
   try {
     const doc = await window.db.collection('masterbatches').doc(masterbatchId).get();
     if (!doc.exists) {
-      alert('Masterbatch nicht gefunden!');
+      if (window.toast && typeof window.toast.error === 'function') {
+        window.toast.error('Masterbatch nicht gefunden!');
+      } else {
+        alert('Masterbatch nicht gefunden!');
+      }
       return;
     }
     
@@ -614,7 +666,11 @@ async function showEditMaterialForm(materialId) {
   try {
     const doc = await window.db.collection('materials').doc(materialId).get();
     if (!doc.exists) {
-      alert('Material nicht gefunden!');
+      if (window.toast && typeof window.toast.error === 'function') {
+        window.toast.error('Material nicht gefunden!');
+      } else {
+        alert('Material nicht gefunden!');
+      }
       return;
     }
     
@@ -700,7 +756,11 @@ async function updateMaterial(materialId) {
   const markup = parseFloat(document.getElementById('editMaterialMarkup').value);
   
   if (!name || isNaN(netPrice) || netPrice <= 0) {
-    alert('Bitte gültigen Namen und EK-Netto-Preis eingeben!');
+    if (window.toast && typeof window.toast.warning === 'function') {
+      window.toast.warning('Bitte gültigen Namen und EK-Netto-Preis eingeben!');
+    } else {
+      alert('Bitte gültigen Namen und EK-Netto-Preis eingeben!');
+    }
     return;
   }
   
@@ -719,13 +779,21 @@ async function updateMaterial(materialId) {
       currency: '€'
     });
     
-    alert('Material erfolgreich aktualisiert!');
+    if (window.toast && typeof window.toast.success === 'function') {
+      window.toast.success('Material erfolgreich aktualisiert!');
+    } else {
+      alert('Material erfolgreich aktualisiert!');
+    }
     closeEditMaterialModal(); // Verwende die spezielle Close-Funktion
     loadMaterials(); // Dropdown aktualisieren
     
   } catch (error) {
     console.error('Fehler beim Aktualisieren:', error);
-    alert('Fehler beim Aktualisieren: ' + error.message);
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Fehler beim Aktualisieren: ' + error.message);
+    } else {
+      alert('Fehler beim Aktualisieren: ' + error.message);
+    }
   }
 }
 
@@ -737,7 +805,11 @@ async function updateMasterbatch(masterbatchId) {
   const markup = parseFloat(document.getElementById('editMasterbatchMarkup').value);
   
   if (!name || isNaN(netPrice) || netPrice <= 0) {
-    alert('Bitte gültigen Namen und EK-Netto-Preis eingeben!');
+    if (window.toast && typeof window.toast.warning === 'function') {
+      window.toast.warning('Bitte gültigen Namen und EK-Netto-Preis eingeben!');
+    } else {
+      alert('Bitte gültigen Namen und EK-Netto-Preis eingeben!');
+    }
     return;
   }
   
@@ -756,13 +828,21 @@ async function updateMasterbatch(masterbatchId) {
       currency: '€'
     });
     
-    alert('Masterbatch erfolgreich aktualisiert!');
+    if (window.toast && typeof window.toast.success === 'function') {
+      window.toast.success('Masterbatch erfolgreich aktualisiert!');
+    } else {
+      alert('Masterbatch erfolgreich aktualisiert!');
+    }
     closeEditMasterbatchModal(); // Verwende die spezielle Close-Funktion
     loadMasterbatches(); // Dropdown aktualisieren
     
   } catch (error) {
     console.error('Fehler beim Aktualisieren:', error);
-    alert('Fehler beim Aktualisieren: ' + error.message);
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Fehler beim Aktualisieren: ' + error.message);
+    } else {
+      alert('Fehler beim Aktualisieren: ' + error.message);
+    }
   }
 }
 

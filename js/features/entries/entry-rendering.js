@@ -39,8 +39,8 @@ function renderUserEntries(entries) {
     const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
     const isPaid = entry.paid || entry.isPaid;
     const status = isPaid ? 
-      '<span class="status-paid">Bezahlt</span>' : 
-      '<span class="status-unpaid">Offen</span>';
+      '<span class="entry-status-badge status-paid">Bezahlt</span>' : 
+      '<span class="entry-status-badge status-unpaid">Offen</span>';
     const jobName = entry.jobName || "3D-Druck Auftrag";
     const jobNotes = entry.jobNotes || "";
     const truncatedNotes = jobNotes.length > 30 ? jobNotes.substring(0, 30) + "..." : jobNotes;
@@ -206,8 +206,8 @@ function renderAdminEntries(entries) {
     const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
     const isPaid = entry.paid || entry.isPaid;
     const status = isPaid ? 
-      '<span class="status-paid">Bezahlt</span>' : 
-      '<span class="status-unpaid">Offen</span>';
+      '<span class="entry-status-badge status-paid">Bezahlt</span>' : 
+      '<span class="entry-status-badge status-unpaid">Offen</span>';
     const jobName = entry.jobName || "3D-Druck Auftrag";
     const jobNotes = entry.jobNotes || "";
     const truncatedNotes = jobNotes.length > 20 ? jobNotes.substring(0, 20) + "..." : jobNotes;

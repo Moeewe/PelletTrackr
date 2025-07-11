@@ -8,8 +8,12 @@ function formatCurrency(amount, decimals = 2) {
 
 // Admin-Zugriff prüfen
 function checkAdminAccess() {
-  if (!window.currentUser.isAdmin) {
-    alert('Nur für Administratoren!');
+  if (!window.currentUser || !window.currentUser.isAdmin) {
+    if (window.toast && typeof window.toast.warning === 'function') {
+      window.toast.warning('Nur für Administratoren!');
+    } else {
+      alert('Nur für Administratoren!');
+    }
     return false;
   }
   return true;

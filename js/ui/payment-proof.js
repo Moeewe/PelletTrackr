@@ -5,7 +5,11 @@ async function showPaymentProof(entryId) {
     const entryDoc = await window.db.collection('entries').doc(entryId).get();
     
     if (!entryDoc.exists) {
-      alert('Druck nicht gefunden!');
+      if (window.toast && typeof window.toast.error === 'function') {
+        window.toast.error('Druck nicht gefunden!');
+      } else {
+        alert('Druck nicht gefunden!');
+      }
       return;
     }
     
@@ -13,7 +17,11 @@ async function showPaymentProof(entryId) {
     
     // Prüfen ob bezahlt
     if (!(entry.paid || entry.isPaid)) {
-      alert('Für diesen Druck wurde noch keine Zahlung registriert!');
+      if (window.toast && typeof window.toast.warning === 'function') {
+        window.toast.warning('Für diesen Druck wurde noch keine Zahlung registriert!');
+      } else {
+        alert('Für diesen Druck wurde noch keine Zahlung registriert!');
+      }
       return;
     }
     
@@ -107,7 +115,11 @@ async function showPaymentProof(entryId) {
     
   } catch (error) {
     console.error('Fehler beim Laden des Zahlungsnachweises:', error);
-    alert('Fehler beim Laden des Zahlungsnachweises: ' + error.message);
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Fehler beim Laden des Zahlungsnachweises: ' + error.message);
+    } else {
+      alert('Fehler beim Laden des Zahlungsnachweises: ' + error.message);
+    }
   }
 }
 
@@ -119,19 +131,53 @@ function closePaymentProofModal() {
 function printPaymentProof() {
   // Prüfen ob ein Nachweis geladen ist
   if (!window.currentProofEntry) {
-    alert('Fehler: Kein Zahlungsnachweis geladen!');
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Fehler: Kein Zahlungsnachweis geladen!');
+    } else {
+      alert('Fehler: Kein Zahlungsnachweis geladen!');
+    }
     return;
   }
   
-  // Kurze Verzögerung damit das CSS wirken kann
+  // Print-optimierte Klasse für bessere Kontrolle
+  document.body.classList.add('printing-proof');
+  
+  // Alle anderen Modals ausblenden
+  const otherModals = document.querySelectorAll('.modal:not(#paymentProofModal)');
+  otherModals.forEach(modal => {
+    modal.style.display = 'none';
+  });
+  
+  // Sicherstellen dass das Payment Proof Modal sichtbar ist
+  const proofModal = document.getElementById('paymentProofModal');
+  if (proofModal) {
+    proofModal.style.display = 'block';
+    proofModal.style.visibility = 'visible';
+  }
+  
+  // Kurze Verzögerung damit alle Styles geladen sind
   setTimeout(() => {
+    // Print-Event
     window.print();
-  }, 100);
+    
+    // Nach dem Drucken cleanup
+    setTimeout(() => {
+      document.body.classList.remove('printing-proof');
+      // Andere Modals wieder einblenden falls nötig
+      otherModals.forEach(modal => {
+        modal.style.display = '';
+      });
+    }, 500);
+  }, 200);
 }
 
 function emailPaymentProof() {
   if (!window.currentProofEntry) {
-    alert('Fehler: Kein Druck geladen!');
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Fehler: Kein Druck geladen!');
+    } else {
+      alert('Fehler: Kein Druck geladen!');
+    }
     return;
   }
   
