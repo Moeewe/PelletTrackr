@@ -214,7 +214,7 @@ async function submitUserReservation() {
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
-        showToast('Reservierungsanfrage erfolgreich gesendet. Ein Admin wird diese prüfen.', 'success');
+        showToast(`✅ Reservierungsanfrage erfolgreich gesendet!\n\nDrucker: ${printerName}\nDatum: ${formData.date}\nZeit: ${formData.startTime} - ${formData.endTime}\n\nEin Admin wird deine Anfrage prüfen und bestätigen.`, 'success', 8000);
         closeUserReservationForm();
         
     } catch (error) {
@@ -376,7 +376,7 @@ async function submitUserEquipmentRequest() {
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
-        showToast('Equipment-Anfrage erfolgreich gesendet. Ein Admin wird diese prüfen.', 'success');
+        showToast(`✅ Equipment-Anfrage erfolgreich gesendet!\n\nEquipment: ${equipmentName}\nZeitraum: ${formData.fromDate} bis ${formData.toDate}\n\nEin Admin wird deine Anfrage prüfen und das Equipment bereitstellen.`, 'success', 8000);
         closeUserEquipmentRequest();
         
     } catch (error) {
@@ -540,8 +540,15 @@ async function submitProblemReport() {
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
-        const actionText = isStatusUpdate ? 'Status-Update' : 'Problem';
-        showToast(`${actionText} erfolgreich gemeldet und Drucker-Status aktualisiert.`, 'success');
+        const actionText = isStatusUpdate ? 'Status-Update' : 'Problem-Meldung';
+        const statusText = {
+            'available': 'Verfügbar',
+            'printing': 'In Betrieb', 
+            'maintenance': 'Wartung erforderlich',
+            'broken': 'Defekt/Nicht nutzbar'
+        }[formData.newStatus] || formData.newStatus;
+        
+        showToast(`✅ ${actionText} erfolgreich gesendet!\n\nDrucker: ${printerName}\nNeuer Status: ${statusText}\n\nDanke für deine Meldung! Der Drucker-Status wurde entsprechend aktualisiert.`, 'success', 8000);
         closeProblemReportForm();
         
     } catch (error) {

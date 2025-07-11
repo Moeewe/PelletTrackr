@@ -23,6 +23,80 @@ function showScreen(screenId) {
     // Gewünschten Screen anzeigen
     targetScreen.classList.add('active');
     
+    // Auto-load data when switching to specific screens
+    if (screenId === 'userDashboard' && window.currentUser && !window.currentUser.isAdmin) {
+      // Load user data when switching to user dashboard
+      setTimeout(() => {
+        try {
+          // Ensure Firebase is ready before loading data
+          if (!window.db) {
+            console.warn("⚠️ Firebase not ready when switching to userDashboard, will retry...");
+            // Retry after Firebase becomes available
+            const retryDataLoad = () => {
+              if (window.db) {
+                if (typeof loadUserStats === 'function') {
+                  loadUserStats().catch(error => console.warn("User stats loading failed:", error));
+                }
+                if (typeof loadUserEntries === 'function') {
+                  loadUserEntries().catch(error => console.warn("User entries loading failed:", error));
+                }
+                console.log("✅ User data refreshed for dashboard view (retry)");
+              } else {
+                setTimeout(retryDataLoad, 1000); // Retry again if still not ready
+              }
+            };
+            setTimeout(retryDataLoad, 1000);
+            return;
+          }
+          
+          if (typeof loadUserStats === 'function') {
+            loadUserStats().catch(error => console.warn("User stats loading failed:", error));
+          }
+          if (typeof loadUserEntries === 'function') {
+            loadUserEntries().catch(error => console.warn("User entries loading failed:", error));
+          }
+          console.log("✅ User data refreshed for dashboard view");
+        } catch (error) {
+          console.warn("Error refreshing user data:", error);
+        }
+      }, 100); // Short delay to ensure screen is fully loaded
+    } else if (screenId === 'adminDashboard' && window.currentUser && window.currentUser.isAdmin) {
+      // Load admin data when switching to admin dashboard
+      setTimeout(() => {
+        try {
+          // Ensure Firebase is ready before loading data
+          if (!window.db) {
+            console.warn("⚠️ Firebase not ready when switching to adminDashboard, will retry...");
+            const retryDataLoad = () => {
+              if (window.db) {
+                if (typeof loadAdminStats === 'function') {
+                  loadAdminStats().catch(error => console.warn("Admin stats loading failed:", error));
+                }
+                if (typeof loadAllEntries === 'function') {
+                  loadAllEntries().catch(error => console.warn("Admin entries loading failed:", error));
+                }
+                console.log("✅ Admin data refreshed for dashboard view (retry)");
+              } else {
+                setTimeout(retryDataLoad, 1000);
+              }
+            };
+            setTimeout(retryDataLoad, 1000);
+            return;
+          }
+          
+          if (typeof loadAdminStats === 'function') {
+            loadAdminStats().catch(error => console.warn("Admin stats loading failed:", error));
+          }
+          if (typeof loadAllEntries === 'function') {
+            loadAllEntries().catch(error => console.warn("Admin entries loading failed:", error));
+          }
+          console.log("✅ Admin data refreshed for dashboard view");
+        } catch (error) {
+          console.warn("Error refreshing admin data:", error);
+        }
+      }, 100);
+    }
+    
     console.log(`📱 Switched to screen: ${screenId}`);
     return true;
   } catch (error) {
@@ -80,19 +154,8 @@ function initializeUserDashboard() {
         window.toast?.warning("Einige Dashboard-Funktionen sind möglicherweise nicht verfügbar");
       });
     
-    // Load user stats and entries (non-critical)
-    setTimeout(() => {
-      try {
-        if (typeof loadUserStats === 'function') {
-          loadUserStats().catch(error => console.warn("User stats loading failed:", error));
-        }
-        if (typeof loadUserEntries === 'function') {
-          loadUserEntries().catch(error => console.warn("User entries loading failed:", error));
-        }
-      } catch (error) {
-        console.warn("Error loading user data:", error);
-      }
-    }, 1000);
+    // Note: User data (stats and entries) will be loaded automatically by showScreen() 
+    // when switching to userDashboard view - no need to load here to avoid duplication
     
     return true;
   } catch (error) {

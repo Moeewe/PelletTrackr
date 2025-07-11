@@ -188,21 +188,21 @@
 
                     <!-- Termin buchen -->
                     <div class="stat-card clickable" onclick="showUserReservationForm()">
-                        <div class="stat-number">→</div>
+                        <div class="stat-number">📅</div>
                         <div class="stat-label">Termine</div>
                         <div class="stat-description">Drucker reservieren</div>
                     </div>
 
                     <!-- Equipment ausleihen -->
                     <div class="stat-card clickable" onclick="showUserEquipmentRequest()">
-                        <div class="stat-number">→</div>
+                        <div class="stat-number">📦</div>
                         <div class="stat-label">Leihe</div>
                         <div class="stat-description">Equipment anfragen</div>
                     </div>
 
                     <!-- Problem melden -->
                     <div class="stat-card clickable" onclick="showProblemReportForm()">
-                        <div class="stat-number">→</div>
+                        <div class="stat-number">⚠️</div>
                         <div class="stat-label">Problem</div>
                         <div class="stat-description">Defekte melden</div>
                     </div>
@@ -650,7 +650,7 @@
         <div class="global-footer-links">
             <a href="impressum.html?from=app" target="_blank" onclick="console.log('Impressum Link clicked!'); sessionStorage.setItem('openedFromApp', 'true');">Impressum</a>
             <a href="datenschutz.html?from=app" target="_blank" onclick="console.log('Datenschutz Link clicked!'); sessionStorage.setItem('openedFromApp', 'true');">Datenschutz</a>
-            <button class="diagnostic-trigger" onclick="showDiagnosticPanel()" title="System-Diagnose (Strg+Shift+D)">🔧</button>
+            <button class="diagnostic-trigger" onclick="showDiagnosticPanel()" title="System-Diagnose (Strg+Shift+D)">Debug</button>
         </div>
     </div>
 

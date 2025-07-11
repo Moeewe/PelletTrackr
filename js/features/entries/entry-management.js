@@ -207,7 +207,7 @@ async function addEntry() {
       }
     }, 
     'Druck wird gespeichert...', 
-    'Druck erfolgreich gespeichert!', 
+    `✅ 3D-Druck erfolgreich hinzugefügt!\n\nJob: ${formData.jobName || "3D-Druck Auftrag"}\nKosten: ${formatCurrency(totalCost)}\n\nDer Druck wurde zu deinen Aufträgen hinzugefügt.`, 
     'Fehler beim Speichern des Drucks');
     
   } catch (error) {

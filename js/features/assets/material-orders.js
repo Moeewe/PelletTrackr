@@ -103,7 +103,10 @@ async function submitMaterialRequest() {
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
-        showToast('Material-Anfrage erfolgreich gesendet', 'success');
+        const quantityText = formData.quantity ? `\nMenge: ${formData.quantity}` : '';
+        const manufacturerText = formData.manufacturer ? `\nHersteller: ${formData.manufacturer}` : '';
+        
+        showToast(`✅ Material-Anfrage erfolgreich gesendet!\n\nMaterial: ${formData.materialName}${quantityText}${manufacturerText}\nPriorität: ${getPriorityText(formData.priority)}\n\nEin Admin wird deine Anfrage prüfen und das Material bestellen.`, 'success', 8000);
         closeMaterialRequestForm();
         
     } catch (error) {

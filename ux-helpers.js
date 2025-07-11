@@ -188,6 +188,19 @@ function setButtonLoading(button, loading = true) {
 const toast = new ToastManager();
 const loading = new LoadingManager();
 
+// Global showToast function for backward compatibility
+function showToast(message, type = 'info', duration = 5000) {
+    return toast.show(message, type, duration);
+}
+
+// Make toast system globally available
+window.toast = toast;
+window.loading = loading;
+window.showToast = showToast;
+window.setButtonLoading = setButtonLoading;
+window.withLoading = withLoading;
+window.UXHelpers = UXHelpers;
+
 // Firebase Operations mit Loading States
 async function withLoading(operation, loadingMessage = 'Laden...', successMessage = null, errorMessage = null) {
     const loadingId = loading.show(loadingMessage);
