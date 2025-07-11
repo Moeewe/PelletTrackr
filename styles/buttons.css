@@ -244,7 +244,7 @@
 .button-group {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
   width: 100%;
 }
 
@@ -256,7 +256,7 @@
 .action-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
 }
 
@@ -268,7 +268,7 @@
 
 .entry-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   justify-content: flex-start;
   flex-wrap: wrap;
 }
@@ -276,7 +276,7 @@
 @media screen and (max-width: 768px) {
   .entry-actions {
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
   }
   .entry-actions .btn {
     width: 100%;
@@ -313,7 +313,7 @@
   }
   
   .button-group .btn {
-    min-height: 48px;
+    min-height: 44px;
   }
 }
 
@@ -340,7 +340,7 @@
   .action-group {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
   }
   
   .action-group .btn {

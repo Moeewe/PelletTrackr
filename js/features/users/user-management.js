@@ -220,7 +220,14 @@ function searchUsers() {
 
 function showUserDetails(kennung) {
   const user = window.allUsers.find(u => u.kennung === kennung);
-  if (!user) return;
+  if (!user) {
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Benutzer nicht gefunden!');
+    } else {
+      alert('Benutzer nicht gefunden!');
+    }
+    return;
+  }
   
   const modalHtml = `
     <div class="modal-header">
@@ -279,10 +286,21 @@ function showUserDetails(kennung) {
 
 function sendPaymentReminder(kennung) {
   const user = window.allUsers.find(u => u.kennung === kennung);
-  if (!user) return;
+  if (!user) {
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Benutzer nicht gefunden!');
+    } else {
+      alert('Benutzer nicht gefunden!');
+    }
+    return;
+  }
   
   if (user.unpaidAmount <= 0) {
-    alert('Dieser Benutzer hat keine offenen Beträge.');
+    if (window.toast && typeof window.toast.info === 'function') {
+      window.toast.info('Dieser Benutzer hat keine offenen Beträge.');
+    } else {
+      alert('Dieser Benutzer hat keine offenen Beträge.');
+    }
     return;
   }
   

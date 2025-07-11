@@ -146,3 +146,17 @@ const ButtonFactory = {
 window.ButtonFactory = ButtonFactory;
 window.BUTTON_ACTIONS = BUTTON_ACTIONS;
 window.createButton = createButton;
+
+// UX: Toast für Nachweis-Button wenn disabled
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('button.btn-nachweis:disabled');
+  if (btn) {
+    if (window.toast && typeof window.toast.warning === 'function') {
+      window.toast.warning('Nachweis erst verfügbar, wenn der Druck bezahlt wurde.');
+    } else {
+      alert('Nachweis erst verfügbar, wenn der Druck bezahlt wurde.');
+    }
+    e.preventDefault();
+    e.stopPropagation();
+  }
+});

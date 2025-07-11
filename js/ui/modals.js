@@ -73,7 +73,11 @@ async function viewEntryDetails(entryId) {
   try {
     const doc = await window.db.collection('entries').doc(entryId).get();
     if (!doc.exists) {
-      alert('Eintrag nicht gefunden!');
+      if (window.toast && typeof window.toast.error === 'function') {
+        window.toast.error('Eintrag nicht gefunden!');
+      } else {
+        alert('Eintrag nicht gefunden!');
+      }
       return;
     }
     
@@ -158,7 +162,11 @@ async function editUserEntry(entryId) {
   try {
     const doc = await window.db.collection('entries').doc(entryId).get();
     if (!doc.exists) {
-      alert('Druck nicht gefunden!');
+      if (window.toast && typeof window.toast.error === 'function') {
+        window.toast.error('Druck nicht gefunden!');
+      } else {
+        alert('Druck nicht gefunden!');
+      }
       return;
     }
     
@@ -166,13 +174,21 @@ async function editUserEntry(entryId) {
     
     // Prüfen ob User berechtigt ist (nur eigene Drucke bearbeiten)
     if (entry.kennung !== window.currentUser.kennung) {
-      alert('Du kannst nur deine eigenen Drucke bearbeiten!');
+      if (window.toast && typeof window.toast.warning === 'function') {
+        window.toast.warning('Du kannst nur deine eigenen Drucke bearbeiten!');
+      } else {
+        alert('Du kannst nur deine eigenen Drucke bearbeiten!');
+      }
       return;
     }
     
     // Prüfen ob Eintrag bereits bezahlt wurde
     if (entry.paid || entry.isPaid) {
-      alert('Bezahlte Einträge können nicht mehr bearbeitet werden!');
+      if (window.toast && typeof window.toast.warning === 'function') {
+        window.toast.warning('Bezahlte Einträge können nicht mehr bearbeitet werden!');
+      } else {
+        alert('Bezahlte Einträge können nicht mehr bearbeitet werden!');
+      }
       return;
     }
     
@@ -217,7 +233,11 @@ async function editUserEntry(entryId) {
     
   } catch (error) {
     console.error("Fehler beim Laden des Eintrags:", error);
-    alert("Fehler beim Laden des Eintrags!");
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Fehler beim Laden des Eintrags!');
+    } else {
+      alert('Fehler beim Laden des Eintrags!');
+    }
   }
 }
 
@@ -312,7 +332,11 @@ async function editEntry(entryId) {
     
   } catch (error) {
     console.error("Fehler beim Laden des Eintrags:", error);
-    alert("Fehler beim Laden des Eintrags!");
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Fehler beim Laden des Eintrags!');
+    } else {
+      alert('Fehler beim Laden des Eintrags!');
+    }
   }
 }
 
@@ -384,7 +408,11 @@ async function saveEntryChanges(entryId) {
       updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
     });
     
-    alert('Eintrag erfolgreich aktualisiert!');
+    if (window.toast && typeof window.toast.success === 'function') {
+      window.toast.success('Eintrag erfolgreich aktualisiert!');
+    } else {
+      alert('Eintrag erfolgreich aktualisiert!');
+    }
     closeModal();
     
     // Admin Dashboard aktualisieren
@@ -393,7 +421,11 @@ async function saveEntryChanges(entryId) {
     
   } catch (error) {
     console.error('Fehler beim Aktualisieren des Eintrags:', error);
-    alert('Fehler beim Speichern: ' + error.message);
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Fehler beim Speichern: ' + error.message);
+    } else {
+      alert('Fehler beim Speichern: ' + error.message);
+    }
   }
 }
 
@@ -417,7 +449,11 @@ async function editNote(entryId, currentNote) {
     
   } catch (error) {
     console.error('Fehler beim Aktualisieren der Notiz:', error);
-    alert('Fehler beim Speichern der Notiz: ' + error.message);
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Fehler beim Speichern der Notiz: ' + error.message);
+    } else {
+      alert('Fehler beim Speichern der Notiz: ' + error.message);
+    }
   }
 }
 
