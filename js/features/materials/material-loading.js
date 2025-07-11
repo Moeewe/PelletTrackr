@@ -379,50 +379,7 @@ async function editMaterial(materialId) {
     const grossPrice = netPrice * (1 + taxRate / 100);
     const sellingPrice = grossPrice * (1 + markup / 100);
     
-    const modalHtml = `
-      <div class="modal-header">
-        <h2 class="material-title">${material.name}</h2>
-        <button class="close-btn" onclick="closeEditMaterialModal()">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="card">
-          <div class="card-body">
-            <div class="detail-row">
-              <span class="detail-label">HERSTELLER</span>
-              <span class="detail-value">${material.manufacturer || 'Unbekannt'}</span>
-            </div>
-            
-            <div class="detail-row">
-              <span class="detail-label">EK NETTO €/KG</span>
-              <span class="detail-value">${window.formatCurrency(netPrice)}</span>
-            </div>
-            
-            <div class="detail-row">
-              <span class="detail-label">EK BRUTTO €/KG</span>
-              <span class="detail-value">${window.formatCurrency(grossPrice)}</span>
-            </div>
-            
-            <div class="detail-row">
-              <span class="detail-label">GEMEINKOSTEN %</span>
-              <span class="detail-value">${markup}%</span>
-            </div>
-            
-            <div class="detail-row highlight-total">
-              <span class="detail-label"></span>
-              <span class="detail-value material-vk">VK €/KG: ${window.formatCurrency(sellingPrice)}</span>
-            </div>
-          </div>
-          <div class="card-footer">
-            <div class="button-group">
-              ${ButtonFactory.primary('BEARBEITEN', `showEditMaterialForm('${materialId}')`)}
-              ${ButtonFactory.danger('LÖSCHEN', `deleteMaterial('${materialId}')`)}
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-    
-    showModalWithContent(modalHtml);
+    showEditMaterialForm(materialId);
     
   } catch (error) {
     console.error('Fehler beim Laden des Materials:', error);
@@ -450,50 +407,7 @@ async function editMasterbatch(masterbatchId) {
     const grossPrice = netPrice * (1 + taxRate / 100);
     const sellingPrice = grossPrice * (1 + markup / 100);
     
-    const modalHtml = `
-      <div class="modal-header">
-        <h2 class="masterbatch-title">${masterbatch.name}</h2>
-        <button class="close-btn" onclick="closeEditMasterbatchModal()">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="card">
-          <div class="card-body">
-            <div class="detail-row">
-              <span class="detail-label">HERSTELLER</span>
-              <span class="detail-value">${masterbatch.manufacturer || 'Unbekannt'}</span>
-            </div>
-            
-            <div class="detail-row">
-              <span class="detail-label">EK NETTO €/G</span>
-              <span class="detail-value">${window.formatCurrency(netPrice, 4)}</span>
-            </div>
-            
-            <div class="detail-row">
-              <span class="detail-label">EK BRUTTO €/G</span>
-              <span class="detail-value">${window.formatCurrency(grossPrice, 4)}</span>
-            </div>
-            
-            <div class="detail-row">
-              <span class="detail-label">GEMEINKOSTEN %</span>
-              <span class="detail-value">${markup}%</span>
-            </div>
-            
-            <div class="detail-row highlight-total">
-              <span class="detail-label"></span>
-              <span class="detail-value masterbatch-vk">VK €/G: ${window.formatCurrency(sellingPrice, 4)}</span>
-            </div>
-          </div>
-          <div class="card-footer">
-            <div class="button-group">
-              ${ButtonFactory.primary('BEARBEITEN', `showEditMasterbatchForm('${masterbatchId}')`)}
-              ${ButtonFactory.danger('LÖSCHEN', `deleteMasterbatch('${masterbatchId}')`)}
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-    
-    showModalWithContent(modalHtml);
+    showEditMasterbatchForm(masterbatchId);
     
   } catch (error) {
     console.error('Fehler beim Laden des Masterbatches:', error);

@@ -273,6 +273,17 @@
   flex-wrap: wrap;
 }
 
+@media screen and (max-width: 768px) {
+  .entry-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .entry-actions .btn {
+    width: 100%;
+    max-width: none;
+  }
+}
+
 /* ==================== RESPONSIVE DESIGN ==================== */
 
 /* Mobile Optimierung */

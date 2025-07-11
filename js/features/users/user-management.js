@@ -121,7 +121,7 @@ function renderUsersTable(users) {
         <td data-label="Offen" class="${statusClass}"><span class="cell-value">${window.formatCurrency(user.unpaidAmount)}</span></td>
         <td data-label="Letzter Druck"><span class="cell-value">${lastEntryDate}</span></td>
         <td data-label="Aktionen" class="actions">
-          <div class="action-group">
+          <div class="entry-actions">
             ${ButtonFactory.editUser(user.kennung)}
             ${ButtonFactory.userDetails(user.kennung)}
             ${ButtonFactory.sendReminder(user.kennung)}
@@ -360,35 +360,8 @@ async function editUser(kennung) {
   
   const currentEmail = user.email || `${user.kennung}@fh-muenster.de`;
   
-  const modalHtml = `
-    <div class="modal-header">
-      <h3>Benutzer bearbeiten</h3>
-      <button class="close-btn" onclick="closeModal()">&times;</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label class="form-label">Name</label>
-        <input type="text" id="editUserName" class="form-input" value="${user.name}" required>
-      </div>
-      <div class="form-group">
-        <label class="form-label">FH-Kennung</label>
-        <input type="text" id="editUserKennung" class="form-input" value="${user.kennung}" required>
-        <small>Achtung: Änderung der Kennung aktualisiert alle verknüpften Einträge!</small>
-      </div>
-      <div class="form-group">
-        <label class="form-label">E-Mail</label>
-        <input type="email" id="editUserEmail" class="form-input" value="${currentEmail}">
-      </div>
-    </div>
-    <div class="modal-footer">
-      <div class="button-group">
-        ${ButtonFactory.cancelModal()}
-        ${ButtonFactory.saveChanges(`updateUser('${kennung}')`)}
-      </div>
-    </div>
-  `;
-  
-  showModalWithContent(modalHtml);
+  // Direkt das Bearbeitungsformular anzeigen
+  showEditUserForm(kennung);
 }
 
 async function updateUser(oldKennung) {

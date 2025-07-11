@@ -478,20 +478,40 @@
 /* ==================== MATERIAL/MASTERBATCH SPECIFIC STYLING ==================== */
 
 /* Material/Masterbatch Titel - Größer und prominenter */
-.material-title,
+
+.material-title {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  color: #000000;
+  margin: 0;
+  text-transform: none;
+  letter-spacing: 0;
+  text-align: left;
+}
+
 .masterbatch-title {
   font-size: 28px !important;
   font-weight: 700 !important;
   color: #000000;
   margin: 0;
-  text-transform: none; /* Kein Uppercase für Material/Masterbatch Namen */
+  text-transform: none;
   letter-spacing: 0;
+  text-align: left;
 }
 
 /* Material/Masterbatch VK Preise - Eingerückt zur Ausrichtung */
-.material-vk,
+
+.material-vk {
+  margin-left: 0;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: #000000;
+  text-align: left;
+  display: block;
+}
+
 .masterbatch-vk {
-  margin-left: 156px; /* Entspricht min-width von detail-label + margin-right */
+  margin-left: 156px;
   font-size: 18px !important;
   font-weight: 700 !important;
   color: #000000;
