@@ -378,6 +378,42 @@
 
 /* ==================== BUTTON LAYOUTS ==================== */
 
+/* Aktions-Buttons in Tabellen (Desktop) */
+.action-group {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+}
+
+.action-group .btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+/* Entry-Aktionen in Tabellen */
+.entry-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.entry-actions .btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
 .button-group {
   display: flex;
   flex-direction: column;
