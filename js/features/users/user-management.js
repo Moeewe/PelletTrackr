@@ -102,6 +102,7 @@ function renderUsersTable(users) {
               <th onclick="sortUsersBy('totalCost')">Gesamtkosten</th>
               <th onclick="sortUsersBy('paidAmount')">Bezahlt</th>
               <th onclick="sortUsersBy('unpaidAmount')">Offen</th>
+              <th onclick="sortUsersBy('status')">Status</th>
               <th onclick="sortUsersBy('lastEntry')">Letzter Druck</th>
               <th>Aktionen</th>
             </tr>
@@ -111,8 +112,12 @@ function renderUsersTable(users) {
   
   users.forEach(user => {
     const lastEntryDate = user.lastEntry.toLocaleDateString('de-DE');
-    const statusClass = user.unpaidAmount > 0 ? 'status-unpaid' : 'status-paid';
     const email = user.email || `${user.kennung}@fh-muenster.de`;
+    
+    // Status Badge für Desktop-Tabelle
+    const statusBadge = user.unpaidAmount > 0 ? 
+      '<span class="entry-status-badge status-unpaid">OFFEN</span>' : 
+      '<span class="entry-status-badge status-paid">BEZAHLT</span>';
     
     // Tabellen-Zeile für Desktop
     containerHtml += `
@@ -123,7 +128,8 @@ function renderUsersTable(users) {
         <td><span class="cell-value">${user.entries.length}</span></td>
         <td><span class="cell-value"><strong>${window.formatCurrency(user.totalCost)}</strong></span></td>
         <td><span class="cell-value">${window.formatCurrency(user.paidAmount)}</span></td>
-        <td class="${statusClass}"><span class="cell-value">${window.formatCurrency(user.unpaidAmount)}</span></td>
+        <td><span class="cell-value">${window.formatCurrency(user.unpaidAmount)}</span></td>
+        <td>${statusBadge}</td>
         <td><span class="cell-value">${lastEntryDate}</span></td>
         <td class="actions">
           <div class="entry-actions">
@@ -456,10 +462,50 @@ async function editUser(kennung) {
     return;
   }
   
-  const currentEmail = user.email || `${user.kennung}@fh-muenster.de`;
-  
   // Direkt das Bearbeitungsformular anzeigen
   showEditUserForm(kennung);
+}
+
+async function showEditUserForm(kennung) {
+  const user = window.allUsers.find(u => u.kennung === kennung);
+  if (!user) {
+    alert('Benutzer nicht gefunden!');
+    return;
+  }
+  
+  const currentEmail = user.email || `${user.kennung}@fh-muenster.de`;
+  
+  const modalHtml = `
+    <div class="modal-header">
+      <h2>${user.name} - Bearbeiten</h2>
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="card">
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Vollständiger Name</label>
+            <input type="text" id="editUserName" class="form-input" value="${user.name}" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">FH-Kennung</label>
+            <input type="text" id="editUserKennung" class="form-input" value="${user.kennung}" required>
+            <small>Achtung: Änderung der Kennung aktualisiert alle zugehörigen Einträge!</small>
+          </div>
+          <div class="form-group">
+            <label class="form-label">E-Mail Adresse</label>
+            <input type="email" id="editUserEmail" class="form-input" value="${currentEmail}">
+          </div>
+        </div>
+        <div class="card-footer">
+          ${ButtonFactory.primary('ÄNDERUNGEN SPEICHERN', `updateUser('${kennung}')`)}
+          ${ButtonFactory.cancelModal()}
+        </div>
+      </div>
+    </div>
+  `;
+  
+  window.showModal(modalHtml);
 }
 
 async function updateUser(oldKennung) {
@@ -469,6 +515,12 @@ async function updateUser(oldKennung) {
   
   if (!newName || !newKennung) {
     alert('Name und FH-Kennung sind erforderlich!');
+    return;
+  }
+  
+  // Prüfen ob neue Kennung bereits existiert (außer bei unveränderter Kennung)
+  if (newKennung !== oldKennung && window.allUsers && window.allUsers.find(u => u.kennung === newKennung)) {
+    alert('Diese FH-Kennung wird bereits verwendet!');
     return;
   }
   
@@ -515,8 +567,10 @@ async function updateUser(oldKennung) {
     alert('Benutzer erfolgreich aktualisiert!');
     window.closeModal();
     loadUsersForManagement();
-    window.loadAdminStats();
-    window.loadAllEntries();
+    
+    // Admin Dashboard aktualisieren falls verfügbar
+    if (window.loadAdminStats) window.loadAdminStats();
+    if (window.loadAllEntries) window.loadAllEntries();
     
   } catch (error) {
     console.error('Fehler beim Aktualisieren des Benutzers:', error);
@@ -529,58 +583,64 @@ async function updateUser(oldKennung) {
 function showAddUserDialog() {
   if (!window.checkAdminAccess()) return;
   
-  const modalHtml = `
-    <div class="modal-header">
-      <h2>Neuen Benutzer Hinzufügen</h2>
-      <button class="close-btn" onclick="closeModal()">&times;</button>
-    </div>
-    <div class="modal-body">
-      <div class="card">
-        <div class="card-body">
-          <div class="form-group">
-            <label class="form-label">Vollständiger Name</label>
-            <input type="text" id="newUserName" class="form-input" required>
+  // WICHTIG: Erst userManager Modal schließen
+  closeUserManager();
+  
+  // Kurze Verzögerung damit das erste Modal geschlossen wird
+  setTimeout(() => {
+    const modalHtml = `
+      <div class="modal-header">
+        <h2>Neuen Benutzer Hinzufügen</h2>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="card">
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label">Vollständiger Name</label>
+              <input type="text" id="newUserName" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">FH-Kennung</label>
+              <input type="text" id="newUserKennung" class="form-input" required>
+              <div id="kennungCheck" style="margin-top: 8px;"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">E-Mail Adresse</label>
+              <input type="email" id="newUserEmail" class="form-input">
+              <small>Optional - Standard: kennung@fh-muenster.de</small>
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">FH-Kennung</label>
-            <input type="text" id="newUserKennung" class="form-input" required>
-            <div id="kennungCheck" style="margin-top: 8px;"></div>
+          <div class="card-footer">
+            ${ButtonFactory.primary('BENUTZER HINZUFÜGEN', 'createNewUser()')}
+            ${ButtonFactory.cancelModal()}
           </div>
-          <div class="form-group">
-            <label class="form-label">E-Mail Adresse</label>
-            <input type="email" id="newUserEmail" class="form-input">
-            <small>Optional - Standard: kennung@fh-muenster.de</small>
-          </div>
-        </div>
-        <div class="card-footer">
-          ${ButtonFactory.primary('BENUTZER HINZUFÜGEN', 'createNewUser()')}
-          ${ButtonFactory.cancelModal()}
         </div>
       </div>
-    </div>
-  `;
-  
-  showModal(modalHtml);
-  
-  // Event Listener für Kennung-Validierung und Auto-Email-Generierung
-  document.getElementById('newUserKennung').addEventListener('input', function() {
-    const kennung = this.value.trim().toLowerCase();
-    const checkDiv = document.getElementById('kennungCheck');
-    const emailField = document.getElementById('newUserEmail');
+    `;
     
-    // Auto-generate email when kennung changes
-    if (kennung && !emailField.value) {
-      emailField.value = `${kennung}@fh-muenster.de`;
-    }
+    window.showModal(modalHtml);
     
-    if (kennung && window.allUsers.find(u => u.kennung === kennung)) {
-      checkDiv.innerHTML = '<span style="color: #dc3545;">Diese Kennung existiert bereits!</span>';
-    } else if (kennung) {
-      checkDiv.innerHTML = '<span style="color: #28a745;">✅ Kennung verfügbar</span>';
-    } else {
-      checkDiv.innerHTML = '';
-    }
-  });
+    // Event Listener für Kennung-Validierung und Auto-Email-Generierung
+    document.getElementById('newUserKennung').addEventListener('input', function() {
+      const kennung = this.value.trim().toLowerCase();
+      const checkDiv = document.getElementById('kennungCheck');
+      const emailField = document.getElementById('newUserEmail');
+      
+      // Auto-generate email when kennung changes
+      if (kennung && !emailField.value) {
+        emailField.value = `${kennung}@fh-muenster.de`;
+      }
+      
+      if (kennung && window.allUsers && window.allUsers.find(u => u.kennung === kennung)) {
+        checkDiv.innerHTML = '<span style="color: #dc3545;">Diese Kennung existiert bereits!</span>';
+      } else if (kennung) {
+        checkDiv.innerHTML = '<span style="color: #28a745;">✅ Kennung verfügbar</span>';
+      } else {
+        checkDiv.innerHTML = '';
+      }
+    });
+  }, 100);
 }
 
 async function createNewUser() {
@@ -594,22 +654,26 @@ async function createNewUser() {
   }
   
   // Prüfen ob Kennung bereits existiert
-  if (window.allUsers.find(u => u.kennung === kennung)) {
+  if (window.allUsers && window.allUsers.find(u => u.kennung === kennung)) {
     alert('Diese FH-Kennung wird bereits verwendet!');
     return;
   }
   
   try {
     // User-Dokument erstellen
-    await window.db.collection('users').add({
+    const userRef = await window.db.collection('users').add({
       name: name,
       kennung: kennung,
       email: email || `${kennung}@fh-muenster.de`,
-      createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
+      createdAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
     });
     
+    console.log('Neuer Benutzer erstellt mit ID:', userRef.id);
     alert('Benutzer erfolgreich hinzugefügt!');
     window.closeModal();
+    
+    // Nutzer-Liste neu laden
     loadUsersForManagement();
     
   } catch (error) {
@@ -630,6 +694,7 @@ window.showUserManager = showUserManager;
 window.closeUserManager = closeUserManager;
 window.loadUsersForManagement = loadUsersForManagement;
 window.sortUsersBy = sortUsersBy;
+window.showEditUserForm = showEditUserForm; // Export the function
 
 // ==================== USER MANAGEMENT MODULE ====================
 
