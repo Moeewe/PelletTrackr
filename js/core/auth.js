@@ -144,6 +144,11 @@ function loginAsAdmin() {
 }
 
 function logout() {
+  // Clean up any active listeners
+  if (typeof cleanupUserDashboard === 'function') {
+    cleanupUserDashboard();
+  }
+  
   window.currentUser = { name: '', kennung: '', isAdmin: false };
   showScreen('loginScreen');
   

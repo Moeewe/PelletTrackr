@@ -1410,6 +1410,172 @@
     color: #000000;
 }
 
+/* Problem Report Severity Indicators */
+.severity-indicator {
+    padding: 4px 8px;
+    border: 2px solid #000000;
+    border-radius: 0;
+    font-size: 0.8em;
+    font-weight: bold;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+.severity-indicator.low {
+    background: #4CAF50;
+    color: white;
+}
+
+.severity-indicator.medium {
+    background: #FFEB00;
+    color: #000000;
+}
+
+.severity-indicator.high {
+    background: #FF5722;
+    color: white;
+}
+
+.severity-indicator.critical {
+    background: #000000;
+    color: white;
+}
+
+/* Problem Reports & Equipment Requests Styling */
+.problem-reports-container,
+.equipment-requests-container {
+    max-height: 500px;
+    overflow-y: auto;
+    margin-top: 20px;
+}
+
+.problem-report-item,
+.equipment-request-item {
+    background: white;
+    border: 2px solid #000000;
+    border-radius: 0;
+    padding: 15px;
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.problem-report-item.open,
+.equipment-request-item.pending {
+    border-left: 4px solid #FFEB00;
+}
+
+.problem-report-item.in_progress,
+.equipment-request-item.approved {
+    border-left: 4px solid #4CAF50;
+}
+
+.problem-report-item.resolved,
+.equipment-request-item.returned {
+    border-left: 4px solid #757575;
+}
+
+.equipment-request-item.active {
+    border-left: 4px solid #FF5722;
+}
+
+.equipment-request-item.rejected {
+    border-left: 4px solid #FF5722;
+}
+
+.problem-header,
+.request-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #000000;
+}
+
+.problem-user,
+.request-user {
+    font-weight: bold;
+    color: #000000;
+}
+
+.problem-date,
+.request-date {
+    font-size: 0.85em;
+    color: #666;
+}
+
+.problem-details,
+.request-details {
+    margin: 10px 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    font-size: 0.9em;
+}
+
+.problem-description,
+.request-reason {
+    margin: 10px 0;
+    padding: 10px;
+    background: #f8f8f8;
+    border: 2px solid #000000;
+    border-radius: 0;
+    font-style: italic;
+}
+
+.problem-actions,
+.request-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px solid #000000;
+    flex-wrap: wrap;
+}
+
+.problem-actions .btn,
+.request-actions .btn {
+    flex: 1;
+    min-width: 100px;
+    padding: 6px 12px;
+    font-size: 0.85em;
+}
+
+.problem-status,
+.request-status {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px solid #000000;
+    font-weight: bold;
+    color: #666;
+}
+
+/* Responsive Problem Reports & Equipment Requests */
+@media (max-width: 768px) {
+    .problem-details,
+    .request-details {
+        grid-template-columns: 1fr;
+        gap: 5px;
+    }
+    
+    .problem-header,
+    .request-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .problem-actions,
+    .request-actions {
+        flex-direction: column;
+    }
+    
+    .problem-actions .btn,
+    .request-actions .btn {
+        flex: none;
+    }
+}
+
 /* Form Actions Styling */
 .form-actions {
     display: flex;
@@ -1422,6 +1588,174 @@
 
 .form-actions .btn {
     min-width: 120px;
+}
+
+/* ===== USER DASHBOARD CARDS ===== */
+/* Corporate Design Dashboard Cards für User-Services */
+
+.user-dashboard-section {
+    margin-top: 40px;
+}
+
+.dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.dashboard-card {
+    background: white;
+    border: 2px solid #000000;
+    border-radius: 0;
+    padding: 20px;
+    box-shadow: none;
+    transition: background-color 0.2s ease;
+    position: relative;
+}
+
+.dashboard-card.clickable {
+    cursor: pointer;
+}
+
+.dashboard-card.clickable:hover {
+    background: #f8f8f8;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #000000;
+}
+
+.card-title {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #000000;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.card-number {
+    font-size: 2em;
+    font-weight: bold;
+    color: #000000;
+    line-height: 1;
+}
+
+.card-icon {
+    font-size: 2em;
+    line-height: 1;
+}
+
+.card-content {
+    color: #333;
+}
+
+.card-content p {
+    margin: 0 0 15px 0;
+    font-size: 0.9em;
+    line-height: 1.4;
+}
+
+.card-action {
+    font-weight: bold;
+    color: #000000;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.9em;
+    margin-top: 10px;
+}
+
+/* Status Indicators */
+.status-indicators {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9em;
+}
+
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #000000;
+    flex-shrink: 0;
+}
+
+.status-dot.status-available {
+    background: #4CAF50;
+}
+
+.status-dot.status-printing {
+    background: #FFEB00;
+}
+
+.status-dot.status-maintenance {
+    background: #757575;
+}
+
+.status-dot.status-broken {
+    background: #FF5722;
+}
+
+.status-count {
+    font-weight: bold;
+    color: #000000;
+    min-width: 20px;
+}
+
+.status-label {
+    color: #666;
+    font-size: 0.85em;
+}
+
+/* Responsive Dashboard Cards */
+@media (max-width: 768px) {
+    .dashboard-cards {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .status-indicators {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .card-number,
+    .card-icon {
+        font-size: 1.5em;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-card {
+        padding: 15px;
+    }
+    
+    .card-title {
+        font-size: 1em;
+    }
+    
+    .status-indicator {
+        font-size: 0.85em;
+    }
 }
 
 /* Responsive Asset Management */
