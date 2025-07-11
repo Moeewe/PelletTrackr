@@ -381,7 +381,7 @@ async function editMaterial(materialId) {
     
     const modalHtml = `
       <div class="modal-header">
-        <h2>${material.name}</h2>
+        <h2 class="material-title">${material.name}</h2>
         <button class="close-btn" onclick="closeEditMaterialModal()">&times;</button>
       </div>
       <div class="modal-body">
@@ -408,8 +408,8 @@ async function editMaterial(materialId) {
             </div>
             
             <div class="detail-row highlight-total">
-              <span class="detail-label">VK €/KG:</span>
-              <span class="detail-value">${window.formatCurrency(sellingPrice)}</span>
+              <span class="detail-label"></span>
+              <span class="detail-value material-vk">VK €/KG: ${window.formatCurrency(sellingPrice)}</span>
             </div>
           </div>
           <div class="card-footer">
@@ -452,7 +452,7 @@ async function editMasterbatch(masterbatchId) {
     
     const modalHtml = `
       <div class="modal-header">
-        <h2>${masterbatch.name}</h2>
+        <h2 class="masterbatch-title">${masterbatch.name}</h2>
         <button class="close-btn" onclick="closeEditMasterbatchModal()">&times;</button>
       </div>
       <div class="modal-body">
@@ -479,8 +479,8 @@ async function editMasterbatch(masterbatchId) {
             </div>
             
             <div class="detail-row highlight-total">
-              <span class="detail-label">VK €/KG:</span>
-              <span class="detail-value">${window.formatCurrency(sellingPrice)}</span>
+              <span class="detail-label"></span>
+              <span class="detail-value masterbatch-vk">VK €/KG: ${window.formatCurrency(sellingPrice)}</span>
             </div>
           </div>
           <div class="card-footer">

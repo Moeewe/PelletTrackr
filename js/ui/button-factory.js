@@ -137,7 +137,9 @@ const ButtonFactory = {
   
   secondary: (text, onclick, options = {}) => createButton('CLOSE', onclick, { ...options, text }),
   
-  tertiary: (text, onclick, options = {}) => createButton('DETAILS', onclick, { ...options, text })
+  tertiary: (text, onclick, options = {}) => createButton('DETAILS', onclick, { ...options, text }),
+  
+  danger: (text, onclick, options = {}) => createButton('DELETE', onclick, { ...options, text })
 };
 
 // Export für globale Verwendung
