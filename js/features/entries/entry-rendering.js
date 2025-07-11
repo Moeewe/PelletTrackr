@@ -1,7 +1,7 @@
 // ==================== ENTRY RENDERING MODULE ====================
-// Basis-Rendering für User/Admin Entry-Tabellen
+// Basis-Rendering für User/Admin Entry-Tabellen und Cards
 
-// User-Drucke rendern (vollständige Version)
+// User-Drucke rendern (vollständige Version mit Card + Table)
 function renderUserEntries(entries) {
   const tableDiv = document.getElementById("userEntriesTable");
   
@@ -11,26 +11,30 @@ function renderUserEntries(entries) {
     return;
   }
 
-  // Tabelle erstellen
-  let tableHtml = `
-    <table>
-      <thead>
-        <tr>
-          <th onclick="sortUserEntries('date')">Datum</th>
-          <th onclick="sortUserEntries('jobName')">Job</th>
-          <th onclick="sortUserEntries('material')">Material</th>
-          <th onclick="sortUserEntries('materialMenge')">Menge</th>
-          <th onclick="sortUserEntries('masterbatch')">Masterbatch</th>
-          <th onclick="sortUserEntries('masterbatchMenge')">Menge</th>
-          <th onclick="sortUserEntries('cost')">Kosten</th>
-          <th onclick="sortUserEntries('status')">Status</th>
-          <th>Notizen</th>
-          <th>Aktionen</th>
-        </tr>
-      </thead>
-      <tbody>
+  // Container mit Tabelle UND Cards erstellen
+  let containerHtml = `
+    <div class="entries-container">
+      <!-- Desktop Tabelle -->
+      <div class="data-table">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="sortUserEntries('date')">Datum</th>
+              <th onclick="sortUserEntries('jobName')">Job</th>
+              <th onclick="sortUserEntries('material')">Material</th>
+              <th onclick="sortUserEntries('materialMenge')">Menge</th>
+              <th onclick="sortUserEntries('masterbatch')">Masterbatch</th>
+              <th onclick="sortUserEntries('masterbatchMenge')">Menge</th>
+              <th onclick="sortUserEntries('cost')">Kosten</th>
+              <th onclick="sortUserEntries('status')">Status</th>
+              <th>Notizen</th>
+              <th>Aktionen</th>
+            </tr>
+          </thead>
+          <tbody>
   `;
 
+  // Tabellen-Zeilen für Desktop
   entries.forEach(entry => {
     const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
     const isPaid = entry.paid || entry.isPaid;
@@ -49,8 +53,8 @@ function renderUserEntries(entries) {
         ${ButtonFactory.editEntry(entry.id, true)}
       </div>`;
     
-    // Responsive Tabellen-Zeile mit Zwei-Zeilen-Layout
-    tableHtml += `
+    // Tabellen-Zeile für Desktop
+    containerHtml += `
       <tr class="entry-row">
         <td data-label="Datum"><span class="cell-value">${date}</span></td>
         <td data-label="Job"><span class="cell-value">${jobName}</span></td>
@@ -71,15 +75,99 @@ function renderUserEntries(entries) {
     `;
   });
 
-  tableHtml += `
-      </tbody>
-    </table>
+  containerHtml += `
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Mobile Cards -->
+      <div class="entry-cards">
+  `;
+
+  // Card-Struktur für Mobile
+  entries.forEach(entry => {
+    const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
+    const isPaid = entry.paid || entry.isPaid;
+    const jobName = entry.jobName || "3D-Druck Auftrag";
+    const jobNotes = entry.jobNotes || "";
+    
+    // Status Badge
+    const statusBadgeClass = isPaid ? 'status-paid' : 'status-unpaid';
+    const statusBadgeText = isPaid ? 'BEZAHLT' : 'OFFEN';
+    
+    // Aktionen für Cards
+    const cardActions = `
+      ${ButtonFactory.showNachweis(entry.id, isPaid)}
+      ${ButtonFactory.viewDetails(entry.id)}
+      ${ButtonFactory.editEntry(entry.id, true)}
+    `;
+    
+    // Card HTML
+    containerHtml += `
+      <div class="entry-card">
+        <!-- Card Header mit Job-Name und Status -->
+        <div class="entry-card-header">
+          <h3 class="entry-job-title">${jobName}</h3>
+          <span class="entry-status-badge ${statusBadgeClass}">${statusBadgeText}</span>
+        </div>
+        
+        <!-- Card Body mit Detail-Zeilen -->
+        <div class="entry-card-body">
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Datum</span>
+            <span class="entry-detail-value">${date}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Material</span>
+            <span class="entry-detail-value">${entry.material}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Menge</span>
+            <span class="entry-detail-value">${entry.materialMenge.toFixed(2)} kg</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Masterbatch</span>
+            <span class="entry-detail-value">${entry.masterbatch}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">MB Menge</span>
+            <span class="entry-detail-value">${entry.masterbatchMenge.toFixed(2)} g</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Kosten</span>
+            <span class="entry-detail-value cost-value">${formatCurrency(entry.totalCost)}</span>
+          </div>
+          
+          ${jobNotes ? `
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Notizen</span>
+            <span class="entry-detail-value notes-value">${jobNotes}</span>
+          </div>
+          ` : ''}
+        </div>
+        
+        <!-- Card Footer mit Buttons -->
+        <div class="entry-card-footer">
+          ${cardActions}
+        </div>
+      </div>
+    `;
+  });
+
+  containerHtml += `
+      </div>
+    </div>
   `;
   
-  tableDiv.innerHTML = tableHtml;
+  tableDiv.innerHTML = containerHtml;
 }
 
-// Admin-Drucke rendern (vollständige Version mit allen Admin-Features)
+// Admin-Drucke rendern (vollständige Version mit Card + Table für Admin)
 function renderAdminEntries(entries) {
   const tableDiv = document.getElementById("adminEntriesTable");
   
@@ -89,28 +177,32 @@ function renderAdminEntries(entries) {
     return;
   }
 
-  // Admin-Tabelle erstellen
-  let tableHtml = `
-    <table>
-      <thead>
-        <tr>
-          <th onclick="sortAdminEntriesBy('date')">Datum</th>
-          <th onclick="sortAdminEntriesBy('name')">Name</th>
-          <th onclick="sortAdminEntriesBy('kennung')">Kennung</th>
-          <th onclick="sortAdminEntriesBy('jobName')">Job</th>
-          <th onclick="sortAdminEntriesBy('material')">Material</th>
-          <th onclick="sortAdminEntriesBy('materialMenge')">Mat. Menge</th>
-          <th onclick="sortAdminEntriesBy('masterbatch')">Masterbatch</th>
-          <th onclick="sortAdminEntriesBy('masterbatchMenge')">MB Menge</th>
-          <th onclick="sortAdminEntriesBy('cost')">Kosten</th>
-          <th onclick="sortAdminEntriesBy('status')">Status</th>
-          <th>Notizen</th>
-          <th>Aktionen</th>
-        </tr>
-      </thead>
-      <tbody>
+  // Container mit Tabelle UND Cards erstellen
+  let containerHtml = `
+    <div class="entries-container">
+      <!-- Desktop Tabelle -->
+      <div class="data-table">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="sortAdminEntriesBy('date')">Datum</th>
+              <th onclick="sortAdminEntriesBy('name')">Name</th>
+              <th onclick="sortAdminEntriesBy('kennung')">Kennung</th>
+              <th onclick="sortAdminEntriesBy('jobName')">Job</th>
+              <th onclick="sortAdminEntriesBy('material')">Material</th>
+              <th onclick="sortAdminEntriesBy('materialMenge')">Mat. Menge</th>
+              <th onclick="sortAdminEntriesBy('masterbatch')">Masterbatch</th>
+              <th onclick="sortAdminEntriesBy('masterbatchMenge')">MB Menge</th>
+              <th onclick="sortAdminEntriesBy('cost')">Kosten</th>
+              <th onclick="sortAdminEntriesBy('status')">Status</th>
+              <th>Notizen</th>
+              <th>Aktionen</th>
+            </tr>
+          </thead>
+          <tbody>
   `;
 
+  // Tabellen-Zeilen für Desktop
   entries.forEach(entry => {
     const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
     const isPaid = entry.paid || entry.isPaid;
@@ -134,8 +226,8 @@ function renderAdminEntries(entries) {
       </div>
     `;
     
-    // Responsive Tabellen-Zeile mit data-label Attributen
-    tableHtml += `
+    // Tabellen-Zeile für Desktop
+    containerHtml += `
       <tr id="entry-${entry.id}">
         <td data-label="Datum"><span class="cell-value">${date}</span></td>
         <td data-label="Name"><span class="cell-value">${entry.name}</span></td>
@@ -158,10 +250,109 @@ function renderAdminEntries(entries) {
     `;
   });
 
-  tableHtml += `
-      </tbody>
-    </table>
+  containerHtml += `
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Mobile Cards für Admin -->
+      <div class="entry-cards">
+  `;
+
+  // Card-Struktur für Mobile (Admin mit mehr Feldern)
+  entries.forEach(entry => {
+    const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
+    const isPaid = entry.paid || entry.isPaid;
+    const jobName = entry.jobName || "3D-Druck Auftrag";
+    const jobNotes = entry.jobNotes || "";
+    
+    // Status Badge
+    const statusBadgeClass = isPaid ? 'status-paid' : 'status-unpaid';
+    const statusBadgeText = isPaid ? 'BEZAHLT' : 'OFFEN';
+    
+    // Admin-Aktionen für Cards
+    const cardActions = `
+      ${!isPaid ? 
+        ButtonFactory.registerPayment(entry.id) :
+        `${ButtonFactory.undoPayment(entry.id)}
+         ${ButtonFactory.showNachweis(entry.id, true)}`
+      }
+      ${ButtonFactory.viewDetails(entry.id)}
+      ${ButtonFactory.editEntry(entry.id)}
+      ${ButtonFactory.deleteEntry(entry.id)}
+    `;
+    
+    // Admin Card HTML (mit Name und Kennung)
+    containerHtml += `
+      <div class="entry-card" id="entry-card-${entry.id}">
+        <!-- Card Header mit Job-Name und Status -->
+        <div class="entry-card-header">
+          <h3 class="entry-job-title">${jobName}</h3>
+          <span class="entry-status-badge ${statusBadgeClass}">${statusBadgeText}</span>
+        </div>
+        
+        <!-- Card Body mit Detail-Zeilen -->
+        <div class="entry-card-body">
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Datum</span>
+            <span class="entry-detail-value">${date}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Name</span>
+            <span class="entry-detail-value">${entry.name}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">FH-Kennung</span>
+            <span class="entry-detail-value">${entry.kennung}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Material</span>
+            <span class="entry-detail-value">${entry.material}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Mat. Menge</span>
+            <span class="entry-detail-value">${(entry.materialMenge || 0).toFixed(2)} kg</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Masterbatch</span>
+            <span class="entry-detail-value">${entry.masterbatch}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">MB Menge</span>
+            <span class="entry-detail-value">${(entry.masterbatchMenge || 0).toFixed(2)} g</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Kosten</span>
+            <span class="entry-detail-value cost-value">${formatCurrency(entry.totalCost)}</span>
+          </div>
+          
+          ${jobNotes ? `
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Notizen</span>
+            <span class="entry-detail-value notes-value">${jobNotes}</span>
+          </div>
+          ` : ''}
+        </div>
+        
+        <!-- Card Footer mit Admin-Buttons -->
+        <div class="entry-card-footer">
+          ${cardActions}
+        </div>
+      </div>
+    `;
+  });
+
+  containerHtml += `
+      </div>
+    </div>
   `;
   
-  tableDiv.innerHTML = tableHtml;
+  tableDiv.innerHTML = containerHtml;
 }

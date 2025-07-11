@@ -1,15 +1,221 @@
-/* ===== KONSISTENTES CARD DESIGN ===== */
-/* Einheitliches Design für alle Karten in Admin und User-Bereich */
+/* ===== ENTRY CARDS - NEUES LAYOUT ===== */
+/* Für mobile Druckübersicht mit Label links, Wert rechts */
 
-/* ==================== BASE CARD STRUCTURE ==================== */
+/* ==================== ENTRY CARD CONTAINER ==================== */
 
-/* Universal Card Container */
+.entries-container {
+  display: block;
+  width: 100%;
+}
+
+/* Desktop: Zeige Tabelle */
+@media (min-width: 769px) {
+  .entries-container .data-table {
+    display: block;
+  }
+  
+  .entries-container .entry-cards {
+    display: none;
+  }
+}
+
+/* Mobile: Zeige Cards */
+@media (max-width: 768px) {
+  .entries-container .data-table {
+    display: none;
+  }
+  
+  .entries-container .entry-cards {
+    display: block;
+  }
+}
+
+/* ==================== ENTRY CARD STRUKTUR ==================== */
+
+.entry-cards {
+  display: block;
+  width: 100%;
+  gap: 20px;
+}
+
+.entry-card {
+  background: white;
+  border: 2px solid #000000;
+  border-radius: 0;
+  margin-bottom: 20px;
+  padding: 0;
+  width: 100%;
+  position: relative;
+}
+
+/* Card Header mit Job-Name und Status */
+.entry-card-header {
+  padding: 16px 20px;
+  border-bottom: 2px solid #000000;
+  background: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.entry-job-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #000000;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex: 1;
+  min-width: 0;
+}
+
+.entry-status-badge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border: 1px solid #000;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.entry-status-badge.status-paid {
+  background: #4CAF50;
+  color: white;
+  border-color: #4CAF50;
+}
+
+.entry-status-badge.status-unpaid {
+  background: #FFEB00;
+  color: #000000;
+  border-color: #000000;
+}
+
+/* ==================== ENTRY DETAIL ROWS ==================== */
+
+.entry-card-body {
+  padding: 0;
+  background: white;
+}
+
+.entry-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  min-height: 50px;
+}
+
+.entry-detail-row:last-child {
+  border-bottom: none;
+}
+
+.entry-detail-label {
+  font-size: 15px;
+  font-weight: 400;
+  color: #000000;
+  text-align: left;
+  flex-shrink: 0;
+  margin-right: 16px;
+}
+
+.entry-detail-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: #000000;
+  text-align: right;
+  flex: 1;
+  word-break: break-word;
+  min-width: 0;
+}
+
+/* Spezielle Werte */
+.entry-detail-value.cost-value {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.entry-detail-value.notes-value {
+  text-align: left;
+  font-weight: 400;
+  color: #666;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* ==================== ENTRY CARD FOOTER (Buttons) ==================== */
+
+.entry-card-footer {
+  padding: 16px 20px;
+  border-top: 1px solid #e0e0e0;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.entry-card-footer .btn {
+  width: 100%;
+  padding: 14px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+/* ==================== RESPONSIVE ADJUSTMENTS ==================== */
+
+@media (max-width: 480px) {
+  .entry-card {
+    margin-bottom: 16px;
+  }
+  
+  .entry-card-header {
+    padding: 14px 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .entry-job-title {
+    font-size: 16px;
+  }
+  
+  .entry-detail-row {
+    padding: 12px 16px;
+    min-height: 44px;
+  }
+  
+  .entry-detail-label {
+    font-size: 14px;
+  }
+  
+  .entry-detail-value {
+    font-size: 14px;
+  }
+  
+  .entry-card-footer {
+    padding: 14px 16px;
+  }
+  
+  .entry-card-footer .btn {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+}
+
+/* ==================== BESTEHENDE CARD DESIGNS BEREINIGT ==================== */
+
+/* Universal Card Container für andere Bereiche (Material, User, etc.) */
 .card,
 .detail-card,
 .user-card,
 .material-card,
-.masterbatch-card,
-.entry-card {
+.masterbatch-card {
   background: white;
   border: 2px solid #000000;
   border-radius: 0;
@@ -19,7 +225,7 @@
   width: 100%;
 }
 
-/* Card Header */
+/* Standard Card Header */
 .card-header {
   padding: 24px 32px;
   border-bottom: 2px solid #000000;
@@ -31,18 +237,18 @@
   font-weight: 700;
   color: #000000;
   margin: 0;
-  text-align: left; /* Job name should be left-aligned */
+  text-align: left;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-/* Card Body */
+/* Standard Card Body */
 .card-body {
   padding: 32px;
   background: white;
 }
 
-/* Card Footer */
+/* Standard Card Footer */
 .card-footer {
   padding: 24px 32px;
   border-top: 2px solid #000000;
@@ -52,17 +258,14 @@
   gap: 12px;
 }
 
-/* ==================== DETAIL ROWS ==================== */
+/* ==================== STANDARD DETAIL ROWS (für Modals, etc.) ==================== */
 
-/* ==================== DETAIL ROWS - VEREINHEITLICHT ==================== */
-
-/* Neue minimalistische Detail-Rows ohne Container-Styling */
 .detail-row {
   display: flex;
   justify-content: flex-start;
   align-items: baseline;
   padding: 8px 0;
-  border-bottom: none; /* Kein Border mehr */
+  border-bottom: none;
   min-height: auto;
   line-height: 1.4;
 }
@@ -71,10 +274,9 @@
   border-bottom: none;
 }
 
-/* Labels - Normal gewichtet, linksbündig */
 .detail-label {
   font-size: 16px;
-  font-weight: 400; /* Normal weight */
+  font-weight: 400;
   color: #000000;
   min-width: 140px;
   text-align: left;
@@ -82,10 +284,9 @@
   flex-shrink: 0;
 }
 
-/* Values - Bold gewichtet, linksbündig */
 .detail-value {
   font-size: 16px;
-  font-weight: 700; /* Bold weight */
+  font-weight: 700;
   color: #000000;
   text-align: left;
   flex: 1;
@@ -93,7 +294,6 @@
 
 /* ==================== SPECIAL HIGHLIGHT ROWS ==================== */
 
-/* Gesamtkosten - Hervorgehoben wie im Design */
 .detail-row.highlight-total {
   background: none;
   color: #000000;
@@ -111,7 +311,6 @@
   font-size: 18px;
 }
 
-/* Status - Bezahlt (Grün) */
 .detail-row.highlight-green {
   background: none;
   color: #000000;
@@ -127,11 +326,10 @@
 }
 
 .detail-row.highlight-green .detail-value {
-  color: #4CAF50; /* Harmonisches Grün */
+  color: #4CAF50;
   font-weight: 700;
 }
 
-/* Status - Offen (Gelb) */
 .detail-row.highlight-yellow {
   background: none;
   color: #000000;
@@ -154,9 +352,8 @@
   display: inline-block;
 }
 
-/* ==================== NOTIZEN SPEZIAL-STYLING ==================== */
+/* ==================== NOTES STYLING ==================== */
 
-/* Notizen-Zeile - flexibel in der Höhe, gleiche Breite */
 .detail-row.notes-row {
   align-items: flex-start;
   padding: 12px 0;
@@ -174,9 +371,8 @@
   max-width: 100%;
 }
 
-/* ==================== BUTTON LAYOUT ==================== */
+/* ==================== BUTTON LAYOUTS ==================== */
 
-/* Button Group Layout for Cards */
 .button-group {
   display: flex;
   flex-direction: column;
@@ -189,7 +385,6 @@
   margin: 0;
 }
 
-/* Alle Buttons in Cards */
 .card-footer .btn,
 .card-actions .btn {
   width: 100%;
@@ -198,126 +393,38 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin: 0;
-  border-radius: 0;
-  transition: all 0.2s ease;
-}
-
-/* Button Varianten */
-.card-footer .btn-primary {
-  background: #000000;
-  color: white;
-  border: 2px solid #000000;
-}
-
-.card-footer .btn-primary:hover {
-  background: #333333;
-  border-color: #333333;
-}
-
-.card-footer .btn-secondary {
-  background: white;
-  color: #000000;
-  border: 2px solid #000000;
-}
-
-.card-footer .btn-secondary:hover {
-  background: #f8f8f8;
-}
-
-.card-footer .btn-success {
-  background: #28a745;
-  color: white;
-  border: 2px solid #28a745;
-}
-
-.card-footer .btn-success:hover {
-  background: #218838;
-  border-color: #218838;
-}
-
-.card-footer .btn-warning {
-  background: #FFEB00;
-  color: #000000;
-  border: 2px solid #000000;
-}
-
-.card-footer .btn-warning:hover {
-  background: #e6d200;
-}
-
-.card-footer .btn-danger {
-  background: #dc3545;
-  color: white;
-  border: 2px solid #dc3545;
-}
-
-.card-footer .btn-danger:hover {
-  background: #c82333;
-  border-color: #c82333;
 }
 
 /* ==================== STATUS INDICATORS ==================== */
 
 .status-indicator {
   display: inline-block;
-  padding: 8px 16px;
+  padding: 4px 8px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  border-radius: 0;
-  border: 2px solid;
+  letter-spacing: 0.5px;
 }
 
 .status-paid {
-  background: #28a745;
+  background: #4CAF50;
   color: white;
-  border-color: #28a745;
+  border: 1px solid #4CAF50;
 }
 
 .status-unpaid {
   background: #FFEB00;
   color: #000000;
-  border-color: #000000;
+  border: 1px solid #000000;
 }
 
 .status-overdue {
-  background: #dc3545;
+  background: #FF5722;
   color: white;
-  border-color: #dc3545;
+  border: 1px solid #FF5722;
 }
 
-/* ==================== BEZAHLT-STATUS BADGE ==================== */
-
-/* Status-Badge für das Modal - erscheint oben rechts */
-.status-badge {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  padding: 8px 16px;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border: 2px solid;
-  border-radius: 0;
-  background: white;
-}
-
-.status-badge.paid {
-  color: #4CAF50;
-  border-color: #4CAF50;
-  background: white;
-}
-
-.status-badge.unpaid {
-  color: #000000;
-  border-color: #000000;
-  background: #FFEB00;
-}
-
-/* ==================== RESPONSIVE DESIGN ==================== */
+/* ==================== RESPONSIVE STANDARD CARDS ==================== */
 
 @media (max-width: 768px) {
   .card-header {
@@ -336,592 +443,24 @@
     padding: 20px 24px;
   }
   
-  /* Responsive Detail-Rows - Stack vertikal auf Mobile */
-  .detail-row {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 12px 0;
-  }
-  
-  .detail-label {
-    margin-bottom: 4px;
-    margin-right: 0;
-    min-width: auto;
-    font-size: 14px;
-    color: #666;
-  }
-  
-  .detail-value {
-    font-size: 16px;
-    margin-left: 0;
-  }
-  
-  .detail-row.highlight-total .detail-label,
-  .detail-row.highlight-total .detail-value {
-    font-size: 16px;
-  }
-}
-
-@media (max-width: 480px) {
-  .card-header {
-    padding: 16px 20px;
-  }
-  
-  .card-title {
-    font-size: 18px;
-  }
-  
-  .card-body {
-    padding: 20px;
-  }
-  
-  .card-footer {
-    padding: 16px 20px;
-  }
-  
-  .detail-label {
-    font-size: 13px;
-  }
-  
-  .detail-value {
-    font-size: 15px;
-  }
-  
-  .detail-row.highlight-total .detail-label,
-  .detail-row.highlight-total .detail-value {
-    font-size: 15px;
-  }
-}
-
-/* ==================== ADMIN FORM CARDS ==================== */
-
-/* Entferne graue Hintergründe von Form-Sections */
-.entry-form,
-.form-section {
-  background: white;
-  border: 2px solid #000000;
-  border-radius: 0;
-  padding: 32px;
-  margin-bottom: 24px;
-}
-
-.form-section h2 {
-  font-size: 24px;
-  font-weight: 700;
-  color: #000000;
-  margin-bottom: 24px;
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding-bottom: 16px;
-  border-bottom: 2px solid #000000;
-}
-
-/* Admin Controls - Einheitliche Karten */
-.admin-controls {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
-  margin-bottom: 40px;
-}
-
-.control-section {
-  background: white;
-  border: 2px solid #000000;
-  border-radius: 0;
-  padding: 0;
-}
-
-.control-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #000000;
-  margin: 0;
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 20px 24px;
-  border-bottom: 2px solid #000000;
-  background: white;
-}
-
-.control-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  padding: 0;
-}
-
-.control-buttons .btn {
-  width: 100%;
-  padding: 16px 24px;
-  font-size: 14px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 0;
-  border-radius: 0;
-  border-top: 1px solid #e0e0e0;
-  border-left: none;
-  border-right: none;
-  border-bottom: none;
-}
-
-.control-buttons .btn:first-child {
-  border-top: none;
-}
-
-.control-buttons .btn:hover {
-  background: #f8f8f8;
-}
-
-/* ==================== DETAIL ROWS & EINRÜCKUNG (Vereinheitlichung) ==================== */
-.detail-row {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.detail-label {
-  flex: 0 0 140px;
-  color: #888;
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.5px;
-  text-align: left;
-}
-
-.detail-value {
-  flex: 1;
-  font-weight: bold;
-  color: #111;
-  padding-left: 16px;
-  font-size: 15px;
-  word-break: break-word;
-  text-align: left;
-}
-
-@media screen and (max-width: 768px) {
   .detail-row {
     flex-direction: column;
     align-items: flex-start;
     margin-bottom: 10px;
   }
+  
   .detail-label {
     margin-bottom: 2px;
     padding-left: 0;
     font-size: 14px;
   }
+  
   .detail-value {
     padding-left: 8px;
     font-size: 15px;
   }
 }
 
-/* ==================== MATERIAL/MASTERBATCH SPECIFIC STYLING ==================== */
-
-/* Material/Masterbatch Titel - Größer und prominenter */
-
-.material-title {
-  font-size: 18px !important;
-  font-weight: 600 !important;
-  color: #000000;
-  margin: 0;
-  text-transform: none;
-  letter-spacing: 0;
-  text-align: left;
-}
-
-.masterbatch-title {
-  font-size: 28px !important;
-  font-weight: 700 !important;
-  color: #000000;
-  margin: 0;
-  text-transform: none;
-  letter-spacing: 0;
-  text-align: left;
-}
-
-/* Material/Masterbatch VK Preise - Eingerückt zur Ausrichtung */
-
-.material-vk {
-  margin-left: 0;
-  font-size: 16px !important;
-  font-weight: 600 !important;
-  color: #000000;
-  text-align: left;
-  display: block;
-}
-
-.masterbatch-vk {
-  margin-left: 156px;
-  font-size: 18px !important;
-  font-weight: 700 !important;
-  color: #000000;
-}
-
-/* ==================== EXISTING CARD STRUCTURE ==================== */
-
-/* Universal Card Container */
-.card,
-.detail-card,
-.user-card,
-.material-card,
-.masterbatch-card,
-.entry-card {
-  background: white;
-  border: 2px solid #000000;
-  border-radius: 0;
-  padding: 0;
-  margin-bottom: 24px;
-  position: relative;
-  width: 100%;
-}
-
-/* Card Header */
-.card-header {
-  padding: 24px 32px;
-  border-bottom: 2px solid #000000;
-  background: white;
-}
-
-.card-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: #000000;
-  margin: 0;
-  text-align: left; /* Job name should be left-aligned */
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* Card Body */
-.card-body {
-  padding: 32px;
-  background: white;
-}
-
-/* Card Footer */
-.card-footer {
-  padding: 24px 32px;
-  border-top: 2px solid #000000;
-  background: white;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* ==================== DETAIL ROWS ==================== */
-
-/* ==================== DETAIL ROWS - VEREINHEITLICHT ==================== */
-
-/* Neue minimalistische Detail-Rows ohne Container-Styling */
-.detail-row {
-  display: flex;
-  justify-content: flex-start;
-  align-items: baseline;
-  padding: 8px 0;
-  border-bottom: none; /* Kein Border mehr */
-  min-height: auto;
-  line-height: 1.4;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-/* Labels - Normal gewichtet, linksbündig */
-.detail-label {
-  font-size: 16px;
-  font-weight: 400; /* Normal weight */
-  color: #000000;
-  min-width: 140px;
-  text-align: left;
-  margin-right: 16px;
-  flex-shrink: 0;
-}
-
-/* Values - Bold gewichtet, linksbündig */
-.detail-value {
-  font-size: 16px;
-  font-weight: 700; /* Bold weight */
-  color: #000000;
-  text-align: left;
-  flex: 1;
-}
-
-/* ==================== SPECIAL HIGHLIGHT ROWS ==================== */
-
-/* Gesamtkosten - Hervorgehoben wie im Design */
-.detail-row.highlight-total {
-  background: none;
-  color: #000000;
-  border: none;
-  margin: 16px 0 8px 0;
-  padding: 0;
-  font-weight: 700;
-  font-size: 18px;
-}
-
-.detail-row.highlight-total .detail-label,
-.detail-row.highlight-total .detail-value {
-  color: #000000;
-  font-weight: 700;
-  font-size: 18px;
-}
-
-/* Status - Bezahlt (Grün) */
-.detail-row.highlight-green {
-  background: none;
-  color: #000000;
-  border: none;
-  margin: 8px 0;
-  padding: 0;
-  font-weight: 700;
-}
-
-.detail-row.highlight-green .detail-label {
-  color: #000000;
-  font-weight: 400;
-}
-
-.detail-row.highlight-green .detail-value {
-  color: #4CAF50; /* Harmonisches Grün */
-  font-weight: 700;
-}
-
-/* Status - Offen (Gelb) */
-.detail-row.highlight-yellow {
-  background: none;
-  color: #000000;
-  border: none;
-  margin: 8px 0;
-  padding: 0;
-  font-weight: 700;
-}
-
-.detail-row.highlight-yellow .detail-label {
-  color: #000000;
-  font-weight: 400;
-}
-
-.detail-row.highlight-yellow .detail-value {
-  color: #FFEB00;
-  font-weight: 700;
-  background: #000000;
-  padding: 4px 8px;
-  display: inline-block;
-}
-
-/* ==================== NOTIZEN SPEZIAL-STYLING ==================== */
-
-/* Notizen-Zeile - flexibel in der Höhe, gleiche Breite */
-.detail-row.notes-row {
-  align-items: flex-start;
-  padding: 12px 0;
-}
-
-.detail-row.notes-row .detail-label {
-  padding-top: 0;
-  align-self: flex-start;
-}
-
-.detail-row.notes-row .detail-value {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  line-height: 1.5;
-  max-width: 100%;
-}
-
-/* ==================== BUTTON LAYOUT ==================== */
-
-/* Button Group Layout for Cards */
-.button-group {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
-}
-
-.button-group .btn {
-  width: 100%;
-  margin: 0;
-}
-
-/* Alle Buttons in Cards */
-.card-footer .btn,
-.card-actions .btn {
-  width: 100%;
-  padding: 16px 24px;
-  font-size: 16px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 0;
-  border-radius: 0;
-  transition: all 0.2s ease;
-}
-
-/* Button Varianten */
-.card-footer .btn-primary {
-  background: #000000;
-  color: white;
-  border: 2px solid #000000;
-}
-
-.card-footer .btn-primary:hover {
-  background: #333333;
-  border-color: #333333;
-}
-
-.card-footer .btn-secondary {
-  background: white;
-  color: #000000;
-  border: 2px solid #000000;
-}
-
-.card-footer .btn-secondary:hover {
-  background: #f8f8f8;
-}
-
-.card-footer .btn-success {
-  background: #28a745;
-  color: white;
-  border: 2px solid #28a745;
-}
-
-.card-footer .btn-success:hover {
-  background: #218838;
-  border-color: #218838;
-}
-
-.card-footer .btn-warning {
-  background: #FFEB00;
-  color: #000000;
-  border: 2px solid #000000;
-}
-
-.card-footer .btn-warning:hover {
-  background: #e6d200;
-}
-
-.card-footer .btn-danger {
-  background: #dc3545;
-  color: white;
-  border: 2px solid #dc3545;
-}
-
-.card-footer .btn-danger:hover {
-  background: #c82333;
-  border-color: #c82333;
-}
-
-/* ==================== STATUS INDICATORS ==================== */
-
-.status-indicator {
-  display: inline-block;
-  padding: 8px 16px;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  border-radius: 0;
-  border: 2px solid;
-}
-
-.status-paid {
-  background: #28a745;
-  color: white;
-  border-color: #28a745;
-}
-
-.status-unpaid {
-  background: #FFEB00;
-  color: #000000;
-  border-color: #000000;
-}
-
-.status-overdue {
-  background: #dc3545;
-  color: white;
-  border-color: #dc3545;
-}
-
-/* ==================== BEZAHLT-STATUS BADGE ==================== */
-
-/* Status-Badge für das Modal - erscheint oben rechts */
-.status-badge {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  padding: 8px 16px;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border: 2px solid;
-  border-radius: 0;
-  background: white;
-}
-
-.status-badge.paid {
-  color: #4CAF50;
-  border-color: #4CAF50;
-  background: white;
-}
-
-.status-badge.unpaid {
-  color: #000000;
-  border-color: #000000;
-  background: #FFEB00;
-}
-
-/* ==================== RESPONSIVE DESIGN ==================== */
-
-@media (max-width: 768px) {
-  .card-header {
-    padding: 20px 24px;
-  }
-  
-  .card-title {
-    font-size: 20px;
-  }
-  
-  .card-body {
-    padding: 24px;
-  }
-  
-  .card-footer {
-    padding: 20px 24px;
-  }
-  
-  /* Responsive Detail-Rows - Stack vertikal auf Mobile */
-  .detail-row {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 12px 0;
-  }
-  
-  .detail-label {
-    margin-bottom: 4px;
-    margin-right: 0;
-    min-width: auto;
-    font-size: 14px;
-    color: #666;
-  }
-  
-  .detail-value {
-    font-size: 16px;
-    margin-left: 0;
-  }
-  
-  .detail-row.highlight-total .detail-label,
-  .detail-row.highlight-total .detail-value {
-    font-size: 16px;
-  }
-}
-
 @media (max-width: 480px) {
   .card-header {
     padding: 16px 20px;
@@ -944,93 +483,6 @@
   }
   
   .detail-value {
-    font-size: 15px;
+    font-size: 14px;
   }
-  
-  .detail-row.highlight-total .detail-label,
-  .detail-row.highlight-total .detail-value {
-    font-size: 15px;
-  }
-}
-
-/* ==================== ADMIN FORM CARDS ==================== */
-
-/* Entferne graue Hintergründe von Form-Sections */
-.entry-form,
-.form-section {
-  background: white;
-  border: 2px solid #000000;
-  border-radius: 0;
-  padding: 32px;
-  margin-bottom: 24px;
-}
-
-.form-section h2 {
-  font-size: 24px;
-  font-weight: 700;
-  color: #000000;
-  margin-bottom: 24px;
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding-bottom: 16px;
-  border-bottom: 2px solid #000000;
-}
-
-/* Admin Controls - Einheitliche Karten */
-.admin-controls {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
-  margin-bottom: 40px;
-}
-
-.control-section {
-  background: white;
-  border: 2px solid #000000;
-  border-radius: 0;
-  padding: 0;
-}
-
-.control-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #000000;
-  margin: 0;
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 20px 24px;
-  border-bottom: 2px solid #000000;
-  background: white;
-}
-
-.control-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  padding: 0;
-}
-
-.control-buttons .btn {
-  width: 100%;
-  padding: 16px 24px;
-  font-size: 14px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 0;
-  border-radius: 0;
-  border-top: 1px solid #e0e0e0;
-  border-left: none;
-  border-right: none;
-  border-bottom: none;
-}
-
-.control-buttons .btn:first-child {
-  border-top: none;
-}
-
-.control-buttons .btn:hover {
-  background: #f8f8f8;
 }
