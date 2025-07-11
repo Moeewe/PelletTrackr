@@ -136,6 +136,10 @@
                     <button type="button" class="btn btn-primary" onclick="addEntry()">
                         Druck hinzufügen
                     </button>
+                    
+                    <button type="button" class="btn btn-secondary" onclick="showMaterialRequestForm()" style="margin-top: 10px;">
+                        Material anfragen
+                    </button>
                 </form>
             </div>
 
@@ -192,6 +196,24 @@
 
             <!-- Admin Controls -->
             <div class="admin-controls">
+                <div class="control-section">
+                    <h3 class="control-title">Asset Management</h3>
+                    <div class="control-buttons">
+                        <button class="btn btn-secondary" onclick="showPrinterManager()">
+                            Drucker verwalten
+                        </button>
+                        <button class="btn btn-secondary" onclick="showReservationCalendar()">
+                            Reservierungen
+                        </button>
+                        <button class="btn btn-secondary" onclick="showEquipmentManager()">
+                            Ausleih-System
+                        </button>
+                        <button class="btn btn-secondary" onclick="showMaterialOrders()">
+                            Material-Bestellungen
+                        </button>
+                    </div>
+                </div>
+                
                 <div class="control-section">
                     <h3 class="control-title">Material-Verwaltung</h3>
                     <div class="control-buttons">
@@ -390,9 +412,169 @@
     <script src="js/features/entries/entry-stats.js"></script>
     <script src="js/features/entries/entry-rendering.js"></script>
     <script src="js/features/users/user-management.js"></script>
-    
+
+    <!-- Asset Management System -->
+    <script src="js/features/assets/printer-management.js"></script>
+    <script src="js/features/assets/reservation-system.js"></script>
+    <script src="js/features/assets/equipment-management.js"></script>
+    <script src="js/features/assets/material-orders.js"></script>
+
     <!-- Main App (Coordinator) -->
     <script src="web-app-modular.js"></script>
+
+    <!-- Modals und Overlays -->
+    <div id="overlay" class="overlay" onclick="closeAllModals()"></div>
+
+    <!-- Drucker Manager Modal -->
+    <div id="printerManagerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Drucker-Verwaltung</h3>
+                <button class="modal-close" onclick="closePrinterManager()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-controls">
+                    <button class="btn btn-primary" onclick="showAddPrinterForm()">
+                        Neuer Drucker
+                    </button>
+                </div>
+                
+                <div class="printer-grid" id="printerGrid">
+                    <!-- Drucker-Karten werden hier dynamisch eingefügt -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Drucker hinzufügen/bearbeiten Modal -->
+    <div id="printerFormModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="printerFormTitle">Drucker hinzufügen</h3>
+                <button class="modal-close" onclick="closePrinterForm()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="printerForm" class="form">
+                    <div class="form-group">
+                        <label class="form-label">Drucker-Name</label>
+                        <input type="text" id="printerName" class="form-input" placeholder="z.B. Prusa MK3S+ #1">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Typ/Modell</label>
+                        <input type="text" id="printerModel" class="form-input" placeholder="z.B. Prusa i3 MK3S+">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Bauraum (mm)</label>
+                        <input type="text" id="printerBuildVolume" class="form-input" placeholder="z.B. 250x210x200">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select id="printerStatus" class="form-select">
+                            <option value="available">Verfügbar</option>
+                            <option value="printing">In Betrieb</option>
+                            <option value="maintenance">Wartung</option>
+                            <option value="broken">Defekt</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Unterstützte Materialien</label>
+                        <textarea id="printerMaterials" class="form-textarea" placeholder="PLA, PETG, ABS..." rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Notizen</label>
+                        <textarea id="printerNotes" class="form-textarea" placeholder="Besonderheiten, letzte Wartung, etc." rows="3"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closePrinterForm()">Abbrechen</button>
+                        <button type="button" class="btn btn-primary" onclick="savePrinter()">Speichern</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reservierungs-Kalender Modal -->
+    <div id="reservationModal" class="modal modal-large">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Drucker-Reservierungen</h3>
+                <button class="modal-close" onclick="closeReservationCalendar()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="calendar-controls">
+                    <button class="btn btn-primary" onclick="showNewReservationForm()">
+                        Neue Reservierung
+                    </button>
+                    <div class="date-navigation">
+                        <button class="btn btn-secondary" onclick="previousWeek()">&lt;</button>
+                        <span id="currentWeek">KW 48, 2024</span>
+                        <button class="btn btn-secondary" onclick="nextWeek()">&gt;</button>
+                    </div>
+                </div>
+                <div id="reservationCalendar" class="reservation-calendar">
+                    <!-- Kalender wird hier dynamisch generiert -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ausleih-System Modal -->
+    <div id="equipmentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Ausleih-System</h3>
+                <button class="modal-close" onclick="closeEquipmentManager()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-controls">
+                    <button class="btn btn-primary" onclick="showAddEquipmentForm()">
+                        Equipment hinzufügen
+                    </button>
+                </div>
+                
+                <div class="equipment-categories">
+                    <div class="category-tabs">
+                        <button class="tab-btn active" onclick="showEquipmentCategory('keys')">Schlüssel</button>
+                        <button class="tab-btn" onclick="showEquipmentCategory('tools')">Werkzeuge</button>
+                        <button class="tab-btn" onclick="showEquipmentCategory('accessories')">Zubehör</button>
+                    </div>
+                    
+                    <div class="equipment-list" id="equipmentList">
+                        <!-- Equipment-Liste wird hier dynamisch eingefügt -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Material-Bestellungen Modal -->
+    <div id="materialOrdersModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Material-Bestellungen</h3>
+                <button class="modal-close" onclick="closeMaterialOrders()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="order-tabs">
+                    <button class="tab-btn active" onclick="showOrderTab('requests')">Bestellanfragen</button>
+                    <button class="tab-btn" onclick="showOrderTab('shopping')">Einkaufsliste</button>
+                    <button class="tab-btn" onclick="showOrderTab('orders')">Bestellungen</button>
+                </div>
+                
+                <div class="order-content">
+                    <div id="orderRequests" class="order-tab-content active">
+                        <!-- Bestellanfragen von Usern -->
+                    </div>
+                    <div id="shoppingList" class="order-tab-content">
+                        <!-- Automatische Einkaufsliste -->
+                    </div>
+                    <div id="orderHistory" class="order-tab-content">
+                        <!-- Bestellhistorie -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Global Footer - Always visible at bottom -->
     <div class="global-footer">
