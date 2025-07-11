@@ -154,76 +154,57 @@
                 </div>
             </div>
 
-            <!-- User Dashboard Cards -->
-            <div class="user-dashboard-section">
-                <h2 class="section-title">3D-Druck Services</h2>
-                <div class="dashboard-cards">
-                    <!-- Drucker Status Card -->
-                    <div class="dashboard-card">
-                        <div class="card-header">
-                            <h3 class="card-title">Drucker Status</h3>
-                            <div class="card-number" id="totalPrintersCount">0</div>
-                        </div>
-                        <div class="card-content">
-                            <div class="status-indicators">
-                                <div class="status-indicator">
-                                    <span class="status-dot status-available"></span>
-                                    <span class="status-count" id="availablePrintersCount">0</span>
-                                    <span class="status-label">Verfügbar</span>
-                                </div>
-                                <div class="status-indicator">
-                                    <span class="status-dot status-printing"></span>
-                                    <span class="status-count" id="printingPrintersCount">0</span>
-                                    <span class="status-label">In Betrieb</span>
-                                </div>
-                                <div class="status-indicator">
-                                    <span class="status-dot status-maintenance"></span>
-                                    <span class="status-count" id="maintenancePrintersCount">0</span>
-                                    <span class="status-label">Wartung</span>
-                                </div>
-                                <div class="status-indicator">
-                                    <span class="status-dot status-broken"></span>
-                                    <span class="status-count" id="brokenPrintersCount">0</span>
-                                    <span class="status-label">Defekt</span>
-                                </div>
+            <!-- User Services -->
+            <div class="stats-section">
+                <h2 class="section-title">Deine Services</h2>
+                <div class="stats-grid">
+                    <!-- Drucker Status -->
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalPrintersCount">0</div>
+                        <div class="stat-label">Drucker</div>
+                        <div class="status-indicators">
+                            <div class="status-indicator">
+                                <span class="status-dot status-available"></span>
+                                <span class="status-count" id="availablePrintersCount">0</span>
+                                <span class="status-label">Verfügbar</span>
+                            </div>
+                            <div class="status-indicator">
+                                <span class="status-dot status-printing"></span>
+                                <span class="status-count" id="printingPrintersCount">0</span>
+                                <span class="status-label">In Betrieb</span>
+                            </div>
+                            <div class="status-indicator">
+                                <span class="status-dot status-maintenance"></span>
+                                <span class="status-count" id="maintenancePrintersCount">0</span>
+                                <span class="status-label">Wartung</span>
+                            </div>
+                            <div class="status-indicator">
+                                <span class="status-dot status-broken"></span>
+                                <span class="status-count" id="brokenPrintersCount">0</span>
+                                <span class="status-label">Defekt</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Termin buchen Card -->
-                    <div class="dashboard-card clickable" onclick="showUserReservationForm()">
-                        <div class="card-header">
-                            <h3 class="card-title">Termin buchen</h3>
-                            <div class="card-icon">📅</div>
-                        </div>
-                        <div class="card-content">
-                            <p>Reserviere einen Drucker für dein nächstes Projekt</p>
-                            <div class="card-action">Jetzt buchen</div>
-                        </div>
+                    <!-- Termin buchen -->
+                    <div class="stat-card clickable" onclick="showUserReservationForm()">
+                        <div class="stat-number">→</div>
+                        <div class="stat-label">Termine</div>
+                        <div class="stat-description">Drucker reservieren</div>
                     </div>
 
-                    <!-- Equipment ausleihen Card -->
-                    <div class="dashboard-card clickable" onclick="showUserEquipmentRequest()">
-                        <div class="card-header">
-                            <h3 class="card-title">Equipment ausleihen</h3>
-                            <div class="card-icon">🔧</div>
-                        </div>
-                        <div class="card-content">
-                            <p>Schlüssel, Werkzeuge und Zubehör anfragen</p>
-                            <div class="card-action">Anfrage stellen</div>
-                        </div>
+                    <!-- Equipment ausleihen -->
+                    <div class="stat-card clickable" onclick="showUserEquipmentRequest()">
+                        <div class="stat-number">→</div>
+                        <div class="stat-label">Leihe</div>
+                        <div class="stat-description">Equipment anfragen</div>
                     </div>
 
-                    <!-- Problem melden Card -->
-                    <div class="dashboard-card clickable" onclick="showProblemReportForm()">
-                        <div class="card-header">
-                            <h3 class="card-title">Problem melden</h3>
-                            <div class="card-icon">⚠️</div>
-                        </div>
-                        <div class="card-content">
-                            <p>Defekte oder Probleme mit Druckern melden</p>
-                            <div class="card-action">Problem melden</div>
-                        </div>
+                    <!-- Problem melden -->
+                    <div class="stat-card clickable" onclick="showProblemReportForm()">
+                        <div class="stat-number">→</div>
+                        <div class="stat-label">Problem</div>
+                        <div class="stat-description">Defekte melden</div>
                     </div>
                 </div>
             </div>
@@ -638,9 +619,15 @@
             </div>
             <div class="modal-body">
                 <div class="order-tabs">
-                    <button class="tab-btn active" onclick="showOrderTab('requests')">Bestellanfragen</button>
-                    <button class="tab-btn" onclick="showOrderTab('shopping')">Einkaufsliste</button>
-                    <button class="tab-btn" onclick="showOrderTab('orders')">Bestellungen</button>
+                    <button class="tab-btn active" onclick="showOrderTab('requests')">
+                        Bestellanfragen <span id="requestsCounter" class="tab-counter">0</span>
+                    </button>
+                    <button class="tab-btn" onclick="showOrderTab('shopping')">
+                        Einkaufsliste <span id="shoppingCounter" class="tab-counter">0</span>
+                    </button>
+                    <button class="tab-btn" onclick="showOrderTab('orders')">
+                        Bestellungen <span id="ordersCounter" class="tab-counter">0</span>
+                    </button>
                 </div>
                 
                 <div class="order-content">
@@ -663,6 +650,7 @@
         <div class="global-footer-links">
             <a href="impressum.html?from=app" target="_blank" onclick="console.log('Impressum Link clicked!'); sessionStorage.setItem('openedFromApp', 'true');">Impressum</a>
             <a href="datenschutz.html?from=app" target="_blank" onclick="console.log('Datenschutz Link clicked!'); sessionStorage.setItem('openedFromApp', 'true');">Datenschutz</a>
+            <button class="diagnostic-trigger" onclick="showDiagnosticPanel()" title="System-Diagnose (Strg+Shift+D)">🔧</button>
         </div>
     </div>
 

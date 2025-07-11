@@ -1,81 +1,264 @@
 // ==================== MATERIAL LOADING MODULE ====================
 // Laden von Materialien und Masterbatches aus Firestore
 
+// Loading state tracking
+let materialsLoaded = false;
+let masterbatchesLoaded = false;
+
+// Firebase event listeners
+document.addEventListener('firebase-ready', () => {
+  console.log("📦 Firebase ready - initializing material loading...");
+  initializeMaterialLoading();
+});
+
+document.addEventListener('firebase-error', () => {
+  console.warn("📦 Firebase error - material loading postponed");
+  updateLoadingStates(false);
+});
+
+// Initialize material loading system
+function initializeMaterialLoading() {
+  if (materialsLoaded && masterbatchesLoaded) {
+    console.log("📦 Materials already loaded, skipping...");
+    return;
+  }
+  
+  // Load materials and masterbatches in parallel
+  Promise.all([
+    loadMaterials(),
+    loadMasterbatches()
+  ]).then(() => {
+    console.log("✅ All materials loaded successfully");
+  }).catch(error => {
+    console.error("❌ Error loading materials:", error);
+  });
+}
+
+// Update loading state indicators
+function updateLoadingStates(hasError = false) {
+  const materialSelect = document.getElementById("material");
+  const masterbatchSelect = document.getElementById("masterbatch");
+  
+  if (hasError) {
+    if (materialSelect) {
+      materialSelect.innerHTML = '<option value="">Firebase Verbindungsfehler</option>';
+    }
+    if (masterbatchSelect) {
+      masterbatchSelect.innerHTML = '<option value="">Firebase Verbindungsfehler</option>';
+    }
+  }
+}
+
 // Materialien laden (direkt aus Firestore)
 async function loadMaterials() {
   const select = document.getElementById("material");
-  if (!select) return;
+  if (!select) {
+    console.warn("⚠️ Material-Select-Element nicht gefunden");
+    return;
+  }
   
   select.innerHTML = '<option value="">Lade Materialien...</option>';
   
   console.log("🔄 Lade Materialien...");
   
-  try {
-    const snapshot = await window.db.collection("materials").get();
-    console.log("📊 Materials-Snapshot:", snapshot.size, "Dokumente");
+  // Check Firebase availability with enhanced checks
+  if (!window.db || !window.safeFirebaseOp) {
+    console.error("❌ Firebase DB oder SafeOp nicht verfügbar beim Material-Loading");
+    select.innerHTML = '<option value="">Firebase nicht verfügbar</option>';
     
-    select.innerHTML = '<option value="">Material auswählen... (optional)</option>';
-    
-    if (snapshot.empty) {
-      console.log("⚠️ Keine Materialien gefunden");
-      select.innerHTML = '<option value="">Keine Materialien verfügbar</option>';
+    // Listen for firebase-ready event if not already loaded
+    if (!materialsLoaded) {
+      console.log("⏳ Warte auf Firebase-Ready Event für Materialien...");
       return;
     }
+  }
+
+  try {
+    // Enhanced Firebase operation with retry logic
+    const loadMaterialsOperation = async () => {
+      const snapshot = await window.db.collection("materials").get();
+      return snapshot;
+    };
+
+    const snapshot = await window.safeFirebaseOp(loadMaterialsOperation, 3);
     
+    const materials = [];
     snapshot.forEach(doc => {
-      const material = doc.data();
-      console.log("➕ Material:", material.name, "Preis:", material.price);
+      materials.push(doc.data());
+    });
+
+    // Sortieren nach Name
+    materials.sort((a, b) => a.name.localeCompare(b.name));
+
+    // Dropdown befüllen
+    select.innerHTML = '<option value="">Material auswählen... (optional)</option>';
+    materials.forEach(material => {
       const option = document.createElement("option");
       option.value = material.name;
-      option.textContent = `${material.name} (${material.price.toFixed(2)} ${(material.currency || '€')}/kg)`;
+      option.textContent = `${material.name} (${formatCurrency(material.price)}/g)`;
       select.appendChild(option);
     });
+
+    // Global speichern für andere Module
+    window.availableMaterials = materials;
+    materialsLoaded = true;
     
-    console.log("✅ Materialien erfolgreich geladen!");
+    console.log("✅ Materialien geladen:", materials.length);
     
-  } catch (e) {
-    console.error("❌ Fehler beim Laden der Materialien:", e);
+    // Update material info panel if it exists
+    updateMaterialInfoPanel();
+    
+  } catch (error) {
+    console.error("❌ Fehler beim Laden der Materialien:", error);
     select.innerHTML = '<option value="">Fehler beim Laden</option>';
+    
+    // Show user-friendly error
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error("Materialien konnten nicht geladen werden. Bitte versuchen Sie es später erneut.");
+    }
+    
+    materialsLoaded = false;
   }
 }
 
 // Masterbatches laden (direkt aus Firestore)
 async function loadMasterbatches() {
   const select = document.getElementById("masterbatch");
-  if (!select) return;
+  if (!select) {
+    console.warn("⚠️ Masterbatch-Select-Element nicht gefunden");
+    return;
+  }
   
   select.innerHTML = '<option value="">Lade Masterbatches...</option>';
   
   console.log("🔄 Lade Masterbatches...");
   
-  try {
-    const snapshot = await window.db.collection("masterbatches").get();
-    console.log("📊 Masterbatches-Snapshot:", snapshot.size, "Dokumente");
+  // Check Firebase availability
+  if (!window.db || !window.safeFirebaseOp) {
+    console.error("❌ Firebase DB oder SafeOp nicht verfügbar beim Masterbatch-Loading");
+    select.innerHTML = '<option value="">Firebase nicht verfügbar</option>';
     
-    select.innerHTML = '<option value="">Masterbatch auswählen... (optional)</option>';
-    
-    if (snapshot.empty) {
-      console.log("⚠️ Keine Masterbatches gefunden");
-      select.innerHTML = '<option value="">Keine Masterbatches verfügbar</option>';
+    // Listen for firebase-ready event if not already loaded
+    if (!masterbatchesLoaded) {
+      console.log("⏳ Warte auf Firebase-Ready Event für Masterbatches...");
       return;
     }
+  }
+
+  try {
+    // Enhanced Firebase operation with retry logic
+    const loadMasterbatchesOperation = async () => {
+      const snapshot = await window.db.collection("masterbatches").get();
+      return snapshot;
+    };
+
+    const snapshot = await window.safeFirebaseOp(loadMasterbatchesOperation, 3);
     
+    const masterbatches = [];
     snapshot.forEach(doc => {
-      const masterbatch = doc.data();
-      console.log("➕ Masterbatch:", masterbatch.name, "Preis:", masterbatch.price);
+      masterbatches.push(doc.data());
+    });
+
+    // Sortieren nach Name
+    masterbatches.sort((a, b) => a.name.localeCompare(b.name));
+
+    // Dropdown befüllen
+    select.innerHTML = '<option value="">Masterbatch auswählen... (optional)</option>';
+    masterbatches.forEach(masterbatch => {
       const option = document.createElement("option");
       option.value = masterbatch.name;
-      option.textContent = `${masterbatch.name} (${masterbatch.price.toFixed(4)} ${(masterbatch.currency || '€')}/g)`;
+      option.textContent = `${masterbatch.name} (${formatCurrency(masterbatch.price)}/g)`;
       select.appendChild(option);
     });
+
+    // Global speichern für andere Module
+    window.availableMasterbatches = masterbatches;
+    masterbatchesLoaded = true;
     
-    console.log("✅ Masterbatches erfolgreich geladen!");
+    console.log("✅ Masterbatches geladen:", masterbatches.length);
     
-  } catch (e) {
-    console.error("❌ Fehler beim Laden der Masterbatches:", e);
+    // Update masterbatch info panel if it exists
+    updateMasterbatchInfoPanel();
+    
+  } catch (error) {
+    console.error("❌ Fehler beim Laden der Masterbatches:", error);
     select.innerHTML = '<option value="">Fehler beim Laden</option>';
+    
+    // Show user-friendly error
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error("Masterbatches konnten nicht geladen werden. Bitte versuchen Sie es später erneut.");
+    }
+    
+    masterbatchesLoaded = false;
   }
 }
+
+// Info-Panel für Material aktualisieren
+function updateMaterialInfoPanel() {
+  const infoPanel = document.getElementById("materialInfo");
+  if (!infoPanel || !window.availableMaterials) return;
+  
+  try {
+    const materialCount = window.availableMaterials.length;
+    const avgPrice = window.availableMaterials.reduce((sum, m) => sum + m.price, 0) / materialCount;
+    
+    infoPanel.innerHTML = `
+      <div class="info-stat">
+        <span class="info-label">Verfügbare Materialien:</span>
+        <span class="info-value">${materialCount}</span>
+      </div>
+      <div class="info-stat">
+        <span class="info-label">Durchschnittspreis:</span>
+        <span class="info-value">${formatCurrency(avgPrice)}/g</span>
+      </div>
+    `;
+  } catch (error) {
+    console.warn("Info-Panel update failed:", error);
+  }
+}
+
+// Info-Panel für Masterbatch aktualisieren  
+function updateMasterbatchInfoPanel() {
+  const infoPanel = document.getElementById("masterbatchInfo");
+  if (!infoPanel || !window.availableMasterbatches) return;
+  
+  try {
+    const masterbatchCount = window.availableMasterbatches.length;
+    const avgPrice = window.availableMasterbatches.reduce((sum, m) => sum + m.price, 0) / masterbatchCount;
+    
+    infoPanel.innerHTML = `
+      <div class="info-stat">
+        <span class="info-label">Verfügbare Masterbatches:</span>
+        <span class="info-value">${masterbatchCount}</span>
+      </div>
+      <div class="info-stat">
+        <span class="info-label">Durchschnittspreis:</span>
+        <span class="info-value">${formatCurrency(avgPrice)}/g</span>
+      </div>
+    `;
+  } catch (error) {
+    console.warn("Masterbatch Info-Panel update failed:", error);
+  }
+}
+
+// Reload function for manual retry
+function reloadMaterials() {
+  console.log("🔄 Manual reload of materials requested");
+  materialsLoaded = false;
+  masterbatchesLoaded = false;
+  
+  if (window.db) {
+    initializeMaterialLoading();
+  } else {
+    console.warn("⚠️ Firebase not available for manual reload");
+    if (window.toast && typeof window.toast.warning === 'function') {
+      window.toast.warning("Firebase-Verbindung nicht verfügbar. Bitte warten Sie auf die automatische Wiederverbindung.");
+    }
+  }
+}
+
+// Global reload function
+window.reloadMaterials = reloadMaterials;
 
 // ==================== MATERIAL MANAGEMENT UI ====================
 

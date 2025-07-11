@@ -20,6 +20,7 @@
 .global-footer-links {
     display: inline-flex;
     justify-content: center;
+    align-items: center;
     gap: 32px;
     margin: 0;
     pointer-events: auto;
@@ -45,6 +46,37 @@
 .global-footer-links a:hover {
     color: #000;
     text-decoration: underline;
+}
+
+/* Diagnostic Trigger Button */
+.diagnostic-trigger {
+    background: none;
+    border: 1px solid #ddd;
+    border-radius: 0;
+    color: #666;
+    font-size: 14px;
+    padding: 6px 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: 8px;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 28px;
+}
+
+.diagnostic-trigger:hover {
+    background: #f5f5f5;
+    border-color: #999;
+    color: #333;
+    transform: translateY(-1px);
+}
+
+.diagnostic-trigger:active {
+    transform: translateY(0);
+    background: #e0e0e0;
 }
 
 /* ===== LEGACY FOOTER LINKS ===== */
@@ -87,6 +119,14 @@
     .global-footer-links a {
         font-size: 11px;
         padding: 6px 8px;
+    }
+    
+    .diagnostic-trigger {
+        font-size: 12px;
+        padding: 4px 6px;
+        min-width: 26px;
+        height: 24px;
+        margin-left: 6px;
     }
     
     body {

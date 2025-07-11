@@ -395,7 +395,7 @@ function showProblemReportForm() {
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Problem melden</h3>
+                <h3>Drucker-Status melden</h3>
                 <button class="modal-close" onclick="closeProblemReportForm()">&times;</button>
             </div>
             <div class="modal-body">
@@ -407,33 +407,41 @@ function showProblemReportForm() {
                         </select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Problemtyp</label>
+                        <label class="form-label">Meldungstyp</label>
                         <select id="problemType" class="form-select">
-                            <option value="">Problemtyp auswählen...</option>
-                            <option value="mechanical">Mechanisches Problem</option>
-                            <option value="software">Software-Problem</option>
-                            <option value="filament">Filament-Problem</option>
-                            <option value="power">Stromversorgung</option>
-                            <option value="quality">Druckqualität</option>
-                            <option value="other">Sonstiges</option>
+                            <option value="">Meldungstyp auswählen...</option>
+                            <optgroup label="Probleme melden">
+                                <option value="mechanical">Mechanisches Problem</option>
+                                <option value="software">Software-Problem</option>
+                                <option value="filament">Filament-Problem</option>
+                                <option value="power">Stromversorgung</option>
+                                <option value="quality">Druckqualität</option>
+                                <option value="maintenance_needed">Wartung erforderlich</option>
+                                <option value="other_problem">Sonstiges Problem</option>
+                            </optgroup>
+                            <optgroup label="Status-Updates">
+                                <option value="repaired">Drucker repariert</option>
+                                <option value="maintenance_done">Wartung abgeschlossen</option>
+                                <option value="ready_for_use">Bereit für Nutzung</option>
+                            </optgroup>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Schweregrad</label>
+                        <label class="form-label">Auswirkung/Status</label>
                         <select id="problemSeverity" class="form-select">
-                            <option value="low">Niedrig - Funktioniert mit Einschränkungen</option>
-                            <option value="medium">Mittel - Deutliche Beeinträchtigung</option>
-                            <option value="high">Hoch - Nicht nutzbar</option>
-                            <option value="critical">Kritisch - Sicherheitsrisiko</option>
+                            <option value="available">Verfügbar - Drucker funktioniert einwandfrei</option>
+                            <option value="printing">In Betrieb - Wird gerade verwendet</option>
+                            <option value="maintenance">Wartung - Funktioniert mit Einschränkungen</option>
+                            <option value="broken">Defekt - Nicht nutzbar</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Problembeschreibung</label>
-                        <textarea id="problemDescription" class="form-textarea" placeholder="Beschreiben Sie das Problem so detailliert wie möglich..." rows="4"></textarea>
+                        <label class="form-label">Beschreibung</label>
+                        <textarea id="problemDescription" class="form-textarea" placeholder="Beschreiben Sie die Situation, das Problem oder die durchgeführte Reparatur..." rows="4"></textarea>
                     </div>
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" onclick="closeProblemReportForm()">Abbrechen</button>
-                        <button type="button" class="btn btn-primary" onclick="submitProblemReport()">Problem melden</button>
+                        <button type="button" class="btn btn-primary" onclick="submitProblemReport()">Meldung senden</button>
                     </div>
                 </form>
             </div>
@@ -484,18 +492,18 @@ async function populateProblemPrinterDropdown() {
 }
 
 /**
- * Submit problem report
+ * Submit problem report or status update
  */
 async function submitProblemReport() {
     const formData = {
         printerId: document.getElementById('problemPrinter').value,
         problemType: document.getElementById('problemType').value,
-        severity: document.getElementById('problemSeverity').value,
+        newStatus: document.getElementById('problemSeverity').value,
         description: document.getElementById('problemDescription').value.trim()
     };
     
     // Validation
-    if (!formData.printerId || !formData.problemType || !formData.severity || !formData.description) {
+    if (!formData.printerId || !formData.problemType || !formData.newStatus || !formData.description) {
         showToast('Bitte füllen Sie alle Felder aus', 'error');
         return;
     }
@@ -505,35 +513,40 @@ async function submitProblemReport() {
         const printerDoc = await window.db.collection('printers').doc(formData.printerId).get();
         const printerName = printerDoc.exists ? printerDoc.data().name : 'Unbekannter Drucker';
         
-        // Submit problem report
+        // Determine if this is a problem report or status update
+        const isStatusUpdate = ['repaired', 'maintenance_done', 'ready_for_use'].includes(formData.problemType);
+        const reportType = isStatusUpdate ? 'status_update' : 'problem';
+        
+        // Submit report/update
         await window.db.collection('problemReports').add({
             userName: window.currentUser?.name || 'Unbekannter User',
             userKennung: window.currentUser?.kennung || '',
             printerId: formData.printerId,
             printerName: printerName,
             problemType: formData.problemType,
-            severity: formData.severity,
+            reportType: reportType,
+            requestedStatus: formData.newStatus,
             description: formData.description,
             status: 'open',
             reportedAt: firebase.firestore.FieldValue.serverTimestamp(),
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
-        // If severity is high or critical, automatically set printer to broken status
-        if (formData.severity === 'high' || formData.severity === 'critical') {
-            await window.db.collection('printers').doc(formData.printerId).update({
-                status: 'broken',
-                lastProblemReport: firebase.firestore.FieldValue.serverTimestamp(),
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        }
+        // Update printer status directly based on new status
+        await window.db.collection('printers').doc(formData.printerId).update({
+            status: formData.newStatus,
+            lastStatusUpdate: firebase.firestore.FieldValue.serverTimestamp(),
+            lastUpdatedBy: window.currentUser?.name || 'Unbekannter User',
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
         
-        showToast('Problem erfolgreich gemeldet. Ein Admin wird sich darum kümmern.', 'success');
+        const actionText = isStatusUpdate ? 'Status-Update' : 'Problem';
+        showToast(`${actionText} erfolgreich gemeldet und Drucker-Status aktualisiert.`, 'success');
         closeProblemReportForm();
         
     } catch (error) {
-        console.error('Error submitting problem report:', error);
-        showToast('Fehler beim Melden des Problems', 'error');
+        console.error('Error submitting report:', error);
+        showToast('Fehler beim Melden', 'error');
     }
 }
 

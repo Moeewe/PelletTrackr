@@ -869,8 +869,11 @@ async function createNewUser() {
     }
     window.closeModal();
     
-    // Nutzer-Liste neu laden
-    loadUsersForManagement();
+    // User-Manager wieder öffnen und Daten neu laden
+    setTimeout(() => {
+      document.getElementById('userManager').classList.add('active');
+      loadUsersForManagement();
+    }, 100);
     
   } catch (error) {
     console.error('Fehler beim Erstellen des Benutzers:', error);

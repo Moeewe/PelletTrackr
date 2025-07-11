@@ -254,6 +254,38 @@ function renderTabContent(tab) {
             renderOrderHistory();
             break;
     }
+    
+    // Update tab counters
+    updateTabCounters();
+}
+
+/**
+ * Update tab counters with current counts
+ */
+function updateTabCounters() {
+    const requestsCount = materialOrders.filter(order => order.type === 'request' && order.status === 'pending').length;
+    const shoppingCount = materialOrders.filter(order => order.status === 'approved').length;
+    const ordersCount = materialOrders.filter(order => order.status === 'purchased').length;
+    
+    // Update counter elements
+    const requestsCounter = document.getElementById('requestsCounter');
+    const shoppingCounter = document.getElementById('shoppingCounter');
+    const ordersCounter = document.getElementById('ordersCounter');
+    
+    if (requestsCounter) {
+        requestsCounter.textContent = requestsCount;
+        requestsCounter.style.display = requestsCount > 0 ? 'inline-block' : 'none';
+    }
+    
+    if (shoppingCounter) {
+        shoppingCounter.textContent = shoppingCount;
+        shoppingCounter.style.display = shoppingCount > 0 ? 'inline-block' : 'none';
+    }
+    
+    if (ordersCounter) {
+        ordersCounter.textContent = ordersCount;
+        ordersCounter.style.display = ordersCount > 0 ? 'inline-block' : 'none';
+    }
 }
 
 /**
@@ -326,44 +358,68 @@ function getStatusText(status) {
 }
 
 /**
- * Render automatic shopping list
+ * Render shopping list (approved items to purchase)
  */
 function renderShoppingList() {
     const container = document.getElementById('shoppingList');
+    const shoppingItems = materialOrders.filter(order => order.status === 'approved');
     
-    // Placeholder content
-    container.innerHTML = `
-        <div class="empty-state">
-            <p>Automatische Einkaufsliste wird noch implementiert.</p>
-            <p>Hier werden Materialien mit niedrigem Bestand angezeigt.</p>
+    if (shoppingItems.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <p>Keine Artikel zum Einkaufen vorhanden.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = shoppingItems.map(item => `
+        <div class="shopping-list-item">
+            <div class="shopping-item-info">
+                <div class="shopping-item-name">${item.materialName || 'Unbekanntes Material'}</div>
+                <div class="shopping-item-details">
+                    ${item.manufacturer ? `Hersteller: ${item.manufacturer}<br>` : ''}
+                    Angefragt von: ${item.userName || 'Unbekannt'}<br>
+                    Menge: ${item.quantity || 'Nicht angegeben'}
+                </div>
+            </div>
+            <div class="shopping-item-quantity">
+                Dringlichkeit: ${getPriorityText(item.priority)}
+            </div>
+            <div class="shopping-item-actions">
+                <button class="btn btn-success" onclick="markAsPurchased('${item.id}')">Eingekauft</button>
+                <button class="btn btn-danger" onclick="cancelOrder('${item.id}')">Stornieren</button>
+            </div>
         </div>
-    `;
+    `).join('');
 }
 
 /**
- * Render order history
+ * Render order history (purchased items)
  */
 function renderOrderHistory() {
     const container = document.getElementById('orderHistory');
-    const orders = materialOrders.filter(order => order.type === 'order');
+    const orders = materialOrders.filter(order => order.status === 'purchased');
     
     if (orders.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <p>Keine Bestellungen vorhanden.</p>
+                <p>Keine eingekauften Bestellungen vorhanden.</p>
             </div>
         `;
         return;
     }
     
     container.innerHTML = orders.map(order => `
-        <div class="order-request">
+        <div class="order-request purchased">
             <div class="order-header">
-                <div class="order-user">Bestellung #${order.orderNumber || order.id.substr(0,8)}</div>
-                <div class="order-date">${order.createdAt ? order.createdAt.toLocaleDateString() : 'Unbekanntes Datum'}</div>
+                <div class="order-user">${order.materialName || 'Unbekanntes Material'}</div>
+                <div class="order-date">${order.purchasedAt ? order.purchasedAt.toDate().toLocaleDateString() : 'Unbekanntes Datum'}</div>
             </div>
-            <div class="order-material">${order.items?.length || 0} Artikel</div>
-            <div class="order-reason">Status: ${order.status || 'Unbekannt'}</div>
+            ${order.manufacturer ? `<div class="order-manufacturer">Hersteller: ${order.manufacturer}</div>` : ''}
+            <div class="order-material">Menge: ${order.quantity || 'Nicht angegeben'}</div>
+            <div class="order-reason">Eingekauft von: ${order.userName || 'Unbekannt'}</div>
+            <div class="order-priority">Ursprünglich angefragt: ${order.createdAt ? order.createdAt.toLocaleDateString() : 'Unbekannt'}</div>
         </div>
     `).join('');
 }
@@ -375,10 +431,11 @@ async function approveOrderRequest(requestId) {
     try {
         await window.db.collection('materialOrders').doc(requestId).update({
             status: 'approved',
+            approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
-        showToast('Anfrage genehmigt', 'success');
+        showToast('Anfrage genehmigt und zur Einkaufsliste hinzugefügt', 'success');
         // Real-time listener will automatically update the UI
         
     } catch (error) {
@@ -425,5 +482,47 @@ async function deleteOrderRequest(requestId) {
     } catch (error) {
         console.error('Error deleting request:', error);
         showToast('Fehler beim Löschen', 'error');
+    }
+}
+
+/**
+ * Mark item as purchased (move from shopping list to order history)
+ */
+async function markAsPurchased(requestId) {
+    try {
+        await window.db.collection('materialOrders').doc(requestId).update({
+            status: 'purchased',
+            purchasedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        showToast('Artikel als eingekauft markiert', 'success');
+        // Real-time listener will automatically update the UI
+        
+    } catch (error) {
+        console.error('Error marking as purchased:', error);
+        showToast('Fehler beim Markieren', 'error');
+    }
+}
+
+/**
+ * Cancel/reject order from shopping list
+ */
+async function cancelOrder(requestId) {
+    const reason = prompt('Grund für Stornierung (optional):');
+    
+    try {
+        await window.db.collection('materialOrders').doc(requestId).update({
+            status: 'cancelled',
+            cancellationReason: reason || '',
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        showToast('Bestellung storniert', 'success');
+        // Real-time listener will automatically update the UI
+        
+    } catch (error) {
+        console.error('Error cancelling order:', error);
+        showToast('Fehler beim Stornieren', 'error');
     }
 } 
