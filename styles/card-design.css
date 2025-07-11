@@ -55,20 +55,21 @@
   background: white;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   flex-wrap: wrap;
   gap: 10px;
 }
 
 .entry-job-title {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 600;
   color: #000000;
   margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  text-transform: none;
+  letter-spacing: 0;
   flex: 1;
   min-width: 0;
+  line-height: 1.3;
 }
 
 .entry-status-badge {
@@ -176,13 +177,17 @@
   
   .entry-card-header {
     padding: 14px 16px;
-    flex-direction: column;
-    align-items: flex-start;
     gap: 8px;
   }
   
   .entry-job-title {
-    font-size: 16px;
+    font-size: 15px;
+    line-height: 1.2;
+  }
+  
+  .entry-status-badge {
+    font-size: 11px;
+    padding: 5px 10px;
   }
   
   .entry-detail-row {
@@ -484,5 +489,265 @@
   
   .detail-value {
     font-size: 14px;
+  }
+}
+
+/* ==================== ZAHLUNGSNACHWEIS STYLING ==================== */
+
+.payment-proof {
+  font-family: Arial, sans-serif;
+  max-width: 600px;
+  margin: 0 auto;
+  background: white;
+  color: #000;
+  line-height: 1.5;
+}
+
+.proof-header {
+  text-align: center;
+  padding: 20px 0;
+  border-bottom: 3px solid #000;
+  margin-bottom: 30px;
+}
+
+.proof-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 8px;
+}
+
+.proof-title .highlight {
+  background: #FFEB00;
+  color: #000;
+  padding: 4px 8px;
+}
+
+.proof-subtitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.proof-details {
+  margin-bottom: 30px;
+}
+
+.proof-section {
+  margin-bottom: 25px;
+  padding: 20px;
+  border: 1px solid #e0e0e0;
+  background: #fafafa;
+}
+
+.proof-section h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #000;
+  margin: 0 0 15px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #000;
+  padding-bottom: 8px;
+}
+
+.proof-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.proof-item:last-child {
+  border-bottom: none;
+}
+
+.proof-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  flex-shrink: 0;
+  min-width: 120px;
+}
+
+.proof-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #000;
+  text-align: right;
+  flex: 1;
+  word-break: break-word;
+}
+
+.proof-total {
+  text-align: center;
+  padding: 25px;
+  border: 3px solid #000;
+  background: #FFEB00;
+  margin-bottom: 30px;
+}
+
+.proof-total-amount {
+  font-size: 28px;
+  font-weight: 700;
+  color: #000;
+  margin: 0;
+}
+
+.proof-footer {
+  text-align: center;
+  padding: 20px 0;
+  border-top: 1px solid #e0e0e0;
+  font-size: 12px;
+  color: #666;
+  line-height: 1.4;
+}
+
+.proof-footer p {
+  margin: 4px 0;
+}
+
+/* ==================== PRINT STYLES FÜR ZAHLUNGSNACHWEIS ==================== */
+
+@media print {
+  /* Verstecke alles außer dem Zahlungsnachweis */
+  body * {
+    visibility: hidden;
+  }
+  
+  /* Zeige nur das Payment Proof Modal und dessen Inhalt */
+  #paymentProofModal,
+  #paymentProofModal *,
+  .payment-proof,
+  .payment-proof * {
+    visibility: visible;
+  }
+  
+  /* Entferne Modal-Hintergrund und Positionierung */
+  #paymentProofModal {
+    position: static !important;
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  
+  /* Modal Content für Druck optimieren */
+  #paymentProofModal .modal-content {
+    position: static !important;
+    background: white !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+  }
+  
+  /* Verstecke Modal-Header und Footer beim Drucken */
+  #paymentProofModal .modal-header,
+  #paymentProofModal .modal-footer {
+    display: none !important;
+  }
+  
+  /* Modal Body für Druck optimieren */
+  #paymentProofModal .modal-body {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  /* Payment Proof für Druck optimieren */
+  .payment-proof {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    background: white !important;
+    color: #000 !important;
+    font-size: 12px !important;
+  }
+  
+  .proof-header {
+    padding: 15px 0 !important;
+    margin-bottom: 20px !important;
+  }
+  
+  .proof-title {
+    font-size: 24px !important;
+  }
+  
+  .proof-subtitle {
+    font-size: 14px !important;
+  }
+  
+  .proof-section {
+    margin-bottom: 20px !important;
+    padding: 15px !important;
+    border: 1px solid #000 !important;
+    background: white !important;
+    break-inside: avoid;
+  }
+  
+  .proof-section h3 {
+    font-size: 14px !important;
+    margin-bottom: 10px !important;
+  }
+  
+  .proof-item {
+    padding: 6px 0 !important;
+    font-size: 11px !important;
+  }
+  
+  .proof-label {
+    font-size: 11px !important;
+  }
+  
+  .proof-value {
+    font-size: 11px !important;
+  }
+  
+  .proof-total {
+    padding: 20px !important;
+    margin-bottom: 20px !important;
+    border: 2px solid #000 !important;
+    background: #f0f0f0 !important;
+    break-inside: avoid;
+  }
+  
+  .proof-total-amount {
+    font-size: 20px !important;
+  }
+  
+  .proof-footer {
+    padding: 15px 0 !important;
+    font-size: 10px !important;
+  }
+  
+  /* Entferne alle anderen Elemente beim Drucken */
+  .modal:not(#paymentProofModal),
+  .global-footer,
+  .footer-links,
+  .dashboard-header,
+  .entries-section,
+  .stats-section,
+  .form-section,
+  .admin-controls,
+  .table-controls,
+  nav,
+  header,
+  .btn,
+  button {
+    display: none !important;
+  }
+  
+  /* Entferne Seitenbrechungen innerhalb wichtiger Elemente */
+  .proof-section,
+  .proof-total {
+    page-break-inside: avoid;
   }
 }

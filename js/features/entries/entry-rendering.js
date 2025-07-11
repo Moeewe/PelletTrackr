@@ -98,7 +98,6 @@ function renderUserEntries(entries) {
     // Aktionen für Cards
     const cardActions = `
       ${ButtonFactory.showNachweis(entry.id, isPaid)}
-      ${ButtonFactory.viewDetails(entry.id)}
       ${ButtonFactory.editEntry(entry.id, true)}
     `;
     
@@ -277,7 +276,6 @@ function renderAdminEntries(entries) {
         `${ButtonFactory.undoPayment(entry.id)}
          ${ButtonFactory.showNachweis(entry.id, true)}`
       }
-      ${ButtonFactory.viewDetails(entry.id)}
       ${ButtonFactory.editEntry(entry.id)}
       ${ButtonFactory.deleteEntry(entry.id)}
     `;

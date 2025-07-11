@@ -34,32 +34,32 @@ async function showPaymentProof(entryId) {
           <div class="proof-section">
             <h3>Rechnungsdetails</h3>
             <div class="proof-item">
-              <span class="proof-label">Datum:</span>
+              <span class="proof-label">Datum</span>
               <span class="proof-value">${entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt'}</span>
             </div>
             <div class="proof-item">
-              <span class="proof-label">Job:</span>
+              <span class="proof-label">Job-Name</span>
               <span class="proof-value">${entry.jobName || '3D-Druck Auftrag'}</span>
             </div>
             <div class="proof-item">
-              <span class="proof-label">Material:</span>
+              <span class="proof-label">Material</span>
               <span class="proof-value">${entry.material}</span>
             </div>
             <div class="proof-item">
-              <span class="proof-label">Menge:</span>
+              <span class="proof-label">Material-Menge</span>
               <span class="proof-value">${entry.materialMenge.toFixed(2)} kg</span>
             </div>
             <div class="proof-item">
-              <span class="proof-label">Masterbatch:</span>
+              <span class="proof-label">Masterbatch</span>
               <span class="proof-value">${entry.masterbatch}</span>
             </div>
             <div class="proof-item">
-              <span class="proof-label">Menge:</span>
-              <span class="proof-value">${entry.masterbatchMenge.toFixed(2)} kg</span>
+              <span class="proof-label">MB-Menge</span>
+              <span class="proof-value">${entry.masterbatchMenge.toFixed(2)} g</span>
             </div>
             ${entry.jobNotes ? `
             <div class="proof-item">
-              <span class="proof-label">Notizen:</span>
+              <span class="proof-label">Notizen</span>
               <span class="proof-value">${entry.jobNotes}</span>
             </div>
             ` : ''}
@@ -68,32 +68,33 @@ async function showPaymentProof(entryId) {
           <div class="proof-section">
             <h3>Zahlungsinformationen</h3>
             <div class="proof-item">
-              <span class="proof-label">Name:</span>
+              <span class="proof-label">Student/in</span>
               <span class="proof-value">${entry.name}</span>
             </div>
             <div class="proof-item">
-              <span class="proof-label">FH-Kennung:</span>
+              <span class="proof-label">FH-Kennung</span>
               <span class="proof-value">${entry.kennung}</span>
             </div>
             <div class="proof-item">
-              <span class="proof-label">Bezahlt am:</span>
+              <span class="proof-label">Bezahlt am</span>
               <span class="proof-value">${paidDate}</span>
             </div>
             <div class="proof-item">
-              <span class="proof-label">Status:</span>
-              <span class="proof-value" style="color: #28a745; font-weight: 700;">✅ Bezahlt</span>
+              <span class="proof-label">Zahlungsstatus</span>
+              <span class="proof-value" style="color: #4CAF50; font-weight: 700;">✅ BEZAHLT</span>
             </div>
           </div>
         </div>
         
         <div class="proof-total">
-          <div style="font-size: 16px; margin-bottom: 8px;">Gesamtbetrag</div>
+          <div style="font-size: 16px; margin-bottom: 8px; color: #000;">Gesamtbetrag</div>
           <div class="proof-total-amount">${window.formatCurrency(entry.totalCost)}</div>
         </div>
         
         <div class="proof-footer">
-          <p>Dieser Zahlungsnachweis wurde automatisch generiert am ${new Date().toLocaleDateString('de-DE')} um ${new Date().toLocaleTimeString('de-DE')}.</p>
-          <p>FGF 3D-Druck Verwaltung - PelletTrackr System</p>
+          <p><strong>Generiert am:</strong> ${new Date().toLocaleDateString('de-DE')} um ${new Date().toLocaleTimeString('de-DE')}</p>
+          <p><strong>FGF 3D-Druck Verwaltung</strong> • FH Münster • PelletTrackr System</p>
+          <p>Dieser Zahlungsnachweis ist maschinell erstellt und ohne Unterschrift gültig.</p>
         </div>
       </div>
     `;
@@ -116,7 +117,16 @@ function closePaymentProofModal() {
 }
 
 function printPaymentProof() {
-  window.print();
+  // Prüfen ob ein Nachweis geladen ist
+  if (!window.currentProofEntry) {
+    alert('Fehler: Kein Zahlungsnachweis geladen!');
+    return;
+  }
+  
+  // Kurze Verzögerung damit das CSS wirken kann
+  setTimeout(() => {
+    window.print();
+  }, 100);
 }
 
 function emailPaymentProof() {
