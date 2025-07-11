@@ -88,10 +88,14 @@ async function submitMaterialRequest() {
     }
     
     try {
-        await db.collection('materialOrders').add({
+        // Get current user info from globals or localStorage
+        const userName = window.currentUser?.name || localStorage.getItem('userName') || 'Unbekannter User';
+        const userKennung = window.currentUser?.kennung || localStorage.getItem('userKennung') || '';
+        
+        await window.db.collection('materialOrders').add({
             type: 'request',
-            userName: currentUser?.name || 'Unbekannter User',
-            userKennung: currentUser?.kennung || '',
+            userName: userName,
+            userKennung: userKennung,
             materialName: formData.materialName,
             manufacturer: formData.manufacturer,
             reason: formData.reason,
@@ -133,7 +137,7 @@ function closeMaterialOrders() {
  */
 async function loadMaterialOrders() {
     try {
-        const querySnapshot = await db.collection('materialOrders').get();
+        const querySnapshot = await window.db.collection('materialOrders').get();
         materialOrders = [];
         
         querySnapshot.forEach((doc) => {
@@ -159,22 +163,32 @@ async function loadMaterialOrders() {
 function showOrderTab(tab) {
     currentOrderTab = tab;
     
-    // Update tab buttons
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    event?.target?.classList.add('active');
-    
-    // Hide all tab content
-    document.querySelectorAll('.order-tab-content').forEach(content => {
-        content.classList.remove('active');
-    });
-    
-    // Show selected tab
-    const tabContent = document.getElementById(getTabContentId(tab));
-    if (tabContent) {
-        tabContent.classList.add('active');
-        renderTabContent(tab);
+    // Update tab buttons - only within material orders modal
+    const modal = document.getElementById('materialOrdersModal');
+    if (modal) {
+        modal.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Find and activate the correct tab button
+        const tabButtons = modal.querySelectorAll('.tab-btn');
+        const tabMap = ['requests', 'shopping', 'orders'];
+        const tabIndex = tabMap.indexOf(tab);
+        if (tabButtons[tabIndex]) {
+            tabButtons[tabIndex].classList.add('active');
+        }
+        
+        // Hide all tab content within this modal
+        modal.querySelectorAll('.order-tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        
+        // Show selected tab
+        const tabContent = document.getElementById(getTabContentId(tab));
+        if (tabContent) {
+            tabContent.classList.add('active');
+            renderTabContent(tab);
+        }
     }
 }
 
@@ -318,7 +332,7 @@ function renderOrderHistory() {
  */
 async function approveOrderRequest(requestId) {
     try {
-        await db.collection('materialOrders').doc(requestId).update({
+        await window.db.collection('materialOrders').doc(requestId).update({
             status: 'approved',
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
@@ -340,7 +354,7 @@ async function rejectOrderRequest(requestId) {
     const reason = prompt('Grund für Ablehnung (optional):');
     
     try {
-        await db.collection('materialOrders').doc(requestId).update({
+        await window.db.collection('materialOrders').doc(requestId).update({
             status: 'rejected',
             rejectionReason: reason || '',
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()

@@ -19,7 +19,7 @@ function initializePrinterManagement() {
  */
 async function loadPrinters() {
     try {
-        const querySnapshot = await db.collection('printers').get();
+        const querySnapshot = await window.db.collection('printers').get();
         printers = [];
         
         querySnapshot.forEach((doc) => {
@@ -218,12 +218,12 @@ async function savePrinter() {
     try {
         if (currentEditingPrinter) {
             // Update existing printer
-            await db.collection('printers').doc(currentEditingPrinter.id).update(formData);
+            await window.db.collection('printers').doc(currentEditingPrinter.id).update(formData);
             showToast('Drucker erfolgreich aktualisiert', 'success');
         } else {
             // Add new printer
             formData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-            await db.collection('printers').add(formData);
+            await window.db.collection('printers').add(formData);
             showToast('Drucker erfolgreich hinzugefügt', 'success');
         }
         
@@ -256,7 +256,7 @@ async function changePrinterStatus(printerId) {
     const newStatus = statusOptions[nextIndex].value;
     
     try {
-        await db.collection('printers').doc(printerId).update({
+        await window.db.collection('printers').doc(printerId).update({
             status: newStatus,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
@@ -283,7 +283,7 @@ async function deletePrinter(printerId) {
     }
     
     try {
-        await db.collection('printers').doc(printerId).delete();
+        await window.db.collection('printers').doc(printerId).delete();
         showToast('Drucker erfolgreich gelöscht', 'success');
         await loadPrinters();
         renderPrinterGrid();
