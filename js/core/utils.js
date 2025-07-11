@@ -2,8 +2,8 @@
 // Hilfsfunktionen für Formatierung und Validierung
 
 // Währung formatieren
-function formatCurrency(amount) {
-  return (amount || 0).toFixed(2).replace('.', ',') + ' €';
+function formatCurrency(amount, decimals = 2) {
+  return (amount || 0).toFixed(decimals).replace('.', ',') + ' €';
 }
 
 // Admin-Zugriff prüfen

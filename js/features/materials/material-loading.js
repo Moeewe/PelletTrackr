@@ -65,7 +65,7 @@ async function loadMasterbatches() {
       console.log("➕ Masterbatch:", masterbatch.name, "Preis:", masterbatch.price);
       const option = document.createElement("option");
       option.value = masterbatch.name;
-      option.textContent = `${masterbatch.name} (${masterbatch.price.toFixed(2)} ${(masterbatch.currency || '€')}/kg)`;
+      option.textContent = `${masterbatch.name} (${masterbatch.price.toFixed(4)} ${(masterbatch.currency || '€')}/g)`;
       select.appendChild(option);
     });
     
@@ -188,10 +188,10 @@ async function loadMasterbatchesForManagement() {
           <tr>
             <th onclick="sortMasterbatches('name')">Name</th>
             <th onclick="sortMasterbatches('manufacturer')">Hersteller</th>
-            <th onclick="sortMasterbatches('netPrice')">EK Netto €/kg</th>
-            <th onclick="sortMasterbatches('grossPrice')">EK Brutto €/kg</th>
+            <th onclick="sortMasterbatches('netPrice')">EK Netto €/g</th>
+            <th onclick="sortMasterbatches('grossPrice')">EK Brutto €/g</th>
             <th onclick="sortMasterbatches('markup')">Gemeinkosten %</th>
-            <th onclick="sortMasterbatches('sellingPrice')">VK €/kg</th>
+            <th onclick="sortMasterbatches('sellingPrice')">VK €/g</th>
             <th>Aktionen</th>
           </tr>
         </thead>
@@ -213,10 +213,10 @@ async function loadMasterbatchesForManagement() {
         <tr id="masterbatch-row-${doc.id}">
           <td data-label="Name" id="masterbatch-name-${doc.id}"><span class="cell-value">${masterbatch.name}</span></td>
           <td data-label="Hersteller" id="masterbatch-manufacturer-${doc.id}"><span class="cell-value">${masterbatch.manufacturer || 'Unbekannt'}</span></td>
-          <td data-label="EK Netto €/kg" id="masterbatch-netprice-${doc.id}"><span class="cell-value">${window.formatCurrency(netPrice)}</span></td>
-          <td data-label="EK Brutto €/kg" id="masterbatch-grossprice-${doc.id}"><span class="cell-value">${window.formatCurrency(grossPrice)}</span></td>
+          <td data-label="EK Netto €/g" id="masterbatch-netprice-${doc.id}"><span class="cell-value">${window.formatCurrency(netPrice, 4)}</span></td>
+          <td data-label="EK Brutto €/g" id="masterbatch-grossprice-${doc.id}"><span class="cell-value">${window.formatCurrency(grossPrice, 4)}</span></td>
           <td data-label="Gemeinkosten %" id="masterbatch-markup-${doc.id}"><span class="cell-value">${markup}%</span></td>
-          <td data-label="VK €/kg" id="masterbatch-price-${doc.id}"><span class="cell-value">${window.formatCurrency(sellingPrice)}</span></td>
+          <td data-label="VK €/g" id="masterbatch-price-${doc.id}"><span class="cell-value">${window.formatCurrency(sellingPrice, 4)}</span></td>
           <td class="actions" data-label="Aktionen">
             <div class="action-group">
               ${ButtonFactory.editMasterbatch(doc.id)}
@@ -464,13 +464,13 @@ async function editMasterbatch(masterbatchId) {
             </div>
             
             <div class="detail-row">
-              <span class="detail-label">EK NETTO €/KG</span>
-              <span class="detail-value">${window.formatCurrency(netPrice)}</span>
+              <span class="detail-label">EK NETTO €/G</span>
+              <span class="detail-value">${window.formatCurrency(netPrice, 4)}</span>
             </div>
             
             <div class="detail-row">
-              <span class="detail-label">EK BRUTTO €/KG</span>
-              <span class="detail-value">${window.formatCurrency(grossPrice)}</span>
+              <span class="detail-label">EK BRUTTO €/G</span>
+              <span class="detail-value">${window.formatCurrency(grossPrice, 4)}</span>
             </div>
             
             <div class="detail-row">
@@ -480,7 +480,7 @@ async function editMasterbatch(masterbatchId) {
             
             <div class="detail-row highlight-total">
               <span class="detail-label"></span>
-              <span class="detail-value masterbatch-vk">VK €/KG: ${window.formatCurrency(sellingPrice)}</span>
+              <span class="detail-value masterbatch-vk">VK €/G: ${window.formatCurrency(sellingPrice, 4)}</span>
             </div>
           </div>
           <div class="card-footer">
@@ -530,8 +530,8 @@ async function showEditMasterbatchForm(masterbatchId) {
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">EK Netto €/kg</label>
-                <input type="number" id="editMasterbatchNetPrice" class="form-input" value="${masterbatch.netPrice || masterbatch.price || 0}" step="0.01">
+                <label class="form-label">EK Netto €/g</label>
+                <input type="number" id="editMasterbatchNetPrice" class="form-input" value="${masterbatch.netPrice || masterbatch.price || 0}" step="0.0001">
               </div>
               <div class="form-group">
                 <label class="form-label">Mehrwertsteuer %</label>

@@ -57,7 +57,7 @@ function renderUserEntries(entries) {
         <td data-label="Material"><span class="cell-value">${entry.material}</span></td>
         <td data-label="Menge"><span class="cell-value">${entry.materialMenge.toFixed(2)} kg</span></td>
         <td data-label="Masterbatch"><span class="cell-value">${entry.masterbatch}</span></td>
-        <td data-label="MB Menge"><span class="cell-value">${entry.masterbatchMenge.toFixed(2)} kg</span></td>
+        <td data-label="MB Menge"><span class="cell-value">${entry.masterbatchMenge.toFixed(2)} g</span></td>
         <td data-label="Kosten"><span class="cell-value"><strong>${formatCurrency(entry.totalCost)}</strong></span></td>
         <td data-label="Status" class="status-cell"><span class="cell-value">${status}</span></td>
         <td data-label="Notizen" class="notes-cell" title="${jobNotes}">

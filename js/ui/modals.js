@@ -119,7 +119,7 @@ async function viewEntryDetails(entryId) {
             
             <div class="detail-row">
               <span class="detail-label">MB MENGE</span>
-              <span class="detail-value">${(entry.masterbatchMenge || 0).toFixed(2)} kg</span>
+              <span class="detail-value">${(entry.masterbatchMenge || 0).toFixed(2)} g</span>
             </div>
             
             <div class="detail-row highlight-total">
@@ -283,7 +283,7 @@ async function editEntry(entryId) {
                   <input type="number" id="editMaterialMenge" class="form-input" value="${(entry.materialMenge || 0).toFixed(2)}" step="0.01" min="0" required>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Masterbatch-Menge (kg)</label>
+                  <label class="form-label">Masterbatch-Menge (g)</label>
                   <input type="number" id="editMasterbatchMenge" class="form-input" value="${(entry.masterbatchMenge || 0).toFixed(2)}" step="0.01" min="0" required>
                 </div>
               </div>
