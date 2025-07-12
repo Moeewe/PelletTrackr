@@ -11,6 +11,7 @@ let modulesInitialized = false;
 
 // App initialisieren
 function initializeApp() {
+  console.log("🔍 initializeApp() called, current appInitialized:", window.appInitialized);
   if (window.appInitialized) {
     console.log("🚀 PelletTrackr bereits initialisiert, überspringe...");
     return;
@@ -18,6 +19,7 @@ function initializeApp() {
 
   console.log("🚀 PelletTrackr wird initialisiert...");
   window.appInitialized = true;
+  console.log("✅ Set window.appInitialized to true:", window.appInitialized);
   
   // Firebase-Ready Event Listener
   document.addEventListener('firebase-ready', (event) => {

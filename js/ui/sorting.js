@@ -155,6 +155,15 @@ function searchUserEntries() {
   }
 }
 
+// Clear User Search
+function clearUserSearch() {
+  const searchInput = document.getElementById('userSearchInput');
+  if (searchInput) {
+    searchInput.value = '';
+    searchUserEntries(); // Trigger search to show all entries
+  }
+}
+
 // Admin Entries durchsuchen
 function searchAdminEntries() {
   if (!window.allAdminEntries || window.allAdminEntries.length === 0) return;
@@ -273,6 +282,7 @@ function sortUsers() {
 // Make all functions globally available
 window.sortUserEntries = sortUserEntries;
 window.searchUserEntries = searchUserEntries;
+window.clearUserSearch = clearUserSearch;
 window.sortAdminEntries = sortAdminEntries;
 window.searchAdminEntries = searchAdminEntries;
 window.searchUsers = searchUsers;

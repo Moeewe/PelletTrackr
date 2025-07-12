@@ -117,7 +117,7 @@ class MobileEnhancements {
                     loadUserEntries(),
                     loadUserStats()
                 ]);
-                showToast('✅ Deine Drucke wurden aktualisiert', 'success', 2000);
+                // showToast('✅ Deine Drucke wurden aktualisiert', 'success', 2000);
             } else if (screenType === 'adminDashboard' && typeof loadAllEntries === 'function') {
                 await Promise.all([
                     loadAllEntries(),

@@ -149,24 +149,10 @@
             <div class="entries-section">
                 <h2 class="section-title">Deine Drucke</h2>
                 
-                <!-- Enhanced Search & Filter Controls -->
-                <div class="advanced-search-controls">
-                    <!-- Main Search Bar -->
-                    <div class="search-bar">
-                        <input type="text" id="userSearchInput" placeholder="Suchen nach Material, Job-Name, Notizen..." class="search-input" onkeyup="performAdvancedUserSearch()">
-                        <button class="search-clear-btn" onclick="clearUserSearch()" title="Suche löschen">×</button>
-                    </div>
-                    
-                    <!-- Quick Filters -->
-                    <div class="quick-filters">
-                        <button class="filter-btn" data-filter="all" onclick="setUserQuickFilter('all')">Alle</button>
-                        <button class="filter-btn" data-filter="unpaid" onclick="setUserQuickFilter('unpaid')">Offen</button>
-                        <button class="filter-btn" data-filter="paid" onclick="setUserQuickFilter('paid')">Bezahlt</button>
-                        <button class="filter-btn" data-filter="recent" onclick="setUserQuickFilter('recent')">Letzte 7 Tage</button>
-                        <button class="filter-btn" data-filter="high-cost" onclick="setUserQuickFilter('high-cost')">Hohe Kosten</button>
-                    </div>
-                    
-
+                <!-- Simple Search -->
+                <div class="table-controls">
+                    <input type="text" id="userSearchInput" placeholder="Suchen nach Material, Job-Name, Notizen..." class="search-input" onkeyup="searchUserEntries()">
+                    <button class="search-clear-btn" onclick="clearUserSearch()" title="Suche löschen">×</button>
                 </div>
                 
                 <div class="user-entries-container">
@@ -180,9 +166,6 @@
                 <div class="stats-grid">
                     <!-- Drucker Status -->
                     <div class="stat-card service-card clickable" onclick="showPrinterDetails()">
-                        <div class="service-icon-container">
-                            <div class="service-icon printer-icon">3</div>
-                        </div>
                         <div class="stat-label">Drucker</div>
                         <div class="service-status-indicators">
                             <div class="service-status-item">
@@ -206,27 +189,18 @@
 
                     <!-- Termin buchen -->
                     <div class="stat-card service-card clickable" onclick="showUserReservationForm()">
-                        <div class="service-icon-container">
-                            <div class="service-icon termine-icon">📅</div>
-                        </div>
                         <div class="stat-label">Termine</div>
                         <div class="stat-description">Drucker reservieren</div>
                     </div>
 
                     <!-- Equipment ausleihen -->
                     <div class="stat-card service-card clickable" onclick="showUserEquipmentRequest()">
-                        <div class="service-icon-container">
-                            <div class="service-icon leihe-icon">📦</div>
-                        </div>
                         <div class="stat-label">Leihe</div>
                         <div class="stat-description">Equipment anfragen</div>
                     </div>
 
                     <!-- Problem melden -->
                     <div class="stat-card service-card clickable" onclick="showProblemReportForm()">
-                        <div class="service-icon-container">
-                            <div class="service-icon problem-icon">⚠️</div>
-                        </div>
                         <div class="stat-label">Problem</div>
                         <div class="stat-description">Defekte melden</div>
                     </div>
@@ -246,6 +220,7 @@
                 </h1>
                 <div class="user-info">
                     <span id="adminWelcome">Admin Dashboard - Moritz</span>
+                    <button class="btn btn-link" onclick="showScreen('userDashboard')">Zur Nutzeransicht</button>
                     <button class="btn btn-link" onclick="logout()">Abmelden</button>
                 </div>
             </div>
@@ -291,11 +266,9 @@
                 <div class="control-section">
                     <h3 class="control-title">Verwaltungsbereiche</h3>
                     <div class="control-buttons">
-                        <button class="btn btn-primary" onclick="showScreen('adminAssets')">
-                            Asset Management
-                        </button>
-                        <button class="btn btn-primary" onclick="showScreen('userManager')">
-                            Nutzer-Verwaltung
+                        <button class="btn btn-primary" onclick="showUserManagerModal()">
+                            <span>Nutzer-Verwaltung</span>
+                            <span class="notification-badge" id="userManagerBadge" style="display: none;">0</span>
                         </button>
                     </div>
                 </div>
@@ -304,22 +277,28 @@
                     <h3 class="control-title">Asset Management</h3>
                     <div class="control-buttons">
                         <button class="btn btn-secondary" onclick="showPrinterManager()">
-                            Drucker verwalten
+                            <span>Drucker verwalten</span>
+                            <span class="notification-badge" id="printerManagerBadge" style="display: none;">0</span>
                         </button>
                         <button class="btn btn-secondary" onclick="showReservationCalendar()">
-                            Reservierungen
+                            <span>Reservierungen</span>
+                            <span class="notification-badge" id="reservationBadge" style="display: none;">0</span>
                         </button>
                         <button class="btn btn-secondary" onclick="showEquipmentManager()">
-                            Ausleih-System
+                            <span>Ausleih-System</span>
+                            <span class="notification-badge" id="equipmentBadge" style="display: none;">0</span>
                         </button>
                         <button class="btn btn-secondary" onclick="showMaterialOrders()">
-                            Material-Bestellungen
+                            <span>Material-Bestellungen</span>
+                            <span class="notification-badge" id="materialOrdersBadge" style="display: none;">0</span>
                         </button>
                         <button class="btn btn-secondary" onclick="showProblemReports()">
-                            Problem-Meldungen
+                            <span>Problem-Meldungen</span>
+                            <span class="notification-badge" id="problemReportsBadge" style="display: none;">0</span>
                         </button>
                         <button class="btn btn-secondary" onclick="showEquipmentRequests()">
-                            Ausleih-Anfragen
+                            <span>Ausleih-Anfragen</span>
+                            <span class="notification-badge" id="equipmentRequestsBadge" style="display: none;">0</span>
                         </button>
                     </div>
                 </div>
@@ -360,6 +339,7 @@
                 <div class="user-info">
                     <span id="assetWelcome">Asset Management</span>
                     <button class="btn btn-link" onclick="showScreen('adminDashboard')">← Dashboard</button>
+                    <button class="btn btn-link" onclick="showScreen('userDashboard')">Zur Nutzeransicht</button>
                     <button class="btn btn-link" onclick="logout()">Abmelden</button>
                 </div>
             </div>
@@ -469,74 +449,37 @@
         </div>
     </div>
 
-    <!-- User Manager Screen -->
-    <div id="userManager" class="screen">
-        <div class="admin-container">
-            <!-- Header with logout -->
-            <div class="dashboard-header">
-                <h1 class="logo" onclick="navigateToHome()" style="cursor: pointer;" title="Zur Hauptseite">
-                    <span class="highlight">Pellet</span>Trackr
-                    <span class="admin-badge">Admin</span>
-                </h1>
-                <div class="user-info">
-                    <span id="userManagerWelcome">Nutzer-Verwaltung</span>
-                    <button class="btn btn-link" onclick="showScreen('adminDashboard')">← Dashboard</button>
-                    <button class="btn btn-link" onclick="logout()">Abmelden</button>
-                </div>
+    <!-- User Manager Modal -->
+    <div id="userManagerModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>Nutzer-Verwaltung</h3>
+                <button class="modal-close" onclick="closeUserManagerModal()">&times;</button>
             </div>
-
-            <!-- Content -->
-            <div class="screen-content">
-                <p class="screen-subtitle">Benutzerkonten und Zugriffsrechte verwalten</p>
-
-                <!-- User Management Content -->
-                <div class="user-management">
-                    <!-- User Stats -->
-                    <div class="user-stats">
-                        <div class="stat-card">
-                            <div class="stat-number" id="totalUsers">0</div>
-                            <div class="stat-label">Nutzer</div>
-                            <div class="stat-description">Gesamt registriert</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="activeUsers">0</div>
-                            <div class="stat-label">Aktiv</div>
-                            <div class="stat-description">Mit Drucken</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="adminUsers">0</div>
-                            <div class="stat-label">Admins</div>
-                            <div class="stat-description">Administratoren</div>
-                        </div>
+            <div class="modal-body">
+                <!-- User Management Controls -->
+                <div class="modal-controls">
+                    <button class="btn btn-primary" onclick="showAddUserDialog()">
+                        Neuen Nutzer hinzufügen
+                    </button>
+                </div>
+                
+                <!-- User Table Container -->
+                <div class="user-table-container">
+                    <div class="table-controls">
+                        <input type="text" id="userManagerSearchInput" placeholder="Suchen nach Name oder FH-Kennung..." class="search-input" onkeyup="searchUsers()">
+                        <select id="userManagerSortSelect" class="sort-select" onchange="sortUsers()">
+                            <option value="name-asc">Name (A-Z)</option>
+                            <option value="name-desc">Name (Z-A)</option>
+                            <option value="kennung-asc">Kennung (A-Z)</option>
+                            <option value="kennung-desc">Kennung (Z-A)</option>
+                            <option value="entries-desc">Meiste Drucke</option>
+                            <option value="entries-asc">Wenigste Drucke</option>
+                            <option value="revenue-desc">Höchster Umsatz</option>
+                            <option value="revenue-asc">Niedrigster Umsatz</option>
+                        </select>
                     </div>
-
-                    <!-- User Management Controls -->
-                    <div class="user-controls">
-                                        <button class="btn btn-primary" onclick="showScreen('userManager')">
-                    Nutzer verwalten
-                </button>
-                        <button class="btn btn-secondary" onclick="showAddUserDialog()">
-                            Neuen Nutzer hinzufügen
-                        </button>
-                    </div>
-
-                    <!-- User Table Container -->
-                    <div class="user-table-container">
-                        <div class="table-controls">
-                            <input type="text" id="userManagerSearchInput" placeholder="Suchen nach Name oder FH-Kennung..." class="search-input" onkeyup="searchUsers()">
-                            <select id="userManagerSortSelect" class="sort-select" onchange="sortUsers()">
-                                <option value="name-asc">Name (A-Z)</option>
-                                <option value="name-desc">Name (Z-A)</option>
-                                <option value="kennung-asc">Kennung (A-Z)</option>
-                                <option value="kennung-desc">Kennung (Z-A)</option>
-                                <option value="entries-desc">Meiste Drucke</option>
-                                <option value="entries-asc">Wenigste Drucke</option>
-                                <option value="revenue-desc">Höchster Umsatz</option>
-                                <option value="revenue-asc">Niedrigster Umsatz</option>
-                            </select>
-                        </div>
-                        <div id="usersTable" class="data-table data-table-responsive"></div>
-                    </div>
+                    <div id="usersTable" class="data-table data-table-responsive"></div>
                 </div>
             </div>
         </div>
@@ -658,6 +601,7 @@
     <script src="js/ui/modals.js"></script>
     <script src="js/ui/payment-proof.js"></script>
     <script src="js/ui/sorting.js"></script>
+    <script src="js/ui/notification-badges.js"></script>
     
     <!-- Feature Modules -->
     <script src="js/features/materials/material-loading.js"></script>
@@ -790,16 +734,17 @@
                 <div class="equipment-categories">
                     <div class="category-tabs">
                         <button class="tab-btn active" onclick="showEquipmentCategory('keys')">Schlüssel</button>
-                        <button class="tab-btn" onclick="showEquipmentCategory('tools')">Werkzeuge</button>
-                        <button class="tab-btn" onclick="showEquipmentCategory('accessories')">Zubehör</button>
+                        <button class="tab-btn" onclick="showEquipmentCategory('hardware')">Hardware</button>
+                        <button class="tab-btn" onclick="showEquipmentCategory('books')">Bücher</button>
+                    </div>
+                    
+                    <div class="equipment-search">
+                        <input type="text" id="equipmentSearchInput" placeholder="Equipment durchsuchen..." class="search-input" onkeyup="searchEquipment()">
+                        <button class="search-clear-btn" onclick="clearEquipmentSearch()" title="Suche löschen">×</button>
                     </div>
                     
                     <div class="equipment-list" id="equipmentList">
                         <!-- Equipment-Liste wird hier dynamisch eingefügt -->
-                    </div>
-                    
-                    <div class="equipment-note" style="margin-top: 20px; padding: 12px; background: #f8f9fa; border-left: 4px solid #007bff; color: #495057; font-size: 14px; border-radius: 4px;">
-                        <strong>Hinweis:</strong> Equipment-Bearbeitung wird in einer späteren Version implementiert.
                     </div>
                 </div>
             </div>

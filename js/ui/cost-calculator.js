@@ -4,6 +4,7 @@
 // Kostenvorschau berechnen
 async function calculateCostPreview() {
   console.log("💰 Kostenvorschau wird berechnet...");
+  console.log("🔧 cost-calculator.js calculateCostPreview called");
   
   const material = document.getElementById("material");
   const materialMenge = document.getElementById("materialMenge");
@@ -12,7 +13,13 @@ async function calculateCostPreview() {
   const costPreview = document.getElementById("costPreview");
   
   if (!material || !materialMenge || !masterbatch || !masterbatchMenge || !costPreview) {
-    console.log("❌ Nicht alle Elemente gefunden");
+    console.log("❌ Nicht alle Elemente gefunden", {
+      material: !!material,
+      materialMenge: !!materialMenge,
+      masterbatch: !!masterbatch,
+      masterbatchMenge: !!masterbatchMenge,
+      costPreview: !!costPreview
+    });
     return;
   }
   
@@ -32,11 +39,22 @@ async function calculateCostPreview() {
   const hasMaterial = materialValue && materialMengeValue && 
     materialValue !== "Material auswählen... (optional)" && 
     materialValue !== "Material auswählen..." && 
-    materialValue !== "Lade Materialien...";
+    materialValue !== "Lade Materialien..." &&
+    materialValue !== "";
   const hasMasterbatch = masterbatchValue && masterbatchMengeValue && 
     masterbatchValue !== "Masterbatch auswählen... (optional)" && 
     masterbatchValue !== "Masterbatch auswählen..." && 
-    masterbatchValue !== "Lade Masterbatches...";
+    masterbatchValue !== "Lade Masterbatches..." &&
+    masterbatchValue !== "";
+    
+  console.log("📊 Material/Masterbatch Status:", {
+    hasMaterial,
+    hasMasterbatch,
+    materialValue,
+    materialMengeValue,
+    masterbatchValue,
+    masterbatchMengeValue
+  });
   
   if (!hasMaterial && !hasMasterbatch) {
     console.log("⚠️ Weder Material noch Masterbatch ausgefüllt");
@@ -117,6 +135,7 @@ async function calculateCostPreview() {
 // Throttled cost calculation
 let costCalculationTimeout = null;
 function throttledCalculateCost() {
+  console.log("🔧 throttledCalculateCost called from cost-calculator.js");
   clearTimeout(costCalculationTimeout);
   costCalculationTimeout = setTimeout(calculateCostPreview, 500);
 }

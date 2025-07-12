@@ -117,6 +117,10 @@ function showScreen(screenId) {
                     if (typeof loadAllEntries === 'function') {
                         loadAllEntries().catch(error => console.warn("All entries loading failed:", error));
                     }
+                    // Initialize notification badge system for admin
+                    if (typeof initializeBadgeSystem === 'function') {
+                        initializeBadgeSystem();
+                    }
                 }
             } catch (error) {
                 console.warn("Error loading admin data:", error);

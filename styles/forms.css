@@ -34,6 +34,8 @@
   border-radius: 0;
   padding: 32px;
   margin-bottom: 24px;
+  max-width: 100%;
+  width: 100%;
 }
 
 .form-section h2 {
@@ -54,6 +56,11 @@
   grid-template-columns: 1fr 1fr;
   gap: 24px;
   margin-bottom: 24px;
+}
+
+/* Ensure sufficient width for dropdown content */
+.form-row .form-group {
+  min-width: 300px; /* Guarantee minimum width for dropdown text */
 }
 
 .form-group {
@@ -95,10 +102,22 @@
   background-position: right 12px center;
   background-size: 16px 16px;
   padding-right: 40px;
+  width: 100%;
+  min-width: 280px;
 }
 
 .form-select::-ms-expand {
   display: none;
+}
+
+/* Ensure dropdown options are visible and readable */
+.form-select option {
+  padding: 8px 12px;
+  white-space: normal;
+  word-wrap: break-word;
+  color: #000000;
+  background: white;
+  font-size: 16px;
 }
 
 .form-input:focus,

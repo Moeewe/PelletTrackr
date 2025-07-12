@@ -1,21 +1,43 @@
 // ==================== USER MANAGEMENT SYSTEM ====================
 
-function showUserManager() {
+function showUserManagerModal() {
   if (!window.checkAdminAccess()) return;
-  document.getElementById('userManager').classList.add('active');
+  document.getElementById('overlay').style.display = 'block';
+  document.getElementById('userManagerModal').style.display = 'block';
   loadUsersForManagement();
 }
 
+function closeUserManagerModal() {
+  document.getElementById('overlay').style.display = 'none';
+  document.getElementById('userManagerModal').style.display = 'none';
+}
+
+// Legacy function for backward compatibility
+function showUserManager() {
+  showUserManagerModal();
+}
+
 function closeUserManager() {
-  document.getElementById('userManager').classList.remove('active');
+  closeUserManagerModal();
 }
 
 async function loadUsersForManagement() {
   try {
     console.log("🔄 Lade Benutzer für Verwaltung...");
     
+    // Check if Firebase is available
+    if (!window.db) {
+      console.error("❌ Firebase nicht verfügbar beim Laden der Benutzer");
+      document.getElementById("usersTable").innerHTML = '<p>Datenbankverbindung nicht verfügbar. Bitte laden Sie die Seite neu.</p>';
+      return;
+    }
+    
     // 1. Benutzerinformationen aus users-Sammlung laden (Primärquelle)
-    const usersSnapshot = await window.db.collection("users").get();
+    console.log("🔍 Versuche users-Sammlung zu laden...");
+    const usersSnapshot = await window.safeFirebaseOp(
+      () => window.db.collection("users").get(),
+      3 // Max 3 retry attempts
+    );
     const usersData = new Map();
     
     usersSnapshot.forEach(doc => {
@@ -27,7 +49,11 @@ async function loadUsersForManagement() {
     });
     
     // 2. Alle Einträge laden, um Statistiken zu berechnen
-    const entriesSnapshot = await window.db.collection("entries").get();
+    console.log("🔍 Versuche entries-Sammlung zu laden...");
+    const entriesSnapshot = await window.safeFirebaseOp(
+      () => window.db.collection("entries").get(),
+      3 // Max 3 retry attempts
+    );
     const entriesData = new Map();
     
     entriesSnapshot.forEach(doc => {
@@ -149,8 +175,32 @@ async function loadUsersForManagement() {
     
   } catch (error) {
     console.error("❌ Fehler beim Laden der Benutzer:", error);
-    document.getElementById("usersTable").innerHTML = '<p>Fehler beim Laden der Benutzer.</p>';
+    let errorMessage = 'Unbekannter Fehler beim Laden der Benutzer.';
+    
+    if (error.code === 'permission-denied') {
+      errorMessage = 'Zugriff auf die Benutzerdaten verweigert. Bitte überprüfen Sie Ihre Berechtigung.';
+    } else if (error.code === 'unavailable') {
+      errorMessage = 'Datenbankverbindung unterbrochen. Bitte versuchen Sie es später erneut.';
+    } else if (error.message.includes('users')) {
+      errorMessage = 'Fehler beim Laden der Benutzer-Sammlung. Möglicherweise existiert die Sammlung noch nicht.';
+    } else if (error.message.includes('entries')) {
+      errorMessage = 'Fehler beim Laden der Einträge-Sammlung.';
+    }
+    
+    document.getElementById("usersTable").innerHTML = `
+      <div class="error-message">
+        <p><strong>Fehler:</strong> ${errorMessage}</p>
+        <p><strong>Details:</strong> ${error.message}</p>
+        <button class="btn btn-primary" onclick="retryUserLoad()">Erneut versuchen</button>
+      </div>
+    `;
   }
+}
+
+function retryUserLoad() {
+  console.log("🔄 Erneuter Versuch, Benutzer zu laden...");
+  document.getElementById("usersTable").innerHTML = '<p>Lade Benutzer erneut...</p>';
+  loadUsersForManagement();
 }
 
 function renderUsersTable(users) {
@@ -743,7 +793,7 @@ async function editUser(kennung) {
   }
   
   // Erst das User-Manager-Modal schließen (wie bei Material/Masterbatch)
-  document.getElementById('userManager').classList.remove('active');
+  closeUserManagerModal();
   
   // Direkt das Edit-Modal öffnen
   showEditUserForm(kennung);
@@ -886,7 +936,7 @@ function showAddUserDialog() {
   if (!window.checkAdminAccess()) return;
   
   // WICHTIG: Erst userManager Modal schließen
-  closeUserManager();
+  closeUserManagerModal();
   
   // Kurze Verzögerung damit das erste Modal geschlossen wird
   setTimeout(() => {
@@ -989,8 +1039,7 @@ async function createNewUser() {
     
     // User-Manager wieder öffnen und Daten neu laden
     setTimeout(() => {
-      document.getElementById('userManager').classList.add('active');
-      loadUsersForManagement();
+      showUserManagerModal();
     }, 100);
     
   } catch (error) {
@@ -1010,13 +1059,14 @@ function closeEditUserModal() {
   window.closeModal();
   // Nach dem Schließen des Edit-Modals, User-Manager wieder öffnen
   setTimeout(() => {
-    document.getElementById('userManager').classList.add('active');
-    loadUsersForManagement();
+    showUserManagerModal();
   }, 100);
 }
 
 // ==================== GLOBAL EXPORTS ====================
 // Funktionen global verfügbar machen
+window.showUserManagerModal = showUserManagerModal;
+window.closeUserManagerModal = closeUserManagerModal;
 window.showAddUserDialog = showAddUserDialog;
 window.editUser = editUser;
 window.showUserDetails = showUserDetails;
@@ -1027,8 +1077,11 @@ window.createNewUser = createNewUser;
 window.showUserManager = showUserManager;
 window.closeUserManager = closeUserManager;
 window.loadUsersForManagement = loadUsersForManagement;
+window.retryUserLoad = retryUserLoad;
 window.sortUsersBy = sortUsersBy;
-window.showEditUserForm = showEditUserForm; // Export the function
+window.searchUsers = searchUsers;
+window.showEditUserForm = showEditUserForm;
+window.updateUser = updateUser;
 window.closeEditUserModal = closeEditUserModal;
 
 // ==================== USER MANAGEMENT MODULE ====================
