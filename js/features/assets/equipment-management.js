@@ -80,6 +80,20 @@ function showEquipmentCategory(category) {
 }
 
 /**
+ * Show equipment editing message
+ */
+function showEquipmentEditMessage() {
+    if (window.toast && typeof window.toast.info === 'function') {
+        window.toast.info('Equipment-Bearbeitung wird in einer späteren Version implementiert.');
+    } else {
+        alert('Equipment-Bearbeitung wird in einer späteren Version implementiert.');
+    }
+}
+
+// Make function globally available
+window.showEquipmentEditMessage = showEquipmentEditMessage;
+
+/**
  * Render equipment list
  */
 function renderEquipmentList(equipmentList) {

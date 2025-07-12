@@ -1227,25 +1227,37 @@
 .tab-counter {
     background: #FF5722;
     color: white;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
     padding: 2px 6px;
-    border-radius: 12px;
+    border-radius: 10px;
     margin-left: 8px;
     min-width: 18px;
     text-align: center;
     display: inline-block;
     line-height: 1.2;
+    position: relative;
+    top: -1px;
 }
 
 .tab-btn.active .tab-counter {
     background: #FFEB00;
     color: #000000;
+    border: 1px solid #000000;
 }
 
 .tab-counter:empty,
 .tab-counter[data-count="0"] {
     display: none;
+}
+
+.tab-btn:hover .tab-counter {
+    background: #FF7043;
+}
+
+.tab-btn.active:hover .tab-counter {
+    background: #FFD600;
+    color: #000000;
 }
 
 .equipment-list {

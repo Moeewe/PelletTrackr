@@ -334,7 +334,8 @@ async function editEntry(entryId) {
               </div>
               
               <div class="detail-row highlight-yellow" style="margin-top: 24px;">
-                <strong>Admin-Berechtigung:</strong> Du kannst alle Felder dieses Eintrags bearbeiten. Kosten werden automatisch neu berechnet.
+                <span class="detail-label">Hinweis:</span>
+                <span class="detail-value">Als Admin kannst du alle Felder dieses Eintrags bearbeiten. Kosten werden automatisch neu berechnet.</span>
               </div>
             </form>
           </div>
@@ -410,7 +411,18 @@ async function saveEntryChanges(entryId) {
       
       if (!materialSnapshot.empty) {
         const materialData = materialSnapshot.docs[0].data();
-        materialCost = materialMenge * (materialData.price || 0);
+        
+        // Verwende Verkaufspreis (oder berechne ihn falls nicht vorhanden)
+        let materialPrice = materialData.sellingPrice;
+        if (!materialPrice) {
+          const netPrice = materialData.netPrice || materialData.price || 0;
+          const taxRate = materialData.taxRate || 19;
+          const markup = materialData.markup || 30;
+          const grossPrice = netPrice * (1 + taxRate / 100);
+          materialPrice = grossPrice * (1 + markup / 100);
+        }
+        
+        materialCost = materialMenge * materialPrice;
       }
     }
     
@@ -422,7 +434,18 @@ async function saveEntryChanges(entryId) {
       
       if (!masterbatchSnapshot.empty) {
         const masterbatchData = masterbatchSnapshot.docs[0].data();
-        masterbatchCost = masterbatchMenge * (masterbatchData.price || 0);
+        
+        // Verwende Verkaufspreis (oder berechne ihn falls nicht vorhanden)
+        let masterbatchPrice = masterbatchData.sellingPrice;
+        if (!masterbatchPrice) {
+          const netPrice = masterbatchData.netPrice || masterbatchData.price || 0;
+          const taxRate = masterbatchData.taxRate || 19;
+          const markup = masterbatchData.markup || 30;
+          const grossPrice = netPrice * (1 + taxRate / 100);
+          masterbatchPrice = grossPrice * (1 + markup / 100);
+        }
+        
+        masterbatchCost = masterbatchMenge * masterbatchPrice;
       }
     }
     
@@ -497,6 +520,7 @@ window.closeModal = closeModal;
 window.showDetails = showDetails;
 window.editUserEntry = editUserEntry;
 window.editEntry = editEntry;
+window.saveEntryChanges = saveEntryChanges;
 window.editNote = editNote;
 
 // ==================== MODALS MODULE ====================
