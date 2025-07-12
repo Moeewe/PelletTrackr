@@ -2418,3 +2418,207 @@
         padding: 16px 0;
     }
 }
+
+/* ===== PRINTER DETAILS MODAL STYLES ===== */
+/* Printer Details Grid */
+.printer-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 24px;
+    margin-top: 20px;
+}
+
+/* Printer Detail Cards */
+.printer-detail-card {
+    background: white;
+    border: 2px solid #000000;
+    border-radius: 0;
+    padding: 0;
+    margin-bottom: 0;
+    transition: all 0.2s ease;
+}
+
+.printer-detail-card:hover {
+    box-shadow: 4px 4px 0 #000000;
+}
+
+/* Status-based Card Styling */
+.printer-detail-card.printer-status-available {
+    border-left: 6px solid #28a745;
+}
+
+.printer-detail-card.printer-status-printing {
+    border-left: 6px solid #ffc107;
+}
+
+.printer-detail-card.printer-status-maintenance {
+    border-left: 6px solid #fd7e14;
+}
+
+.printer-detail-card.printer-status-broken {
+    border-left: 6px solid #dc3545;
+}
+
+/* Card Header with Status Badge */
+.printer-detail-card .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 2px solid #000000;
+    background: white;
+}
+
+.printer-detail-card .card-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #000000;
+    margin: 0;
+}
+
+/* Status Badge Styles */
+.status-badge {
+    padding: 6px 12px;
+    border: 2px solid #000000;
+    border-radius: 0;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.status-available {
+    background: #28a745;
+    color: white;
+}
+
+.status-badge.status-printing {
+    background: #ffc107;
+    color: #000000;
+}
+
+.status-badge.status-maintenance {
+    background: #fd7e14;
+    color: white;
+}
+
+.status-badge.status-broken {
+    background: #dc3545;
+    color: white;
+}
+
+/* Card Body */
+.printer-detail-card .card-body {
+    padding: 24px;
+    background: white;
+}
+
+.printer-detail-card .card-footer {
+    padding: 16px 24px;
+    border-top: 2px solid #000000;
+    background: white;
+}
+
+.printer-detail-card .card-footer .btn {
+    width: 100%;
+    font-weight: 600;
+    padding: 12px;
+    border: 2px solid #000000;
+    border-radius: 0;
+    background: #000000;
+    color: white;
+    transition: all 0.2s ease;
+}
+
+.printer-detail-card .card-footer .btn:hover {
+    background: #333333;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .printer-details-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .printer-detail-card .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .status-badge {
+        align-self: flex-start;
+    }
+}
+
+/* ===== SERVICE CARDS (NO OUTLINE) ===== */
+/* Remove outline from service cards */
+.service-card {
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.service-card:hover {
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.service-card:focus {
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* Service Card Icons and Content */
+.service-card .service-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+    display: block;
+}
+
+.service-card .service-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #000000;
+    margin-bottom: 8px;
+}
+
+.service-card .service-description {
+    font-size: 14px;
+    color: #666666;
+    margin-bottom: 12px;
+}
+
+.service-card .service-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.service-card .service-status .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #666666;
+}
+
+.service-card .service-status .status-dot.status-available {
+    background: #28a745;
+}
+
+.service-card .service-status .status-dot.status-printing {
+    background: #ffc107;
+}
+
+.service-card .service-status .status-dot.status-maintenance {
+    background: #fd7e14;
+}
+
+.service-card .service-status .status-dot.status-broken {
+    background: #dc3545;
+}

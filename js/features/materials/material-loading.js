@@ -95,7 +95,18 @@ async function loadMaterials() {
     materials.forEach(material => {
       const option = document.createElement("option");
       option.value = material.name;
-      option.textContent = `${material.name} (${formatCurrency(material.price)}/g)`;
+      
+      // Verkaufspreis verwenden oder berechnen
+      let displayPrice = material.sellingPrice;
+      if (!displayPrice) {
+        const basePrice = material.netPrice || material.price || 0;
+        const taxMultiplier = 1 + (material.taxRate || 19) / 100;
+        const markupMultiplier = 1 + (material.markup || 30) / 100;
+        displayPrice = basePrice * taxMultiplier * markupMultiplier;
+      }
+      
+      // Kompakte Anzeige: Name und Preis pro kg
+      option.textContent = `${material.name} - ${displayPrice.toFixed(2)}€/kg`;
       select.appendChild(option);
     });
 
@@ -167,7 +178,18 @@ async function loadMasterbatches() {
     masterbatches.forEach(masterbatch => {
       const option = document.createElement("option");
       option.value = masterbatch.name;
-      option.textContent = `${masterbatch.name} (${formatCurrency(masterbatch.price)}/g)`;
+      
+      // Verkaufspreis verwenden oder berechnen
+      let displayPrice = masterbatch.sellingPrice;
+      if (!displayPrice) {
+        const basePrice = masterbatch.netPrice || masterbatch.price || 0;
+        const taxMultiplier = 1 + (masterbatch.taxRate || 19) / 100;
+        const markupMultiplier = 1 + (masterbatch.markup || 30) / 100;
+        displayPrice = basePrice * taxMultiplier * markupMultiplier;
+      }
+      
+      // Kompakte Anzeige: Name und Preis pro g
+      option.textContent = `${masterbatch.name} - ${displayPrice.toFixed(3)}€/g`;
       select.appendChild(option);
     });
 

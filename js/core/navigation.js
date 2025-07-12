@@ -388,7 +388,7 @@ function setupEventListeners() {
         try {
           const value = this.value;
           if (value) {
-            const parsed = parseGermanNumber(value);
+            const parsed = window.parseGermanNumber(value);
             if (!isNaN(parsed) && parsed > 0) {
               this.value = parsed.toFixed(2).replace('.', ',');
               safeCalculateCost();

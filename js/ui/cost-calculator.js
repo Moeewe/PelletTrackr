@@ -65,7 +65,7 @@ async function calculateCostPreview() {
           materialPrice = grossPrice * (1 + markup / 100);
         }
         
-        materialCost = parseGermanNumber(materialMengeValue) * materialPrice;
+        materialCost = window.parseGermanNumber(materialMengeValue) * materialPrice;
         console.log("💰 Material-Kosten:", materialCost, "€/kg");
       }
     }
@@ -87,7 +87,7 @@ async function calculateCostPreview() {
         }
         
         // Masterbatch wird in Gramm eingegeben, Preis ist pro Gramm
-        masterbatchCost = parseGermanNumber(masterbatchMengeValue) * masterbatchPrice;
+        masterbatchCost = window.parseGermanNumber(masterbatchMengeValue) * masterbatchPrice;
         console.log("💰 Masterbatch-Kosten:", masterbatchCost, "€/g");
       }
     }
@@ -101,7 +101,7 @@ async function calculateCostPreview() {
     });
     
     if (!isNaN(totalCost) && totalCost >= 0) {
-      const formattedCost = formatCurrency(totalCost);
+      const formattedCost = window.formatCurrency(totalCost);
       costPreview.textContent = formattedCost;
       console.log("✅ Kostenvorschau aktualisiert:", formattedCost);
     } else {
@@ -120,3 +120,7 @@ function throttledCalculateCost() {
   clearTimeout(costCalculationTimeout);
   costCalculationTimeout = setTimeout(calculateCostPreview, 500);
 }
+
+// Export functions to global scope
+window.calculateCostPreview = calculateCostPreview;
+window.throttledCalculateCost = throttledCalculateCost;

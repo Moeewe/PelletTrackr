@@ -121,40 +121,38 @@ function generatePrinterDetailsHTML(printers) {
     return printers.map(printer => {
         const statusClass = `printer-status-${printer.status}`;
         const statusText = getStatusText(printer.status);
-        const statusIcon = getStatusIcon(printer.status);
         
         return `
-            <div class="printer-detail-card ${statusClass}">
-                <div class="printer-detail-header">
-                    <h4 class="printer-name">${printer.name || 'Unbekannter Drucker'}</h4>
-                    <div class="printer-status-badge">
-                        <span class="status-icon">${statusIcon}</span>
-                        <span class="status-text">${statusText}</span>
+            <div class="card printer-detail-card ${statusClass}">
+                <div class="card-header">
+                    <h4 class="card-title">${printer.name || 'Unbekannter Drucker'}</h4>
+                    <div class="status-badge status-${printer.status}">
+                        ${statusText}
                     </div>
                 </div>
-                <div class="printer-detail-body">
-                    <div class="printer-info-row">
-                        <span class="info-label">Modell:</span>
-                        <span class="info-value">${printer.model || 'Nicht angegeben'}</span>
+                <div class="card-body">
+                    <div class="detail-row">
+                        <span class="detail-label">Modell:</span>
+                        <span class="detail-value">${printer.model || 'Nicht angegeben'}</span>
                     </div>
-                    <div class="printer-info-row">
-                        <span class="info-label">Bauraum:</span>
-                        <span class="info-value">${printer.buildVolume || 'Nicht angegeben'}</span>
+                    <div class="detail-row">
+                        <span class="detail-label">Bauraum:</span>
+                        <span class="detail-value">${printer.buildVolume || 'Nicht angegeben'}</span>
                     </div>
-                    <div class="printer-info-row">
-                        <span class="info-label">Materialien:</span>
-                        <span class="info-value">${printer.materials || 'Nicht angegeben'}</span>
+                    <div class="detail-row">
+                        <span class="detail-label">Materialien:</span>
+                        <span class="detail-value">${printer.materials || 'Nicht angegeben'}</span>
                     </div>
                     ${printer.notes ? `
-                        <div class="printer-info-row">
-                            <span class="info-label">Hinweise:</span>
-                            <span class="info-value">${printer.notes}</span>
+                        <div class="detail-row">
+                            <span class="detail-label">Hinweise:</span>
+                            <span class="detail-value">${printer.notes}</span>
                         </div>
                     ` : ''}
                 </div>
                 ${printer.status === 'available' ? `
-                    <div class="printer-detail-footer">
-                        <button class="btn btn-primary btn-sm" onclick="reservePrinter('${printer.id}')">
+                    <div class="card-footer">
+                        <button class="btn btn-primary" onclick="reservePrinter('${printer.id}')">
                             Reservieren
                         </button>
                     </div>

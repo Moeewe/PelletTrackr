@@ -166,51 +166,7 @@
                         <button class="filter-btn" data-filter="high-cost" onclick="setUserQuickFilter('high-cost')">Hohe Kosten</button>
                     </div>
                     
-                    <!-- Advanced Filters (Collapsible) -->
-                    <div class="advanced-filters" id="userAdvancedFilters">
-                        <button class="advanced-toggle" onclick="toggleUserAdvancedFilters()">
-                            <span>Erweiterte Filter</span>
-                            <span class="toggle-arrow">▼</span>
-                        </button>
-                        
-                        <div class="filters-panel" id="userFiltersPanel">
-                            <div class="filter-row">
-                                <div class="filter-group">
-                                    <label>Material:</label>
-                                    <select id="userMaterialFilter" onchange="performAdvancedUserSearch()">
-                                        <option value="">Alle Materialien</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="filter-group">
-                                    <label>Zeitraum:</label>
-                                    <select id="userDateFilter" onchange="performAdvancedUserSearch()">
-                                        <option value="">Alle Zeiten</option>
-                                        <option value="today">Heute</option>
-                                        <option value="week">Letzte Woche</option>
-                                        <option value="month">Letzter Monat</option>
-                                        <option value="quarter">Letzte 3 Monate</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="filter-group">
-                                    <label>Kosten:</label>
-                                    <select id="userCostFilter" onchange="performAdvancedUserSearch()">
-                                        <option value="">Alle Kosten</option>
-                                        <option value="0-5">0 - 5 €</option>
-                                        <option value="5-15">5 - 15 €</option>
-                                        <option value="15-30">15 - 30 €</option>
-                                        <option value="30+">30+ €</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <div class="filter-actions">
-                                <button class="btn btn-secondary btn-small" onclick="resetUserFilters()">Filter zurücksetzen</button>
-                                <span class="results-counter" id="userResultsCounter"></span>
-                            </div>
-                        </div>
-                    </div>
+
                 </div>
                 
                 <div class="user-entries-container">
