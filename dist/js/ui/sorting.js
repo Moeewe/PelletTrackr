@@ -3,8 +3,9 @@
 let userSortDirection = {};
 let adminSortDirection = {};
 
+// User Entries sortieren
 function sortUserEntries(column) {
-  if (!window.allUserEntries.length) return;
+  if (!window.allUserEntries || !window.allUserEntries.length) return;
   
   // Toggle sort direction
   userSortDirection[column] = userSortDirection[column] === 'asc' ? 'desc' : 'asc';
@@ -13,65 +14,10 @@ function sortUserEntries(column) {
   window.allUserEntries.sort((a, b) => {
     let valueA, valueB;
     
-    switch(column) {
-      case 'date':
-        valueA = new Date(a.date);
-        valueB = new Date(b.date);
-        break;
-      case 'jobName':
-        valueA = a.jobName?.toLowerCase() || '';
-        valueB = b.jobName?.toLowerCase() || '';
-        break;
-      case 'material':
-        valueA = a.material?.toLowerCase() || '';
-        valueB = b.material?.toLowerCase() || '';
-        break;
-      case 'materialMenge':
-        valueA = parseFloat(a.materialMenge) || 0;
-        valueB = parseFloat(b.materialMenge) || 0;
-        break;
-      case 'masterbatch':
-        valueA = a.masterbatch?.toLowerCase() || '';
-        valueB = b.masterbatch?.toLowerCase() || '';
-        break;
-      case 'masterbatchMenge':
-        valueA = parseFloat(a.masterbatchMenge) || 0;
-        valueB = parseFloat(b.masterbatchMenge) || 0;
-        break;
-      case 'cost':
-        valueA = parseFloat(a.cost) || 0;
-        valueB = parseFloat(b.cost) || 0;
-        break;
-      case 'status':
-        valueA = a.status?.toLowerCase() || '';
-        valueB = b.status?.toLowerCase() || '';
-        break;
-      default:
-        return 0;
-    }
-    
-    if (valueA < valueB) return direction === 'asc' ? -1 : 1;
-    if (valueA > valueB) return direction === 'asc' ? 1 : -1;
-    return 0;
-  });
-  
-  window.renderUserEntries(window.allUserEntries);
-}
-
-function sortAdminEntriesBy(column) {
-  if (!window.allAdminEntries.length) return;
-  
-  // Toggle sort direction
-  adminSortDirection[column] = adminSortDirection[column] === 'asc' ? 'desc' : 'asc';
-  const direction = adminSortDirection[column];
-  
-  window.allAdminEntries.sort((a, b) => {
-    let valueA, valueB;
-    
     switch (column) {
       case 'date':
-        valueA = new Date(a.date);
-        valueB = new Date(b.date);
+        valueA = a.timestamp ? new Date(a.timestamp.toDate()) : new Date(0);
+        valueB = b.timestamp ? new Date(b.timestamp.toDate()) : new Date(0);
         break;
       case 'name':
         valueA = a.name?.toLowerCase() || '';
@@ -102,100 +48,37 @@ function sortAdminEntriesBy(column) {
         valueB = parseFloat(b.masterbatchMenge) || 0;
         break;
       case 'cost':
-        valueA = parseFloat(a.cost) || 0;
-        valueB = parseFloat(b.cost) || 0;
+        valueA = parseFloat(a.totalCost) || 0;
+        valueB = parseFloat(b.totalCost) || 0;
         break;
       case 'status':
-        valueA = a.status?.toLowerCase() || '';
-        valueB = b.status?.toLowerCase() || '';
+        valueA = (a.paid || a.isPaid) ? 'bezahlt' : 'offen';
+        valueB = (b.paid || b.isPaid) ? 'bezahlt' : 'offen';
         break;
       default:
         return 0;
     }
     
-    if (valueA < valueB) return direction === 'asc' ? -1 : 1;
-    if (valueA > valueB) return direction === 'asc' ? 1 : -1;
-    return 0;
+    if (typeof valueA === 'string') {
+      return direction === 'asc' ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+    } else {
+      return direction === 'asc' ? valueA - valueB : valueB - valueA;
+    }
   });
   
-  window.renderAdminEntries(window.allAdminEntries);
-}
-
-// Search Admin entries
-function searchAdmins() {
-  if (!window.allAdminEntries) return;
-
-  const searchTerm = document.getElementById('adminManagerSearchInput').value.toLowerCase();
-
-  const filteredEntries = window.allAdminEntries.filter(entry => {
-    return entry.name.toLowerCase().includes(searchTerm) ||
-           entry.kennung.toLowerCase().includes(searchTerm) ||
-           entry.jobName.toLowerCase().includes(searchTerm) ||
-           entry.material.toLowerCase().includes(searchTerm) ||
-           entry.masterbatch.toLowerCase().includes(searchTerm);
-  });
-
-  window.renderAdminEntries(filteredEntries);
-}
-
-// ==================== SEARCH FUNCTIONS ====================
-
-// User Entries durchsuchen
-function searchUserEntries() {
-  if (!window.allUserEntries || window.allUserEntries.length === 0) return;
-
-  const searchTerm = document.getElementById('userSearchInput').value.toLowerCase();
-  
-  if (!searchTerm) {
-    // Zeige alle Einträge wenn Suchfeld leer ist
+  if (typeof window.renderUserEntries === 'function') {
     window.renderUserEntries(window.allUserEntries);
-    return;
   }
-
-  const filteredEntries = window.allUserEntries.filter(entry => {
-    return (
-      (entry.material && entry.material.toLowerCase().includes(searchTerm)) ||
-      (entry.masterbatch && entry.masterbatch.toLowerCase().includes(searchTerm)) ||
-      (entry.jobName && entry.jobName.toLowerCase().includes(searchTerm)) ||
-      (entry.kennung && entry.kennung.toLowerCase().includes(searchTerm)) ||
-      (entry.paid ? 'bezahlt' : 'offen').includes(searchTerm)
-    );
-  });
-
-  window.renderUserEntries(filteredEntries);
-}
-
-// Admin Entries durchsuchen
-function searchAdminEntries() {
-  if (!window.allAdminEntries || window.allAdminEntries.length === 0) return;
-
-  const searchTerm = document.getElementById('adminSearchInput').value.toLowerCase();
-  
-  if (!searchTerm) {
-    // Zeige alle Einträge wenn Suchfeld leer ist
-    window.renderAdminEntries(window.allAdminEntries);
-    return;
-  }
-
-  const filteredEntries = window.allAdminEntries.filter(entry => {
-    return (
-      (entry.name && entry.name.toLowerCase().includes(searchTerm)) ||
-      (entry.kennung && entry.kennung.toLowerCase().includes(searchTerm)) ||
-      (entry.material && entry.material.toLowerCase().includes(searchTerm)) ||
-      (entry.masterbatch && entry.masterbatch.toLowerCase().includes(searchTerm)) ||
-      (entry.jobName && entry.jobName.toLowerCase().includes(searchTerm)) ||
-      (entry.paid ? 'bezahlt' : 'offen').includes(searchTerm)
-    );
-  });
-
-  window.renderAdminEntries(filteredEntries);
 }
 
 // Admin Entries sortieren (über Select-Dropdown)
 function sortAdminEntries() {
   if (!window.allAdminEntries || window.allAdminEntries.length === 0) return;
 
-  const sortValue = document.getElementById('adminSortSelect').value;
+  const sortSelect = document.getElementById('adminSortSelect');
+  if (!sortSelect) return;
+
+  const sortValue = sortSelect.value;
   const [criteria, direction] = sortValue.split('-');
 
   let sortedEntries = [...window.allAdminEntries];
@@ -234,8 +117,175 @@ function sortAdminEntries() {
       break;
   }
 
-  window.renderAdminEntries(sortedEntries);
+  if (typeof window.renderAdminEntries === 'function') {
+    window.renderAdminEntries(sortedEntries);
+  }
 }
 
-// ==================== VISUAL SORT INDICATORS ====================
-// Removed - using only gray arrows in CSS
+// User Entries durchsuchen
+function searchUserEntries() {
+  if (!window.allUserEntries || window.allUserEntries.length === 0) return;
+
+  const searchInput = document.getElementById('userSearchInput');
+  if (!searchInput) return;
+
+  const searchTerm = searchInput.value.toLowerCase();
+  
+  if (!searchTerm) {
+    // Zeige alle Einträge wenn Suchfeld leer ist
+    if (typeof window.renderUserEntries === 'function') {
+      window.renderUserEntries(window.allUserEntries);
+    }
+    return;
+  }
+
+  const filteredEntries = window.allUserEntries.filter(entry => {
+    return (
+      (entry.material && entry.material.toLowerCase().includes(searchTerm)) ||
+      (entry.masterbatch && entry.masterbatch.toLowerCase().includes(searchTerm)) ||
+      (entry.jobName && entry.jobName.toLowerCase().includes(searchTerm)) ||
+      (entry.kennung && entry.kennung.toLowerCase().includes(searchTerm)) ||
+      (entry.name && entry.name.toLowerCase().includes(searchTerm)) ||
+      (entry.paid || entry.isPaid ? 'bezahlt' : 'offen').includes(searchTerm)
+    );
+  });
+
+  if (typeof window.renderUserEntries === 'function') {
+    window.renderUserEntries(filteredEntries);
+  }
+}
+
+// Clear User Search
+function clearUserSearch() {
+  const searchInput = document.getElementById('userSearchInput');
+  if (searchInput) {
+    searchInput.value = '';
+    searchUserEntries(); // Trigger search to show all entries
+  }
+}
+
+// Admin Entries durchsuchen
+function searchAdminEntries() {
+  if (!window.allAdminEntries || window.allAdminEntries.length === 0) return;
+
+  const searchInput = document.getElementById('adminSearchInput');
+  if (!searchInput) return;
+
+  const searchTerm = searchInput.value.toLowerCase();
+  
+  if (!searchTerm) {
+    // Zeige alle Einträge wenn Suchfeld leer ist
+    if (typeof window.renderAdminEntries === 'function') {
+      window.renderAdminEntries(window.allAdminEntries);
+    }
+    return;
+  }
+
+  const filteredEntries = window.allAdminEntries.filter(entry => {
+    return (
+      (entry.name && entry.name.toLowerCase().includes(searchTerm)) ||
+      (entry.kennung && entry.kennung.toLowerCase().includes(searchTerm)) ||
+      (entry.material && entry.material.toLowerCase().includes(searchTerm)) ||
+      (entry.masterbatch && entry.masterbatch.toLowerCase().includes(searchTerm)) ||
+      (entry.jobName && entry.jobName.toLowerCase().includes(searchTerm)) ||
+      (entry.paid || entry.isPaid ? 'bezahlt' : 'offen').includes(searchTerm)
+    );
+  });
+
+  if (typeof window.renderAdminEntries === 'function') {
+    window.renderAdminEntries(filteredEntries);
+  }
+}
+
+// User Management Search
+function searchUsers() {
+  if (!window.allUsers || window.allUsers.length === 0) return;
+
+  const searchInput = document.getElementById('userManagerSearchInput');
+  if (!searchInput) return;
+
+  const searchTerm = searchInput.value.toLowerCase();
+  
+  if (!searchTerm) {
+    // Zeige alle Nutzer wenn Suchfeld leer ist
+    if (typeof window.renderUsersTable === 'function') {
+      window.renderUsersTable(window.allUsers);
+    }
+    return;
+  }
+
+  const filteredUsers = window.allUsers.filter(user => {
+    return (
+      (user.name && user.name.toLowerCase().includes(searchTerm)) ||
+      (user.kennung && user.kennung.toLowerCase().includes(searchTerm)) ||
+      (user.email && user.email.toLowerCase().includes(searchTerm))
+    );
+  });
+
+  if (typeof window.renderUsersTable === 'function') {
+    window.renderUsersTable(filteredUsers);
+  }
+}
+
+// User Management Sort
+function sortUsers() {
+  if (!window.allUsers || window.allUsers.length === 0) return;
+
+  const sortSelect = document.getElementById('userManagerSortSelect');
+  if (!sortSelect) return;
+
+  const sortValue = sortSelect.value;
+  const [criteria, direction] = sortValue.split('-');
+
+  let sortedUsers = [...window.allUsers];
+
+  switch (criteria) {
+    case 'name':
+      sortedUsers.sort((a, b) => {
+        const nameA = (a.name || '').toLowerCase();
+        const nameB = (b.name || '').toLowerCase();
+        return direction === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+      });
+      break;
+    
+    case 'kennung':
+      sortedUsers.sort((a, b) => {
+        const kennungA = (a.kennung || '').toLowerCase();
+        const kennungB = (b.kennung || '').toLowerCase();
+        return direction === 'asc' ? kennungA.localeCompare(kennungB) : kennungB.localeCompare(kennungA);
+      });
+      break;
+    
+    case 'entries':
+      sortedUsers.sort((a, b) => {
+        const entriesA = a.entries ? a.entries.length : 0;
+        const entriesB = b.entries ? b.entries.length : 0;
+        return direction === 'asc' ? entriesA - entriesB : entriesB - entriesA;
+      });
+      break;
+    
+    case 'revenue':
+      sortedUsers.sort((a, b) => {
+        const revenueA = a.totalCost || 0;
+        const revenueB = b.totalCost || 0;
+        return direction === 'asc' ? revenueA - revenueB : revenueB - revenueA;
+      });
+      break;
+  }
+
+  if (typeof window.renderUsersTable === 'function') {
+    window.renderUsersTable(sortedUsers);
+  }
+}
+
+// ==================== GLOBAL EXPORTS ====================
+// Make all functions globally available
+window.sortUserEntries = sortUserEntries;
+window.searchUserEntries = searchUserEntries;
+window.clearUserSearch = clearUserSearch;
+window.sortAdminEntries = sortAdminEntries;
+window.searchAdminEntries = searchAdminEntries;
+window.searchUsers = searchUsers;
+window.sortUsers = sortUsers;
+
+console.log("🔍 Sorting & Filtering Module loaded");

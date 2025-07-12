@@ -54,7 +54,7 @@ async function calculateCostPreview() {
       const materialSnapshot = await window.db.collection("materials").where("name", "==", materialValue).get();
       if (!materialSnapshot.empty) {
         const materialPrice = materialSnapshot.docs[0].data().price;
-        materialCost = window.parseGermanNumber(materialMengeValue) * materialPrice;
+        materialCost = parseGermanNumber(materialMengeValue) * materialPrice;
         console.log("💰 Material-Kosten:", materialCost);
       }
     }
@@ -64,7 +64,7 @@ async function calculateCostPreview() {
       const masterbatchSnapshot = await window.db.collection("masterbatches").where("name", "==", masterbatchValue).get();
       if (!masterbatchSnapshot.empty) {
         const masterbatchPrice = masterbatchSnapshot.docs[0].data().price;
-        masterbatchCost = window.parseGermanNumber(masterbatchMengeValue) * masterbatchPrice;
+        masterbatchCost = parseGermanNumber(masterbatchMengeValue) * masterbatchPrice;
         console.log("💰 Masterbatch-Kosten:", masterbatchCost);
       }
     }
@@ -78,7 +78,7 @@ async function calculateCostPreview() {
     });
     
     if (!isNaN(totalCost) && totalCost >= 0) {
-      const formattedCost = window.formatCurrency(totalCost);
+      const formattedCost = formatCurrency(totalCost);
       costPreview.textContent = formattedCost;
       console.log("✅ Kostenvorschau aktualisiert:", formattedCost);
     } else {

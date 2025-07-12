@@ -146,7 +146,18 @@
   font-size: 14px;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 16px;
+}
+
+/* Sicherstellen, dass ABMELDEN Button perfekt zentriert ist */
+.user-info .btn-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  line-height: 1;
+  vertical-align: middle;
 }
 
 .user-info .user-name {
@@ -190,4 +201,101 @@
   border-radius: 0;
   padding: 32px;
   min-height: 400px;
+}
+
+/* ===== APP HEADER STYLES ===== */
+
+.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0;
+    margin-bottom: 24px;
+    border-bottom: 2px solid #000;
+    background: white;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-left, .header-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.header-right {
+    justify-content: flex-end;
+}
+
+.header-center {
+    flex: 2;
+    text-align: center;
+}
+
+.header-title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: #000;
+}
+
+.screen-content {
+    margin-top: 0;
+}
+
+.screen-subtitle {
+    text-align: center;
+    margin: 0 0 32px 0;
+    font-size: 16px;
+    color: #666;
+    font-weight: 400;
+}
+
+/* Clickable app title */
+.app-title {
+    transition: opacity 0.2s ease;
+}
+
+.app-title:hover {
+    opacity: 0.8;
+}
+
+/* Mobile responsive headers */
+@media (max-width: 768px) {
+    .app-header {
+        padding: 12px 0;
+        margin-bottom: 16px;
+    }
+    
+    .header-title {
+        font-size: 20px;
+    }
+    
+    .screen-subtitle {
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+    
+    .header-left .btn, .header-right .btn {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .app-header {
+        padding: 8px 0;
+        margin-bottom: 12px;
+    }
+    
+    .header-title {
+        font-size: 18px;
+    }
+    
+    .screen-subtitle {
+        font-size: 13px;
+        margin-bottom: 16px;
+        padding: 0 16px;
+    }
 }
