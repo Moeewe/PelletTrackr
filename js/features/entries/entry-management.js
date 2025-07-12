@@ -81,7 +81,7 @@ async function addEntry() {
 
   if (hasMaterial) {
     try {
-      materialMengeNum = parseGermanNumber(formData.materialMenge);
+      materialMengeNum = window.parseGermanNumber(formData.materialMenge);
       if (isNaN(materialMengeNum) || materialMengeNum <= 0 || materialMengeNum > 10000) {
         window.toast?.warning("Bitte eine gültige Materialmenge eingeben (0,1 - 10.000 kg)!");
         return;
@@ -94,7 +94,7 @@ async function addEntry() {
 
   if (hasMasterbatch) {
     try {
-      masterbatchMengeNum = parseGermanNumber(formData.masterbatchMenge);
+      masterbatchMengeNum = window.parseGermanNumber(formData.masterbatchMenge);
       if (isNaN(masterbatchMengeNum) || masterbatchMengeNum <= 0 || masterbatchMengeNum > 10000) {
         window.toast?.warning("Bitte eine gültige Masterbatch-Menge eingeben (0,1 - 10.000 g)!");
         return;
@@ -106,65 +106,65 @@ async function addEntry() {
   }
 
   try {
+    let materialData = null;
+    let masterbatchData = null;
+    let materialCost = 0;
+    let masterbatchCost = 0;
+
+    // Material-Daten abrufen (falls ausgewählt)
+    if (hasMaterial) {
+      try {
+        const materialSnapshot = await window.safeFirebaseOp(async () => {
+          return await window.db.collection("materials").where("name", "==", formData.material).get();
+        });
+        
+        if (materialSnapshot.empty) {
+          throw new Error(`Material "${formData.material}" nicht in der Datenbank gefunden`);
+        }
+        
+        materialData = materialSnapshot.docs[0].data();
+        if (!materialData.price || typeof materialData.price !== 'number') {
+          throw new Error(`Material "${formData.material}" hat keinen gültigen Preis`);
+        }
+        
+        materialCost = materialMengeNum * materialData.price;
+      } catch (error) {
+        console.error("Material loading error:", error);
+        throw new Error(`Fehler beim Laden der Materialdaten: ${error.message}`);
+      }
+    }
+
+    // Masterbatch-Daten abrufen (falls ausgewählt)
+    if (hasMasterbatch) {
+      try {
+        const masterbatchSnapshot = await window.safeFirebaseOp(async () => {
+          return await window.db.collection("masterbatches").where("name", "==", formData.masterbatch).get();
+        });
+        
+        if (masterbatchSnapshot.empty) {
+          throw new Error(`Masterbatch "${formData.masterbatch}" nicht in der Datenbank gefunden`);
+        }
+        
+        masterbatchData = masterbatchSnapshot.docs[0].data();
+        if (!masterbatchData.price || typeof masterbatchData.price !== 'number') {
+          throw new Error(`Masterbatch "${formData.masterbatch}" hat keinen gültigen Preis`);
+        }
+        
+        masterbatchCost = masterbatchMengeNum * masterbatchData.price;
+      } catch (error) {
+        console.error("Masterbatch loading error:", error);
+        throw new Error(`Fehler beim Laden der Masterbatch-Daten: ${error.message}`);
+      }
+    }
+
+    // Gesamtkosten berechnen
+    const totalCost = materialCost + masterbatchCost;
+    
+    if (totalCost <= 0 || totalCost > 100000) {
+      throw new Error(`Ungültige Gesamtkosten: ${window.formatCurrency(totalCost)}`);
+    }
+
     await withLoading(async () => {
-      let materialData = null;
-      let masterbatchData = null;
-      let materialCost = 0;
-      let masterbatchCost = 0;
-
-      // Material-Daten abrufen (falls ausgewählt)
-      if (hasMaterial) {
-        try {
-          const materialSnapshot = await window.safeFirebaseOp(async () => {
-            return await window.db.collection("materials").where("name", "==", formData.material).get();
-          });
-          
-          if (materialSnapshot.empty) {
-            throw new Error(`Material "${formData.material}" nicht in der Datenbank gefunden`);
-          }
-          
-          materialData = materialSnapshot.docs[0].data();
-          if (!materialData.price || typeof materialData.price !== 'number') {
-            throw new Error(`Material "${formData.material}" hat keinen gültigen Preis`);
-          }
-          
-          materialCost = materialMengeNum * materialData.price;
-        } catch (error) {
-          console.error("Material loading error:", error);
-          throw new Error(`Fehler beim Laden der Materialdaten: ${error.message}`);
-        }
-      }
-
-      // Masterbatch-Daten abrufen (falls ausgewählt)
-      if (hasMasterbatch) {
-        try {
-          const masterbatchSnapshot = await window.safeFirebaseOp(async () => {
-            return await window.db.collection("masterbatches").where("name", "==", formData.masterbatch).get();
-          });
-          
-          if (masterbatchSnapshot.empty) {
-            throw new Error(`Masterbatch "${formData.masterbatch}" nicht in der Datenbank gefunden`);
-          }
-          
-          masterbatchData = masterbatchSnapshot.docs[0].data();
-          if (!masterbatchData.price || typeof masterbatchData.price !== 'number') {
-            throw new Error(`Masterbatch "${formData.masterbatch}" hat keinen gültigen Preis`);
-          }
-          
-          masterbatchCost = masterbatchMengeNum * masterbatchData.price;
-        } catch (error) {
-          console.error("Masterbatch loading error:", error);
-          throw new Error(`Fehler beim Laden der Masterbatch-Daten: ${error.message}`);
-        }
-      }
-
-      // Gesamtkosten berechnen
-      const totalCost = materialCost + masterbatchCost;
-      
-      if (totalCost <= 0 || totalCost > 100000) {
-        throw new Error(`Ungültige Gesamtkosten: ${formatCurrency(totalCost)}`);
-      }
-
       // Druck in Firestore speichern
       const entry = {
         name: formData.name,
@@ -207,7 +207,7 @@ async function addEntry() {
       }
     }, 
     'Druck wird gespeichert...', 
-    `✅ 3D-Druck erfolgreich hinzugefügt!\n\nJob: ${formData.jobName || "3D-Druck Auftrag"}\nKosten: ${formatCurrency(totalCost)}\n\nDer Druck wurde zu deinen Aufträgen hinzugefügt.`, 
+    `✅ 3D-Druck erfolgreich hinzugefügt!\n\nJob: ${formData.jobName || "3D-Druck Auftrag"}\nKosten: ${window.formatCurrency(totalCost)}\n\nDer Druck wurde zu deinen Aufträgen hinzugefügt.`, 
     'Fehler beim Speichern des Drucks');
     
   } catch (error) {

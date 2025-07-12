@@ -61,7 +61,7 @@ function renderUserEntries(entries) {
         <td data-label="Menge"><span class="cell-value">${entry.materialMenge.toFixed(2)} kg</span></td>
         <td data-label="Masterbatch"><span class="cell-value">${entry.masterbatch}</span></td>
         <td data-label="MB Menge"><span class="cell-value">${entry.masterbatchMenge.toFixed(2)} g</span></td>
-        <td data-label="Kosten"><span class="cell-value"><strong>${formatCurrency(entry.totalCost)}</strong></span></td>
+        <td data-label="Kosten"><span class="cell-value"><strong>${window.formatCurrency(entry.totalCost)}</strong></span></td>
         <td data-label="Status" class="status-cell"><span class="cell-value">${status}</span></td>
         <td data-label="Notizen" class="notes-cell" title="${jobNotes}">
           <span class="cell-value">
@@ -138,7 +138,7 @@ function renderUserEntries(entries) {
           
           <div class="entry-detail-row">
             <span class="entry-detail-label">Kosten</span>
-            <span class="entry-detail-value cost-value">${formatCurrency(entry.totalCost)}</span>
+            <span class="entry-detail-value cost-value">${window.formatCurrency(entry.totalCost)}</span>
           </div>
           
           ${jobNotes ? `
@@ -234,7 +234,7 @@ function renderAdminEntries(entries) {
         <td data-label="Mat. Menge"><span class="cell-value">${(entry.materialMenge || 0).toFixed(2)} kg</span></td>
         <td data-label="Masterbatch"><span class="cell-value">${entry.masterbatch}</span></td>
         <td data-label="MB Menge"><span class="cell-value">${(entry.masterbatchMenge || 0).toFixed(2)} kg</span></td>
-        <td data-label="Kosten"><span class="cell-value"><strong>${formatCurrency(entry.totalCost)}</strong></span></td>
+        <td data-label="Kosten"><span class="cell-value"><strong>${window.formatCurrency(entry.totalCost)}</strong></span></td>
         <td data-label="Status"><span class="cell-value">${status}</span></td>
         <td data-label="Notizen" class="notes-cell" title="${jobNotes}">
           <span class="cell-value">
@@ -326,7 +326,7 @@ function renderAdminEntries(entries) {
           
           <div class="entry-detail-row">
             <span class="entry-detail-label">Kosten</span>
-            <span class="entry-detail-value cost-value">${formatCurrency(entry.totalCost)}</span>
+            <span class="entry-detail-value cost-value">${window.formatCurrency(entry.totalCost)}</span>
           </div>
           
           ${jobNotes ? `
@@ -352,3 +352,9 @@ function renderAdminEntries(entries) {
   
   tableDiv.innerHTML = containerHtml;
 }
+
+// ==================== GLOBAL EXPORTS ====================
+window.renderUserEntries = renderUserEntries;
+window.renderAdminEntries = renderAdminEntries;
+
+console.log("📊 Entry Rendering Module loaded");

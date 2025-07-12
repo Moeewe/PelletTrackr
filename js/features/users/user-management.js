@@ -371,7 +371,7 @@ function renderUsersTable(users) {
           
           <div class="entry-detail-row">
             <span class="entry-detail-label">Letzter Druck</span>
-            <span class="entry-detail-value">${lastEntryDate}</span>
+            <span class="entry-detail-value">${lastLoginDate}</span>
           </div>
         </div>
         
