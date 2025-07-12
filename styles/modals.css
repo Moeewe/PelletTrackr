@@ -559,36 +559,42 @@
 /* Mobile Modal Optimierung */
 @media (max-width: 768px) {
   .modal {
-    padding: 0;
-    align-items: stretch;
-    justify-content: stretch;
+    padding: 10px;
+    align-items: center;
+    justify-content: center;
   }
   
   .modal-content {
     max-width: 100%;
-    width: 100%;
-    max-height: 100vh;
-    height: 100vh;
-    border-radius: 0;
-    border: none;
-    margin: 0;
+    width: calc(100% - 20px);
+    max-height: 95vh;
+    height: auto;
+    border-radius: 8px;
+    border: 2px solid #000;
+    margin: 10px;
     animation: slideInMobile 0.3s ease;
+    background: white;
   }
   
   .modal-header {
     padding: 16px 20px;
     flex-shrink: 0;
+    border-bottom: 2px solid #000;
+    background: white;
   }
   
   .modal-header h2,
   .modal-header h3 {
     font-size: 18px !important;
+    color: #000 !important;
   }
   
   .modal-body {
     padding: 20px;
     flex: 1;
     overflow-y: auto;
+    background: white;
+    max-height: 70vh;
   }
   
   .modal-footer {
@@ -596,6 +602,8 @@
     flex-direction: column;
     gap: 12px;
     flex-shrink: 0;
+    border-top: 2px solid #000;
+    background: white;
   }
   
   .modal-footer .btn {
@@ -603,6 +611,61 @@
     margin: 0;
     padding: 16px 20px;
     font-size: 16px;
+  }
+  
+  /* Mobile Material/Masterbatch Specific */
+  .modal .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .modal .form-label {
+    font-size: 16px;
+    font-weight: 600;
+    color: #000;
+    display: block;
+    margin-bottom: 8px;
+  }
+  
+  .modal .form-input,
+  .modal .form-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #000;
+    border-radius: 0;
+    font-size: 16px;
+    background: white;
+    color: #000;
+    box-sizing: border-box;
+  }
+  
+  .modal .form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .modal .data-table {
+    overflow-x: auto;
+    background: white;
+  }
+  
+  .modal .data-table table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+  }
+  
+  .modal .data-table th,
+  .modal .data-table td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    text-align: left;
+    font-size: 14px;
+  }
+  
+  .modal .data-table th {
+    background: #f8f9fa;
+    font-weight: 600;
   }
   
   /* Mobile Detail Layout Adjustments */

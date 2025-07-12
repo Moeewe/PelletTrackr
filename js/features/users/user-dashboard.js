@@ -51,18 +51,18 @@ function updatePrinterStatusCard(printers) {
         broken: printers.filter(p => p.status === 'broken').length
     };
     
-    // Update UI elements
-    const totalElement = document.getElementById('totalPrintersCount');
-    if (totalElement) {
-        totalElement.textContent = statusCounts.total;
+    // Update printer icon with total count
+    const printerIcon = document.querySelector('.printer-icon');
+    if (printerIcon) {
+        printerIcon.textContent = statusCounts.total;
     }
     
-    // Update status counts
+    // Update status counts in the new structure
     const statusElements = {
-        available: document.querySelector('.status-dot.status-available').parentElement.querySelector('.status-count'),
-        printing: document.querySelector('.status-dot.status-printing').parentElement.querySelector('.status-count'),
-        maintenance: document.querySelector('.status-dot.status-maintenance').parentElement.querySelector('.status-count'),
-        broken: document.querySelector('.status-dot.status-broken').parentElement.querySelector('.status-count')
+        available: document.getElementById('availablePrinters'),
+        printing: document.getElementById('printingPrinters'),
+        maintenance: document.getElementById('maintenancePrinters'),
+        broken: document.getElementById('brokenPrinters')
     };
     
     Object.keys(statusElements).forEach(status => {
@@ -70,6 +70,9 @@ function updatePrinterStatusCard(printers) {
             statusElements[status].textContent = statusCounts[status];
         }
     });
+    
+    // Store printer data globally for details view
+    window.userPrintersData = printers;
 }
 
 /**
@@ -78,6 +81,139 @@ function updatePrinterStatusCard(printers) {
 async function loadUserDashboardData() {
     // Additional data loading can be added here
     console.log('User dashboard data loaded');
+}
+
+/**
+ * Show detailed printer information modal
+ */
+function showPrinterDetails() {
+    const printers = window.userPrintersData || [];
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Drucker-Übersicht</h3>
+                <button class="modal-close" onclick="closePrinterDetails()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="printer-details-grid">
+                    ${generatePrinterDetailsHTML(printers)}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    modal.id = 'printerDetailsModal';
+}
+
+/**
+ * Generate HTML for printer details
+ */
+function generatePrinterDetailsHTML(printers) {
+    if (printers.length === 0) {
+        return '<p>Keine Drucker-Daten verfügbar.</p>';
+    }
+    
+    return printers.map(printer => {
+        const statusClass = `printer-status-${printer.status}`;
+        const statusText = getStatusText(printer.status);
+        const statusIcon = getStatusIcon(printer.status);
+        
+        return `
+            <div class="printer-detail-card ${statusClass}">
+                <div class="printer-detail-header">
+                    <h4 class="printer-name">${printer.name || 'Unbekannter Drucker'}</h4>
+                    <div class="printer-status-badge">
+                        <span class="status-icon">${statusIcon}</span>
+                        <span class="status-text">${statusText}</span>
+                    </div>
+                </div>
+                <div class="printer-detail-body">
+                    <div class="printer-info-row">
+                        <span class="info-label">Modell:</span>
+                        <span class="info-value">${printer.model || 'Nicht angegeben'}</span>
+                    </div>
+                    <div class="printer-info-row">
+                        <span class="info-label">Bauraum:</span>
+                        <span class="info-value">${printer.buildVolume || 'Nicht angegeben'}</span>
+                    </div>
+                    <div class="printer-info-row">
+                        <span class="info-label">Materialien:</span>
+                        <span class="info-value">${printer.materials || 'Nicht angegeben'}</span>
+                    </div>
+                    ${printer.notes ? `
+                        <div class="printer-info-row">
+                            <span class="info-label">Hinweise:</span>
+                            <span class="info-value">${printer.notes}</span>
+                        </div>
+                    ` : ''}
+                </div>
+                ${printer.status === 'available' ? `
+                    <div class="printer-detail-footer">
+                        <button class="btn btn-primary btn-sm" onclick="reservePrinter('${printer.id}')">
+                            Reservieren
+                        </button>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+/**
+ * Get status text in German
+ */
+function getStatusText(status) {
+    const statusMap = {
+        available: 'Verfügbar',
+        printing: 'In Betrieb',
+        maintenance: 'Wartung',
+        broken: 'Defekt'
+    };
+    return statusMap[status] || 'Unbekannt';
+}
+
+/**
+ * Get status icon
+ */
+function getStatusIcon(status) {
+    const iconMap = {
+        available: '✅',
+        printing: '🔄',
+        maintenance: '🔧',
+        broken: '❌'
+    };
+    return iconMap[status] || '❓';
+}
+
+/**
+ * Close printer details modal
+ */
+function closePrinterDetails() {
+    const modal = document.getElementById('printerDetailsModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+/**
+ * Reserve a specific printer
+ */
+function reservePrinter(printerId) {
+    closePrinterDetails();
+    showUserReservationForm();
+    
+    // Pre-select the printer in the reservation form
+    setTimeout(() => {
+        const printerSelect = document.getElementById('userReservationPrinter');
+        if (printerSelect) {
+            printerSelect.value = printerId;
+        }
+    }, 100);
 }
 
 /**
@@ -582,4 +718,19 @@ function cleanupUserDashboard() {
         userProblemReportsListener();
         userProblemReportsListener = null;
     }
-} 
+}
+
+// ==================== GLOBAL EXPORTS ====================
+// Export functions to window for global access
+window.showPrinterDetails = showPrinterDetails;
+window.closePrinterDetails = closePrinterDetails;
+window.reservePrinter = reservePrinter;
+window.showUserReservationForm = showUserReservationForm;
+window.closeUserReservationForm = closeUserReservationForm;
+window.submitUserReservation = submitUserReservation;
+window.showUserEquipmentRequest = showUserEquipmentRequest;
+window.closeUserEquipmentRequest = closeUserEquipmentRequest;
+window.submitUserEquipmentRequest = submitUserEquipmentRequest;
+window.showProblemReportForm = showProblemReportForm;
+window.closeProblemReportForm = closeProblemReportForm;
+window.submitProblemReport = submitProblemReport; 

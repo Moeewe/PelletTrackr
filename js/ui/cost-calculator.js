@@ -53,9 +53,20 @@ async function calculateCostPreview() {
     if (hasMaterial) {
       const materialSnapshot = await window.db.collection("materials").where("name", "==", materialValue).get();
       if (!materialSnapshot.empty) {
-        const materialPrice = materialSnapshot.docs[0].data().price;
+        const materialData = materialSnapshot.docs[0].data();
+        
+        // Verwende Verkaufspreis (oder berechne ihn falls nicht vorhanden)
+        let materialPrice = materialData.sellingPrice;
+        if (!materialPrice) {
+          const netPrice = materialData.netPrice || materialData.price || 0;
+          const taxRate = materialData.taxRate || 19;
+          const markup = materialData.markup || 30;
+          const grossPrice = netPrice * (1 + taxRate / 100);
+          materialPrice = grossPrice * (1 + markup / 100);
+        }
+        
         materialCost = parseGermanNumber(materialMengeValue) * materialPrice;
-        console.log("💰 Material-Kosten:", materialCost);
+        console.log("💰 Material-Kosten:", materialCost, "€/kg");
       }
     }
     
@@ -63,9 +74,21 @@ async function calculateCostPreview() {
     if (hasMasterbatch) {
       const masterbatchSnapshot = await window.db.collection("masterbatches").where("name", "==", masterbatchValue).get();
       if (!masterbatchSnapshot.empty) {
-        const masterbatchPrice = masterbatchSnapshot.docs[0].data().price;
+        const masterbatchData = masterbatchSnapshot.docs[0].data();
+        
+        // Verwende Verkaufspreis (oder berechne ihn falls nicht vorhanden)
+        let masterbatchPrice = masterbatchData.sellingPrice;
+        if (!masterbatchPrice) {
+          const netPrice = masterbatchData.netPrice || masterbatchData.price || 0;
+          const taxRate = masterbatchData.taxRate || 19;
+          const markup = masterbatchData.markup || 30;
+          const grossPrice = netPrice * (1 + taxRate / 100);
+          masterbatchPrice = grossPrice * (1 + markup / 100);
+        }
+        
+        // Masterbatch wird in Gramm eingegeben, Preis ist pro Gramm
         masterbatchCost = parseGermanNumber(masterbatchMengeValue) * masterbatchPrice;
-        console.log("💰 Masterbatch-Kosten:", masterbatchCost);
+        console.log("💰 Masterbatch-Kosten:", masterbatchCost, "€/g");
       }
     }
     

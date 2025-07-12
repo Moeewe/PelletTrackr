@@ -14,67 +14,141 @@ async function loadUsersForManagement() {
   try {
     console.log("🔄 Lade Benutzer für Verwaltung...");
     
-    // Alle Einträge laden, um Benutzer zu extrahieren
-    const snapshot = await window.db.collection("entries").get();
-    
-    // Benutzerinformationen aus users-Sammlung laden
+    // 1. Benutzerinformationen aus users-Sammlung laden (Primärquelle)
     const usersSnapshot = await window.db.collection("users").get();
     const usersData = new Map();
     
     usersSnapshot.forEach(doc => {
       const userData = doc.data();
-      usersData.set(userData.kennung, userData);
+      usersData.set(userData.kennung, {
+        docId: doc.id,
+        ...userData
+      });
     });
     
-    const userMap = new Map();
+    // 2. Alle Einträge laden, um Statistiken zu berechnen
+    const entriesSnapshot = await window.db.collection("entries").get();
+    const entriesData = new Map();
     
-    snapshot.forEach(doc => {
+    entriesSnapshot.forEach(doc => {
       const entry = doc.data();
-      const userKey = `${entry.name}_${entry.kennung}`;
-      
-      if (!userMap.has(userKey)) {
-        const userData = usersData.get(entry.kennung) || {};
-        userMap.set(userKey, {
-          name: entry.name,
-          kennung: entry.kennung,
-          email: userData.email, // E-Mail aus users-Sammlung
-          entries: [],
-          totalCost: 0,
-          paidAmount: 0,
-          unpaidAmount: 0,
-          firstEntry: entry.timestamp ? entry.timestamp.toDate() : new Date(),
-          lastEntry: entry.timestamp ? entry.timestamp.toDate() : new Date()
-        });
+      if (!entriesData.has(entry.kennung)) {
+        entriesData.set(entry.kennung, []);
       }
-      
-      const user = userMap.get(userKey);
-      user.entries.push({
+      entriesData.get(entry.kennung).push({
         id: doc.id,
         ...entry
       });
+    });
+    
+    // 3. Benutzer-Daten zusammenführen
+    const userMap = new Map();
+    
+    // Alle registrierten Benutzer aus users-Collection
+    usersData.forEach((userData, kennung) => {
+      const entries = entriesData.get(kennung) || [];
       
-      user.totalCost += entry.totalCost || 0;
-      if (entry.paid || entry.isPaid) {
-        user.paidAmount += entry.totalCost || 0;
-      } else {
-        user.unpaidAmount += entry.totalCost || 0;
+      // Statistiken berechnen
+      let totalCost = 0;
+      let paidAmount = 0;
+      let unpaidAmount = 0;
+      let firstEntry = null;
+      let lastEntry = null;
+      
+      entries.forEach(entry => {
+        totalCost += entry.totalCost || 0;
+        if (entry.paid || entry.isPaid) {
+          paidAmount += entry.totalCost || 0;
+        } else {
+          unpaidAmount += entry.totalCost || 0;
+        }
+        
+        const entryDate = entry.timestamp ? entry.timestamp.toDate() : new Date();
+        if (!firstEntry || entryDate < firstEntry) firstEntry = entryDate;
+        if (!lastEntry || entryDate > lastEntry) lastEntry = entryDate;
+      });
+      
+      userMap.set(kennung, {
+        docId: userData.docId,
+        name: userData.name,
+        kennung: userData.kennung,
+        email: userData.email || `${userData.kennung}@fh-muenster.de`,
+        isAdmin: userData.isAdmin || false,
+        createdAt: userData.createdAt,
+        lastLogin: userData.lastLogin,
+        entries: entries,
+        totalCost: totalCost,
+        paidAmount: paidAmount,
+        unpaidAmount: unpaidAmount,
+        firstEntry: firstEntry,
+        lastEntry: lastEntry
+      });
+    });
+    
+    // 4. Benutzer mit Einträgen aber ohne users-Eintrag hinzufügen (Legacy-Daten)
+    entriesData.forEach((entries, kennung) => {
+      if (!userMap.has(kennung)) {
+        console.log(`⚠️ Legacy-User ohne users-Eintrag gefunden: ${kennung}`);
+        
+        // Ersten Eintrag für Name verwenden
+        const firstEntry = entries[0];
+        if (firstEntry) {
+          let totalCost = 0;
+          let paidAmount = 0;
+          let unpaidAmount = 0;
+          let firstEntryDate = null;
+          let lastEntryDate = null;
+          
+          entries.forEach(entry => {
+            totalCost += entry.totalCost || 0;
+            if (entry.paid || entry.isPaid) {
+              paidAmount += entry.totalCost || 0;
+            } else {
+              unpaidAmount += entry.totalCost || 0;
+            }
+            
+            const entryDate = entry.timestamp ? entry.timestamp.toDate() : new Date();
+            if (!firstEntryDate || entryDate < firstEntryDate) firstEntryDate = entryDate;
+            if (!lastEntryDate || entryDate > lastEntryDate) lastEntryDate = entryDate;
+          });
+          
+          userMap.set(kennung, {
+            docId: null, // Kein users-Dokument
+            name: firstEntry.name,
+            kennung: kennung,
+            email: `${kennung}@fh-muenster.de`,
+            isAdmin: false,
+            createdAt: firstEntryDate,
+            lastLogin: lastEntryDate,
+            entries: entries,
+            totalCost: totalCost,
+            paidAmount: paidAmount,
+            unpaidAmount: unpaidAmount,
+            firstEntry: firstEntryDate,
+            lastEntry: lastEntryDate,
+            isLegacy: true
+          });
+        }
       }
-      
-      // Datum-Updates
-      const entryDate = entry.timestamp ? entry.timestamp.toDate() : new Date();
-      if (entryDate < user.firstEntry) user.firstEntry = entryDate;
-      if (entryDate > user.lastEntry) user.lastEntry = entryDate;
     });
     
     const users = Array.from(userMap.values());
     
+    // Nach letztem Login sortieren (neueste zuerst)
+    users.sort((a, b) => {
+      const aDate = a.lastLogin || a.lastEntry || a.createdAt || new Date(0);
+      const bDate = b.lastLogin || b.lastEntry || b.createdAt || new Date(0);
+      return bDate - aDate;
+    });
+    
     // Global speichern für Suche und Sortierung
     window.allUsers = users;
     
+    console.log(`✅ ${users.length} Benutzer geladen`);
     renderUsersTable(users);
     
   } catch (error) {
-    console.error("Fehler beim Laden der Benutzer:", error);
+    console.error("❌ Fehler beim Laden der Benutzer:", error);
     document.getElementById("usersTable").innerHTML = '<p>Fehler beim Laden der Benutzer.</p>';
   }
 }
@@ -98,12 +172,13 @@ function renderUsersTable(users) {
               <th onclick="sortUsersBy('name')">Name</th>
               <th onclick="sortUsersBy('kennung')">FH-Kennung</th>
               <th onclick="sortUsersBy('email')">E-Mail</th>
+              <th onclick="sortUsersBy('isAdmin')">Admin</th>
+              <th onclick="sortUsersBy('lastLogin')">Letzter Login</th>
               <th onclick="sortUsersBy('entries')">Drucke</th>
               <th onclick="sortUsersBy('totalCost')">Gesamtkosten</th>
               <th onclick="sortUsersBy('paidAmount')">Bezahlt</th>
               <th onclick="sortUsersBy('unpaidAmount')">Offen</th>
               <th onclick="sortUsersBy('status')">Status</th>
-              <th onclick="sortUsersBy('lastEntry')">Letzter Druck</th>
               <th>Aktionen</th>
             </tr>
           </thead>
@@ -111,26 +186,44 @@ function renderUsersTable(users) {
   `;
   
   users.forEach(user => {
-    const lastEntryDate = user.lastEntry.toLocaleDateString('de-DE');
+    const lastLoginDate = user.lastLogin ? 
+      user.lastLogin.toLocaleDateString('de-DE', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit' 
+      }) : 
+      (user.lastEntry ? user.lastEntry.toLocaleDateString('de-DE') : 'Nie');
+    
     const email = user.email || `${user.kennung}@fh-muenster.de`;
+    
+    // Admin Badge
+    const adminBadge = user.isAdmin ? 
+      '<span class="entry-status-badge status-admin">ADMIN</span>' : 
+      '<span class="entry-status-badge status-user">USER</span>';
     
     // Status Badge für Desktop-Tabelle
     const statusBadge = user.unpaidAmount > 0 ? 
       '<span class="entry-status-badge status-unpaid">OFFEN</span>' : 
       '<span class="entry-status-badge status-paid">BEZAHLT</span>';
     
+    // Legacy-Indikator
+    const legacyIndicator = user.isLegacy ? ' <small>(Legacy)</small>' : '';
+    
     // Tabellen-Zeile für Desktop
     containerHtml += `
       <tr>
-        <td><span class="cell-value">${user.name}</span></td>
+        <td><span class="cell-value">${user.name}${legacyIndicator}</span></td>
         <td><span class="cell-value">${user.kennung}</span></td>
         <td><span class="cell-value">${email}</span></td>
+        <td>${adminBadge}</td>
+        <td><span class="cell-value">${lastLoginDate}</span></td>
         <td><span class="cell-value">${user.entries.length}</span></td>
         <td><span class="cell-value"><strong>${window.formatCurrency(user.totalCost)}</strong></span></td>
         <td><span class="cell-value">${window.formatCurrency(user.paidAmount)}</span></td>
         <td><span class="cell-value">${window.formatCurrency(user.unpaidAmount)}</span></td>
         <td>${statusBadge}</td>
-        <td><span class="cell-value">${lastEntryDate}</span></td>
         <td class="actions">
           <div class="entry-actions">
             ${ButtonFactory.editUser(user.kennung)}
@@ -154,19 +247,39 @@ function renderUsersTable(users) {
 
   // Card-Struktur für Mobile
   users.forEach(user => {
-    const lastEntryDate = user.lastEntry.toLocaleDateString('de-DE');
+    const lastLoginDate = user.lastLogin ? 
+      user.lastLogin.toLocaleDateString('de-DE', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit' 
+      }) : 
+      (user.lastEntry ? user.lastEntry.toLocaleDateString('de-DE') : 'Nie');
+    
     const email = user.email || `${user.kennung}@fh-muenster.de`;
     
     // Status Badge basierend auf offenen Beträgen
     const statusBadgeClass = user.unpaidAmount > 0 ? 'status-unpaid' : 'status-paid';
     const statusBadgeText = user.unpaidAmount > 0 ? 'OFFEN' : 'BEZAHLT';
     
+    // Admin Badge für Mobile
+    const adminBadge = user.isAdmin ? 
+      '<span class="entry-status-badge status-admin">ADMIN</span>' : 
+      '<span class="entry-status-badge status-user">USER</span>';
+    
+    // Legacy-Indikator
+    const legacyIndicator = user.isLegacy ? ' <small>(Legacy)</small>' : '';
+    
     containerHtml += `
       <div class="entry-card">
         <!-- Card Header mit User-Name und Status -->
         <div class="entry-card-header">
-          <h3 class="entry-job-title">${user.name}</h3>
-          <span class="entry-status-badge ${statusBadgeClass}">${statusBadgeText}</span>
+          <h3 class="entry-job-title">${user.name}${legacyIndicator}</h3>
+          <div class="entry-status-badges">
+            ${adminBadge}
+            <span class="entry-status-badge ${statusBadgeClass}">${statusBadgeText}</span>
+          </div>
         </div>
         
         <!-- Card Body mit Detail-Zeilen -->
@@ -179,6 +292,11 @@ function renderUsersTable(users) {
           <div class="entry-detail-row">
             <span class="entry-detail-label">E-Mail</span>
             <span class="entry-detail-value">${email}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Letzter Login</span>
+            <span class="entry-detail-value">${lastLoginDate}</span>
           </div>
           
           <div class="entry-detail-row">

@@ -287,7 +287,9 @@ async function loadAssetStats() {
         
     } catch (error) {
         console.error('❌ Error loading asset statistics:', error);
-        showToast('Fehler beim Laden der Asset-Statistiken', 'error');
+        if (window.toast) {
+            window.toast.error('Fehler beim Laden der Asset-Statistiken');
+        }
     }
 }
 
@@ -342,7 +344,9 @@ async function loadUserManagementStats() {
         
     } catch (error) {
         console.error('❌ Error loading user management statistics:', error);
-        showToast('Fehler beim Laden der Nutzer-Statistiken', 'error');
+        if (window.toast) {
+            window.toast.error('Fehler beim Laden der Nutzer-Statistiken');
+        }
     }
 }
 
@@ -366,7 +370,9 @@ async function loadUsersForManagement() {
         
     } catch (error) {
         console.error('❌ Error loading users for management:', error);
-        showToast('Fehler beim Laden der Nutzer', 'error');
+        if (window.toast) {
+            window.toast.error('Fehler beim Laden der Nutzer');
+        }
     }
 }
 
@@ -379,3 +385,13 @@ function updateElementText(elementId, value) {
         element.textContent = value || '0';
     }
 }
+
+// ==================== GLOBAL EXPORTS ====================
+// Export functions to window for global access
+window.loadAssetStats = loadAssetStats;
+window.loadUserManagementStats = loadUserManagementStats;
+window.loadUserStats = loadUserStats;
+window.loadUserEntries = loadUserEntries;
+window.loadAdminStats = loadAdminStats;
+window.loadAllEntries = loadAllEntries;
+window.loadUsersForManagement = loadUsersForManagement;

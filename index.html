@@ -223,50 +223,54 @@
                 <h2 class="section-title">Deine Services</h2>
                 <div class="stats-grid">
                     <!-- Drucker Status -->
-                    <div class="stat-card">
-                        <div class="stat-number" id="totalPrintersCount">0</div>
+                    <div class="stat-card service-card clickable" onclick="showPrinterDetails()">
+                        <div class="service-icon-container">
+                            <div class="service-icon printer-icon">3</div>
+                        </div>
                         <div class="stat-label">Drucker</div>
-                        <div class="status-indicators">
-                            <div class="status-indicator">
-                                <span class="status-dot status-available"></span>
-                                <span class="status-count">1</span>
-                                <span class="status-label">Verfügbar</span>
+                        <div class="service-status-indicators">
+                            <div class="service-status-item">
+                                <span class="service-status-dot status-available" id="availablePrinters">3</span>
+                                <span class="service-status-label">Verfügbar</span>
                             </div>
-                            <div class="status-indicator">
-                                <span class="status-dot status-printing"></span>
-                                <span class="status-count">0</span>
-                                <span class="status-label">In Betrieb</span>
+                            <div class="service-status-item">
+                                <span class="service-status-dot status-printing" id="printingPrinters">0</span>
+                                <span class="service-status-label">In Betrieb</span>
                             </div>
-                            <div class="status-indicator">
-                                <span class="status-dot status-maintenance"></span>
-                                <span class="status-count">0</span>
-                                <span class="status-label">Wartung</span>
+                            <div class="service-status-item">
+                                <span class="service-status-dot status-maintenance" id="maintenancePrinters">0</span>
+                                <span class="service-status-label">Wartung</span>
                             </div>
-                            <div class="status-indicator">
-                                <span class="status-dot status-broken"></span>
-                                <span class="status-count">0</span>
-                                <span class="status-label">Defekt</span>
+                            <div class="service-status-item">
+                                <span class="service-status-dot status-broken" id="brokenPrinters">0</span>
+                                <span class="service-status-label">Defekt</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Termin buchen -->
-                    <div class="stat-card clickable" onclick="showUserReservationForm()">
-                        <div class="stat-number">T</div>
+                    <div class="stat-card service-card clickable" onclick="showUserReservationForm()">
+                        <div class="service-icon-container">
+                            <div class="service-icon termine-icon">📅</div>
+                        </div>
                         <div class="stat-label">Termine</div>
                         <div class="stat-description">Drucker reservieren</div>
                     </div>
 
                     <!-- Equipment ausleihen -->
-                    <div class="stat-card clickable" onclick="showUserEquipmentRequest()">
-                        <div class="stat-number">E</div>
+                    <div class="stat-card service-card clickable" onclick="showUserEquipmentRequest()">
+                        <div class="service-icon-container">
+                            <div class="service-icon leihe-icon">📦</div>
+                        </div>
                         <div class="stat-label">Leihe</div>
                         <div class="stat-description">Equipment anfragen</div>
                     </div>
 
                     <!-- Problem melden -->
-                    <div class="stat-card clickable" onclick="showProblemReportForm()">
-                        <div class="stat-number">!</div>
+                    <div class="stat-card service-card clickable" onclick="showProblemReportForm()">
+                        <div class="service-icon-container">
+                            <div class="service-icon problem-icon">⚠️</div>
+                        </div>
                         <div class="stat-label">Problem</div>
                         <div class="stat-description">Defekte melden</div>
                     </div>
@@ -315,6 +319,19 @@
 
             <!-- Admin Controls -->
             <div class="admin-controls">
+                <!-- Material Management - Mobile Priority -->
+                <div class="control-section mobile-priority">
+                    <h3 class="control-title">Material-Verwaltung</h3>
+                    <div class="control-buttons">
+                        <button class="btn btn-primary material-btn" onclick="showMaterialManager()">
+                            Materialien verwalten
+                        </button>
+                        <button class="btn btn-primary material-btn" onclick="showMasterbatchManager()">
+                            Masterbatches verwalten
+                        </button>
+                    </div>
+                </div>
+                
                 <div class="control-section">
                     <h3 class="control-title">Verwaltungsbereiche</h3>
                     <div class="control-buttons">
@@ -347,18 +364,6 @@
                         </button>
                         <button class="btn btn-secondary" onclick="showEquipmentRequests()">
                             Ausleih-Anfragen
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="control-section">
-                    <h3 class="control-title">Material-Verwaltung</h3>
-                    <div class="control-buttons">
-                        <button class="btn btn-secondary" onclick="showMaterialManager()">
-                            Materialien verwalten
-                        </button>
-                        <button class="btn btn-secondary" onclick="showMasterbatchManager()">
-                            Masterbatches verwalten
                         </button>
                     </div>
                 </div>
