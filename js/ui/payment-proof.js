@@ -123,8 +123,13 @@ async function showPaymentProof(entryId) {
   }
 }
 
+// ==================== MODAL CONTROL ====================
+
 function closePaymentProofModal() {
-  document.getElementById('paymentProofModal').classList.remove('active');
+  const modal = document.getElementById('paymentProofModal');
+  if (modal) {
+    modal.classList.remove('active');
+  }
   window.currentProofEntry = null;
 }
 
@@ -225,7 +230,14 @@ document.addEventListener('click', function(event) {
   }
 });
 
-// ==================== PAYMENT PROOF MODULE ====================
+// ==================== GLOBAL EXPORTS ====================
+// Payment Proof-Funktionen global verfügbar machen
+window.showPaymentProof = showPaymentProof;
+window.closePaymentProofModal = closePaymentProofModal;
+window.printPaymentProof = printPaymentProof;
+window.emailPaymentProof = emailPaymentProof;
 
-// Alle Funktionen sind bereits global verfügbar
+// ==================== PAYMENT PROOF MODULE ====================
+// Payment Proof System für Zahlungsnachweise
+
 console.log("💳 Payment Proof Module geladen");

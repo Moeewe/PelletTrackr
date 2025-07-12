@@ -138,13 +138,12 @@ async function viewEntryDetails(entryId) {
               </div>` : ''
             }
           </div>
-          <div class="card-footer">
-            <div class="button-group">
-              ${isPaid ? ButtonFactory.showNachweis(entryId, true) : ''}
-              ${ButtonFactory.closeModal()}
-            </div>
-          </div>
         </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-nachweis" ${!isPaid ? 'disabled' : ''} ${isPaid ? `onclick="showPaymentProof('${entry.id}')"` : ''}>Nachweis</button>
+        <button class="btn btn-edit" onclick="editUserEntry('${entry.id}')">Bearbeiten</button>
+        <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
       </div>
     `;
     

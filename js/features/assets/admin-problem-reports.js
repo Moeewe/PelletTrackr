@@ -354,22 +354,29 @@ function renderEquipmentRequests(statusFilter = 'all') {
                 </div>
             </div>
             <div class="request-reason"><strong>Grund:</strong> ${request.reason}</div>
+            
             ${request.status === 'pending' ? `
                 <div class="request-actions">
                     <button class="btn btn-success" onclick="updateEquipmentRequestStatus('${request.id}', 'approved')">Genehmigen</button>
                     <button class="btn btn-danger" onclick="updateEquipmentRequestStatus('${request.id}', 'rejected')">Ablehnen</button>
+                    <button class="btn btn-delete" onclick="deleteEquipmentRequest('${request.id}')">Löschen</button>
                 </div>
             ` : request.status === 'approved' ? `
                 <div class="request-actions">
                     <button class="btn btn-primary" onclick="markEquipmentAsGiven('${request.id}')">Als ausgegeben markieren</button>
                     <button class="btn btn-secondary" onclick="updateEquipmentRequestStatus('${request.id}', 'rejected')">Doch ablehnen</button>
+                    <button class="btn btn-delete" onclick="deleteEquipmentRequest('${request.id}')">Löschen</button>
                 </div>
             ` : request.status === 'active' ? `
                 <div class="request-actions">
                     <button class="btn btn-success" onclick="markEquipmentAsReturned('${request.id}')">Als zurückgegeben markieren</button>
+                    <button class="btn btn-delete" onclick="deleteEquipmentRequest('${request.id}')">Löschen</button>
                 </div>
             ` : `
-                <div class="request-status">Status: ${getRequestStatusText(request.status)}</div>
+                <div class="request-actions">
+                    <div class="request-status">Status: ${getRequestStatusText(request.status)}</div>
+                    <button class="btn btn-delete" onclick="deleteEquipmentRequest('${request.id}')">Löschen</button>
+                </div>
             `}
         </div>
     `).join('');
@@ -472,3 +479,37 @@ async function markEquipmentAsReturned(requestId) {
         showToast('Fehler beim Markieren als zurückgegeben', 'error');
     }
 } 
+
+/**
+ * Delete equipment request
+ */
+async function deleteEquipmentRequest(requestId) {
+    if (!confirm('Möchten Sie diese Ausleih-Anfrage wirklich löschen?')) {
+        return;
+    }
+
+    try {
+        await window.db.collection('equipmentRequests').doc(requestId).delete();
+        showToast('Ausleih-Anfrage erfolgreich gelöscht', 'success');
+        loadEquipmentRequests();
+    } catch (error) {
+        console.error('Error deleting equipment request:', error);
+        showToast('Fehler beim Löschen', 'error');
+    }
+} 
+
+// ==================== GLOBAL EXPORTS ====================
+// Admin Problem Reports-Funktionen global verfügbar machen
+window.showProblemReports = showProblemReports;
+window.closeProblemReports = closeProblemReports;
+window.loadProblemReports = loadProblemReports;
+window.updateProblemReportStatus = updateProblemReportStatus;
+window.showEquipmentRequests = showEquipmentRequests;
+window.closeEquipmentRequests = closeEquipmentRequests;
+window.loadEquipmentRequests = loadEquipmentRequests;
+window.updateEquipmentRequestStatus = updateEquipmentRequestStatus;
+window.markEquipmentAsGiven = markEquipmentAsGiven;
+window.markEquipmentAsReturned = markEquipmentAsReturned;
+window.deleteEquipmentRequest = deleteEquipmentRequest;
+
+console.log("🚨 Admin Problem Reports Module geladen"); 

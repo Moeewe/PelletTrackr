@@ -45,11 +45,10 @@ function renderUserEntries(entries) {
     const jobNotes = entry.jobNotes || "";
     const truncatedNotes = jobNotes.length > 30 ? jobNotes.substring(0, 30) + "..." : jobNotes;
     
-    // Aktionen für User (Zahlungsnachweis, Details und Bearbeiten gruppiert)
+    // Aktionen für User (Zahlungsnachweis und Bearbeiten)
     const actions = `
       <div class="actions">
         ${ButtonFactory.showNachweis(entry.id, isPaid)}
-        ${ButtonFactory.viewDetails(entry.id)}
         ${ButtonFactory.editEntry(entry.id, true)}
       </div>`;
     
@@ -219,7 +218,6 @@ function renderAdminEntries(entries) {
           `${ButtonFactory.undoPayment(entry.id)}
            ${ButtonFactory.showNachweis(entry.id, true)}`
         }
-        ${ButtonFactory.viewDetails(entry.id)}
         ${ButtonFactory.editEntry(entry.id)}
         ${ButtonFactory.deleteEntry(entry.id)}
       </div>

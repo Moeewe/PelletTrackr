@@ -1195,6 +1195,7 @@
     display: flex;
     border-bottom: 2px solid #000000;
     margin-bottom: 20px;
+    flex-wrap: wrap;
 }
 
 .tab-btn {
@@ -1209,6 +1210,11 @@
     text-transform: none;
     letter-spacing: 0.5px;
     border-radius: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 120px;
+    justify-content: center;
 }
 
 .tab-btn.active {
@@ -1222,6 +1228,34 @@
 
 .tab-btn.active:hover {
     background: #000000;
+}
+
+.tab-btn-add {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.tab-btn-add:hover {
+    background: #0056b3;
+}
+
+.tab-btn-manage {
+    background: #6c757d;
+    color: white;
+    border-color: #6c757d;
+}
+
+.tab-btn-manage:hover {
+    background: #545b62;
+}
+
+.tab-icon {
+    font-size: 16px;
+}
+
+.tab-name {
+    font-weight: 600;
 }
 
 .tab-counter {
@@ -1260,79 +1294,268 @@
     color: #000000;
 }
 
-.equipment-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 15px;
-}
-
+/* Equipment Items */
 .equipment-item {
     background: white;
     border: 2px solid #000000;
     border-radius: 0;
-    padding: 15px;
-    box-shadow: none;
+    padding: 20px;
+    margin-bottom: 16px;
+    transition: all 0.2s ease;
+}
+
+.equipment-item:hover {
+    box-shadow: 4px 4px 0 #000000;
+}
+
+.equipment-item.requires-deposit {
+    border-left: 6px solid #ffc107;
 }
 
 .equipment-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
+    align-items: flex-start;
+    margin-bottom: 12px;
 }
 
 .equipment-name {
-    font-weight: bold;
-    color: var(--text-dark);
+    font-weight: 700;
+    font-size: 18px;
+    color: #000000;
+}
+
+.equipment-status-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .equipment-status {
-    padding: 3px 8px;
-    border: 2px solid #000000;
+    padding: 6px 12px;
     border-radius: 0;
-    font-size: 0.8em;
-    font-weight: bold;
-    text-transform: none;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 2px solid #000000;
 }
 
 .equipment-status.available {
-    background: #4CAF50;
+    background: #28a745;
     color: white;
 }
 
 .equipment-status.borrowed {
-    background: #FFEB00;
+    background: #ffc107;
     color: #000000;
 }
 
 .equipment-status.maintenance {
-    background: #FF5722;
+    background: #dc3545;
+    color: white;
+}
+
+.equipment-deposit {
+    padding: 4px 8px;
+    border-radius: 0;
+    font-weight: 600;
+    font-size: 12px;
+    border: 2px solid #000000;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.equipment-deposit.paid {
+    background: #28a745;
+    color: white;
+}
+
+.equipment-deposit.unpaid {
+    background: #dc3545;
     color: white;
 }
 
 .equipment-info {
-    font-size: 0.9em;
-    color: var(--text-secondary);
-    margin-bottom: 10px;
+    color: #666;
+    margin-bottom: 12px;
+    line-height: 1.4;
 }
 
 .equipment-current-user {
-    font-size: 0.85em;
-    padding: 8px;
-    background: var(--background-light);
-    border-radius: 4px;
-    margin-bottom: 10px;
+    background: #f8f9fa;
+    padding: 12px;
+    border-left: 4px solid #000000;
+    margin-bottom: 12px;
+    font-size: 14px;
+}
+
+.equipment-deposit-status {
+    margin-top: 8px;
+    font-weight: 600;
+}
+
+.deposit-paid {
+    color: #28a745;
+}
+
+.deposit-unpaid {
+    color: #dc3545;
 }
 
 .equipment-actions {
     display: flex;
     gap: 8px;
+    flex-wrap: wrap;
 }
 
 .equipment-actions .btn {
+    font-size: 14px;
+    padding: 8px 16px;
+}
+
+/* Category Management */
+.category-list {
+    margin-bottom: 20px;
+}
+
+.category-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    border: 2px solid #000000;
+    margin-bottom: 8px;
+    background: white;
+}
+
+.category-icon {
+    font-size: 20px;
+    margin-right: 12px;
+}
+
+.category-name {
     flex: 1;
-    padding: 6px 10px;
-    font-size: 0.8em;
+    font-weight: 600;
+    margin-right: 12px;
+}
+
+.category-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.category-actions .btn {
+    font-size: 12px;
+    padding: 6px 12px;
+}
+
+/* Form Enhancements */
+.form-checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.form-checkbox-input {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #000000;
+    border-radius: 0;
+    cursor: pointer;
+}
+
+.form-checkbox-input:checked {
+    background: #000000;
+    border-color: #000000;
+}
+
+.form-checkbox-label {
+    font-weight: 600;
+    color: #000000;
+    cursor: pointer;
+}
+
+/* Delete Button Styling */
+.btn-delete {
+    background: #dc3545;
+    color: white;
+    border: 2px solid #dc3545;
+    padding: 8px 16px;
+    font-weight: 600;
+    border-radius: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-delete:hover {
+    background: #c82333;
+    border-color: #c82333;
+    color: white;
+}
+
+.btn-warning {
+    background: #ffc107;
+    color: #000000;
+    border: 2px solid #ffc107;
+    padding: 8px 16px;
+    font-weight: 600;
+    border-radius: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-warning:hover {
+    background: #e0a800;
+    border-color: #e0a800;
+    color: #000000;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .category-tabs {
+        flex-direction: column;
+    }
+    
+    .tab-btn {
+        width: 100%;
+        margin-bottom: 2px;
+    }
+    
+    .equipment-header {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .equipment-status-row {
+        justify-content: flex-start;
+    }
+    
+    .equipment-actions {
+        flex-direction: column;
+    }
+    
+    .equipment-actions .btn {
+        width: 100%;
+    }
+    
+    .category-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .category-actions {
+        width: 100%;
+        justify-content: center;
+    }
 }
 
 /* Material Orders */
