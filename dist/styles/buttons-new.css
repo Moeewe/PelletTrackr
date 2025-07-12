@@ -29,7 +29,7 @@
 }
 
 .btn:hover {
-    /* Remove hover effects for cleaner design */
+  background: #f8f8f8;
 }
 
 .btn:disabled {
@@ -41,10 +41,8 @@
 }
 
 .btn:disabled:hover {
-    background: #e5e5e5;
-    color: #999;
-    cursor: not-allowed;
-    border-color: #ccc;
+  background: #f5f5f5;
+  color: #999999;
 }
 
 /* ==================== BUTTON VARIANTS ==================== */
@@ -57,7 +55,8 @@
 }
 
 .btn-primary:hover {
-    /* Remove hover effects */
+  background: #333333;
+  border-color: #333333;
 }
 
 /* SECONDARY - Weiß mit schwarzer Outline (Sekundäre Aktionen: Schließen, Abbrechen) */
@@ -68,7 +67,7 @@
 }
 
 .btn-secondary:hover {
-    /* Remove hover effects */
+  background: #f8f8f8;
 }
 
 /* TERTIARY - Weiß mit schwarzer Outline (Tertiäre Aktionen: Details) */
@@ -79,18 +78,19 @@
 }
 
 .btn-tertiary:hover {
-    /* Remove hover effects */
+  background: #f8f8f8;
 }
 
-/* SUCCESS - Harmonisches Grün (Erfolg: Nachweis anzeigen, Bezahlt) */
+/* SUCCESS - Grün (Erfolg: Nachweis anzeigen, Bezahlt) */
 .btn-success {
-  background: #4CAF50; /* Harmonisches Grün, das mit Gelb #FFEB00 harmoniert */
+  background: #28a745;
   color: white;
-  border: 2px solid #4CAF50;
+  border: 2px solid #28a745;
 }
 
 .btn-success:hover {
-    /* Remove hover effects */
+  background: #218838;
+  border-color: #218838;
 }
 
 /* WARNING - Gelb (Warnungen: Mahnung) */
@@ -101,29 +101,19 @@
 }
 
 .btn-warning:hover {
-    /* Remove hover effects */
+  background: #e6d200;
 }
 
-/* DANGER - Harmonisches Rot (Gefährliche Aktionen: Löschen) */
+/* DANGER - Rot (Gefährliche Aktionen: Löschen) */
 .btn-danger {
-  background: #FF5722; /* Harmonisches Orange-Rot, das mit Gelb harmoniert */
+  background: #dc3545;
   color: white;
-  border: 2px solid #FF5722;
+  border: 2px solid #dc3545;
 }
 
 .btn-danger:hover {
-    /* Remove hover effects */
-}
-
-/* UNDO/RÜCKGÄNGIG - Neues Grau für Rückgängig-Aktionen */
-.btn-undo {
-  background: #757575; /* Harmonisches Grau für Rückgängig */
-  color: white;
-  border: 2px solid #757575;
-}
-
-.btn-undo:hover {
-    /* Remove hover effects */
+  background: #c82333;
+  border-color: #c82333;
 }
 
 /* NACHWEIS - Spezial Gelb für Nachweis-Buttons */
@@ -134,7 +124,7 @@
 }
 
 .btn-nachweis:hover {
-    /* Remove hover effects */
+  background: #e6d200;
 }
 
 .btn-nachweis:disabled {
@@ -184,39 +174,17 @@
 }
 
 /* Link-style Button */
-
-/* Desktop: btn-link als Button mit Outline */
 .btn-link {
-  background: white;
-  border: 2px solid #000000;
+  background: transparent;
+  border: none;
   color: #000000;
-  text-decoration: none;
-  padding: 12px 20px;
-  height: auto;
-  line-height: 1.3;
-  border-radius: 0;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  text-transform: none;
-}
-
-@media (max-width: 768px) {
-  .btn-link {
-    padding: 10px 12px;
-    font-size: 14px;
-  }
+  text-decoration: underline;
+  padding: 8px 16px;
 }
 
 .btn-link:hover {
-  background: #f8f8f8;
-  color: #000000;
-  border-color: #000000;
+  background: transparent;
+  color: #333333;
 }
 
 /* Edit Note Button */
@@ -242,7 +210,7 @@
 .button-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 12px;
   width: 100%;
 }
 
@@ -254,7 +222,7 @@
 .action-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
 }
 
@@ -266,20 +234,9 @@
 
 .entry-actions {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   justify-content: flex-start;
   flex-wrap: wrap;
-}
-
-@media screen and (max-width: 768px) {
-  .entry-actions {
-    flex-direction: column;
-    gap: 6px;
-  }
-  .entry-actions .btn {
-    width: 100%;
-    max-width: none;
-  }
 }
 
 /* ==================== RESPONSIVE DESIGN ==================== */
@@ -297,7 +254,7 @@
   
   .entry-actions {
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
   }
   
   .entry-actions .btn {
@@ -311,7 +268,7 @@
   }
   
   .button-group .btn {
-    min-height: 44px;
+    min-height: 48px;
   }
 }
 
@@ -338,66 +295,11 @@
   .action-group {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
   }
   
   .action-group .btn {
     width: 100%;
     min-width: 140px;
   }
-}
-
-/* Info Button Style */
-.btn-info {
-    background: #00BCD4;
-    color: white;
-    border-color: #00BCD4;
-}
-
-.btn-info:hover {
-    background: #0097A7;
-    border-color: #0097A7;
-}
-
-/* ==================== NOTIFICATION BADGES ==================== */
-.notification-badge {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    background: #FF5722;
-    color: white;
-    border-radius: 50%;
-    min-width: 20px;
-    height: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid white;
-    z-index: 1;
-}
-
-.notification-badge:empty {
-    display: none;
-}
-
-/* Button container needs relative positioning for badges */
-.btn {
-    position: relative;
-}
-
-/* Hide badge when count is 0 */
-.notification-badge[data-count="0"] {
-    display: none;
-}
-
-@media (max-width: 768px) {
-    .notification-badge {
-        top: -6px;
-        right: -6px;
-        min-width: 18px;
-        height: 18px;
-        font-size: 11px;
-    }
 }
