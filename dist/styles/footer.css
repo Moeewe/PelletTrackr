@@ -20,7 +20,6 @@
 .global-footer-links {
     display: inline-flex;
     justify-content: center;
-    align-items: center;
     gap: 32px;
     margin: 0;
     pointer-events: auto;
@@ -44,28 +43,6 @@
 }
 
 .global-footer-links a:hover {
-    color: #000;
-    text-decoration: underline;
-}
-
-/* Diagnostic Trigger Button */
-.diagnostic-trigger {
-    background: none;
-    border: none;
-    border-radius: 0;
-    color: #666;
-    text-decoration: none;
-    font-size: 12px;
-    font-weight: 400;
-    transition: color 0.2s ease;
-    padding: 4px 8px;
-    cursor: pointer;
-    pointer-events: auto;
-    position: relative;
-    z-index: 1;
-}
-
-.diagnostic-trigger:hover {
     color: #000;
     text-decoration: underline;
 }
@@ -108,11 +85,6 @@
     }
     
     .global-footer-links a {
-        font-size: 11px;
-        padding: 6px 8px;
-    }
-    
-    .diagnostic-trigger {
         font-size: 11px;
         padding: 6px 8px;
     }

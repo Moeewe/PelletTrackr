@@ -1,28 +1,11 @@
 // ==================== MODAL MODULE ====================
 // Modal-Verwaltung und UI-Komponenten
 
-// Modal anzeigen mit korrekter Struktur
+// Modal anzeigen
 function showModal(htmlContent) {
-  // Erst alle anderen Modals schließen
-  closeModal();
-  
   const modal = document.getElementById('modal');
-  
-  // Prüfen ob Content bereits modal-content Wrapper hat
-  if (htmlContent.includes('<div class="modal-content">')) {
-    modal.innerHTML = htmlContent;
-  } else {
-    // Content in modal-content Wrapper einbetten
-    modal.innerHTML = `<div class="modal-content">${htmlContent}</div>`;
-  }
-  
-  // Kurze Verzögerung für bessere Animation
-  setTimeout(() => {
-    modal.classList.add('active');
-  }, 10);
-  
-  // Prevent body scrolling when modal is open
-  document.body.style.overflow = 'hidden';
+  modal.innerHTML = htmlContent;
+  modal.classList.add('active');
 }
 
 // Modal mit Content anzeigen
@@ -35,37 +18,8 @@ function closeModal() {
   const modal = document.getElementById('modal');
   if (modal) {
     modal.classList.remove('active');
-    modal.innerHTML = '';
-    // Restore body scrolling
-    document.body.style.overflow = '';
   }
 }
-
-// ESC-Taste Support für Modals
-document.addEventListener('keydown', function(event) {
-  if (event.key === 'Escape') {
-    const activeModal = document.querySelector('.modal.active');
-    if (activeModal) {
-      if (activeModal.id === 'modal') {
-        closeModal();
-      } else if (activeModal.id === 'paymentProofModal') {
-        window.closePaymentProofModal();
-      }
-    }
-  }
-});
-
-// Click outside modal to close
-document.addEventListener('click', function(event) {
-  const activeModal = document.querySelector('.modal.active');
-  if (activeModal && event.target === activeModal) {
-    if (activeModal.id === 'modal') {
-      closeModal();
-    } else if (activeModal.id === 'paymentProofModal') {
-      window.closePaymentProofModal();
-    }
-  }
-});
 
 // ==================== ENTRY DETAILS & VIEWING ====================
 
@@ -73,11 +27,7 @@ async function viewEntryDetails(entryId) {
   try {
     const doc = await window.db.collection('entries').doc(entryId).get();
     if (!doc.exists) {
-      if (window.toast && typeof window.toast.error === 'function') {
-        window.toast.error('Eintrag nicht gefunden!');
-      } else {
-        alert('Eintrag nicht gefunden!');
-      }
+      alert('Eintrag nicht gefunden!');
       return;
     }
     
@@ -91,59 +41,56 @@ async function viewEntryDetails(entryId) {
     
     const modalHtml = `
       <div class="modal-header">
-        <h2>${jobName}</h2>
-        ${isPaid ? 
-          '<div class="status-badge paid">BEZAHLT</div>' :
-          '<div class="status-badge unpaid">OFFEN</div>'
-        }
+        <h2>Druck Details</h2>
         <button class="close-btn" onclick="closeModal()">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="card">
-          <div class="card-body">
-            <div class="detail-row">
-              <span class="detail-label">DATUM</span>
-              <span class="detail-value">${date}</span>
+        <div class="mobile-detail-layout">
+          <div class="detail-row">
+            <span class="detail-label">Datum:</span>
+            <span class="detail-value">${date}</span>
+          </div>
+          
+          <div class="detail-name">${entry.name}</div>
+          
+          <div class="detail-row">
+            <span class="detail-label">Material:</span>
+            <span class="detail-value">${entry.material}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">Menge:</span>
+            <span class="detail-value">${(entry.materialMenge || 0).toFixed(2)} kg</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">Masterbatch:</span>
+            <span class="detail-value">${entry.masterbatch}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">MB Menge:</span>
+            <span class="detail-value">${(entry.masterbatchMenge || 0).toFixed(2)} kg</span>
+          </div>
+          
+          <div class="detail-cost-status">
+            <div class="cost-section">
+              <span class="cost-label">Kosten:</span>
+              <span class="cost-value">${window.formatCurrency(entry.totalCost)}</span>
             </div>
-            
-            <div class="detail-row">
-              <span class="detail-label">MATERIAL</span>
-              <span class="detail-value">${entry.material}</span>
-            </div>
-            
-            <div class="detail-row">
-              <span class="detail-label">MENGE</span>
-              <span class="detail-value">${(entry.materialMenge || 0).toFixed(2)} kg</span>
-            </div>
-            
-            <div class="detail-row">
-              <span class="detail-label">MASTERBATCH</span>
-              <span class="detail-value">${entry.masterbatch}</span>
-            </div>
-            
-            <div class="detail-row">
-              <span class="detail-label">MB MENGE</span>
-              <span class="detail-value">${(entry.masterbatchMenge || 0).toFixed(2)} g</span>
-            </div>
-            
-            <div class="detail-row highlight-total">
-              <span class="detail-label">KOSTEN:</span>
-              <span class="detail-value">${window.formatCurrency(entry.totalCost)}</span>
-            </div>
-            
-            ${jobNotes && jobNotes !== "Keine Notizen" ? 
-              `<div class="detail-row notes-row">
-                <span class="detail-label">♦ NOTIZEN:</span>
-                <span class="detail-value">${jobNotes}</span>
-              </div>` : ''
-            }
+            <div class="status-badge ${isPaid ? 'status-paid' : 'status-unpaid'}">${status.toUpperCase()}</div>
+          </div>
+          
+          <div class="notes-section">
+            <div class="notes-header">◆ Notizen:</div>
+            <div class="notes-content">${jobNotes}</div>
           </div>
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-nachweis" ${!isPaid ? 'disabled' : ''} ${isPaid ? `onclick="showPaymentProof('${entry.id}')"` : ''}>Nachweis</button>
+        <button class="btn btn-details" onclick="closeModal()">Details</button>
         <button class="btn btn-edit" onclick="editUserEntry('${entry.id}')">Bearbeiten</button>
-        <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
       </div>
     `;
     
@@ -151,11 +98,7 @@ async function viewEntryDetails(entryId) {
     
   } catch (error) {
     console.error("Fehler beim Laden der Druck-Details:", error);
-    if (window.toast && typeof window.toast.error === 'function') {
-      window.toast.error("Fehler beim Laden der Details!");
-    } else {
-      alert("Fehler beim Laden der Details!");
-    }
+    alert("Fehler beim Laden der Details!");
   }
 }
 
@@ -165,11 +108,7 @@ async function editUserEntry(entryId) {
   try {
     const doc = await window.db.collection('entries').doc(entryId).get();
     if (!doc.exists) {
-      if (window.toast && typeof window.toast.error === 'function') {
-        window.toast.error('Druck nicht gefunden!');
-      } else {
-        alert('Druck nicht gefunden!');
-      }
+      alert('Druck nicht gefunden!');
       return;
     }
     
@@ -177,21 +116,13 @@ async function editUserEntry(entryId) {
     
     // Prüfen ob User berechtigt ist (nur eigene Drucke bearbeiten)
     if (entry.kennung !== window.currentUser.kennung) {
-      if (window.toast && typeof window.toast.warning === 'function') {
-        window.toast.warning('Du kannst nur deine eigenen Drucke bearbeiten!');
-      } else {
-        alert('Du kannst nur deine eigenen Drucke bearbeiten!');
-      }
+      alert('Du kannst nur deine eigenen Drucke bearbeiten!');
       return;
     }
     
     // Prüfen ob Eintrag bereits bezahlt wurde
     if (entry.paid || entry.isPaid) {
-      if (window.toast && typeof window.toast.warning === 'function') {
-        window.toast.warning('Bezahlte Einträge können nicht mehr bearbeitet werden!');
-      } else {
-        alert('Bezahlte Einträge können nicht mehr bearbeitet werden!');
-      }
+      alert('Bezahlte Einträge können nicht mehr bearbeitet werden!');
       return;
     }
     
@@ -200,35 +131,29 @@ async function editUserEntry(entryId) {
     
     const modalHtml = `
       <div class="modal-header">
-        <h2>${jobName}</h2>
+        <h2>Mein Eintrag Bearbeiten</h2>
         <button class="close-btn" onclick="closeModal()">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="card">
-          <div class="card-body">
-            <form id="editUserEntryForm">
-              <div class="form-group">
-                <label class="form-label">Job-Name</label>
-                <input type="text" id="editUserJobName" class="form-input" value="${jobName}" required>
-              </div>
-              
-              <div class="form-group">
-                <label class="form-label">Notizen (optional)</label>
-                <textarea id="editUserJobNotes" class="form-textarea" rows="4" placeholder="Optionale Notizen zu diesem Druck...">${jobNotes}</textarea>
-              </div>
-              
-              <div class="detail-row" style="margin-top: 24px; padding: 16px; background: #f8f9fa; border: 1px solid #dee2e6; color: #666; font-size: 14px; line-height: 1.5;">
-                <strong>Hinweis:</strong> Als Benutzer kannst du nur Job-Name und Notizen bearbeiten. Material-Mengen können nur von Admins geändert werden.
-              </div>
-            </form>
+        <form id="editUserEntryForm">
+          <div class="form-group">
+            <label class="form-label">Job-Name</label>
+            <input type="text" id="editUserJobName" class="form-input" value="${jobName}">
           </div>
-          <div class="card-footer">
-            <div class="button-group">
-              ${ButtonFactory.saveChanges(`saveUserEntryChanges('${entryId}')`)}
-              ${ButtonFactory.cancelModal()}
-            </div>
+          
+          <div class="form-group">
+            <label class="form-label">Notizen</label>
+            <textarea id="editUserJobNotes" class="form-textarea" rows="4" placeholder="Optionale Notizen zu diesem Druck...">${jobNotes}</textarea>
           </div>
-        </div>
+          
+          <p style="margin-top: 20px; padding: 16px; background: #f8f8f8; border: 1px solid #e0e0e0; color: #666; font-size: 14px;">
+            <strong>Hinweis:</strong> Als Benutzer kannst du nur Job-Name und Notizen bearbeiten. Material-Mengen können nur von Admins geändert werden.
+          </p>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+        <button class="btn btn-primary" onclick="saveUserEntryChanges('${entryId}')">Speichern</button>
       </div>
     `;
     
@@ -236,11 +161,7 @@ async function editUserEntry(entryId) {
     
   } catch (error) {
     console.error("Fehler beim Laden des Eintrags:", error);
-    if (window.toast && typeof window.toast.error === 'function') {
-      window.toast.error('Fehler beim Laden des Eintrags!');
-    } else {
-      alert('Fehler beim Laden des Eintrags!');
-    }
+    alert("Fehler beim Laden des Eintrags!");
   }
 }
 
@@ -249,11 +170,7 @@ async function saveUserEntryChanges(entryId) {
   const jobNotes = document.getElementById('editUserJobNotes').value.trim();
   
   if (!jobName) {
-    if (window.toast && typeof window.toast.warning === 'function') {
-      window.toast.warning('Job-Name darf nicht leer sein!');
-    } else {
-      alert('Job-Name darf nicht leer sein!');
-    }
+    alert('Job-Name darf nicht leer sein!');
     return;
   }
   
@@ -264,11 +181,7 @@ async function saveUserEntryChanges(entryId) {
       updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
     });
     
-    if (window.toast && typeof window.toast.success === 'function') {
-      window.toast.success('Eintrag erfolgreich aktualisiert!');
-    } else {
-      alert('Eintrag erfolgreich aktualisiert!');
-    }
+    alert('Eintrag erfolgreich aktualisiert!');
     closeModal();
     
     // User Dashboard aktualisieren
@@ -276,11 +189,7 @@ async function saveUserEntryChanges(entryId) {
     
   } catch (error) {
     console.error('Fehler beim Aktualisieren des Eintrags:', error);
-    if (window.toast && typeof window.toast.error === 'function') {
-      window.toast.error('Fehler beim Speichern: ' + error.message);
-    } else {
-      alert('Fehler beim Speichern: ' + error.message);
-    }
+    alert('Fehler beim Speichern: ' + error.message);
   }
 }
 
@@ -290,11 +199,7 @@ async function editEntry(entryId) {
   try {
     const doc = await window.db.collection('entries').doc(entryId).get();
     if (!doc.exists) {
-      if (window.toast && typeof window.toast.error === 'function') {
-        window.toast.error('Druck nicht gefunden!');
-      } else {
-        alert('Druck nicht gefunden!');
-      }
+      alert('Druck nicht gefunden!');
       return;
     }
     
@@ -304,47 +209,40 @@ async function editEntry(entryId) {
     
     const modalHtml = `
       <div class="modal-header">
-        <h2>${jobName} (Admin)</h2>
+        <h2>Eintrag Bearbeiten (Admin)</h2>
         <button class="close-btn" onclick="closeModal()">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="card">
-          <div class="card-body">
-            <form id="editEntryForm">
-              <div class="form-group">
-                <label class="form-label">Job-Name</label>
-                <input type="text" id="editJobName" class="form-input" value="${jobName}" required>
-              </div>
-              
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label">Material-Menge (kg)</label>
-                  <input type="number" id="editMaterialMenge" class="form-input" value="${(entry.materialMenge || 0).toFixed(2)}" step="0.01" min="0" required>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Masterbatch-Menge (g)</label>
-                  <input type="number" id="editMasterbatchMenge" class="form-input" value="${(entry.masterbatchMenge || 0).toFixed(2)}" step="0.01" min="0" required>
-                </div>
-              </div>
-              
-              <div class="form-group">
-                <label class="form-label">Notizen (optional)</label>
-                <textarea id="editJobNotes" class="form-textarea" rows="4" placeholder="Optionale Notizen zu diesem Druck...">${jobNotes}</textarea>
-              </div>
-              
-              <div class="detail-row highlight-yellow" style="margin-top: 24px;">
-                <span class="detail-label">Hinweis:</span>
-                <span class="detail-value">Als Admin kannst du alle Felder dieses Eintrags bearbeiten. Kosten werden automatisch neu berechnet.</span>
-              </div>
-            </form>
+        <form id="editEntryForm">
+          <div class="form-group">
+            <label class="form-label">Job-Name</label>
+            <input type="text" id="editJobName" class="form-input" value="${jobName}">
           </div>
-          <div class="card-footer">
-            <div class="button-group">
-              ${ButtonFactory.saveChanges(`saveEntryChanges('${entryId}')`)}
-              ${ButtonFactory.cancelModal()}
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Material-Menge (kg)</label>
+              <input type="number" id="editMaterialMenge" class="form-input" value="${(entry.materialMenge || 0).toFixed(2)}" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Masterbatch-Menge (kg)</label>
+              <input type="number" id="editMasterbatchMenge" class="form-input" value="${(entry.masterbatchMenge || 0).toFixed(2)}" step="0.01" min="0">
             </div>
           </div>
-        </div>
+          
+          <div class="form-group">
+            <label class="form-label">Notizen</label>
+            <textarea id="editJobNotes" class="form-textarea" rows="4" placeholder="Optionale Notizen zu diesem Druck...">${jobNotes}</textarea>
+          </div>
+          
+          <p style="margin-top: 20px; padding: 16px; background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; font-size: 14px;">
+            <strong>Admin-Berechtigung:</strong> Du kannst alle Felder dieses Eintrags bearbeiten. Kosten werden automatisch neu berechnet.
+          </p>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+        <button class="btn btn-primary" onclick="saveEntryChanges('${entryId}')">Speichern</button>
       </div>
     `;
     
@@ -352,11 +250,7 @@ async function editEntry(entryId) {
     
   } catch (error) {
     console.error("Fehler beim Laden des Eintrags:", error);
-    if (window.toast && typeof window.toast.error === 'function') {
-      window.toast.error('Fehler beim Laden des Eintrags!');
-    } else {
-      alert('Fehler beim Laden des Eintrags!');
-    }
+    alert("Fehler beim Laden des Eintrags!");
   }
 }
 
@@ -367,29 +261,17 @@ async function saveEntryChanges(entryId) {
   const jobNotes = document.getElementById('editJobNotes').value.trim();
   
   if (!jobName) {
-    if (window.toast && typeof window.toast.warning === 'function') {
-      window.toast.warning('Job-Name darf nicht leer sein!');
-    } else {
-      alert('Job-Name darf nicht leer sein!');
-    }
+    alert('Job-Name darf nicht leer sein!');
     return;
   }
   
   if (isNaN(materialMenge) || materialMenge < 0) {
-    if (window.toast && typeof window.toast.warning === 'function') {
-      window.toast.warning('Bitte gültige Material-Menge eingeben!');
-    } else {
-      alert('Bitte gültige Material-Menge eingeben!');
-    }
+    alert('Bitte gültige Material-Menge eingeben!');
     return;
   }
   
   if (isNaN(masterbatchMenge) || masterbatchMenge < 0) {
-    if (window.toast && typeof window.toast.warning === 'function') {
-      window.toast.warning('Bitte gültige Masterbatch-Menge eingeben!');
-    } else {
-      alert('Bitte gültige Masterbatch-Menge eingeben!');
-    }
+    alert('Bitte gültige Masterbatch-Menge eingeben!');
     return;
   }
   
@@ -410,18 +292,7 @@ async function saveEntryChanges(entryId) {
       
       if (!materialSnapshot.empty) {
         const materialData = materialSnapshot.docs[0].data();
-        
-        // Verwende Verkaufspreis (oder berechne ihn falls nicht vorhanden)
-        let materialPrice = materialData.sellingPrice;
-        if (!materialPrice) {
-          const netPrice = materialData.netPrice || materialData.price || 0;
-          const taxRate = materialData.taxRate || 19;
-          const markup = materialData.markup || 30;
-          const grossPrice = netPrice * (1 + taxRate / 100);
-          materialPrice = grossPrice * (1 + markup / 100);
-        }
-        
-        materialCost = materialMenge * materialPrice;
+        materialCost = materialMenge * (materialData.price || 0);
       }
     }
     
@@ -433,18 +304,7 @@ async function saveEntryChanges(entryId) {
       
       if (!masterbatchSnapshot.empty) {
         const masterbatchData = masterbatchSnapshot.docs[0].data();
-        
-        // Verwende Verkaufspreis (oder berechne ihn falls nicht vorhanden)
-        let masterbatchPrice = masterbatchData.sellingPrice;
-        if (!masterbatchPrice) {
-          const netPrice = masterbatchData.netPrice || masterbatchData.price || 0;
-          const taxRate = masterbatchData.taxRate || 19;
-          const markup = masterbatchData.markup || 30;
-          const grossPrice = netPrice * (1 + taxRate / 100);
-          masterbatchPrice = grossPrice * (1 + markup / 100);
-        }
-        
-        masterbatchCost = masterbatchMenge * masterbatchPrice;
+        masterbatchCost = masterbatchMenge * (masterbatchData.price || 0);
       }
     }
     
@@ -462,11 +322,7 @@ async function saveEntryChanges(entryId) {
       updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
     });
     
-    if (window.toast && typeof window.toast.success === 'function') {
-      window.toast.success('Eintrag erfolgreich aktualisiert!');
-    } else {
-      alert('Eintrag erfolgreich aktualisiert!');
-    }
+    alert('Eintrag erfolgreich aktualisiert!');
     closeModal();
     
     // Admin Dashboard aktualisieren
@@ -475,11 +331,7 @@ async function saveEntryChanges(entryId) {
     
   } catch (error) {
     console.error('Fehler beim Aktualisieren des Eintrags:', error);
-    if (window.toast && typeof window.toast.error === 'function') {
-      window.toast.error('Fehler beim Speichern: ' + error.message);
-    } else {
-      alert('Fehler beim Speichern: ' + error.message);
-    }
+    alert('Fehler beim Speichern: ' + error.message);
   }
 }
 
@@ -503,24 +355,9 @@ async function editNote(entryId, currentNote) {
     
   } catch (error) {
     console.error('Fehler beim Aktualisieren der Notiz:', error);
-    if (window.toast && typeof window.toast.error === 'function') {
-      window.toast.error('Fehler beim Speichern der Notiz: ' + error.message);
-    } else {
-      alert('Fehler beim Speichern der Notiz: ' + error.message);
-    }
+    alert('Fehler beim Speichern der Notiz: ' + error.message);
   }
 }
-
-// ==================== GLOBAL EXPORTS ====================
-// Modal-Funktionen global verfügbar machen
-window.showModal = showModal;
-window.showModalWithContent = showModalWithContent;
-window.closeModal = closeModal;
-window.showDetails = showDetails;
-window.editUserEntry = editUserEntry;
-window.editEntry = editEntry;
-window.saveEntryChanges = saveEntryChanges;
-window.editNote = editNote;
 
 // ==================== MODALS MODULE ====================
 // Modal-Verwaltung und Entry-Details/Bearbeitung

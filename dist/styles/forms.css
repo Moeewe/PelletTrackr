@@ -26,28 +26,22 @@
   text-align: center;
 }
 
-/* Entry Form Container - Sauberes weißes Design */
+/* Entry Form Container - Grauer Hintergrund */
 .entry-form,
 .form-section {
-  background: white;
-  border: 2px solid #000000;
-  border-radius: 0;
-  padding: 32px;
-  margin-bottom: 24px;
-  max-width: 100%;
-  width: 100%;
+  background: #f8f9fa;
+  border: none;
+  border-radius: 8px;
+  padding: 30px;
+  margin-bottom: 40px;
 }
 
 .form-section h2 {
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 600;
   color: #000000;
   margin-bottom: 24px;
-  text-align: center;
-      text-transform: none;
-  letter-spacing: 0.5px;
-  padding-bottom: 16px;
-  border-bottom: 2px solid #000000;
+  text-align: left;
 }
 
 /* Form Layout */
@@ -56,11 +50,6 @@
   grid-template-columns: 1fr 1fr;
   gap: 24px;
   margin-bottom: 24px;
-}
-
-/* Ensure sufficient width for dropdown content */
-.form-row .form-group {
-  min-width: 300px; /* Guarantee minimum width for dropdown text */
 }
 
 .form-group {
@@ -102,22 +91,10 @@
   background-position: right 12px center;
   background-size: 16px 16px;
   padding-right: 40px;
-  width: 100%;
-  min-width: 280px;
 }
 
 .form-select::-ms-expand {
   display: none;
-}
-
-/* Ensure dropdown options are visible and readable */
-.form-select option {
-  padding: 8px 12px;
-  white-space: normal;
-  word-wrap: break-word;
-  color: #000000;
-  background: white;
-  font-size: 16px;
 }
 
 .form-input:focus,
@@ -153,21 +130,22 @@
   margin-top: 4px;
 }
 
-/* Cost Preview - Einheitliches Design */
+/* Cost Preview */
 .cost-preview {
-  background: white;
+  background: #FFEB00;
   color: #000000;
   padding: 24px;
-  border: 2px solid #000000;
   border-radius: 0;
   text-align: center;
-  margin: 24px 0;
+  margin: 40px 0;
+  display: block;
+  border: 2px solid #000000;
+  transition: all 0.2s ease;
+  min-height: 80px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  min-height: 80px;
-  transition: all 0.2s ease;
 }
 
 .cost-preview.calculating {
@@ -222,6 +200,18 @@
   margin-bottom: 16px;
   text-align: left;
   position: relative;
+  padding-left: 20px;
+}
+
+.control-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 10px;
+  background: #FFEB00;
 }
 
 .control-buttons {

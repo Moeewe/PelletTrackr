@@ -1,421 +1,128 @@
 // ==================== NAVIGATION MODULE ====================
 // Screen-Management und Event-Listener Setup
 
-/**
- * Navigate to appropriate home screen based on user type
- */
-function navigateToHome() {
-    try {
-        if (!window.currentUser) {
-            // Not logged in - go to login
-            showScreen('loginScreen');
-            console.log("🏠 Navigated to login (no user)");
-            return;
-        }
-        
-        if (window.currentUser.isAdmin) {
-            // Admin user - go to admin dashboard
-            showScreen('adminDashboard');
-            console.log("🏠 Navigated to admin dashboard");
-        } else {
-            // Regular user - go to user dashboard
-            showScreen('userDashboard');
-            console.log("🏠 Navigated to user dashboard");
-        }
-        
-        // Trigger haptic feedback on mobile
-        if (window.mobileEnhancements) {
-            window.mobileEnhancements.triggerHapticFeedback('light');
-        }
-        
-    } catch (error) {
-        console.error("❌ Error in home navigation:", error);
-        // Fallback to login screen
-        showScreen('loginScreen');
-    }
-}
-
 function showScreen(screenId) {
-  try {
-    if (!screenId || typeof screenId !== 'string') {
-      console.error("Invalid screen ID:", screenId);
-      return false;
-    }
-    
-    // Check if screen exists
-    const targetScreen = document.getElementById(screenId);
-    if (!targetScreen) {
-      console.error(`Screen not found: ${screenId}`);
-      return false;
-    }
-    
-    // Alle Screens ausblenden
-    document.querySelectorAll('.screen').forEach(screen => {
-      screen.classList.remove('active');
-    });
-    
-    // Gewünschten Screen anzeigen
-    targetScreen.classList.add('active');
-    
-    // Auto-load data when switching to specific screens
-    if (screenId === 'userDashboard' && window.currentUser && !window.currentUser.isAdmin) {
-        // Load user data when switching to user dashboard
-        setTimeout(() => {
-            try {
-                // Ensure Firebase is ready before loading data
-                if (!window.db) {
-                    console.warn("⚠️ Firebase not ready when switching to userDashboard, will retry...");
-                    // Retry after Firebase becomes available
-                    const retryDataLoad = () => {
-                        if (window.db) {
-                            if (typeof loadUserStats === 'function') {
-                                loadUserStats().catch(error => console.warn("User stats loading failed:", error));
-                            }
-                            if (typeof loadUserEntries === 'function') {
-                                loadUserEntries().catch(error => console.warn("User entries loading failed:", error));
-                            }
-                        } else {
-                            setTimeout(retryDataLoad, 500);
-                        }
-                    };
-                    retryDataLoad();
-                } else {
-                    if (typeof loadUserStats === 'function') {
-                        loadUserStats().catch(error => console.warn("User stats loading failed:", error));
-                    }
-                    if (typeof loadUserEntries === 'function') {
-                        loadUserEntries().catch(error => console.warn("User entries loading failed:", error));
-                    }
-                }
-            } catch (error) {
-                console.warn("Error loading user data:", error);
-            }
-        }, 100);
-    } else if (screenId === 'adminDashboard' && window.currentUser && window.currentUser.isAdmin) {
-        // Load admin data when switching to admin dashboard
-        setTimeout(() => {
-            try {
-                if (!window.db) {
-                    console.warn("⚠️ Firebase not ready when switching to adminDashboard, will retry...");
-                    const retryDataLoad = () => {
-                        if (window.db) {
-                            if (typeof loadAdminStats === 'function') {
-                                loadAdminStats().catch(error => console.warn("Admin stats loading failed:", error));
-                            }
-                            if (typeof loadAllEntries === 'function') {
-                                loadAllEntries().catch(error => console.warn("All entries loading failed:", error));
-                            }
-                        } else {
-                            setTimeout(retryDataLoad, 500);
-                        }
-                    };
-                    retryDataLoad();
-                } else {
-                    if (typeof loadAdminStats === 'function') {
-                        loadAdminStats().catch(error => console.warn("Admin stats loading failed:", error));
-                    }
-                    if (typeof loadAllEntries === 'function') {
-                        loadAllEntries().catch(error => console.warn("All entries loading failed:", error));
-                    }
-                    // Initialize notification badge system for admin
-                    if (typeof initializeBadgeSystem === 'function') {
-                        initializeBadgeSystem();
-                    }
-                }
-            } catch (error) {
-                console.warn("Error loading admin data:", error);
-            }
-        }, 100);
-    } else if (screenId === 'adminAssets' && window.currentUser && window.currentUser.isAdmin) {
-        // Load asset data when switching to admin assets
-        setTimeout(() => {
-            try {
-                if (window.db) {
-                    // Load asset statistics
-                    if (typeof loadAssetStats === 'function') {
-                        loadAssetStats().catch(error => console.warn("Asset stats loading failed:", error));
-                    }
-                    
-                    // Initialize asset management systems
-                    if (typeof initializePrinterManagement === 'function') {
-                        initializePrinterManagement();
-                    }
-                }
-            } catch (error) {
-                console.warn("Error loading asset data:", error);
-            }
-        }, 100);
-    } else if (screenId === 'userManager' && window.currentUser && window.currentUser.isAdmin) {
-        // Load user management data when switching to user manager
-        setTimeout(() => {
-            try {
-                if (window.db) {
-                    // Load user statistics
-                    if (typeof loadUserManagementStats === 'function') {
-                        loadUserManagementStats().catch(error => console.warn("User management stats loading failed:", error));
-                    }
-                    
-                    // Load users for management
-                    if (typeof loadUsersForManagement === 'function') {
-                        loadUsersForManagement().catch(error => console.warn("Users loading failed:", error));
-                    }
-                }
-            } catch (error) {
-                console.warn("Error loading user management data:", error);
-            }
-        }, 100);
-    }
-    
-    console.log(`📱 Switched to screen: ${screenId}`);
-    return true;
-  } catch (error) {
-    console.error("Error switching screens:", error);
-    return false;
-  }
+  // Alle Screens ausblenden
+  document.querySelectorAll('.screen').forEach(screen => {
+    screen.classList.remove('active');
+  });
+  
+  // Gewünschten Screen anzeigen
+  document.getElementById(screenId).classList.add('active');
 }
 
-// Enhanced dashboard initialization with better error handling
+// Dashboard-Initialisierung
 function initializeUserDashboard() {
-  console.log("🏠 Initializing user dashboard...");
-  
-  try {
-    // Check if user is properly logged in
-    if (!window.currentUser || !window.currentUser.name) {
-      console.error("❌ No valid user session for dashboard");
-      window.toast?.error("Benutzer-Session ungültig. Bitte melden Sie sich erneut an.");
-      showScreen('loginScreen');
-      return false;
-    }
-    
-    // Check Firebase availability
-    if (!window.db) {
-      console.warn("⚠️ Firebase not ready, scheduling retry...");
-      setTimeout(() => {
-        if (window.db) {
-          console.log("🔄 Retrying user dashboard initialization...");
-          initializeUserDashboard();
-        }
-      }, 2000);
-      return false;
-    }
-    
-    // Load materials with error handling
-    const loadMaterialsPromise = typeof loadMaterials === 'function' ? 
-      loadMaterials().catch(error => {
-        console.error("❌ Material loading failed:", error);
-        return null;
-      }) : Promise.resolve();
-      
-    const loadMasterbatchesPromise = typeof loadMasterbatches === 'function' ? 
-      loadMasterbatches().catch(error => {
-        console.error("❌ Masterbatch loading failed:", error);
-        return null;
-      }) : Promise.resolve();
-    
-    // Setup event listeners after materials load
-    Promise.all([loadMaterialsPromise, loadMasterbatchesPromise])
-      .then(() => {
+  // Warten bis alle Funktionen verfügbar sind
+  if (typeof loadMaterials === 'function' && typeof loadMasterbatches === 'function') {
+    loadMaterials().then(() => {
+      loadMasterbatches().then(() => {
         setupEventListeners();
-        console.log("✅ User dashboard core setup completed");
-      })
-      .catch(error => {
-        console.error("❌ Dashboard setup failed:", error);
-        window.toast?.warning("Einige Dashboard-Funktionen sind möglicherweise nicht verfügbar");
       });
-    
-    // Note: User data (stats and entries) will be loaded automatically by showScreen() 
-    // when switching to userDashboard view - no need to load here to avoid duplication
-    
-    return true;
-  } catch (error) {
-    console.error("❌ User dashboard initialization failed:", error);
-    window.toast?.error("Dashboard konnte nicht initialisiert werden");
-    return false;
+    });
+  } else {
+    console.warn("⚠️ Material-Loading-Funktionen noch nicht verfügbar, versuche in 500ms erneut");
+    setTimeout(() => {
+      initializeUserDashboard();
+    }, 500);
+    return;
+  }
+  
+  // Stats und Entries laden (diese sind weniger kritisch)
+  if (typeof loadUserStats === 'function') {
+    loadUserStats();
+  }
+  if (typeof loadUserEntries === 'function') {
+    loadUserEntries();
   }
 }
 
 function initializeAdminDashboard() {
-  console.log("⚙️ Initializing admin dashboard...");
+  // Warten bis Admin-Funktionen verfügbar sind
+  if (typeof loadAdminStats === 'function') {
+    loadAdminStats();
+  } else {
+    console.warn("⚠️ Admin-Stats-Funktion noch nicht verfügbar");
+    setTimeout(() => {
+      if (typeof loadAdminStats === 'function') loadAdminStats();
+    }, 500);
+  }
   
-  try {
-    // Check admin access
-    if (!window.currentUser || !window.currentUser.isAdmin) {
-      console.error("❌ No admin privileges");
-      window.toast?.error("Keine Admin-Berechtigung");
-      showScreen('loginScreen');
-      return false;
-    }
-    
-    // Check Firebase availability
-    if (!window.db) {
-      console.warn("⚠️ Firebase not ready for admin dashboard, scheduling retry...");
-      setTimeout(() => {
-        if (window.db) {
-          console.log("🔄 Retrying admin dashboard initialization...");
-          initializeAdminDashboard();
-        }
-      }, 2000);
-      return false;
-    }
-    
-    // Load admin data with error handling
-    const loadPromises = [];
-    
-    if (typeof loadAdminStats === 'function') {
-      loadPromises.push(
-        loadAdminStats().catch(error => {
-          console.warn("Admin stats loading failed:", error);
-          return null;
-        })
-      );
-    } else {
-      console.warn("⚠️ Admin-Stats-Funktion nicht verfügbar");
-    }
-    
-    if (typeof loadAllEntries === 'function') {
-      loadPromises.push(
-        loadAllEntries().catch(error => {
-          console.warn("All entries loading failed:", error);
-          return null;
-        })
-      );
-    } else {
-      console.warn("⚠️ LoadAllEntries-Funktion nicht verfügbar");
-    }
-    
-    if (typeof loadMaterials === 'function') {
-      loadPromises.push(
-        loadMaterials().catch(error => {
-          console.warn("Materials loading failed for admin:", error);
-          return null;
-        })
-      );
-    }
-    
-    if (typeof loadMasterbatches === 'function') {
-      loadPromises.push(
-        loadMasterbatches().catch(error => {
-          console.warn("Masterbatches loading failed for admin:", error);
-          return null;
-        })
-      );
-    }
-    
-    // Execute all loading operations
-    if (loadPromises.length > 0) {
-      Promise.allSettled(loadPromises)
-        .then((results) => {
-          const failed = results.filter(r => r.status === 'rejected').length;
-          if (failed > 0) {
-            console.warn(`⚠️ ${failed}/${results.length} admin loading operations failed`);
-            window.toast?.warning("Einige Admin-Daten konnten nicht geladen werden");
-          } else {
-            console.log("✅ Admin dashboard loaded successfully");
-          }
-        })
-        .catch(error => {
-          console.error("❌ Admin dashboard loading failed:", error);
-          window.toast?.error("Admin-Dashboard konnte nicht vollständig geladen werden");
-        });
-    }
-    
-    return true;
-  } catch (error) {
-    console.error("❌ Admin dashboard initialization failed:", error);
-    window.toast?.error("Admin-Dashboard konnte nicht initialisiert werden");
-    return false;
+  if (typeof loadAllEntries === 'function') {
+    loadAllEntries();
+  } else {
+    console.warn("⚠️ LoadAllEntries-Funktion noch nicht verfügbar");
+    setTimeout(() => {
+      if (typeof loadAllEntries === 'function') loadAllEntries();
+    }, 500);
   }
 }
 
-// Enhanced event listeners setup with better error handling
+// Event Listeners einrichten
 function setupEventListeners() {
-  console.log("🔧 Setting up event listeners...");
+  console.log("🔧 Event Listeners werden eingerichtet...");
   
-  try {
-    // Get form elements safely
-    const elements = {
-      materialMenge: document.getElementById("materialMenge"),
-      masterbatchMenge: document.getElementById("masterbatchMenge"),
-      material: document.getElementById("material"),
-      masterbatch: document.getElementById("masterbatch")
-    };
-    
-    console.log("📊 Form elements found:", {
-      materialMenge: !!elements.materialMenge,
-      masterbatchMenge: !!elements.masterbatchMenge,
-      material: !!elements.material,
-      masterbatch: !!elements.masterbatch
-    });
-    
-    // Setup live cost calculation with error handling
-    const safeCalculateCost = () => {
-      try {
-        if (typeof window.throttledCalculateCost === 'function') {
-          window.throttledCalculateCost();
-        } else if (typeof window.calculateCostPreview === 'function') {
-          window.calculateCostPreview();
-        }
-      } catch (error) {
-        console.warn("Cost calculation error:", error);
-      }
-    };
-    
-    // Material quantity listeners
-    if (elements.materialMenge) {
-      elements.materialMenge.addEventListener("input", safeCalculateCost);
-      elements.materialMenge.addEventListener("keyup", safeCalculateCost);
-      console.log("✅ Material quantity listeners set");
-    }
-    
-    if (elements.masterbatchMenge) {
-      elements.masterbatchMenge.addEventListener("input", safeCalculateCost);
-      elements.masterbatchMenge.addEventListener("keyup", safeCalculateCost);
-      console.log("✅ Masterbatch quantity listeners set");
-    }
-    
-    // Material selection listeners
-    if (elements.material) {
-      elements.material.addEventListener("change", safeCalculateCost);
-      console.log("✅ Material selection listener set");
-    }
-    
-    if (elements.masterbatch) {
-      elements.masterbatch.addEventListener("change", safeCalculateCost);
-      console.log("✅ Masterbatch selection listener set");
-    }
-    
-    // German number format validation with error handling
-    const setupNumberValidation = (element, fieldName) => {
-      if (!element) return;
-      
-      element.addEventListener("blur", function() {
-        try {
-          const value = this.value;
-          if (value) {
-            const parsed = window.parseGermanNumber(value);
-            if (!isNaN(parsed) && parsed > 0) {
-              this.value = parsed.toFixed(2).replace('.', ',');
-              safeCalculateCost();
-            }
-          }
-        } catch (error) {
-          console.warn(`Number validation error for ${fieldName}:`, error);
-        }
-      });
-    };
-    
-    setupNumberValidation(elements.materialMenge, "materialMenge");
-    setupNumberValidation(elements.masterbatchMenge, "masterbatchMenge");
-    
-    // Initial cost calculation
-    setTimeout(() => {
-      safeCalculateCost();
-    }, 1000);
-    
-    console.log("✅ Event listeners setup completed");
-    return true;
-  } catch (error) {
-    console.error("❌ Event listeners setup failed:", error);
-    return false;
+  // Live-Kostenberechnung
+  const materialMenge = document.getElementById("materialMenge");
+  const masterbatchMenge = document.getElementById("masterbatchMenge");
+  const material = document.getElementById("material");
+  const masterbatch = document.getElementById("masterbatch");
+  
+  console.log("📊 Elemente gefunden:", {
+    materialMenge: !!materialMenge,
+    masterbatchMenge: !!masterbatchMenge,
+    material: !!material,
+    masterbatch: !!masterbatch
+  });
+  
+  if (materialMenge) {
+    materialMenge.addEventListener("input", throttledCalculateCost);
+    materialMenge.addEventListener("keyup", throttledCalculateCost);
+    console.log("✅ Material Menge Event Listeners gesetzt");
   }
+  if (masterbatchMenge) {
+    masterbatchMenge.addEventListener("input", throttledCalculateCost);
+    masterbatchMenge.addEventListener("keyup", throttledCalculateCost);
+    console.log("✅ Masterbatch Menge Event Listeners gesetzt");
+  }
+  if (material) {
+    material.addEventListener("change", calculateCostPreview);
+    console.log("✅ Material Change Event Listener gesetzt");
+  }
+  if (masterbatch) {
+    masterbatch.addEventListener("change", calculateCostPreview);
+    console.log("✅ Masterbatch Change Event Listener gesetzt");
+  }
+  
+  // Eingabevalidierung für deutsche Zahlenformate
+  if (materialMenge) {
+    materialMenge.addEventListener("blur", function() {
+      var value = this.value;
+      if (value) {
+        var parsed = parseGermanNumber(value);
+        if (parsed > 0) {
+          this.value = parsed.toFixed(2).replace('.', ',');
+          calculateCostPreview(); // Preisberechnung nach Formatierung
+        }
+      }
+    });
+  }
+  
+  if (masterbatchMenge) {
+    masterbatchMenge.addEventListener("blur", function() {
+      var value = this.value;
+      if (value) {
+        var parsed = parseGermanNumber(value);
+        if (parsed > 0) {
+          this.value = parsed.toFixed(2).replace('.', ',');
+          calculateCostPreview(); // Preisberechnung nach Formatierung
+        }
+      }
+    });
+  }
+  
+  // Initialer Aufruf um sicherzustellen, dass alles funktioniert
+  setTimeout(() => {
+    calculateCostPreview();
+  }, 1000);
 }

@@ -350,10 +350,10 @@ function setupEventListeners() {
     // Setup live cost calculation with error handling
     const safeCalculateCost = () => {
       try {
-        if (typeof window.throttledCalculateCost === 'function') {
-          window.throttledCalculateCost();
-        } else if (typeof window.calculateCostPreview === 'function') {
-          window.calculateCostPreview();
+        if (typeof throttledCalculateCost === 'function') {
+          throttledCalculateCost();
+        } else if (typeof calculateCostPreview === 'function') {
+          calculateCostPreview();
         }
       } catch (error) {
         console.warn("Cost calculation error:", error);

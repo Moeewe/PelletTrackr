@@ -2,7 +2,7 @@
 /* Modal-Overlays und Popup-Fenster */
 /* Einheitliche Modal-Struktur für alle Modal-Typen */
 
-/* ==================== CONFIRMATION DIALOG STYLES ==================== */
+/* Confirmation Dialog Styles */
 .confirmation-overlay {
   position: fixed;
   top: 0;
@@ -30,9 +30,9 @@
   border-radius: 0;
   max-width: 500px;
   width: 100%;
-  transform: scale(0.9);
+  transform: scale(0.7);
   transition: transform 0.3s ease;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
 }
 
 .confirmation-dialog.show {
@@ -101,14 +101,12 @@
 .modal {
   display: none;
   position: fixed;
-  z-index: 10500; /* Höher als confirmation-overlay */
+  z-index: 1000;
   left: 0;
   top: 0;
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
   animation: fadeIn 0.3s ease;
   overflow: hidden;
 }
@@ -125,18 +123,17 @@
   background: white;
   border: 2px solid #000000;
   border-radius: 0;
-  max-width: 900px;
+  max-width: 800px;
   width: 100%;
-  max-height: 90vh;
+  max-height: 85vh;
   animation: slideIn 0.3s ease;
   position: relative;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: none;
 }
 
-/* Modal Header - Einheitlich für alle Modals */
+/* Modal Header - Einheitlich für alle Modals - IMMER OBEN */
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -148,7 +145,7 @@
   z-index: 10;
   width: 100%;
   box-sizing: border-box;
-  position: relative; /* Für Status-Badge Positionierung */
+  order: 1; /* Explizite Reihenfolge - Header ist immer oben */
 }
 
 .modal-header h2,
@@ -168,10 +165,9 @@
   width: auto !important;
   text-transform: none !important;
   letter-spacing: normal !important;
-  line-height: 1.2 !important;
 }
 
-/* Modal Body - Einheitlich für alle Modals */
+/* Modal Body - Einheitlich für alle Modals - MITTE */
 .modal-body {
   padding: 32px;
   line-height: 1.6;
@@ -179,10 +175,10 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   background: white;
-  color: #333;
+  order: 2; /* Explizite Reihenfolge - Body ist in der Mitte */
 }
 
-/* Modal Footer - Einheitlich für alle Modals */
+/* Modal Footer - Einheitlich für alle Modals - IMMER UNTEN */
 .modal-footer {
   padding: 24px 32px;
   border-top: 2px solid #000000;
@@ -192,6 +188,7 @@
   background: white;
   flex-shrink: 0;
   flex-wrap: wrap;
+  order: 3; /* Explizite Reihenfolge - Footer ist immer unten */
 }
 
 /* Modal Actions - Für Buttons innerhalb des Modal-Body */
@@ -232,7 +229,7 @@
 .mobile-detail-layout {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   width: 100%;
 }
 
@@ -240,11 +237,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 0;
+  padding: 8px 0;
   border-bottom: 1px solid #e0e0e0;
   font-size: 14px;
   background: transparent;
-  min-height: 40px;
 }
 
 .detail-row:last-child {
@@ -252,42 +248,37 @@
 }
 
 .detail-label {
-  font-weight: 600;
+  font-weight: 500;
   color: #666666;
-  min-width: 100px;
+  min-width: 80px;
   flex-shrink: 0;
   text-align: left;
-  font-size: 14px;
 }
 
 .detail-value {
   font-weight: 600;
   color: #000000;
-  text-align: right;
+  text-align: left;
   flex: 1;
   margin-left: 16px;
-  font-size: 14px;
 }
 
 .detail-name {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   color: #000000;
   text-align: left;
-  margin: 20px 0;
+  margin: 16px 0;
   padding: 0;
-  line-height: 1.2;
 }
 
 .detail-cost-status {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
-  margin: 24px 0;
-  padding: 20px 0;
-  border-top: 2px solid #f0f0f0;
-  border-bottom: 2px solid #f0f0f0;
-  gap: 24px;
+  margin: 20px 0;
+  padding: 16px 0;
+  gap: 32px;
 }
 
 .cost-section {
@@ -297,7 +288,7 @@
 }
 
 .cost-label {
-  font-weight: 600;
+  font-weight: 500;
   color: #666666;
   font-size: 14px;
   margin-bottom: 4px;
@@ -305,22 +296,19 @@
 }
 
 .cost-value {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   color: #000000;
   text-align: left;
-  line-height: 1.2;
 }
 
 .status-badge {
-  padding: 10px 20px;
+  padding: 8px 16px;
   border: 2px solid #000000;
   border-radius: 0;
   font-weight: 600;
   font-size: 12px;
   letter-spacing: 1px;
-      text-transform: none;
-  white-space: nowrap;
 }
 
 .status-badge.status-paid {
@@ -338,27 +326,25 @@
 .notes-section {
   margin-top: 24px;
   width: 100%;
-  padding-top: 20px;
-  border-top: 1px solid #e0e0e0;
 }
 
 .notes-header {
   font-weight: 600;
   color: #000000;
-  margin-bottom: 12px;
-  font-size: 16px;
+  margin-bottom: 8px;
+  font-size: 14px;
 }
 
 .notes-content {
   width: 100%;
-  min-height: 80px;
+  min-height: 100px;
   padding: 16px;
   border: 1px solid #e0e0e0;
   border-radius: 0;
-  background: #f8f9fa;
+  background: transparent;
   color: #333333;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.4;
   white-space: pre-wrap;
   word-wrap: break-word;
 }
@@ -407,13 +393,13 @@
 .close-btn {
   background: none;
   border: none;
-  font-size: 28px;
+  font-size: 24px;
   color: #666666;
   cursor: pointer;
   padding: 8px;
   line-height: 1;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -429,7 +415,6 @@
 
 .close-btn:active {
   background: #e0e0e0;
-  transform: scale(0.95);
 }
 
 /* ==================== MODAL FORMS ==================== */
@@ -442,13 +427,12 @@
 .modal .form-row {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 20px;
-  margin-bottom: 24px;
+  gap: 16px;
 }
 
 @media (min-width: 768px) {
   .modal .form-row {
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
 }
 
@@ -457,20 +441,19 @@
   margin-bottom: 8px;
   font-weight: 600;
   color: #000000;
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .modal .form-input,
 .modal .form-select,
 .modal .form-textarea {
   width: 100%;
-  padding: 14px 16px;
+  padding: 12px 16px;
   border: 2px solid #000000;
   border-radius: 0;
-  font-size: 15px;
+  font-size: 14px;
   background: white;
   transition: border-color 0.2s ease;
-  color: #000;
 }
 
 .modal .form-input:focus,
@@ -482,17 +465,7 @@
 
 .modal .form-textarea {
   resize: vertical;
-  min-height: 120px;
-  line-height: 1.5;
-}
-
-/* Form Hints in Modals */
-.modal p[style*="background"] {
-  padding: 16px !important;
-  margin: 20px 0 !important;
-  border-radius: 0 !important;
-  font-size: 14px !important;
-  line-height: 1.5 !important;
+  min-height: 100px;
 }
 
 /* ==================== TABLE CONTROLS IN MODALS ==================== */
@@ -508,102 +481,66 @@
 .modal .search-input {
   flex: 1;
   min-width: 200px;
-  padding: 12px 16px;
+  padding: 10px 16px;
   border: 2px solid #000000;
   border-radius: 0;
   font-size: 14px;
-  background: white;
-}
-
-.modal .search-input:focus {
-  outline: none;
-  border-color: #007bff;
 }
 
 .modal .sort-select {
   min-width: 200px;
-  padding: 12px 16px;
+  padding: 10px 16px;
   border: 2px solid #000000;
   border-radius: 0;
   font-size: 14px;
   background: white;
 }
 
-.modal .sort-select:focus {
-  outline: none;
-  border-color: #007bff;
-}
-
 /* ==================== RESPONSIVE MODAL ADJUSTMENTS ==================== */
 
-/* Tablet Modal Optimierung */
-@media (max-width: 1024px) {
-  .modal-content {
-    max-width: 700px;
-    margin: 0 10px;
-  }
-  
-  .modal-header {
-    padding: 20px 24px;
-  }
-  
-  .modal-body {
-    padding: 24px;
-  }
-  
-  .modal-footer {
-    padding: 20px 24px;
-  }
-}
-
-/* Mobile Modal Optimierung */
+/* Diese Styles werden von responsive.css überschrieben, aber hier als Fallback */
 @media (max-width: 768px) {
   .modal {
-    padding: 10px;
-    align-items: center;
-    justify-content: center;
+    padding: 0;
+    align-items: stretch;
+    justify-content: stretch;
   }
   
   .modal-content {
     max-width: 100%;
-    width: calc(100% - 20px);
-    max-height: 95vh;
-    height: auto;
-    border-radius: 8px;
-    border: 2px solid #000;
-    margin: 10px;
-    animation: slideInMobile 0.3s ease;
-    background: white;
+    width: 100%;
+    max-height: 100vh;
+    height: 100vh;
+    border-radius: 0;
+    border: none;
+    margin: 0;
+    display: flex !important;
+    flex-direction: column !important;
   }
   
   .modal-header {
-    padding: 16px 20px;
-    flex-shrink: 0;
-    border-bottom: 2px solid #000;
-    background: white;
+    padding: 20px 24px;
+    order: 1 !important; /* Header immer oben */
+    flex-shrink: 0 !important;
   }
   
   .modal-header h2,
   .modal-header h3 {
     font-size: 18px !important;
-    color: #000 !important;
   }
   
   .modal-body {
     padding: 20px;
-    flex: 1;
-    overflow-y: auto;
-    background: white;
-    max-height: 70vh;
+    order: 2 !important; /* Body in der Mitte */
+    flex: 1 !important;
   }
   
   .modal-footer {
-    padding: 16px 20px;
+    padding: 20px;
     flex-direction: column;
     gap: 12px;
-    flex-shrink: 0;
-    border-top: 2px solid #000;
-    background: white;
+    order: 3 !important; /* Footer immer unten */
+    flex-shrink: 0 !important;
   }
   
   .modal-footer .btn {
@@ -612,85 +549,12 @@
     padding: 16px 20px;
     font-size: 16px;
   }
-  
-  /* Mobile Material/Masterbatch Specific */
-  .modal .form-group {
-    margin-bottom: 20px;
-  }
-  
-  .modal .form-label {
-    font-size: 16px;
-    font-weight: 600;
-    color: #000;
-    display: block;
-    margin-bottom: 8px;
-  }
-  
-  .modal .form-input,
-  .modal .form-textarea {
-    width: 100%;
-    padding: 12px;
-    border: 2px solid #000;
-    border-radius: 0;
-    font-size: 16px;
-    background: white;
-    color: #000;
-    box-sizing: border-box;
-  }
-  
-  .modal .form-row {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-  
-  .modal .data-table {
-    overflow-x: auto;
-    background: white;
-  }
-  
-  .modal .data-table table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-  }
-  
-  .modal .data-table th,
-  .modal .data-table td {
-    padding: 8px;
-    border: 1px solid #ddd;
-    text-align: left;
-    font-size: 14px;
-  }
-  
-  .modal .data-table th {
-    background: #f8f9fa;
-    font-weight: 600;
-  }
-  
-  /* Mobile Detail Layout Adjustments */
-  .detail-cost-status {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-  
-  .cost-section {
-    width: 100%;
-  }
-  
-  .detail-name {
-    font-size: 24px;
-  }
-  
-  .cost-value {
-    font-size: 24px;
-  }
 }
 
 @media (max-width: 480px) {
   .modal-header {
-    padding: 12px 16px;
+    padding: 16px 20px;
+    order: 1 !important; /* Header immer oben */
   }
   
   .modal-header h2,
@@ -699,60 +563,39 @@
   }
   
   .modal-body {
-    padding: 16px;
+    padding: 16px 20px;
+    order: 2 !important; /* Body in der Mitte */
   }
   
   .modal-footer {
-    padding: 12px 16px;
-  }
-  
-  .detail-name {
-    font-size: 20px;
-  }
-  
-  .cost-value {
-    font-size: 20px;
-  }
-  
-  .close-btn {
-    width: 36px;
-    height: 36px;
-    font-size: 24px;
+    padding: 16px 20px;
+    order: 3 !important; /* Footer immer unten */
   }
 }
 
-/* ==================== ANIMATIONS ==================== */
+/* ==================== MODAL STRUCTURE ENFORCEMENT ==================== */
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+/* Stellt sicher, dass Modal-Elemente immer in der richtigen Reihenfolge sind */
+.modal-content > * {
+  flex-shrink: 0; /* Verhindert Schrumpfen von Header und Footer */
 }
 
-@keyframes slideIn {
-  from { 
-    transform: translateY(-30px) scale(0.95);
-    opacity: 0;
-  }
-  to { 
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
+.modal-content > .modal-header {
+  order: 1 !important;
 }
 
-@keyframes slideInMobile {
-  from { 
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  to { 
-    transform: translateY(0);
-    opacity: 1;
-  }
+.modal-content > .modal-body {
+  order: 2 !important;
+  flex: 1 !important; /* Body nimmt verfügbaren Platz ein */
+}
+
+.modal-content > .modal-footer {
+  order: 3 !important;
 }
 
 /* ==================== MODAL Z-INDEX MANAGEMENT ==================== */
 
-/* Basis Modal Z-Index */
+/* Verhindere Modal-Überlagerungen */
 .modal {
   z-index: 1000;
 }
@@ -761,24 +604,24 @@
   z-index: 1001;
 }
 
-/* Manager-Modals */
+/* Wenn ein zweites Modal geöffnet wird, sollte das erste geschlossen werden */
+.modal.active ~ .modal.active {
+  display: none !important;
+}
+
+/* Manager-Modals haben niedrigere z-index */
 #materialManager.modal.active,
 #masterbatchManager.modal.active,
 #userManager.modal.active {
   z-index: 1000;
 }
 
-/* Generic Modal (für Edit-Funktionen) */
+/* Generic Modal (für Edit-Funktionen) hat höhere z-index */
 #modal.modal.active {
   z-index: 1002;
 }
 
-/* Payment Proof Modal */
+/* Payment Proof Modal hat höchste z-index */
 #paymentProofModal.modal.active {
   z-index: 1003;
-}
-
-/* Verhindere mehrere gleichzeitige Modals */
-.modal.active ~ .modal.active {
-  display: none !important;
 }

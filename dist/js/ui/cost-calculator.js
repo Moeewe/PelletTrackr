@@ -37,8 +37,6 @@ async function calculateCostPreview() {
     masterbatchValue !== "Masterbatch auswählen... (optional)" && 
     masterbatchValue !== "Masterbatch auswählen..." && 
     masterbatchValue !== "Lade Masterbatches...";
-    
-
   
   if (!hasMaterial && !hasMasterbatch) {
     console.log("⚠️ Weder Material noch Masterbatch ausgefüllt");
@@ -99,5 +97,3 @@ function throttledCalculateCost() {
   clearTimeout(costCalculationTimeout);
   costCalculationTimeout = setTimeout(calculateCostPreview, 500);
 }
-
-// Functions are available in global scope

@@ -19,14 +19,10 @@ window.closeEditMasterbatchModal = window.closeEditMasterbatchModal || function(
 // App automatisch initialisieren wenn DOM geladen ist
 document.addEventListener('DOMContentLoaded', () => {
   console.log("🚀 Modular PelletTrackr wird initialisiert...");
-  console.log("🔍 initializeApp available:", typeof initializeApp === 'function');
-  console.log("🔍 window.appInitialized:", window.appInitialized);
   
   // Warten bis alle Module geladen sind
   if (typeof initializeApp === 'function') {
-    console.log("📞 Calling initializeApp()...");
     initializeApp();
-    console.log("✅ initializeApp() called, window.appInitialized now:", window.appInitialized);
   } else {
     console.error("❌ initializeApp Funktion nicht gefunden!");
   }

@@ -4,6 +4,7 @@
 // Kostenvorschau berechnen
 async function calculateCostPreview() {
   console.log("💰 Kostenvorschau wird berechnet...");
+  console.log("🔧 cost-calculator.js calculateCostPreview called");
   
   const material = document.getElementById("material");
   const materialMenge = document.getElementById("materialMenge");
@@ -12,7 +13,13 @@ async function calculateCostPreview() {
   const costPreview = document.getElementById("costPreview");
   
   if (!material || !materialMenge || !masterbatch || !masterbatchMenge || !costPreview) {
-    console.log("❌ Nicht alle Elemente gefunden");
+    console.log("❌ Nicht alle Elemente gefunden", {
+      material: !!material,
+      materialMenge: !!materialMenge,
+      masterbatch: !!masterbatch,
+      masterbatchMenge: !!masterbatchMenge,
+      costPreview: !!costPreview
+    });
     return;
   }
   
@@ -32,13 +39,22 @@ async function calculateCostPreview() {
   const hasMaterial = materialValue && materialMengeValue && 
     materialValue !== "Material auswählen... (optional)" && 
     materialValue !== "Material auswählen..." && 
-    materialValue !== "Lade Materialien...";
+    materialValue !== "Lade Materialien..." &&
+    materialValue !== "";
   const hasMasterbatch = masterbatchValue && masterbatchMengeValue && 
     masterbatchValue !== "Masterbatch auswählen... (optional)" && 
     masterbatchValue !== "Masterbatch auswählen..." && 
-    masterbatchValue !== "Lade Masterbatches...";
+    masterbatchValue !== "Lade Masterbatches..." &&
+    masterbatchValue !== "";
     
-
+  console.log("📊 Material/Masterbatch Status:", {
+    hasMaterial,
+    hasMasterbatch,
+    materialValue,
+    materialMengeValue,
+    masterbatchValue,
+    masterbatchMengeValue
+  });
   
   if (!hasMaterial && !hasMasterbatch) {
     console.log("⚠️ Weder Material noch Masterbatch ausgefüllt");
@@ -55,9 +71,20 @@ async function calculateCostPreview() {
     if (hasMaterial) {
       const materialSnapshot = await window.db.collection("materials").where("name", "==", materialValue).get();
       if (!materialSnapshot.empty) {
-        const materialPrice = materialSnapshot.docs[0].data().price;
-        materialCost = parseGermanNumber(materialMengeValue) * materialPrice;
-        console.log("💰 Material-Kosten:", materialCost);
+        const materialData = materialSnapshot.docs[0].data();
+        
+        // Verwende Verkaufspreis (oder berechne ihn falls nicht vorhanden)
+        let materialPrice = materialData.sellingPrice;
+        if (!materialPrice) {
+          const netPrice = materialData.netPrice || materialData.price || 0;
+          const taxRate = materialData.taxRate || 19;
+          const markup = materialData.markup || 30;
+          const grossPrice = netPrice * (1 + taxRate / 100);
+          materialPrice = grossPrice * (1 + markup / 100);
+        }
+        
+        materialCost = window.parseGermanNumber(materialMengeValue) * materialPrice;
+        console.log("💰 Material-Kosten:", materialCost, "€/kg");
       }
     }
     
@@ -65,9 +92,21 @@ async function calculateCostPreview() {
     if (hasMasterbatch) {
       const masterbatchSnapshot = await window.db.collection("masterbatches").where("name", "==", masterbatchValue).get();
       if (!masterbatchSnapshot.empty) {
-        const masterbatchPrice = masterbatchSnapshot.docs[0].data().price;
-        masterbatchCost = parseGermanNumber(masterbatchMengeValue) * masterbatchPrice;
-        console.log("💰 Masterbatch-Kosten:", masterbatchCost);
+        const masterbatchData = masterbatchSnapshot.docs[0].data();
+        
+        // Verwende Verkaufspreis (oder berechne ihn falls nicht vorhanden)
+        let masterbatchPrice = masterbatchData.sellingPrice;
+        if (!masterbatchPrice) {
+          const netPrice = masterbatchData.netPrice || masterbatchData.price || 0;
+          const taxRate = masterbatchData.taxRate || 19;
+          const markup = masterbatchData.markup || 30;
+          const grossPrice = netPrice * (1 + taxRate / 100);
+          masterbatchPrice = grossPrice * (1 + markup / 100);
+        }
+        
+        // Masterbatch wird in Gramm eingegeben, Preis ist pro Gramm
+        masterbatchCost = window.parseGermanNumber(masterbatchMengeValue) * masterbatchPrice;
+        console.log("💰 Masterbatch-Kosten:", masterbatchCost, "€/g");
       }
     }
     
@@ -80,7 +119,7 @@ async function calculateCostPreview() {
     });
     
     if (!isNaN(totalCost) && totalCost >= 0) {
-      const formattedCost = formatCurrency(totalCost);
+      const formattedCost = window.formatCurrency(totalCost);
       costPreview.textContent = formattedCost;
       console.log("✅ Kostenvorschau aktualisiert:", formattedCost);
     } else {
@@ -96,8 +135,11 @@ async function calculateCostPreview() {
 // Throttled cost calculation
 let costCalculationTimeout = null;
 function throttledCalculateCost() {
+  console.log("🔧 throttledCalculateCost called from cost-calculator.js");
   clearTimeout(costCalculationTimeout);
   costCalculationTimeout = setTimeout(calculateCostPreview, 500);
 }
 
-// Functions are available in global scope
+// Export functions to global scope
+window.calculateCostPreview = calculateCostPreview;
+window.throttledCalculateCost = throttledCalculateCost;

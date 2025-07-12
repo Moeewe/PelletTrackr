@@ -17,8 +17,8 @@
     border: 2px solid #000;
     border-radius: 0;
     padding: 16px 20px;
-    min-width: 320px;
-    max-width: 450px;
+    min-width: 300px;
+    max-width: 400px;
     box-shadow: none;
     font-size: 14px;
     font-weight: 500;
@@ -71,9 +71,7 @@
 
 .toast-message {
     flex: 1;
-    line-height: 1.5;
-    white-space: pre-line;
-    word-wrap: break-word;
+    line-height: 1.4;
 }
 
 .toast-close {
