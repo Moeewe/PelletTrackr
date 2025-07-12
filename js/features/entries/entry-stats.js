@@ -55,16 +55,6 @@ async function loadUserEntries() {
     
     renderUserEntries(entries);
     
-    // Initialize advanced filters after entries are loaded
-    if (typeof initializeAdvancedFilters === 'function') {
-      initializeAdvancedFilters();
-    }
-    
-    // Trigger entriesLoaded event for any listeners
-    if (typeof window.dispatchEvent === 'function') {
-      window.dispatchEvent(new CustomEvent('entriesLoaded', { detail: { entries } }));
-    }
-    
   } catch (error) {
     console.error("Fehler beim Laden der User-Drucke:", error);
     document.getElementById("userEntriesTable").innerHTML = '<p>Fehler beim Laden der Drucke.</p>';
@@ -234,16 +224,6 @@ async function loadAllEntries() {
     window.allAdminEntries = entries;
     
     renderAdminEntries(entries);
-    
-    // Initialize advanced filters after entries are loaded
-    if (typeof initializeAdvancedFilters === 'function') {
-      initializeAdvancedFilters();
-    }
-    
-    // Trigger entriesLoaded event for any listeners
-    if (typeof window.dispatchEvent === 'function') {
-      window.dispatchEvent(new CustomEvent('entriesLoaded', { detail: { entries } }));
-    }
     
   } catch (error) {
     console.error('Fehler beim Laden der Admin-Drucke:', error);

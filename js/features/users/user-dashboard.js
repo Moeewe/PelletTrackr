@@ -57,17 +57,17 @@ function updatePrinterStatusCard(printers) {
         totalElement.textContent = statusCounts.total;
     }
     
-    // Update status dots with data-count attributes
-    const statusDots = {
-        available: document.querySelector('.status-dot.status-available'),
-        printing: document.querySelector('.status-dot.status-printing'),
-        maintenance: document.querySelector('.status-dot.status-maintenance'),
-        broken: document.querySelector('.status-dot.status-broken')
+    // Update status counts
+    const statusElements = {
+        available: document.querySelector('.status-dot.status-available').parentElement.querySelector('.status-count'),
+        printing: document.querySelector('.status-dot.status-printing').parentElement.querySelector('.status-count'),
+        maintenance: document.querySelector('.status-dot.status-maintenance').parentElement.querySelector('.status-count'),
+        broken: document.querySelector('.status-dot.status-broken').parentElement.querySelector('.status-count')
     };
     
-    Object.keys(statusDots).forEach(status => {
-        if (statusDots[status]) {
-            statusDots[status].setAttribute('data-count', statusCounts[status]);
+    Object.keys(statusElements).forEach(status => {
+        if (statusElements[status]) {
+            statusElements[status].textContent = statusCounts[status];
         }
     });
 }

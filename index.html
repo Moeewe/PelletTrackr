@@ -228,19 +228,23 @@
                         <div class="stat-label">Drucker</div>
                         <div class="status-indicators">
                             <div class="status-indicator">
-                                <span class="status-dot status-available" data-count="1"></span>
+                                <span class="status-dot status-available"></span>
+                                <span class="status-count">1</span>
                                 <span class="status-label">Verfügbar</span>
                             </div>
                             <div class="status-indicator">
-                                <span class="status-dot status-printing" data-count="0"></span>
+                                <span class="status-dot status-printing"></span>
+                                <span class="status-count">0</span>
                                 <span class="status-label">In Betrieb</span>
                             </div>
                             <div class="status-indicator">
-                                <span class="status-dot status-maintenance" data-count="0"></span>
+                                <span class="status-dot status-maintenance"></span>
+                                <span class="status-count">0</span>
                                 <span class="status-label">Wartung</span>
                             </div>
                             <div class="status-indicator">
-                                <span class="status-dot status-broken" data-count="0"></span>
+                                <span class="status-dot status-broken"></span>
+                                <span class="status-count">0</span>
                                 <span class="status-label">Defekt</span>
                             </div>
                         </div>
@@ -248,40 +252,21 @@
 
                     <!-- Termin buchen -->
                     <div class="stat-card clickable" onclick="showUserReservationForm()">
-                        <div class="service-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                                <line x1="16" y1="2" x2="16" y2="6"/>
-                                <line x1="8" y1="2" x2="8" y2="6"/>
-                                <line x1="3" y1="10" x2="21" y2="10"/>
-                            </svg>
-                        </div>
+                        <div class="stat-number">T</div>
                         <div class="stat-label">Termine</div>
                         <div class="stat-description">Drucker reservieren</div>
                     </div>
 
                     <!-- Equipment ausleihen -->
                     <div class="stat-card clickable" onclick="showUserEquipmentRequest()">
-                        <div class="service-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-                                <polyline points="3.27,6.96 12,12.01 20.73,6.96"/>
-                                <line x1="12" y1="22.08" x2="12" y2="12"/>
-                            </svg>
-                        </div>
+                        <div class="stat-number">E</div>
                         <div class="stat-label">Leihe</div>
                         <div class="stat-description">Equipment anfragen</div>
                     </div>
 
                     <!-- Problem melden -->
                     <div class="stat-card clickable" onclick="showProblemReportForm()">
-                        <div class="service-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"/>
-                                <line x1="12" y1="8" x2="12" y2="12"/>
-                                <line x1="12" y1="16" x2="12.01" y2="16"/>
-                            </svg>
-                        </div>
+                        <div class="stat-number">!</div>
                         <div class="stat-label">Problem</div>
                         <div class="stat-description">Defekte melden</div>
                     </div>
@@ -382,89 +367,19 @@
             <!-- All Entries Table -->
             <div class="entries-section">
                 <h2 class="section-title">Alle Drucke</h2>
-                
-                <!-- Enhanced Admin Search & Filter Controls -->
-                <div class="advanced-search-controls">
-                    <!-- Main Search Bar -->
-                    <div class="search-bar">
-                        <input type="text" id="adminSearchInput" placeholder="Suchen nach Name, Material, Job-Name..." class="search-input" onkeyup="performAdvancedAdminSearch()">
-                        <button class="search-clear-btn" onclick="clearAdminSearch()" title="Suche löschen">×</button>
-                    </div>
-                    
-                    <!-- Quick Filters -->
-                    <div class="quick-filters">
-                        <button class="filter-btn" data-filter="all" onclick="setAdminQuickFilter('all')">Alle</button>
-                        <button class="filter-btn" data-filter="unpaid" onclick="setAdminQuickFilter('unpaid')">Unbezahlt</button>
-                        <button class="filter-btn" data-filter="paid" onclick="setAdminQuickFilter('paid')">Bezahlt</button>
-                        <button class="filter-btn" data-filter="today" onclick="setAdminQuickFilter('today')">Heute</button>
-                        <button class="filter-btn" data-filter="high-value" onclick="setAdminQuickFilter('high-value')">Hohe Kosten</button>
-                    </div>
-                    
-                    <!-- Advanced Filters (Collapsible) -->
-                    <div class="advanced-filters" id="adminAdvancedFilters">
-                        <button class="advanced-toggle" onclick="toggleAdminAdvancedFilters()">
-                            <span>Erweiterte Filter</span>
-                            <span class="toggle-arrow">▼</span>
-                        </button>
-                        
-                        <div class="filters-panel" id="adminFiltersPanel">
-                            <div class="filter-row">
-                                <div class="filter-group">
-                                    <label>Nutzer:</label>
-                                    <select id="adminUserFilter" onchange="performAdvancedAdminSearch()">
-                                        <option value="">Alle Nutzer</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="filter-group">
-                                    <label>Material:</label>
-                                    <select id="adminMaterialFilter" onchange="performAdvancedAdminSearch()">
-                                        <option value="">Alle Materialien</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="filter-group">
-                                    <label>Status:</label>
-                                    <select id="adminStatusFilter" onchange="performAdvancedAdminSearch()">
-                                        <option value="">Alle Status</option>
-                                        <option value="paid">Bezahlt</option>
-                                        <option value="unpaid">Unbezahlt</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="filter-group">
-                                    <label>Zeitraum:</label>
-                                    <select id="adminDateFilter" onchange="performAdvancedAdminSearch()">
-                                        <option value="">Alle Zeiten</option>
-                                        <option value="today">Heute</option>
-                                        <option value="week">Letzte Woche</option>
-                                        <option value="month">Letzter Monat</option>
-                                        <option value="quarter">Letzte 3 Monate</option>
-                                        <option value="year">Letztes Jahr</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <div class="filter-actions">
-                                <button class="btn btn-secondary btn-small" onclick="resetAdminFilters()">Filter zurücksetzen</button>
-                                <span class="results-counter" id="adminResultsCounter"></span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Legacy Sort Select (kept for compatibility) -->
-                    <div class="legacy-sort">
-                        <select id="adminSortSelect" class="sort-select" onchange="sortAdminEntries()">
-                            <option value="date-desc">Datum (neueste zuerst)</option>
-                            <option value="date-asc">Datum (älteste zuerst)</option>
-                            <option value="name-asc">Name (A-Z)</option>
-                            <option value="name-desc">Name (Z-A)</option>
-                            <option value="cost-desc">Kosten (höchste zuerst)</option>
-                            <option value="cost-asc">Kosten (niedrigste zuerst)</option>
-                        </select>
-                    </div>
+                <div class="table-controls">
+                    <input type="text" id="adminSearchInput" placeholder="Suchen nach Name, FH-Kennung, Material..." class="search-input" onkeyup="searchAdminEntries()">
+                    <select id="adminSortSelect" class="sort-select" onchange="sortAdminEntries()">
+                        <option value="date-desc">Datum (neueste zuerst)</option>
+                        <option value="date-asc">Datum (älteste zuerst)</option>
+                        <option value="name-asc">Name (A-Z)</option>
+                        <option value="name-desc">Name (Z-A)</option>
+                        <option value="cost-desc">Kosten (höchste zuerst)</option>
+                        <option value="cost-asc">Kosten (niedrigste zuerst)</option>
+                        <option value="status-paid">Nur bezahlt</option>
+                        <option value="status-unpaid">Nur unbezahlt</option>
+                    </select>
                 </div>
-                
                 <div class="admin-entries-container">
                     <div id="adminEntriesTable" class="data-table data-table-responsive"></div>
                 </div>
