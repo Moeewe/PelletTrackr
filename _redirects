@@ -1,0 +1,15 @@
+# Netlify Redirects für PelletTrackr SPA
+# SPA Fallback - alle nicht gefundenen Pfade zu index.html umleiten
+/*    /index.html   200
+
+# Impressum und Datenschutz direkt erreichbar
+/impressum    /impressum.html   200
+/datenschutz  /datenschutz.html 200
+
+# API-ähnliche Pfade zu Firebase weiterleiten (falls verwendet)
+/api/*  https://fgf-3d-druck.firebaseapp.com/api/:splat  200
+
+# Asset-Optimierung
+/js/*     /js/:splat     200
+/styles/* /styles/:splat 200
+/assets/* /assets/:splat 200 
