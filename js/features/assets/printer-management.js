@@ -102,8 +102,27 @@ async function loadPrinters() {
  * Show printer manager modal
  */
 function showPrinterManager() {
-    document.getElementById('overlay').style.display = 'block';
-    document.getElementById('printerManagerModal').style.display = 'block';
+    const modalContent = `
+        <div class="modal-header">
+            <h3>Drucker-Verwaltung</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="printerManagerContent">
+                <div class="modal-controls">
+                    <button class="btn btn-primary" onclick="showAddPrinterForm()">
+                        Neuer Drucker
+                    </button>
+                </div>
+                
+                <div class="printer-grid" id="printerGrid">
+                    <div class="loading">Drucker werden geladen...</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    showModalWithContent(modalContent);
     
     // Setup real-time listener
     setupPrintersListener();

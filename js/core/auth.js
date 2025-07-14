@@ -46,8 +46,8 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
       
       const userChoice = await toast.confirm(
         confirmMessage,
-        `Als "${userResult.existingName}" anmelden`,
-        'Andere Kennung verwenden'
+        'Anmelden',
+        'Zurück'
       );
       
       if (userChoice) {

@@ -726,3 +726,88 @@
 .modal.active ~ .modal.active {
   display: none !important;
 }
+
+/* ==================== PAYMENT REQUESTS STYLING ==================== */
+
+.payment-requests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.payment-request-item {
+  background: #f8f8f8;
+  border: 1px solid #e0e0e0;
+  padding: 16px;
+  border-radius: 0;
+}
+
+.request-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 8px;
+}
+
+.request-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.request-amount {
+  font-size: 18px;
+  font-weight: bold;
+  color: #000;
+  background: #ffeb00;
+  padding: 4px 8px;
+  border: 1px solid #000;
+}
+
+.request-details {
+  margin-bottom: 16px;
+}
+
+.request-details p {
+  margin: 4px 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.request-details strong {
+  color: #333;
+}
+
+.request-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.request-actions .btn {
+  min-width: 120px;
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .request-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .request-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .request-actions .btn {
+    width: 100%;
+  }
+}

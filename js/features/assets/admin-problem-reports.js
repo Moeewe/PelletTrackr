@@ -11,37 +11,27 @@ let equipmentRequests = [];
  * Show problem reports modal
  */
 function showProblemReports() {
-    document.getElementById('overlay').style.display = 'block';
-    
-    // Create modal dynamically
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'block';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Problem-Meldungen</h3>
-                <button class="modal-close" onclick="closeProblemReports()">&times;</button>
+    const modalContent = `
+        <div class="modal-header">
+            <h3>Problem-Meldungen</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="table-controls">
+                <select id="problemStatusFilter" class="sort-select" onchange="filterProblemReports()">
+                    <option value="all">Alle anzeigen</option>
+                    <option value="open">Offen</option>
+                    <option value="in_progress">In Bearbeitung</option>
+                    <option value="resolved">Gelöst</option>
+                </select>
             </div>
-            <div class="modal-body">
-                <div class="table-controls">
-                    <select id="problemStatusFilter" class="sort-select" onchange="filterProblemReports()">
-                        <option value="all">Alle anzeigen</option>
-                        <option value="open">Offen</option>
-                        <option value="in_progress">In Bearbeitung</option>
-                        <option value="resolved">Gelöst</option>
-                    </select>
-                </div>
-                <div id="problemReportsList" class="problem-reports-container">
-                    <!-- Problem reports will be loaded here -->
-                </div>
+            <div id="problemReportsList" class="problem-reports-container">
+                <!-- Problem reports will be loaded here -->
             </div>
         </div>
     `;
     
-    document.body.appendChild(modal);
-    modal.id = 'problemReportsModal';
-    
+    showModalWithContent(modalContent);
     loadProblemReports();
 }
 
@@ -49,11 +39,7 @@ function showProblemReports() {
  * Close problem reports modal
  */
 function closeProblemReports() {
-    document.getElementById('overlay').style.display = 'none';
-    const modal = document.getElementById('problemReportsModal');
-    if (modal) {
-        modal.remove();
-    }
+    closeModal();
 }
 
 /**

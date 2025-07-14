@@ -119,8 +119,19 @@ async function submitMaterialRequest() {
  * Show material orders modal
  */
 function showMaterialOrders() {
-    document.getElementById('overlay').style.display = 'block';
-    document.getElementById('materialOrdersModal').style.display = 'block';
+    const modalContent = `
+        <div class="modal-header">
+            <h3>Material-Bestellungen</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="materialOrdersContent">
+                <div class="loading">Material-Bestellungen werden geladen...</div>
+            </div>
+        </div>
+    `;
+    
+    showModalWithContent(modalContent);
     
     // Setup real-time listener
     setupMaterialOrdersListener();

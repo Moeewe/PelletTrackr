@@ -10,7 +10,8 @@ const BUTTON_TYPES = {
   WARNING: 'btn-warning',     // Gelb - Warnungen (Mahnung, Nachweis wenn unbezahlt)
   DANGER: 'btn-danger',       // Harmonisches Orange-Rot - Gefährliche Aktionen (Löschen)
   UNDO: 'btn-undo',          // Harmonisches Grau - Rückgängig-Aktionen
-  NACHWEIS: 'btn-nachweis'    // Gelb - Spezial für Nachweis-Buttons
+  NACHWEIS: 'btn-nachweis',   // Gelb - Spezial für Nachweis-Buttons
+  PAYMENT_REQUEST: 'btn-payment-request' // Grau - Zahlungsanfrage
 };
 
 // Button-Aktionen Mapping für konsistente Verwendung
@@ -41,6 +42,9 @@ const BUTTON_ACTIONS = {
   // Warnungs-Aktionen (gelb)
   REMINDER: { type: BUTTON_TYPES.WARNING, text: 'Mahnung' },
   NACHWEIS_UNPAID: { type: BUTTON_TYPES.NACHWEIS, text: 'Nachweis' },
+  
+  // Zahlungsanfrage (grau)
+  PAYMENT_REQUEST: { type: BUTTON_TYPES.PAYMENT_REQUEST, text: 'Zahlung anweisen' },
   
   // Gefährliche Aktionen (rot)
   DELETE: { type: BUTTON_TYPES.DANGER, text: 'Löschen' },
@@ -86,9 +90,9 @@ const ButtonFactory = {
     if (isPaid) {
       return createButton('NACHWEIS_PAID', `showPaymentProof('${entryId}')`);
     } else {
-      return createButton('NACHWEIS_UNPAID', `showPaymentProof('${entryId}')`, {
-        disabled: true,
-        title: 'Nachweis nach Zahlung verfügbar'
+      return createButton('PAYMENT_REQUEST', `requestPayment('${entryId}')`, {
+        title: 'Zahlungsanfrage an Admin senden',
+        id: `payment-request-btn-${entryId}`
       });
     }
   },
