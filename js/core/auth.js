@@ -8,7 +8,7 @@ function showAdminLogin() {
   if (passwordGroup.style.display === 'none' || passwordGroup.style.display === '') {
     // Passwort-Feld anzeigen
     passwordGroup.style.display = 'block';
-    adminBtn.textContent = 'Admin Login';
+    adminBtn.textContent = 'Admin anmelden';
     adminBtn.onclick = loginAsAdmin;
   } else {
     // Passwort-Feld verstecken

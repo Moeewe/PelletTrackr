@@ -767,63 +767,61 @@ async function updateUser(oldKennung) {
 function showAddUserDialog() {
   if (!window.checkAdminAccess()) return;
   
-  // WICHTIG: Erst userManager Modal schließen
-  closeUserManager();
-  
-  // Kurze Verzögerung damit das erste Modal geschlossen wird
-  setTimeout(() => {
-    const modalHtml = `
-      <div class="modal-header">
-        <h2>Neuen Benutzer Hinzufügen</h2>
-        <button class="close-btn" onclick="closeModal()">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="card">
-          <div class="card-body">
-            <div class="form-group">
-              <label class="form-label">Vollständiger Name</label>
-              <input type="text" id="newUserName" class="form-input" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">FH-Kennung</label>
-              <input type="text" id="newUserKennung" class="form-input" required>
-              <div id="kennungCheck" style="margin-top: 8px;"></div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">E-Mail Adresse</label>
-              <input type="email" id="newUserEmail" class="form-input">
-              <small>Optional - Standard: kennung@fh-muenster.de</small>
-            </div>
+  const modalHtml = `
+    <div class="modal-header">
+      <h3>Neuen Benutzer hinzufügen</h3>
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="card">
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Name</label>
+            <input type="text" id="newUserName" class="form-input" placeholder="Vorname Nachname" required>
           </div>
-          <div class="card-footer">
-            ${ButtonFactory.primary('BENUTZER HINZUFÜGEN', 'createNewUser()')}
-            ${ButtonFactory.cancelModal()}
+          <div class="form-group">
+            <label class="form-label">FH-Kennung</label>
+            <input type="text" id="newUserKennung" class="form-input" placeholder="z.B. mw123456" required>
+            <small class="form-hint">Ohne @fh-muenster.de</small>
+          </div>
+          <div class="form-group">
+            <label class="form-label">E-Mail-Adresse</label>
+            <input type="email" id="newUserEmail" class="form-input" placeholder="wird automatisch ausgefüllt">
+            <small class="form-hint">Standard: kennung@fh-muenster.de</small>
           </div>
         </div>
+        <div class="card-footer">
+          <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+          <button class="btn btn-primary" onclick="createNewUser()">Hinzufügen</button>
+        </div>
       </div>
-    `;
+    </div>
+  `;
+  
+  window.showModal(modalHtml);
+  
+  // Auto-generate email when kennung changes - mit verbesserter Logik
+  setTimeout(() => {
+    const kennungInput = document.getElementById('newUserKennung');
+    const emailInput = document.getElementById('newUserEmail');
     
-    window.showModal(modalHtml);
-    
-    // Event Listener für Kennung-Validierung und Auto-Email-Generierung
-    document.getElementById('newUserKennung').addEventListener('input', function() {
-      const kennung = this.value.trim().toLowerCase();
-      const checkDiv = document.getElementById('kennungCheck');
-      const emailField = document.getElementById('newUserEmail');
+    if (kennungInput && emailInput) {
+      kennungInput.addEventListener('input', function() {
+        const kennung = this.value.trim().toLowerCase();
+        // E-Mail immer aktualisieren, wenn sich die Kennung ändert
+        if (kennung) {
+          emailInput.value = `${kennung}@fh-muenster.de`;
+        } else {
+          emailInput.value = '';
+        }
+      });
       
-      // Auto-generate email when kennung changes
-      if (kennung && !emailField.value) {
-        emailField.value = `${kennung}@fh-muenster.de`;
+      // Initial-Generierung falls bereits Text vorhanden ist
+      const initialKennung = kennungInput.value.trim().toLowerCase();
+      if (initialKennung && !emailInput.value) {
+        emailInput.value = `${initialKennung}@fh-muenster.de`;
       }
-      
-      if (kennung && window.allUsers && window.allUsers.find(u => u.kennung === kennung)) {
-        checkDiv.innerHTML = '<span style="color: #dc3545;">Diese Kennung existiert bereits!</span>';
-      } else if (kennung) {
-        checkDiv.innerHTML = '<span style="color: #28a745;">✅ Kennung verfügbar</span>';
-      } else {
-        checkDiv.innerHTML = '';
-      }
-    });
+    }
   }, 100);
 }
 
