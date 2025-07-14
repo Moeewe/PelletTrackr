@@ -163,7 +163,7 @@
   padding: 14px 20px;
   font-size: 15px;
   font-weight: 600;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.5px;
   margin: 0;
 }
@@ -434,7 +434,7 @@
   padding: 16px 24px;
   font-size: 16px;
   font-weight: 600;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.5px;
 }
 
