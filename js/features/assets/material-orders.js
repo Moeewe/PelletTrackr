@@ -276,7 +276,7 @@ function renderTabContent(tab) {
         case 'shopping':
             renderShoppingList();
             break;
-        case 'orders':
+        case 'history':
             renderOrderHistory();
             break;
     }
@@ -350,13 +350,13 @@ function renderOrderRequests() {
                     </div>
                     <div class="request-actions">
                         <button class="btn btn-success btn-small" onclick="approveOrderRequest('${request.id}')">
-                            ✅ Genehmigen
+                            Genehmigen
                         </button>
                         <button class="btn btn-warning btn-small" onclick="rejectOrderRequest('${request.id}')">
-                            ❌ Ablehnen
+                            Ablehnen
                         </button>
                         <button class="btn btn-danger btn-small" onclick="deleteOrderRequest('${request.id}')">
-                            🗑️ Löschen
+                            Löschen
                         </button>
                     </div>
                 </div>
@@ -395,7 +395,7 @@ function getStatusText(status) {
  * Render shopping list (approved items to purchase)
  */
 function renderShoppingList() {
-    const container = document.getElementById('shoppingList');
+    const container = document.getElementById('shoppingListContent');
     const shoppingItems = materialOrders.filter(order => order.status === 'approved');
     
     if (shoppingItems.length === 0) {
@@ -432,7 +432,7 @@ function renderShoppingList() {
  * Render order history (purchased items)
  */
 function renderOrderHistory() {
-    const container = document.getElementById('orderHistory');
+    const container = document.getElementById('orderHistoryContent');
     const orders = materialOrders.filter(order => order.status === 'purchased');
     
     if (orders.length === 0) {

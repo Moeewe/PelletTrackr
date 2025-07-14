@@ -12,62 +12,57 @@ let materialOrdersListener = null;
  * Show material request form for users
  */
 function showMaterialRequestForm() {
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'block';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Material anfragen</h3>
-                <button class="modal-close" onclick="closeMaterialRequestForm()">&times;</button>
+    const modalContent = `
+        <div class="modal-header">
+            <h3>Material anfragen</h3>
+            <button class="close-btn" onclick="closeMaterialRequestForm()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="card">
+                <div class="card-body">
+                    <form id="materialRequestForm" class="form">
+                        <div class="form-group">
+                            <label class="form-label">Material/Filament</label>
+                            <input type="text" id="requestMaterialName" class="form-input" placeholder="z.B. PLA Schwarz, PETG Transparent, TPU Flexibel...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Hersteller (optional)</label>
+                            <input type="text" id="requestManufacturer" class="form-input" placeholder="z.B. Prusament, eSUN, Polymaker...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Begründung</label>
+                            <textarea id="requestReason" class="form-textarea" placeholder="Warum benötigen Sie dieses Material? Für welches Projekt?" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Ungefähre Menge</label>
+                            <input type="text" id="requestQuantity" class="form-input" placeholder="z.B. 1kg, 500g, 2 Spulen...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Dringlichkeit</label>
+                            <select id="requestPriority" class="form-select">
+                                <option value="low">Niedrig - kein Zeitdruck</option>
+                                <option value="medium">Mittel - in den nächsten Wochen</option>
+                                <option value="high">Hoch - dringend benötigt</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div class="modal-body">
-                <form id="materialRequestForm" class="form">
-                    <div class="form-group">
-                        <label class="form-label">Material/Filament</label>
-                        <input type="text" id="requestMaterialName" class="form-input" placeholder="z.B. PLA Schwarz, PETG Transparent, TPU Flexibel...">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Hersteller (optional)</label>
-                        <input type="text" id="requestManufacturer" class="form-input" placeholder="z.B. Prusament, eSUN, Polymaker...">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Begründung</label>
-                        <textarea id="requestReason" class="form-textarea" placeholder="Warum benötigen Sie dieses Material? Für welches Projekt?" rows="3"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Ungefähre Menge</label>
-                        <input type="text" id="requestQuantity" class="form-input" placeholder="z.B. 1kg, 500g, 2 Spulen...">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Dringlichkeit</label>
-                        <select id="requestPriority" class="form-select">
-                            <option value="low">Niedrig - kein Zeitdruck</option>
-                            <option value="medium">Mittel - in den nächsten Wochen</option>
-                            <option value="high">Hoch - dringend benötigt</option>
-                        </select>
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeMaterialRequestForm()">Abbrechen</button>
-                        <button type="button" class="btn btn-primary" onclick="submitMaterialRequest()">Anfrage senden</button>
-                    </div>
-                </form>
-            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" onclick="submitMaterialRequest()">Anfrage senden</button>
+            <button type="button" class="btn btn-secondary" onclick="closeMaterialRequestForm()">Abbrechen</button>
         </div>
     `;
     
-    document.body.appendChild(modal);
-    modal.id = 'materialRequestModal';
+    showModalWithContent(modalContent);
 }
 
 /**
  * Close material request form
  */
 function closeMaterialRequestForm() {
-    const modal = document.getElementById('materialRequestModal');
-    if (modal) {
-        modal.remove();
-    }
+    closeModal();
 }
 
 /**
@@ -119,8 +114,47 @@ async function submitMaterialRequest() {
  * Show material orders modal
  */
 function showMaterialOrders() {
-    document.getElementById('overlay').style.display = 'block';
-    document.getElementById('materialOrdersModal').style.display = 'block';
+    const modalContent = `
+        <div class="modal-header">
+            <h3>Material-Bestellungen verwalten</h3>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="card">
+                <div class="card-body">
+                    <div class="order-tabs">
+                        <button class="tab-btn active" onclick="showOrderTab('requests')">Anfragen</button>
+                        <button class="tab-btn" onclick="showOrderTab('shopping')">Einkaufsliste</button>
+                        <button class="tab-btn" onclick="showOrderTab('history')">Verlauf</button>
+                    </div>
+                    
+                    <div id="requests" class="tab-content active">
+                        <div id="orderRequestsContent">
+                            <div class="loading">Bestellanfragen werden geladen...</div>
+                        </div>
+                    </div>
+                    
+                    <div id="shopping" class="tab-content">
+                        <div id="shoppingListContent">
+                            <div class="loading">Einkaufsliste wird geladen...</div>
+                        </div>
+                    </div>
+                    
+                    <div id="history" class="tab-content">
+                        <div id="orderHistoryContent">
+                            <div class="loading">Bestellverlauf wird geladen...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" onclick="showMaterialRequestForm()">Material anfragen</button>
+            <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
+        </div>
+    `;
+    
+    showModalWithContent(modalContent);
     
     // Setup real-time listener
     setupMaterialOrdersListener();
@@ -159,7 +193,13 @@ function setupMaterialOrdersListener() {
         });
         
         console.log('Live update: Loaded material orders:', materialOrders.length);
-        showOrderTab(currentOrderTab);
+        
+        // Update current tab display if modal is open
+        const tabContent = document.querySelector('.tab-content.active');
+        if (tabContent) {
+            showOrderTab(currentOrderTab);
+        }
+        
     }, (error) => {
         console.error('Error in material orders listener:', error);
         showToast('Fehler beim Live-Update der Bestellungen', 'error');
@@ -197,49 +237,32 @@ async function loadMaterialOrders() {
 function showOrderTab(tab) {
     currentOrderTab = tab;
     
-    // Update tab buttons - search within material orders modal only
-    const materialOrdersModal = document.getElementById('materialOrdersModal');
-    if (materialOrdersModal) {
-        materialOrdersModal.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        
-        // Find the clicked tab button or set first one as active
-        const clickedBtn = event?.target;
-        if (clickedBtn && clickedBtn.classList.contains('tab-btn')) {
-            clickedBtn.classList.add('active');
-        } else {
-            // Set the tab for the current content as active
-            const activeTab = materialOrdersModal.querySelector(`.tab-btn[onclick*="${tab}"]`);
-            if (activeTab) {
-                activeTab.classList.add('active');
-            }
-        }
-        
-        // Hide all tab content
-        materialOrdersModal.querySelectorAll('.order-tab-content').forEach(content => {
-            content.classList.remove('active');
-        });
-        
-        // Show selected tab
-        const tabContent = document.getElementById(getTabContentId(tab));
-        if (tabContent) {
-            tabContent.classList.add('active');
-            renderTabContent(tab);
-        }
+    // Update tab buttons - use correct selector for material orders
+    const tabButtons = document.querySelectorAll('.order-tabs .tab-btn');
+    tabButtons.forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Set the correct tab as active based on tab parameter
+    const activeTab = document.querySelector(`.order-tabs .tab-btn[onclick*="${tab}"]`);
+    if (activeTab) {
+        activeTab.classList.add('active');
     }
-}
-
-/**
- * Get tab content element ID
- */
-function getTabContentId(tab) {
-    const tabMap = {
-        'requests': 'orderRequests',
-        'shopping': 'shoppingList', 
-        'orders': 'orderHistory'
-    };
-    return tabMap[tab];
+    
+    // Hide all tab content
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabContents.forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    // Show selected tab content
+    const selectedContent = document.getElementById(tab);
+    if (selectedContent) {
+        selectedContent.classList.add('active');
+    }
+    
+    // Render the appropriate content
+    renderTabContent(tab);
 }
 
 /**
@@ -253,7 +276,7 @@ function renderTabContent(tab) {
         case 'shopping':
             renderShoppingList();
             break;
-        case 'orders':
+        case 'history':
             renderOrderHistory();
             break;
     }
@@ -292,46 +315,54 @@ function updateTabCounters() {
 }
 
 /**
- * Render order requests from users
+ * Render order requests tab
  */
 function renderOrderRequests() {
-    const container = document.getElementById('orderRequests');
-    const requests = materialOrders.filter(order => order.type === 'request');
+    const requests = materialOrders.filter(order => order.type === 'request' && order.status === 'pending');
+    const container = document.getElementById('orderRequestsContent');
+    
+    if (!container) return;
     
     if (requests.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <p>Keine Bestellanfragen vorhanden.</p>
+                <p>Keine offenen Materialanfragen vorhanden.</p>
+                <p>Nutzer können über den "Material anfragen" Button neue Anfragen erstellen.</p>
             </div>
         `;
         return;
     }
     
-    container.innerHTML = requests.map(request => `
-        <div class="order-request ${request.status || 'pending'}">
-            <div class="order-header">
-                <div class="order-user">${request.userName || 'Unbekannter User'}</div>
-                <div class="order-date">${request.createdAt ? request.createdAt.toLocaleDateString() : 'Unbekanntes Datum'}</div>
-            </div>
-            <div class="order-material">${request.materialName || 'Unbekanntes Material'}</div>
-            ${request.manufacturer ? `<div class="order-manufacturer">Hersteller: ${request.manufacturer}</div>` : ''}
-            ${request.quantity ? `<div class="order-quantity">Menge: ${request.quantity}</div>` : ''}
-            <div class="order-reason">"${request.reason || 'Kein Grund angegeben'}"</div>
-            <div class="order-priority">Dringlichkeit: ${getPriorityText(request.priority)}</div>
-            ${request.status === 'pending' ? `
-                <div class="order-actions">
-                    <button class="btn btn-success" onclick="approveOrderRequest('${request.id}')">Genehmigen</button>
-                    <button class="btn btn-danger" onclick="rejectOrderRequest('${request.id}')">Ablehnen</button>
-                    <button class="btn btn-secondary" onclick="deleteOrderRequest('${request.id}')">Löschen</button>
+    container.innerHTML = `
+        <div class="requests-list">
+            ${requests.map(request => `
+                <div class="request-item">
+                    <div class="request-header">
+                        <h4>${request.materialName}</h4>
+                        <span class="priority-badge priority-${request.priority}">${getPriorityText(request.priority)}</span>
+                    </div>
+                    <div class="request-details">
+                        <p><strong>Nutzer:</strong> ${request.userName} (${request.userKennung})</p>
+                        ${request.manufacturer ? `<p><strong>Hersteller:</strong> ${request.manufacturer}</p>` : ''}
+                        ${request.quantity ? `<p><strong>Menge:</strong> ${request.quantity}</p>` : ''}
+                        <p><strong>Begründung:</strong> ${request.reason}</p>
+                        <p><strong>Angefragt:</strong> ${request.createdAt ? request.createdAt.toLocaleString() : 'Unbekannt'}</p>
+                    </div>
+                    <div class="request-actions">
+                        <button class="btn btn-success btn-small" onclick="approveOrderRequest('${request.id}')">
+                            Genehmigen
+                        </button>
+                        <button class="btn btn-warning btn-small" onclick="rejectOrderRequest('${request.id}')">
+                            Ablehnen
+                        </button>
+                        <button class="btn btn-danger btn-small" onclick="deleteOrderRequest('${request.id}')">
+                            Löschen
+                        </button>
+                    </div>
                 </div>
-            ` : `
-                <div class="order-status">Status: ${getStatusText(request.status)}</div>
-                <div class="order-actions">
-                    <button class="btn btn-danger" onclick="deleteOrderRequest('${request.id}')">Löschen</button>
-                </div>
-            `}
+            `).join('')}
         </div>
-    `).join('');
+    `;
 }
 
 /**
@@ -364,7 +395,7 @@ function getStatusText(status) {
  * Render shopping list (approved items to purchase)
  */
 function renderShoppingList() {
-    const container = document.getElementById('shoppingList');
+    const container = document.getElementById('shoppingListContent');
     const shoppingItems = materialOrders.filter(order => order.status === 'approved');
     
     if (shoppingItems.length === 0) {
@@ -401,7 +432,7 @@ function renderShoppingList() {
  * Render order history (purchased items)
  */
 function renderOrderHistory() {
-    const container = document.getElementById('orderHistory');
+    const container = document.getElementById('orderHistoryContent');
     const orders = materialOrders.filter(order => order.status === 'purchased');
     
     if (orders.length === 0) {
@@ -428,22 +459,34 @@ function renderOrderHistory() {
 }
 
 /**
- * Approve order request
+ * Approve order request and move to shopping list
  */
 async function approveOrderRequest(requestId) {
     try {
+        // Show immediate visual feedback
+        const button = event.target;
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Wird genehmigt...';
+        
         await window.db.collection('materialOrders').doc(requestId).update({
             status: 'approved',
             approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            approvedBy: window.currentUser?.name || 'Admin'
         });
         
         showToast('Anfrage genehmigt und zur Einkaufsliste hinzugefügt', 'success');
-        // Real-time listener will automatically update the UI
+        // Real-time listener will handle the update automatically
         
     } catch (error) {
         console.error('Error approving request:', error);
         showToast('Fehler beim Genehmigen', 'error');
+        
+        // Reset button state on error
+        if (button) {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
     }
 }
 
@@ -451,40 +494,66 @@ async function approveOrderRequest(requestId) {
  * Reject order request
  */
 async function rejectOrderRequest(requestId) {
-    const reason = prompt('Grund für Ablehnung (optional):');
-    
-    try {
-        await window.db.collection('materialOrders').doc(requestId).update({
-            status: 'rejected',
-            rejectionReason: reason || '',
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        showToast('Anfrage abgelehnt', 'success');
-        // Real-time listener will automatically update the UI
-        
-    } catch (error) {
-        console.error('Error rejecting request:', error);
-        showToast('Fehler beim Ablehnen', 'error');
-    }
-}
-
-/**
- * Delete order request permanently
- */
-async function deleteOrderRequest(requestId) {
-    if (!confirm('Möchten Sie diese Bestellung wirklich dauerhaft löschen?')) {
+    if (!confirm('Möchten Sie diese Anfrage wirklich ablehnen?')) {
         return;
     }
     
     try {
+        // Show immediate visual feedback
+        const button = event.target;
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Wird abgelehnt...';
+        
+        await window.db.collection('materialOrders').doc(requestId).update({
+            status: 'rejected',
+            rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            rejectedBy: window.currentUser?.name || 'Admin'
+        });
+        
+        showToast('Anfrage abgelehnt', 'success');
+        // Real-time listener will handle the update automatically
+        
+    } catch (error) {
+        console.error('Error rejecting request:', error);
+        showToast('Fehler beim Ablehnen', 'error');
+        
+        // Reset button state on error
+        if (button) {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+    }
+}
+
+/**
+ * Delete order request  
+ */
+async function deleteOrderRequest(requestId) {
+    if (!confirm('Möchten Sie diese Bestellung wirklich löschen?')) {
+        return;
+    }
+    
+    try {
+        // Show immediate visual feedback
+        const button = event.target;
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Wird gelöscht...';
+        
         await window.db.collection('materialOrders').doc(requestId).delete();
         showToast('Bestellung erfolgreich gelöscht', 'success');
-        // Real-time listener will automatically update the UI
+        // Real-time listener will handle the update automatically
         
     } catch (error) {
         console.error('Error deleting request:', error);
         showToast('Fehler beim Löschen', 'error');
+        
+        // Reset button state on error
+        if (button) {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
     }
 }
 
