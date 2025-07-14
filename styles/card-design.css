@@ -1129,6 +1129,11 @@
     font-size: 14px;
 }
 
+.printer-actions .btn-small {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
 /* Form Actions */
 .form-actions {
     display: flex;
@@ -1227,6 +1232,11 @@
 
     .printer-actions .btn {
         width: 100%;
+        margin-bottom: 8px;
+    }
+    
+    .printer-actions .btn:last-child {
+        margin-bottom: 0;
     }
 
     .form-actions {

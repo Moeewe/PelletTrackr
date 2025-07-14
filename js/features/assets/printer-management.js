@@ -112,7 +112,6 @@ function showPrinterManager() {
                 <div class="card-body">
                     <div class="printer-controls">
                         <div class="control-row">
-                            <button class="btn btn-primary" onclick="showAddPrinterForm()">Neuen Drucker hinzufügen</button>
                             <div class="search-container">
                                 <input type="text" id="printerSearchInput" placeholder="Drucker suchen..." class="search-input" onkeyup="searchPrinters()">
                             </div>
@@ -205,16 +204,16 @@ function renderPrinterGrid() {
             </div>
             
             <div class="printer-actions">
-                <button class="btn btn-secondary" onclick="editPrinter('${printer.id}')">
+                <button class="btn btn-secondary btn-small" onclick="editPrinter('${printer.id}')">
                     Bearbeiten
                 </button>
-                <button class="btn btn-info" onclick="duplicatePrinter('${printer.id}')">
+                <button class="btn btn-info btn-small" onclick="duplicatePrinter('${printer.id}')">
                     Duplizieren
                 </button>
-                <button class="btn btn-primary" onclick="changePrinterStatus('${printer.id}')">
+                <button class="btn btn-primary btn-small" onclick="changePrinterStatus('${printer.id}')">
                     Status ändern
                 </button>
-                <button class="btn btn-danger" onclick="deletePrinter('${printer.id}')">
+                <button class="btn btn-danger btn-small" onclick="deletePrinter('${printer.id}')">
                     Löschen
                 </button>
             </div>
@@ -233,6 +232,89 @@ function getStatusText(status) {
         'broken': 'Defekt'
     };
     return statusMap[status] || status;
+}
+
+/**
+ * Search printers by name, model, or materials
+ */
+function searchPrinters() {
+    const searchInput = document.getElementById('printerSearchInput');
+    if (!searchInput) return;
+    
+    const searchTerm = searchInput.value.toLowerCase();
+    const filteredPrinters = printers.filter(printer => {
+        return (
+            (printer.name && printer.name.toLowerCase().includes(searchTerm)) ||
+            (printer.model && printer.model.toLowerCase().includes(searchTerm)) ||
+            (printer.materials && printer.materials.toLowerCase().includes(searchTerm)) ||
+            (printer.buildVolume && printer.buildVolume.toLowerCase().includes(searchTerm))
+        );
+    });
+    
+    renderFilteredPrinterGrid(filteredPrinters);
+}
+
+/**
+ * Render filtered printer grid
+ */
+function renderFilteredPrinterGrid(filteredPrinters) {
+    const grid = document.getElementById('printerGrid');
+    
+    if (filteredPrinters.length === 0) {
+        grid.innerHTML = `
+            <div class="empty-state">
+                <p>Keine Drucker gefunden.</p>
+                <button class="btn btn-secondary" onclick="document.getElementById('printerSearchInput').value = ''; searchPrinters();">
+                    Suche zurücksetzen
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    grid.innerHTML = filteredPrinters.map(printer => `
+        <div class="printer-card">
+            <div class="printer-header">
+                <div>
+                    <h4 class="printer-name">${printer.name}</h4>
+                    <p class="printer-model">${printer.model || 'Unbekanntes Modell'}</p>
+                </div>
+                <span class="printer-status ${printer.status}">${getStatusText(printer.status)}</span>
+            </div>
+            
+            <div class="printer-details">
+                <div class="printer-detail">
+                    <span class="printer-detail-label">Bauraum:</span>
+                    <span class="printer-detail-value">${printer.buildVolume || 'Nicht angegeben'}</span>
+                </div>
+                <div class="printer-detail">
+                    <span class="printer-detail-label">Materialien:</span>
+                    <span class="printer-detail-value">${printer.materials || 'Nicht angegeben'}</span>
+                </div>
+                ${printer.notes ? `
+                <div class="printer-detail">
+                    <span class="printer-detail-label">Notizen:</span>
+                    <span class="printer-detail-value">${printer.notes}</span>
+                </div>
+                ` : ''}
+            </div>
+            
+            <div class="printer-actions">
+                <button class="btn btn-secondary btn-small" onclick="editPrinter('${printer.id}')">
+                    Bearbeiten
+                </button>
+                <button class="btn btn-info btn-small" onclick="duplicatePrinter('${printer.id}')">
+                    Duplizieren
+                </button>
+                <button class="btn btn-primary btn-small" onclick="changePrinterStatus('${printer.id}')">
+                    Status ändern
+                </button>
+                <button class="btn btn-danger btn-small" onclick="deletePrinter('${printer.id}')">
+                    Löschen
+                </button>
+            </div>
+        </div>
+    `).join('');
 }
 
 /**
@@ -276,9 +358,61 @@ async function duplicatePrinter(printerId) {
  */
 function showAddPrinterForm() {
     currentEditingPrinter = null;
-    document.getElementById('printerFormTitle').textContent = 'Drucker hinzufügen';
-    clearPrinterForm();
-    document.getElementById('printerFormModal').style.display = 'block';
+    
+    const formModalContent = `
+        <div class="modal-header">
+            <h3 id="printerFormTitle">Drucker hinzufügen</h3>
+            <button class="close-btn" onclick="closePrinterForm()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="card">
+                <div class="card-body">
+                    <form id="printerForm" onsubmit="savePrinter(event)">
+                        <div class="form-group">
+                            <label for="printerName">Drucker-Name *</label>
+                            <input type="text" id="printerName" class="form-control" required placeholder="z.B. Ginger Additive Beta 1.3">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="printerModel">Modell</label>
+                            <input type="text" id="printerModel" class="form-control" placeholder="z.B. Moritz, Loy, DXR25">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="printerBuildVolume">Bauraum</label>
+                            <input type="text" id="printerBuildVolume" class="form-control" placeholder="z.B. 1000x1000x1000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="printerStatus">Status</label>
+                            <select id="printerStatus" class="form-control">
+                                <option value="available">Verfügbar</option>
+                                <option value="printing">In Betrieb</option>
+                                <option value="maintenance">Wartung</option>
+                                <option value="broken">Defekt</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="printerMaterials">Materialien</label>
+                            <input type="text" id="printerMaterials" class="form-control" placeholder="z.B. PLA, PETg">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="printerNotes">Notizen</label>
+                            <textarea id="printerNotes" class="form-control" rows="3" placeholder="Zusätzliche Informationen..."></textarea>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="submit" form="printerForm" class="btn btn-primary">Drucker speichern</button>
+            <button class="btn btn-secondary" onclick="closePrinterForm()">Abbrechen</button>
+        </div>
+    `;
+    
+    showModalWithContent(formModalContent);
 }
 
 /**
@@ -289,38 +423,89 @@ function editPrinter(printerId) {
     if (!printer) return;
     
     currentEditingPrinter = printer;
-    document.getElementById('printerFormTitle').textContent = 'Drucker bearbeiten';
     
-    // Populate form
-    document.getElementById('printerName').value = printer.name || '';
-    document.getElementById('printerModel').value = printer.model || '';
-    document.getElementById('printerBuildVolume').value = printer.buildVolume || '';
-    document.getElementById('printerStatus').value = printer.status || 'available';
-    document.getElementById('printerMaterials').value = printer.materials || '';
-    document.getElementById('printerNotes').value = printer.notes || '';
+    const formModalContent = `
+        <div class="modal-header">
+            <h3 id="printerFormTitle">Drucker bearbeiten</h3>
+            <button class="close-btn" onclick="closePrinterForm()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="card">
+                <div class="card-body">
+                    <form id="printerForm" onsubmit="savePrinter(event)">
+                        <div class="form-group">
+                            <label for="printerName">Drucker-Name *</label>
+                            <input type="text" id="printerName" class="form-control" required placeholder="z.B. Ginger Additive Beta 1.3" value="${printer.name || ''}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="printerModel">Modell</label>
+                            <input type="text" id="printerModel" class="form-control" placeholder="z.B. Moritz, Loy, DXR25" value="${printer.model || ''}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="printerBuildVolume">Bauraum</label>
+                            <input type="text" id="printerBuildVolume" class="form-control" placeholder="z.B. 1000x1000x1000" value="${printer.buildVolume || ''}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="printerStatus">Status</label>
+                            <select id="printerStatus" class="form-control">
+                                <option value="available" ${printer.status === 'available' ? 'selected' : ''}>Verfügbar</option>
+                                <option value="printing" ${printer.status === 'printing' ? 'selected' : ''}>In Betrieb</option>
+                                <option value="maintenance" ${printer.status === 'maintenance' ? 'selected' : ''}>Wartung</option>
+                                <option value="broken" ${printer.status === 'broken' ? 'selected' : ''}>Defekt</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="printerMaterials">Materialien</label>
+                            <input type="text" id="printerMaterials" class="form-control" placeholder="z.B. PLA, PETg" value="${printer.materials || ''}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="printerNotes">Notizen</label>
+                            <textarea id="printerNotes" class="form-control" rows="3" placeholder="Zusätzliche Informationen...">${printer.notes || ''}</textarea>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="submit" form="printerForm" class="btn btn-primary">Drucker speichern</button>
+            <button class="btn btn-secondary" onclick="closePrinterForm()">Abbrechen</button>
+        </div>
+    `;
     
-    document.getElementById('printerFormModal').style.display = 'block';
+    showModalWithContent(formModalContent);
 }
 
 /**
  * Clear printer form
  */
 function clearPrinterForm() {
-    document.getElementById('printerForm').reset();
+    const form = document.getElementById('printerForm');
+    if (form) {
+        form.reset();
+    }
 }
 
 /**
  * Close printer form modal
  */
 function closePrinterForm() {
-    document.getElementById('printerFormModal').style.display = 'none';
+    closeModal();
     currentEditingPrinter = null;
 }
 
 /**
  * Save printer (add or update)
  */
-async function savePrinter() {
+async function savePrinter(event) {
+    if (event) {
+        event.preventDefault();
+    }
+    
     const formData = {
         name: document.getElementById('printerName').value.trim(),
         model: document.getElementById('printerModel').value.trim(),
@@ -434,3 +619,11 @@ document.addEventListener('DOMContentLoaded', () => {
 // Export functions to global scope
 window.showPrinterManager = showPrinterManager;
 window.closePrinterManager = closePrinterManager;
+window.showAddPrinterForm = showAddPrinterForm;
+window.editPrinter = editPrinter;
+window.savePrinter = savePrinter;
+window.closePrinterForm = closePrinterForm;
+window.searchPrinters = searchPrinters;
+window.duplicatePrinter = duplicatePrinter;
+window.changePrinterStatus = changePrinterStatus;
+window.deletePrinter = deletePrinter;

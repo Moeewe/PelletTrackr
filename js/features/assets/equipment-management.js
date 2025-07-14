@@ -131,18 +131,7 @@ async function loadEquipment() {
  * Search equipment based on name, description, or category
  */
 function searchEquipment() {
-    const searchTerm = document.getElementById('equipmentSearchInput').value.toLowerCase();
-    
-    if (searchTerm.trim() === '') {
-        filteredEquipment = equipment;
-    } else {
-        filteredEquipment = equipment.filter(item => 
-            item.name.toLowerCase().includes(searchTerm) ||
-            (item.description && item.description.toLowerCase().includes(searchTerm)) ||
-            (item.category && item.category.toLowerCase().includes(searchTerm))
-        );
-    }
-    
+    // Trigger category display which will handle search filtering
     showEquipmentCategory(currentEquipmentCategory);
 }
 
@@ -151,7 +140,6 @@ function searchEquipment() {
  */
 function clearEquipmentSearch() {
     document.getElementById('equipmentSearchInput').value = '';
-    filteredEquipment = equipment;
     showEquipmentCategory(currentEquipmentCategory);
 }
 
@@ -161,29 +149,36 @@ function clearEquipmentSearch() {
 function showEquipmentCategory(category) {
     currentEquipmentCategory = category;
     
-    // Update tab buttons - search within equipment modal only
-    const equipmentModal = document.getElementById('equipmentModal');
-    if (equipmentModal) {
-        equipmentModal.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        
-        // Find the clicked tab button or set first one as active
-        const clickedBtn = event?.target;
-        if (clickedBtn && clickedBtn.classList.contains('tab-btn')) {
-            clickedBtn.classList.add('active');
-        } else {
-            // Set the tab for the current category as active
-            const categoryTab = equipmentModal.querySelector(`.tab-btn[onclick*="${category}"]`);
-            if (categoryTab) {
-                categoryTab.classList.add('active');
-            }
-        }
+    // Update tab buttons - search in current modal
+    const tabButtons = document.querySelectorAll('.category-tabs .tab-btn');
+    tabButtons.forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Set the correct tab as active based on category
+    const categoryTab = document.querySelector(`.tab-btn[onclick*="${category}"]`);
+    if (categoryTab) {
+        categoryTab.classList.add('active');
     }
     
-    // Filter equipment by category from filteredEquipment (search results)
-    const categoryEquipment = filteredEquipment.filter(item => item.category === category);
-    renderEquipmentList(categoryEquipment);
+    // Filter equipment by category from all equipment (not just search results)
+    const categoryEquipment = equipment.filter(item => item.category === category);
+    
+    // Apply search filter if there's a search term
+    const searchInput = document.getElementById('equipmentSearchInput');
+    if (searchInput && searchInput.value.trim()) {
+        const searchTerm = searchInput.value.toLowerCase();
+        const filteredCategoryEquipment = categoryEquipment.filter(item => {
+            return (
+                (item.name && item.name.toLowerCase().includes(searchTerm)) ||
+                (item.description && item.description.toLowerCase().includes(searchTerm)) ||
+                (item.location && item.location.toLowerCase().includes(searchTerm))
+            );
+        });
+        renderEquipmentList(filteredCategoryEquipment);
+    } else {
+        renderEquipmentList(categoryEquipment);
+    }
 }
 
 

@@ -12,62 +12,57 @@ let materialOrdersListener = null;
  * Show material request form for users
  */
 function showMaterialRequestForm() {
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'block';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Material anfragen</h3>
-                <button class="modal-close" onclick="closeMaterialRequestForm()">&times;</button>
+    const modalContent = `
+        <div class="modal-header">
+            <h3>Material anfragen</h3>
+            <button class="close-btn" onclick="closeMaterialRequestForm()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="card">
+                <div class="card-body">
+                    <form id="materialRequestForm" class="form">
+                        <div class="form-group">
+                            <label class="form-label">Material/Filament</label>
+                            <input type="text" id="requestMaterialName" class="form-input" placeholder="z.B. PLA Schwarz, PETG Transparent, TPU Flexibel...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Hersteller (optional)</label>
+                            <input type="text" id="requestManufacturer" class="form-input" placeholder="z.B. Prusament, eSUN, Polymaker...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Begründung</label>
+                            <textarea id="requestReason" class="form-textarea" placeholder="Warum benötigen Sie dieses Material? Für welches Projekt?" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Ungefähre Menge</label>
+                            <input type="text" id="requestQuantity" class="form-input" placeholder="z.B. 1kg, 500g, 2 Spulen...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Dringlichkeit</label>
+                            <select id="requestPriority" class="form-select">
+                                <option value="low">Niedrig - kein Zeitdruck</option>
+                                <option value="medium">Mittel - in den nächsten Wochen</option>
+                                <option value="high">Hoch - dringend benötigt</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div class="modal-body">
-                <form id="materialRequestForm" class="form">
-                    <div class="form-group">
-                        <label class="form-label">Material/Filament</label>
-                        <input type="text" id="requestMaterialName" class="form-input" placeholder="z.B. PLA Schwarz, PETG Transparent, TPU Flexibel...">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Hersteller (optional)</label>
-                        <input type="text" id="requestManufacturer" class="form-input" placeholder="z.B. Prusament, eSUN, Polymaker...">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Begründung</label>
-                        <textarea id="requestReason" class="form-textarea" placeholder="Warum benötigen Sie dieses Material? Für welches Projekt?" rows="3"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Ungefähre Menge</label>
-                        <input type="text" id="requestQuantity" class="form-input" placeholder="z.B. 1kg, 500g, 2 Spulen...">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Dringlichkeit</label>
-                        <select id="requestPriority" class="form-select">
-                            <option value="low">Niedrig - kein Zeitdruck</option>
-                            <option value="medium">Mittel - in den nächsten Wochen</option>
-                            <option value="high">Hoch - dringend benötigt</option>
-                        </select>
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeMaterialRequestForm()">Abbrechen</button>
-                        <button type="button" class="btn btn-primary" onclick="submitMaterialRequest()">Anfrage senden</button>
-                    </div>
-                </form>
-            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" onclick="submitMaterialRequest()">Anfrage senden</button>
+            <button type="button" class="btn btn-secondary" onclick="closeMaterialRequestForm()">Abbrechen</button>
         </div>
     `;
     
-    document.body.appendChild(modal);
-    modal.id = 'materialRequestModal';
+    showModalWithContent(modalContent);
 }
 
 /**
  * Close material request form
  */
 function closeMaterialRequestForm() {
-    const modal = document.getElementById('materialRequestModal');
-    if (modal) {
-        modal.remove();
-    }
+    closeModal();
 }
 
 /**
@@ -236,50 +231,33 @@ async function loadMaterialOrders() {
 function showOrderTab(tab) {
     currentOrderTab = tab;
     
-    // Update tab buttons - search within material orders modal only
-    const materialOrdersModal = document.getElementById('materialOrdersModal');
-    if (materialOrdersModal) {
-        materialOrdersModal.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        
-        // Find the clicked tab button or set first one as active
-        const clickedBtn = event?.target;
-        if (clickedBtn && clickedBtn.classList.contains('tab-btn')) {
-            clickedBtn.classList.add('active');
-        } else {
-            // Set the tab for the current content as active
-            const activeTab = materialOrdersModal.querySelector(`.tab-btn[onclick*="${tab}"]`);
-            if (activeTab) {
-                activeTab.classList.add('active');
-            }
-        }
-        
-        // Hide all tab content
-        materialOrdersModal.querySelectorAll('.order-tab-content').forEach(content => {
-            content.classList.remove('active');
-        });
-        
-        // Show selected tab
-        const tabContent = document.getElementById(getTabContentId(tab));
-        if (tabContent) {
-            tabContent.classList.add('active');
-            renderTabContent(tab);
-        }
+    // Update tab buttons
+    const tabButtons = document.querySelectorAll('.order-tabs .tab-btn');
+    tabButtons.forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Set the correct tab as active based on tab parameter
+    const activeTab = document.querySelector(`.tab-btn[onclick*="${tab}"]`);
+    if (activeTab) {
+        activeTab.classList.add('active');
+    }
+    
+    // Hide all tab content
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabContents.forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    // Show selected tab content
+    const tabContent = document.getElementById(tab);
+    if (tabContent) {
+        tabContent.classList.add('active');
+        renderTabContent(tab);
     }
 }
 
-/**
- * Get tab content element ID
- */
-function getTabContentId(tab) {
-    const tabMap = {
-        'requests': 'orderRequests',
-        'shopping': 'shoppingList', 
-        'orders': 'orderHistory'
-    };
-    return tabMap[tab];
-}
+// getTabContentId function removed - no longer needed
 
 /**
  * Render tab content based on selected tab

@@ -262,22 +262,38 @@ async function checkPaymentRequestExists(entryId) {
  */
 async function loadPendingPaymentRequests() {
     try {
-        const requests = await window.db.collection('paymentRequests')
-            .where('status', '==', 'pending')
-            .orderBy('requestedAt', 'desc')
-            .get();
+        console.log('Loading pending payment requests...');
+        
+        // Try with orderBy first, fallback to simple query if it fails
+        let requests;
+        try {
+            requests = await window.db.collection('paymentRequests')
+                .where('status', '==', 'pending')
+                .orderBy('requestedAt', 'desc')
+                .get();
+        } catch (orderError) {
+            console.warn('OrderBy failed, using simple query:', orderError);
+            requests = await window.db.collection('paymentRequests')
+                .where('status', '==', 'pending')
+                .get();
+        }
             
         const paymentRequests = [];
         requests.forEach(doc => {
+            const data = doc.data();
             paymentRequests.push({
                 id: doc.id,
-                ...doc.data()
+                ...data,
+                // Ensure requestedAt is properly handled
+                requestedAt: data.requestedAt || null
             });
         });
         
+        console.log(`Found ${paymentRequests.length} pending payment requests:`, paymentRequests);
         return paymentRequests;
     } catch (error) {
         console.error('Error loading payment requests:', error);
+        showToast('Fehler beim Laden der Zahlungsanfragen', 'error');
         return [];
     }
 }
@@ -325,6 +341,17 @@ async function processPaymentRequest(requestId, approve = true) {
         // Refresh admin entries if visible
         if (typeof loadAdminEntries === 'function') {
             loadAdminEntries();
+        }
+        
+        // Refresh the modal content if open
+        const container = document.getElementById('paymentRequestsList');
+        if (container) {
+            const requests = await loadPendingPaymentRequests();
+            if (requests.length === 0) {
+                container.innerHTML = '<p class="text-center">Keine offenen Zahlungsanfragen</p>';
+            } else {
+                container.innerHTML = renderPaymentRequestsList(requests);
+            }
         }
         
     } catch (error) {
@@ -381,31 +408,96 @@ async function showPaymentRequestsModal() {
  * Render payment requests list for admin
  */
 function renderPaymentRequestsList(requests) {
+    console.log('Rendering payment requests list with', requests.length, 'requests');
+    
+    if (requests.length === 0) {
+        return '<div class="empty-state"><p>Keine offenen Zahlungsanfragen</p></div>';
+    }
+    
     return `
         <div class="payment-requests-list">
-            ${requests.map(request => `
-                <div class="payment-request-item" id="request-${request.id}">
-                    <div class="request-header">
-                        <h4>${request.jobName}</h4>
-                        <span class="request-amount">${formatCurrency(request.amount)}</span>
+            ${requests.map(request => {
+                // Safe timestamp handling
+                let requestedAtText = 'Unbekannt';
+                try {
+                    if (request.requestedAt) {
+                        if (typeof request.requestedAt.toDate === 'function') {
+                            requestedAtText = new Date(request.requestedAt.toDate()).toLocaleString('de-DE');
+                        } else if (request.requestedAt instanceof Date) {
+                            requestedAtText = request.requestedAt.toLocaleString('de-DE');
+                        } else if (typeof request.requestedAt === 'string') {
+                            requestedAtText = new Date(request.requestedAt).toLocaleString('de-DE');
+                        }
+                    }
+                } catch (dateError) {
+                    console.warn('Error formatting date:', dateError);
+                }
+                
+                // Safe currency formatting
+                const amount = request.amount || 0;
+                const amountText = window.formatCurrency ? window.formatCurrency(amount) : `€${amount.toFixed(2)}`;
+                
+                return `
+                    <div class="payment-request-item" id="request-${request.id}">
+                        <div class="request-header">
+                            <h4>${request.jobName || '3D-Druck Auftrag'}</h4>
+                            <span class="request-amount">${amountText}</span>
+                        </div>
+                        <div class="request-details">
+                            <p><strong>Nutzer:</strong> ${request.userName || 'Unbekannt'} ${request.userId ? `(${request.userId})` : ''}</p>
+                            <p><strong>Material:</strong> ${request.material || 'Unbekannt'} ${request.materialMenge ? `(${request.materialMenge.toFixed(2)} kg)` : ''}</p>
+                            <p><strong>Angefragt:</strong> ${requestedAtText}</p>
+                            <p><strong>Entry-ID:</strong> ${request.entryId || 'Unbekannt'}</p>
+                        </div>
+                        <div class="request-actions">
+                            <button class="btn btn-success" onclick="processPaymentRequest('${request.id}', true)">
+                                ✅ Zahlung registrieren
+                            </button>
+                            <button class="btn btn-danger" onclick="processPaymentRequest('${request.id}', false)">
+                                ❌ Ablehnen
+                            </button>
+                            <button class="btn btn-secondary" onclick="deletePaymentRequest('${request.id}')">
+                                🗑️ Löschen
+                            </button>
+                        </div>
                     </div>
-                    <div class="request-details">
-                        <p><strong>Nutzer:</strong> ${request.userName} (${request.userId})</p>
-                        <p><strong>Material:</strong> ${request.material} (${request.materialMenge?.toFixed(2)} kg)</p>
-                        <p><strong>Angefragt:</strong> ${request.requestedAt ? new Date(request.requestedAt.toDate()).toLocaleString('de-DE') : 'Unbekannt'}</p>
-                    </div>
-                    <div class="request-actions">
-                        <button class="btn btn-success" onclick="processPaymentRequest('${request.id}', true)">
-                            Zahlung registrieren
-                        </button>
-                        <button class="btn btn-danger" onclick="processPaymentRequest('${request.id}', false)">
-                            Ablehnen
-                        </button>
-                    </div>
-                </div>
-            `).join('')}
+                `;
+            }).join('')}
         </div>
     `;
+}
+
+/**
+ * Admin: Delete a payment request completely
+ */
+async function deletePaymentRequest(requestId) {
+    if (!confirm('Möchten Sie diese Zahlungsanfrage wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
+        return;
+    }
+    
+    try {
+        console.log('Deleting payment request:', requestId);
+        
+        await window.db.collection('paymentRequests').doc(requestId).delete();
+        
+        showToast('Zahlungsanfrage wurde gelöscht', 'success');
+        
+        // Refresh the modal content
+        const requests = await loadPendingPaymentRequests();
+        const container = document.getElementById('paymentRequestsList');
+        
+        if (container) {
+            if (requests.length === 0) {
+                container.innerHTML = '<p class="text-center">Keine offenen Zahlungsanfragen</p>';
+            } else {
+                container.innerHTML = renderPaymentRequestsList(requests);
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error deleting payment request:', error);
+        showToast('Fehler beim Löschen der Zahlungsanfrage', 'error');
+    }
 }
 
 /**
@@ -484,6 +576,7 @@ function initializePaymentRequests() {
 window.requestPayment = requestPayment;
 window.cancelPaymentRequest = cancelPaymentRequest;
 window.processPaymentRequest = processPaymentRequest;
+window.deletePaymentRequest = deletePaymentRequest;
 window.showPaymentRequestsModal = showPaymentRequestsModal;
 window.checkPaymentRequestExists = checkPaymentRequestExists;
 window.updatePaymentRequestButton = updatePaymentRequestButton;
