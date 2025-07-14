@@ -3,19 +3,42 @@
 
 function showAdminLogin() {
   const passwordGroup = document.getElementById('passwordGroup');
-  const adminBtn = document.querySelector('.btn-secondary');
+  const loginBtn = document.getElementById('loginBtn');
+  const adminBtn = document.getElementById('adminBtn');
   
   if (passwordGroup.style.display === 'none' || passwordGroup.style.display === '') {
-    // Passwort-Feld anzeigen
+    // In Admin-Modus wechseln
     passwordGroup.style.display = 'block';
-    adminBtn.textContent = 'Admin anmelden';
+    
+    // Haupt-Login-Button zu Nutzer-Login umwandeln (weiß mit schwarzen Outlines)
+    loginBtn.textContent = 'NUTZER LOGIN';
+    loginBtn.className = 'btn btn-secondary';
+    loginBtn.onclick = switchToUserLogin;
+    
+    // Admin-Button zu schwarzem Admin-Login umwandeln
+    adminBtn.textContent = 'ADMIN LOGIN';
+    adminBtn.className = 'btn btn-primary';
     adminBtn.onclick = loginAsAdmin;
-  } else {
-    // Passwort-Feld verstecken
-    passwordGroup.style.display = 'none';
-    adminBtn.textContent = 'Als Admin anmelden';
-    adminBtn.onclick = showAdminLogin;
   }
+}
+
+function switchToUserLogin() {
+  const passwordGroup = document.getElementById('passwordGroup');
+  const loginBtn = document.getElementById('loginBtn');
+  const adminBtn = document.getElementById('adminBtn');
+  
+  // Zurück zum Nutzer-Modus
+  passwordGroup.style.display = 'none';
+  
+  // Haupt-Login-Button zurück zu normalem Login (schwarz)
+  loginBtn.textContent = 'LOGIN';
+  loginBtn.className = 'btn btn-primary';
+  loginBtn.onclick = loginAsUser;
+  
+  // Admin-Button zurück zu sekundärem Style (weiß mit schwarzen Outlines)
+  adminBtn.textContent = 'Als Admin anmelden';
+  adminBtn.className = 'btn btn-secondary';
+  adminBtn.onclick = showAdminLogin;
 }
 
 async function loginAsUser() {
