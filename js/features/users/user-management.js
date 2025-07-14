@@ -14,30 +14,38 @@ async function loadUsersForManagement() {
   try {
     console.log("🔄 Lade Benutzer für Verwaltung...");
     
-    // Alle Einträge laden, um Benutzer zu extrahieren
-    const snapshot = await window.db.collection("entries").get();
-    
-    // Benutzerinformationen aus users-Sammlung laden
+    // 1. ALLE Benutzer aus der users-Sammlung laden
     const usersSnapshot = await window.db.collection("users").get();
-    const usersData = new Map();
-    
-    usersSnapshot.forEach(doc => {
-      const userData = doc.data();
-      usersData.set(userData.kennung, userData);
-    });
-    
     const userMap = new Map();
     
-    snapshot.forEach(doc => {
+    // Erstelle User-Objekte für alle registrierten User
+    usersSnapshot.forEach(doc => {
+      const userData = doc.data();
+      userMap.set(userData.kennung, {
+        name: userData.name,
+        kennung: userData.kennung,
+        email: userData.email,
+        entries: [],
+        totalCost: 0,
+        paidAmount: 0,
+        unpaidAmount: 0,
+        firstEntry: new Date(),
+        lastEntry: new Date()
+      });
+    });
+    
+    // 2. Dann alle Einträge laden und den Usern zuordnen
+    const entriesSnapshot = await window.db.collection("entries").get();
+    
+    entriesSnapshot.forEach(doc => {
       const entry = doc.data();
-      const userKey = `${entry.name}_${entry.kennung}`;
       
-      if (!userMap.has(userKey)) {
-        const userData = usersData.get(entry.kennung) || {};
-        userMap.set(userKey, {
+      // Prüfen ob User in userMap existiert, sonst aus Entry-Daten erstellen
+      if (!userMap.has(entry.kennung)) {
+        userMap.set(entry.kennung, {
           name: entry.name,
           kennung: entry.kennung,
-          email: userData.email, // E-Mail aus users-Sammlung
+          email: `${entry.kennung}@fh-muenster.de`, // Standard-Email
           entries: [],
           totalCost: 0,
           paidAmount: 0,
@@ -47,7 +55,7 @@ async function loadUsersForManagement() {
         });
       }
       
-      const user = userMap.get(userKey);
+      const user = userMap.get(entry.kennung);
       user.entries.push({
         id: doc.id,
         ...entry
@@ -60,10 +68,12 @@ async function loadUsersForManagement() {
         user.unpaidAmount += entry.totalCost || 0;
       }
       
-      // Datum-Updates
-      const entryDate = entry.timestamp ? entry.timestamp.toDate() : new Date();
-      if (entryDate < user.firstEntry) user.firstEntry = entryDate;
-      if (entryDate > user.lastEntry) user.lastEntry = entryDate;
+      // Datum-Updates nur bei vorhandenen Entries
+      if (entry.timestamp) {
+        const entryDate = entry.timestamp.toDate();
+        if (!user.firstEntry || entryDate < user.firstEntry) user.firstEntry = entryDate;
+        if (!user.lastEntry || entryDate > user.lastEntry) user.lastEntry = entryDate;
+      }
     });
     
     const users = Array.from(userMap.values());
@@ -776,23 +786,23 @@ function showAddUserDialog() {
       <div class="card">
         <div class="card-body">
           <div class="form-group">
-            <label class="form-label">Name</label>
+            <label class="form-label">Vollständiger Name</label>
             <input type="text" id="newUserName" class="form-input" placeholder="Vorname Nachname" required>
           </div>
           <div class="form-group">
             <label class="form-label">FH-Kennung</label>
             <input type="text" id="newUserKennung" class="form-input" placeholder="z.B. mw123456" required>
-            <small class="form-hint">Ohne @fh-muenster.de</small>
+            <div id="kennungValidation" class="form-hint">Kennung verfügbar</div>
           </div>
           <div class="form-group">
-            <label class="form-label">E-Mail-Adresse</label>
+            <label class="form-label">E-Mail Adresse</label>
             <input type="email" id="newUserEmail" class="form-input" placeholder="wird automatisch ausgefüllt">
-            <small class="form-hint">Standard: kennung@fh-muenster.de</small>
+            <small class="form-hint">Optional - Standard: kennung@fh-muenster.de</small>
           </div>
         </div>
         <div class="card-footer">
           <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
-          <button class="btn btn-primary" onclick="createNewUser()">Hinzufügen</button>
+          <button class="btn btn-primary" onclick="createNewUser()">Benutzer hinzufügen</button>
         </div>
       </div>
     </div>
@@ -800,27 +810,33 @@ function showAddUserDialog() {
   
   window.showModal(modalHtml);
   
-  // Auto-generate email when kennung changes - mit verbesserter Logik
+  // Email Auto-Generation nach Modal-Rendering aktivieren
   setTimeout(() => {
     const kennungInput = document.getElementById('newUserKennung');
     const emailInput = document.getElementById('newUserEmail');
+    const validationDiv = document.getElementById('kennungValidation');
     
     if (kennungInput && emailInput) {
+      // Auto-generierung bei Eingabe
       kennungInput.addEventListener('input', function() {
         const kennung = this.value.trim().toLowerCase();
-        // E-Mail immer aktualisieren, wenn sich die Kennung ändert
         if (kennung) {
           emailInput.value = `${kennung}@fh-muenster.de`;
+          
+          // Prüfen ob Kennung bereits existiert
+          if (window.allUsers && window.allUsers.find(u => u.kennung === kennung)) {
+            validationDiv.style.color = '#ff0000';
+            validationDiv.textContent = '❌ Kennung bereits vergeben';
+          } else {
+            validationDiv.style.color = '#00aa00';
+            validationDiv.textContent = '✅ Kennung verfügbar';
+          }
         } else {
           emailInput.value = '';
+          validationDiv.style.color = '#666';
+          validationDiv.textContent = 'Kennung verfügbar';
         }
       });
-      
-      // Initial-Generierung falls bereits Text vorhanden ist
-      const initialKennung = kennungInput.value.trim().toLowerCase();
-      if (initialKennung && !emailInput.value) {
-        emailInput.value = `${initialKennung}@fh-muenster.de`;
-      }
     }
   }, 100);
 }
