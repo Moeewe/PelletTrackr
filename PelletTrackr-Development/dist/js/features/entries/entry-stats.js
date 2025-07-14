@@ -95,9 +95,9 @@ async function loadAdminStats() {
       }
     });
     
-    // Stats anzeigen - aktive Nutzer statt aller registrierten
+    // Stats anzeigen - alle registrierten Nutzer
     document.getElementById('adminTotalEntries').textContent = totalEntries;
-    document.getElementById('adminTotalUsers').textContent = activeUsers.size; // Aktive Nutzer
+    document.getElementById('adminTotalUsers').textContent = totalRegisteredUsers; // Alle registrierten Nutzer
     document.getElementById('adminTotalRevenue').textContent = formatCurrency(totalRevenue);
     document.getElementById('adminPendingAmount').textContent = formatCurrency(pendingAmount);
     

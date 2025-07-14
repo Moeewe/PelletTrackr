@@ -654,38 +654,50 @@
             </div>
             <div class="modal-body">
                 <form id="printerForm" class="form">
-                    <div class="form-group">
-                        <label class="form-label">Drucker-Name</label>
-                        <input type="text" id="printerName" class="form-input" placeholder="z.B. Prusa MK3S+ #1">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Drucker-Name</label>
+                            <input type="text" id="printerName" class="form-input" placeholder="z.B. Ginger Additive Beta 1.3">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Typ/Modell</label>
-                        <input type="text" id="printerModel" class="form-input" placeholder="z.B. Prusa i3 MK3S+">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Modell</label>
+                            <input type="text" id="printerModel" class="form-input" placeholder="z.B. Moritz, Loy, DXR25">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Bauraum</label>
+                            <input type="text" id="printerBuildVolume" class="form-input" placeholder="z.B. 1000x1000x1000">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Bauraum (mm)</label>
-                        <input type="text" id="printerBuildVolume" class="form-input" placeholder="z.B. 250x210x200">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Status</label>
+                            <select id="printerStatus" class="form-select">
+                                <option value="available">Verfügbar</option>
+                                <option value="printing">In Betrieb</option>
+                                <option value="maintenance">Wartung</option>
+                                <option value="broken">Defekt</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Materialien</label>
+                            <input type="text" id="printerMaterials" class="form-input" placeholder="z.B. PLA, PETg">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Status</label>
-                        <select id="printerStatus" class="form-select">
-                            <option value="available">Verfügbar</option>
-                            <option value="printing">In Betrieb</option>
-                            <option value="maintenance">Wartung</option>
-                            <option value="broken">Defekt</option>
-                        </select>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Notizen</label>
+                            <textarea id="printerNotes" class="form-textarea" placeholder="Zusätzliche Informationen..." rows="3"></textarea>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Unterstützte Materialien</label>
-                        <textarea id="printerMaterials" class="form-textarea" placeholder="PLA, PETG, ABS..." rows="2"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Notizen</label>
-                        <textarea id="printerNotes" class="form-textarea" placeholder="Besonderheiten, letzte Wartung, etc." rows="3"></textarea>
-                    </div>
+                    
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" onclick="closePrinterForm()">Abbrechen</button>
-                        <button type="button" class="btn btn-primary" onclick="savePrinter()">Speichern</button>
+                        <button type="button" class="btn btn-primary" onclick="savePrinter()">Drucker speichern</button>
                     </div>
                 </form>
             </div>

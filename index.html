@@ -214,6 +214,18 @@
                 </div>
                 
                 <div class="control-section">
+                    <h3 class="control-title">Zahlungs-Verwaltung</h3>
+                    <div class="control-buttons">
+                        <button class="btn btn-secondary" onclick="showPaymentDashboard()">
+                            💳 Zahlungs-Dashboard
+                        </button>
+                        <button class="btn btn-secondary" onclick="showPaymentRequestsModal()">
+                            🔔 Zahlungsanfragen
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="control-section">
                     <h3 class="control-title">Asset-Verwaltung</h3>
                     <div class="control-buttons">
                         <button class="btn btn-secondary" onclick="showEquipmentManager()">
@@ -511,6 +523,7 @@
     <script src="js/features/assets/printer-management.js"></script>
     <script src="js/features/assets/admin-problem-reports.js"></script>
     <script src="js/features/payments/payment-requests.js"></script>
+    <script src="js/features/payments/payment-dashboard.js"></script>
     
     <!-- Main App (Coordinator) -->
     <script src="web-app-modular.js"></script>

@@ -1200,8 +1200,8 @@
 
 .tab-btn {
     background: white;
-    border: 2px solid #000000;
-    border-bottom: none;
+    border: none;
+    border-bottom: 4px solid transparent;
     padding: 12px 24px;
     cursor: pointer;
     font-weight: 600;
@@ -1218,16 +1218,20 @@
 }
 
 .tab-btn.active {
-    background: #000000;
-    color: white;
+    background: white;
+    color: #000000;
+    border-bottom: 4px solid #000000;
 }
 
 .tab-btn:hover {
-    background: #f8f8f8;
+    background: white;
+    color: #000000;
 }
 
 .tab-btn.active:hover {
-    background: #000000;
+    background: white;
+    color: #000000;
+    border-bottom: 4px solid #000000;
 }
 
 .tab-btn-add {
@@ -1561,7 +1565,7 @@
 /* Material Orders */
 .order-tabs {
     display: flex;
-    border-bottom: 2px solid var(--border-color);
+    border-bottom: 2px solid #000000;
     margin-bottom: 20px;
 }
 

@@ -147,13 +147,26 @@ async function deleteEntry(entryId) {
   }
 }
 
-// Druck als bezahlt markieren
+// Druck als bezahlt markieren - Enhanced with payment request coupling
 async function markEntryAsPaid(entryId) {
   if (!checkAdminAccess()) return;
   
   try {
     await withLoading(async () => {
-      await window.db.collection('entries').doc(entryId).update({ paid: true });
+      // Enhanced payment status update with better coupling
+      const updateData = { 
+        paid: true,
+        paidAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+        paymentMethod: 'admin_direct',
+        processedByAdmin: window.currentUser?.name || 'Admin',
+        updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+      };
+      
+      await window.db.collection('entries').doc(entryId).update(updateData);
+      
+      // Clean up related payment requests when marking as paid
+      await cleanupRelatedPaymentRequests(entryId);
+      
       loadAdminStats();
       loadAllEntries();
     }, 
@@ -166,13 +179,24 @@ async function markEntryAsPaid(entryId) {
   }
 }
 
-// Druck als unbezahlt markieren
+// Druck als unbezahlt markieren - Enhanced with payment request coupling
 async function markEntryAsUnpaid(entryId) {
   if (!checkAdminAccess()) return;
   
   try {
     await withLoading(async () => {
-      await window.db.collection('entries').doc(entryId).update({ paid: false });
+      // Enhanced payment status update with metadata cleanup
+      const updateData = { 
+        paid: false,
+        paidAt: null,
+        paymentMethod: null,
+        processedByAdmin: null,
+        requestId: null,
+        updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+      };
+      
+      await window.db.collection('entries').doc(entryId).update(updateData);
+      
       loadAdminStats();
       loadAllEntries();
     }, 
@@ -182,6 +206,36 @@ async function markEntryAsUnpaid(entryId) {
     
   } catch (error) {
     console.error('Fehler beim Markieren als unbezahlt:', error);
+  }
+}
+
+/**
+ * Clean up related payment requests when entry is marked as paid directly
+ */
+async function cleanupRelatedPaymentRequests(entryId) {
+  try {
+    const pendingRequests = await window.db.collection('paymentRequests')
+      .where('entryId', '==', entryId)
+      .where('status', '==', 'pending')
+      .get();
+      
+    if (!pendingRequests.empty) {
+      const batch = window.db.batch();
+      
+      pendingRequests.forEach(doc => {
+        batch.update(doc.ref, {
+          status: 'resolved',
+          resolvedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+          resolvedBy: 'admin_direct_payment',
+          adminNotes: 'Zahlung wurde direkt vom Admin registriert'
+        });
+      });
+      
+      await batch.commit();
+      console.log(`Cleaned up ${pendingRequests.size} payment requests for entry ${entryId} after direct payment`);
+    }
+  } catch (error) {
+    console.error('Error cleaning up payment requests:', error);
   }
 }
 

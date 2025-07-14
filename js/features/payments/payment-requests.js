@@ -1,11 +1,67 @@
 /**
  * Payment Request System
  * Handles user payment requests and admin notifications
+ * Enhanced with better payment status coupling
  */
 
 // Global payment request management
 let paymentRequestsListener = null;
 let userPaymentRequestsListener = null;
+
+/**
+ * Setup real-time listener for payment status changes
+ * This ensures payment requests are automatically cleaned up when entries are paid directly
+ */
+function setupPaymentStatusListener() {
+    if (!window.db) {
+        setTimeout(setupPaymentStatusListener, 500);
+        return;
+    }
+    
+    // Listen for entry payment status changes
+    window.db.collection('entries')
+        .onSnapshot((snapshot) => {
+            snapshot.docChanges().forEach(async (change) => {
+                if (change.type === 'modified') {
+                    const entry = change.doc.data();
+                    const entryId = change.doc.id;
+                    
+                    // If entry was just paid, clean up pending payment requests
+                    if (entry.paid || entry.isPaid) {
+                        await cleanupPendingRequests(entryId);
+                    }
+                }
+            });
+        });
+}
+
+/**
+ * Clean up pending payment requests when entry is marked as paid
+ */
+async function cleanupPendingRequests(entryId) {
+    try {
+        const pendingRequests = await window.db.collection('paymentRequests')
+            .where('entryId', '==', entryId)
+            .where('status', '==', 'pending')
+            .get();
+            
+        const batch = window.db.batch();
+        pendingRequests.forEach(doc => {
+            batch.update(doc.ref, {
+                status: 'resolved',
+                resolvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                resolvedBy: 'system_auto_cleanup'
+            });
+        });
+        
+        if (!pendingRequests.empty) {
+            await batch.commit();
+            console.log(`Cleaned up ${pendingRequests.size} pending payment requests for entry ${entryId}`);
+        }
+    } catch (error) {
+        console.error('Error cleaning up pending requests:', error);
+    }
+}
 
 /**
  * Setup real-time listener for user payment requests
@@ -40,6 +96,9 @@ function setupUserPaymentRequestsListener() {
                 
                 // Update button states for all current entries
                 updateAllPaymentRequestButtons();
+                
+                // Update user notification badges
+                updateUserPaymentRequestStatus();
             }, (error) => {
                 console.error('Error in user payment requests listener:', error);
                 // Retry setting up listener after error
@@ -51,6 +110,38 @@ function setupUserPaymentRequestsListener() {
         console.error("❌ Failed to setup user payment requests listener:", error);
         // Retry after error
         setTimeout(setupUserPaymentRequestsListener, 2000);
+    }
+}
+
+/**
+ * Update user payment request status in UI
+ */
+async function updateUserPaymentRequestStatus() {
+    if (!window.currentUser || window.currentUser.isAdmin) return;
+    
+    try {
+        const pendingRequests = await window.db.collection('paymentRequests')
+            .where('userId', '==', window.currentUser.kennung)
+            .where('status', '==', 'pending')
+            .get();
+            
+        const count = pendingRequests.size;
+        
+        // Update any payment request status indicators
+        const statusElements = document.querySelectorAll('.payment-request-status');
+        statusElements.forEach(element => {
+            element.textContent = count > 0 ? `${count} Zahlungsanfrage(n) ausstehend` : 'Keine ausstehenden Zahlungsanfragen';
+        });
+        
+        // Update navigation badges if they exist
+        const navBadges = document.querySelectorAll('.payment-requests-badge');
+        navBadges.forEach(badge => {
+            badge.textContent = count;
+            badge.style.display = count > 0 ? 'inline-block' : 'none';
+        });
+        
+    } catch (error) {
+        console.error('Error updating user payment request status:', error);
     }
 }
 
@@ -301,6 +392,7 @@ async function loadPendingPaymentRequests() {
 
 /**
  * Admin: Process payment request (approve and mark entry as paid)
+ * Enhanced with better status coupling and notifications
  */
 async function processPaymentRequest(requestId, approve = true) {
     try {
@@ -321,39 +413,77 @@ async function processPaymentRequest(requestId, approve = true) {
         const request = requestDoc.data();
         
         if (approve) {
-            // Mark entry as paid
-            await window.db.collection('entries').doc(request.entryId).update({
+            // Use batch operation to ensure atomicity
+            const batch = window.db.batch();
+            
+            // Mark entry as paid with additional metadata
+            const entryRef = window.db.collection('entries').doc(request.entryId);
+            batch.update(entryRef, {
                 paid: true,
                 isPaid: true,
-                paidAt: firebase.firestore.FieldValue.serverTimestamp()
+                paidAt: firebase.firestore.FieldValue.serverTimestamp(),
+                paymentMethod: 'admin_approved_request',
+                processedByAdmin: window.currentUser.name,
+                requestId: requestId
             });
             
-            // Update request status to approved and remove from pending
-            await window.db.collection('paymentRequests').doc(requestId).update({
+            // Update request status to approved
+            const requestRef = window.db.collection('paymentRequests').doc(requestId);
+            batch.update(requestRef, {
                 status: 'approved',
                 processedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                processedBy: window.currentUser.name
+                processedBy: window.currentUser.name,
+                adminNotes: `Zahlungsanfrage genehmigt - Zahlung registriert`
             });
             
-            showToast('Zahlung registriert und Anfrage genehmigt', 'success');
+            // Clean up any other pending requests for the same entry
+            const otherPendingRequests = await window.db.collection('paymentRequests')
+                .where('entryId', '==', request.entryId)
+                .where('status', '==', 'pending')
+                .get();
+                
+            otherPendingRequests.forEach(doc => {
+                if (doc.id !== requestId) {
+                    batch.update(doc.ref, {
+                        status: 'resolved',
+                        resolvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        resolvedBy: 'admin_duplicate_cleanup'
+                    });
+                }
+            });
+            
+            // Commit batch operation
+            await batch.commit();
+            
+            showToast(`Zahlung registriert und Anfrage genehmigt für ${request.userName}`, 'success');
+            
+            // Log payment approval for admin tracking
+            console.log(`Payment approved by ${window.currentUser.name} for entry ${request.entryId} - Amount: ${request.amount}`);
+            
         } else {
-            // Reject request - remove from pending
+            // Reject request
             await window.db.collection('paymentRequests').doc(requestId).update({
                 status: 'rejected',
                 processedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                processedBy: window.currentUser.name
+                processedBy: window.currentUser.name,
+                adminNotes: `Zahlungsanfrage abgelehnt - weitere Prüfung erforderlich`
             });
             
-            showToast('Zahlungsanfrage abgelehnt', 'warning');
+            showToast(`Zahlungsanfrage von ${request.userName} abgelehnt`, 'warning');
         }
         
-        // Refresh admin entries if visible
-        if (typeof loadAdminEntries === 'function') {
-            loadAdminEntries();
+        // Refresh admin components
+        if (typeof loadAdminStats === 'function') {
+            loadAdminStats();
         }
+        if (typeof loadAllEntries === 'function') {
+            loadAllEntries();
+        }
+        
+        // Update payment request badges
+        updatePaymentRequestsBadge();
         
         // Real-time listener will handle the modal update automatically
-        // No manual reload needed like in problem reports
         
     } catch (error) {
         console.error('Error processing payment request:', error);
@@ -603,6 +733,11 @@ function updatePaymentRequestsBadge(count) {
  * Initialize payment request system
  */
 function initializePaymentRequests() {
+    console.log('Initializing payment requests system with enhanced coupling...');
+    
+    // Initialize payment status listener for all users (ensures coupling)
+    setupPaymentStatusListener();
+    
     if (window.currentUser && !window.currentUser.isAdmin) {
         setupUserPaymentRequestsListener();
     }
@@ -610,6 +745,8 @@ function initializePaymentRequests() {
     if (window.currentUser && window.currentUser.isAdmin) {
         setupPaymentRequestsListener();
     }
+    
+    console.log('Payment requests system initialized with payment status coupling');
 }
 
 // Make functions globally available

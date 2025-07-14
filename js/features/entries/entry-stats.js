@@ -87,7 +87,7 @@ async function loadAdminStats() {
       }
     });
     
-    // Stats anzeigen
+    // Stats anzeigen - alle registrierten Nutzer
     document.getElementById('adminTotalEntries').textContent = totalEntries;
     document.getElementById('adminTotalUsers').textContent = users.size;
     document.getElementById('adminTotalRevenue').textContent = formatCurrency(totalRevenue);
