@@ -1,0 +1,191 @@
+/* ===== TOAST NOTIFICATIONS ===== */
+/* Toast Notifications für Erfolg/Fehler-Meldungen */
+
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.toast {
+    background: white;
+    border: 2px solid #000;
+    border-radius: 0;
+    padding: 16px 20px;
+    min-width: 320px;
+    max-width: 450px;
+    box-shadow: none;
+    font-size: 14px;
+    font-weight: 500;
+    pointer-events: auto;
+    transform: translateX(100%);
+    opacity: 0;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.toast.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.toast.success {
+    background: #f0f9f0;
+    border-color: #2d5016;
+    color: #2d5016;
+}
+
+.toast.error {
+    background: #fdf2f2;
+    border-color: #c53030;
+    color: #c53030;
+}
+
+.toast.info {
+    background: #f0f8ff;
+    border-color: #2b6cb0;
+    color: #2b6cb0;
+}
+
+.toast.warning {
+    background: #fffbf0;
+    border-color: #d69e2e;
+    color: #d69e2e;
+}
+
+.toast-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.toast-icon {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.toast-message {
+    flex: 1;
+    line-height: 1.5;
+    white-space: pre-line;
+    word-wrap: break-word;
+}
+
+.toast-close {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.7;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toast-close:hover {
+    opacity: 1;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .toast-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+    }
+    
+    .toast {
+        min-width: auto;
+        max-width: none;
+        width: 100%;
+    }
+}
+
+/* ===== LOADING INDICATORS ===== */
+/* Loading Spinner und States */
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9998;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.loading-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #000;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.loading-content {
+    text-align: center;
+    background: white;
+    padding: 32px;
+    border: 2px solid #000;
+    border-radius: 0;
+}
+
+.loading-text {
+    margin-top: 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+/* Button Loading States */
+.btn.loading {
+    position: relative;
+    color: transparent !important;
+    pointer-events: none;
+}
+
+.btn.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    color: inherit;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

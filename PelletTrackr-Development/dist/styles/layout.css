@@ -1,0 +1,301 @@
+/* ===== LAYOUT STYLES ===== */
+/* Container, Header, Dashboard und allgemeine Layout-Komponenten */
+
+/* Login Screen - Perfekt zentriert */
+.login-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 32px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: transparent;
+  text-align: center;
+}
+
+/* Dashboard Containers */
+.dashboard-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+.admin-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+/* Legal Content (Impressum/Datenschutz) */
+.legal-content {
+  max-width: 800px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.legal-content h2 {
+  font-size: 28px;
+  margin-bottom: 32px;
+  color: #1a1a1a;
+}
+
+.legal-content h3 {
+  font-size: 20px;
+  margin-top: 40px;
+  margin-bottom: 16px;
+  color: #1a1a1a;
+}
+
+.legal-content h4 {
+  font-size: 16px;
+  margin-top: 32px;
+  margin-bottom: 12px;
+  color: #1a1a1a;
+}
+
+.legal-content p {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.legal-content ul {
+  margin: 16px 0 20px 20px;
+}
+
+.legal-content li {
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.legal-content a {
+  color: #000;
+  text-decoration: underline;
+}
+
+.legal-content a:hover {
+  text-decoration: none;
+}
+
+.back-link {
+  margin-top: 48px;
+  text-align: center;
+}
+
+.back-link .btn {
+  margin: 0 8px;
+}
+
+/* Header Styles */
+.header {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+  padding: 20px 32px;
+  background: transparent;
+  position: relative;
+}
+
+.logo {
+  font-size: 32px;
+  font-weight: 600;
+  color: #000000;
+  letter-spacing: -1px;
+}
+
+.highlight {
+  background: #FFEB00;
+  color: #000000;
+  padding: 4px 8px;
+  border-radius: 0;
+  font-weight: 600;
+}
+
+.admin-badge {
+  background: #ff4444;
+  color: white;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 0;
+  margin-left: 12px;
+  font-weight: 500;
+}
+
+.tagline {
+  color: #333333;
+  font-size: 18px;
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+/* User Info */
+.user-info {
+  position: static;
+  right: auto;
+  top: auto;
+  transform: none;
+  text-align: right;
+  color: #666666;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+}
+
+/* Sicherstellen, dass ABMELDEN Button perfekt zentriert ist */
+.user-info .btn-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.user-info .user-name {
+  font-weight: 600;
+  color: #000000;
+  margin-bottom: 4px;
+}
+
+.user-info .user-id {
+  font-size: 12px;
+  color: #999999;
+}
+
+.logout {
+  background: none;
+  border: none;
+  color: #666666;
+  cursor: pointer;
+  font-size: 12px;
+  margin-top: 8px;
+  text-decoration: underline;
+  font-family: inherit;
+}
+
+.logout:hover {
+  color: #000000;
+}
+
+/* Form Containers */
+.form-container {
+  background: white;
+  border: 2px solid #000000;
+  border-radius: 0;
+  padding: 40px;
+  margin-bottom: 40px;
+}
+
+.admin-content {
+  background: white;
+  border: 2px solid #000000;
+  border-radius: 0;
+  padding: 32px;
+  min-height: 400px;
+}
+
+/* ===== APP HEADER STYLES ===== */
+
+.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0;
+    margin-bottom: 24px;
+    border-bottom: 2px solid #000;
+    background: white;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-left, .header-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.header-right {
+    justify-content: flex-end;
+}
+
+.header-center {
+    flex: 2;
+    text-align: center;
+}
+
+.header-title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: #000;
+}
+
+.screen-content {
+    margin-top: 0;
+}
+
+.screen-subtitle {
+    text-align: center;
+    margin: 0 0 32px 0;
+    font-size: 16px;
+    color: #666;
+    font-weight: 400;
+}
+
+/* Clickable app title */
+.app-title {
+    transition: opacity 0.2s ease;
+}
+
+.app-title:hover {
+    opacity: 0.8;
+}
+
+/* Mobile responsive headers */
+@media (max-width: 768px) {
+    .app-header {
+        padding: 12px 0;
+        margin-bottom: 16px;
+    }
+    
+    .header-title {
+        font-size: 20px;
+    }
+    
+    .screen-subtitle {
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+    
+    .header-left .btn, .header-right .btn {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .app-header {
+        padding: 8px 0;
+        margin-bottom: 12px;
+    }
+    
+    .header-title {
+        font-size: 18px;
+    }
+    
+    .screen-subtitle {
+        font-size: 13px;
+        margin-bottom: 16px;
+        padding: 0 16px;
+    }
+}

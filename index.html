@@ -212,6 +212,24 @@
                         </button>
                     </div>
                 </div>
+                
+                <div class="control-section">
+                    <h3 class="control-title">Asset-Verwaltung</h3>
+                    <div class="control-buttons">
+                        <button class="btn btn-secondary" onclick="showEquipmentManager()">
+                            Equipment verwalten
+                        </button>
+                        <button class="btn btn-secondary" onclick="showPrinterManager()">
+                            Drucker verwalten
+                        </button>
+                        <button class="btn btn-secondary" onclick="showMaterialOrders()">
+                            Material-Bestellungen
+                        </button>
+                        <button class="btn btn-secondary" onclick="showProblemReports()">
+                            Problem-Reports
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- All Entries Table -->
@@ -341,6 +359,68 @@
     </div>
 
     <!-- Payment Proof Modal -->
+    <!-- Asset Management Modals -->
+    
+    <!-- Equipment Management Modal -->
+    <div id="equipmentManagerModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Equipment Management</h2>
+                <button class="close-btn" onclick="closeEquipmentManager()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="equipmentManagerContent">
+                    <!-- Content wird dynamisch geladen -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Printer Management Modal -->
+    <div id="printerManagerModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Drucker Management</h2>
+                <button class="close-btn" onclick="closePrinterManager()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="printerManagerContent">
+                    <!-- Content wird dynamisch geladen -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Material Orders Modal -->
+    <div id="materialOrdersModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Material-Bestellungen</h2>
+                <button class="close-btn" onclick="closeMaterialOrders()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="materialOrdersContent">
+                    <!-- Content wird dynamisch geladen -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Problem Reports Modal -->
+    <div id="problemReportsModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Problem Reports</h2>
+                <button class="close-btn" onclick="closeProblemReports()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="problemReportsContent">
+                    <!-- Content wird dynamisch geladen -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="paymentProofModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -390,6 +470,12 @@
     <script src="js/features/entries/entry-stats.js"></script>
     <script src="js/features/entries/entry-rendering.js"></script>
     <script src="js/features/users/user-management.js"></script>
+    
+    <!-- Asset Management Modules -->
+    <script src="js/features/assets/equipment-management.js"></script>
+    <script src="js/features/assets/material-orders.js"></script>
+    <script src="js/features/assets/printer-management.js"></script>
+    <script src="js/features/assets/admin-problem-reports.js"></script>
     
     <!-- Main App (Coordinator) -->
     <script src="web-app-modular.js"></script>

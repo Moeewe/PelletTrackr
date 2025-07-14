@@ -1,0 +1,260 @@
+/* ===== FORM STYLES ===== */
+/* Alle Form-Elemente und Input-Felder */
+
+/* Form Containers */
+.form-container {
+  background: white;
+  border: 2px solid #000000;
+  border-radius: 0;
+  padding: 40px;
+  margin-bottom: 40px;
+}
+
+.form-section {
+  margin-bottom: 32px;
+}
+
+.form-section:last-child {
+  margin-bottom: 0;
+}
+
+.form-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #000000;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+/* Entry Form Container - Sauberes weißes Design */
+.entry-form,
+.form-section {
+  background: white;
+  border: 2px solid #000000;
+  border-radius: 0;
+  padding: 32px;
+  margin-bottom: 24px;
+  max-width: 100%;
+  width: 100%;
+}
+
+.form-section h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 24px;
+  text-align: center;
+      text-transform: none;
+  letter-spacing: 0.5px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #000000;
+}
+
+/* Form Layout */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+/* Ensure sufficient width for dropdown content */
+.form-row .form-group {
+  min-width: 300px; /* Guarantee minimum width for dropdown text */
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 24px;
+}
+
+.form-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #000000;
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* Form Inputs */
+.form-input,
+.form-select,
+.form-textarea {
+  padding: 16px;
+  border: 2px solid #000000;
+  border-radius: 0;
+  font-size: 16px;
+  font-family: inherit;
+  background: white;
+  color: #000000;
+  transition: border-color 0.2s ease;
+  width: 100%;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Custom dropdown arrow */
+.form-select {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill="%23000000" d="M8 10l-4-4h8z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px 16px;
+  padding-right: 40px;
+  width: 100%;
+  min-width: 280px;
+}
+
+.form-select::-ms-expand {
+  display: none;
+}
+
+/* Ensure dropdown options are visible and readable */
+.form-select option {
+  padding: 8px 12px;
+  white-space: normal;
+  word-wrap: break-word;
+  color: #000000;
+  background: white;
+  font-size: 16px;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: #FFEB00;
+}
+
+.form-textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+/* Form Hints */
+.form-hint {
+  font-size: 14px;
+  color: #666666;
+  margin-top: 8px;
+  font-style: italic;
+}
+
+/* Error States */
+.form-input.error,
+.form-select.error,
+.form-textarea.error {
+  border-color: #dc3545;
+}
+
+.form-error {
+  color: #dc3545;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+/* Cost Preview - Einheitliches Design */
+.cost-preview {
+  background: white;
+  color: #000000;
+  padding: 24px;
+  border: 2px solid #000000;
+  border-radius: 0;
+  text-align: center;
+  margin: 24px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 80px;
+  transition: all 0.2s ease;
+}
+
+.cost-preview.calculating {
+  background: #f8f8f8;
+  color: #666666;
+  border-color: #cccccc;
+}
+
+.cost-preview.show {
+  background: #FFEB00;
+  color: #000000;
+  border-color: #000000;
+}
+
+.cost-preview.show.calculating {
+  background: #f8f8f8;
+  color: #666666;
+}
+
+.cost-amount {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: -1px;
+  color: #000000;
+}
+
+.cost-label {
+  font-size: 16px;
+  font-weight: 400;
+}
+
+/* Admin Controls */
+.admin-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 32px;
+  margin-bottom: 40px;
+}
+
+.control-section {
+  background: white;
+  border: 2px solid #000000;
+  border-radius: 0;
+  padding: 24px;
+}
+
+.control-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #000000;
+  margin-bottom: 16px;
+  text-align: left;
+  position: relative;
+}
+
+.control-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Login Form Specific Styles */
+.login-form {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.login-form .form-group {
+  margin-bottom: 20px;
+}
+
+.login-form .form-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.login-form .button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.login-form .button-group .btn {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+}
