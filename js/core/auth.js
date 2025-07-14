@@ -60,6 +60,10 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
         document.getElementById('userWelcome').textContent = `Willkommen zurück, ${userResult.existingName}!`;
         showScreen('userDashboard');
         initializeUserDashboard();
+        // Initialize payment requests for user
+        if (typeof initializePaymentRequests === 'function') {
+          initializePaymentRequests();
+        }
         toast.success(`Willkommen zurück, ${userResult.existingName}!`);
       } else {
         toast.info('Bitte verwende eine andere FH-Kennung oder wende dich an den Administrator.');
@@ -80,6 +84,10 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
       document.getElementById('userWelcome').textContent = welcomeMessage;
       showScreen('userDashboard');
       initializeUserDashboard();
+      // Initialize payment requests for user
+      if (typeof initializePaymentRequests === 'function') {
+        initializePaymentRequests();
+      }
       toast.success(welcomeMessage);
     }
     
@@ -127,12 +135,27 @@ function loginAsAdmin() {
     // Admin Dashboard initialisieren
     initializeAdminDashboard();
     
+    // Initialize payment requests for admin
+    if (typeof initializePaymentRequests === 'function') {
+      initializePaymentRequests();
+    }
+    
     setButtonLoading(adminButton, false);
     toast.success(`Willkommen im Admin-Bereich, ${name}!`);
   }, 800);
 }
 
 function logout() {
+  // Clean up payment request listeners
+  if (typeof userPaymentRequestsListener !== 'undefined' && userPaymentRequestsListener) {
+    userPaymentRequestsListener();
+    userPaymentRequestsListener = null;
+  }
+  if (typeof paymentRequestsListener !== 'undefined' && paymentRequestsListener) {
+    paymentRequestsListener();
+    paymentRequestsListener = null;
+  }
+  
   window.currentUser = { name: '', kennung: '', isAdmin: false };
   showScreen('loginScreen');
   

@@ -5,6 +5,71 @@
 
 // Global payment request management
 let paymentRequestsListener = null;
+let userPaymentRequestsListener = null;
+
+/**
+ * Setup real-time listener for user payment requests
+ */
+function setupUserPaymentRequestsListener() {
+    // Clean up existing listener
+    if (userPaymentRequestsListener) {
+        userPaymentRequestsListener();
+        userPaymentRequestsListener = null;
+    }
+    
+    // Only set up listener for logged-in users
+    if (!window.currentUser || window.currentUser.isAdmin) {
+        return;
+    }
+    
+    try {
+        userPaymentRequestsListener = window.db.collection('paymentRequests')
+            .where('userId', '==', window.currentUser.kennung)
+            .onSnapshot((snapshot) => {
+                console.log('Live update: Payment requests changed for user');
+                
+                // Update button states for all current entries
+                if (typeof checkAndUpdatePaymentRequestButtons === 'function') {
+                    // Get current entries from the DOM and update buttons
+                    updateAllPaymentRequestButtons();
+                }
+            }, (error) => {
+                console.error('Error in user payment requests listener:', error);
+            });
+        
+        console.log("✅ User payment requests listener registered");
+    } catch (error) {
+        console.error("❌ Failed to setup user payment requests listener:", error);
+    }
+}
+
+/**
+ * Update all payment request buttons based on current state
+ */
+async function updateAllPaymentRequestButtons() {
+    if (!window.currentUser || window.currentUser.isAdmin) return;
+    
+    try {
+        // Get all entry rows currently displayed
+        const entryRows = document.querySelectorAll('.entry-row, .entry-card');
+        
+        for (const row of entryRows) {
+            // Extract entry ID from payment request button
+            const paymentButton = row.querySelector('.payment-request-btn');
+            if (paymentButton && paymentButton.onclick) {
+                const onclickStr = paymentButton.onclick.toString();
+                const entryIdMatch = onclickStr.match(/['"`]([^'"`]+)['"`]/);
+                if (entryIdMatch) {
+                    const entryId = entryIdMatch[1];
+                    const requestExists = await checkPaymentRequestExists(entryId);
+                    updatePaymentRequestButton(entryId, requestExists);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error updating payment request buttons:', error);
+    }
+}
 
 /**
  * User requests payment processing for an entry
@@ -64,8 +129,7 @@ async function requestPayment(entryId) {
         
         showToast('Zahlungsanfrage gesendet! Der Admin wird benachrichtigt.', 'success');
         
-        // Update button state immediately
-        updatePaymentRequestButton(entryId, true);
+        // Button will be updated automatically by the real-time listener
         
     } catch (error) {
         console.error('Error requesting payment:', error);
@@ -132,18 +196,16 @@ async function cancelPaymentRequest(entryId) {
             return;
         }
         
-                 // Mark payment request as cancelled instead of deleting
-         const requestDoc = requests.docs[0];
-         await window.db.collection('paymentRequests').doc(requestDoc.id).update({
-             status: 'cancelled',
-             cancelledAt: firebase.firestore.FieldValue.serverTimestamp(),
-             cancelledBy: window.currentUser.name
-         });
-         
-         showToast('Zahlungsanfrage zurückgezogen', 'success');
+        // Mark as cancelled instead of deleting
+        const requestDoc = requests.docs[0];
+        await window.db.collection('paymentRequests').doc(requestDoc.id).update({
+            status: 'cancelled',
+            cancelledAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
         
-        // Update button state
-        updatePaymentRequestButton(entryId, false);
+        showToast('Zahlungsanfrage zurückgezogen', 'success');
+        
+        // Button will be updated automatically by the real-time listener
         
     } catch (error) {
         console.error('Error cancelling payment request:', error);
@@ -326,18 +388,28 @@ async function getPendingPaymentRequestsCount() {
  * Setup real-time listener for payment requests (for admin)
  */
 function setupPaymentRequestsListener() {
-    if (!window.currentUser?.isAdmin) return;
-    
     if (paymentRequestsListener) {
         paymentRequestsListener();
     }
     
-    paymentRequestsListener = window.db.collection('paymentRequests')
-        .where('status', '==', 'pending')
-        .onSnapshot(snapshot => {
-            const count = snapshot.size;
-            updatePaymentRequestsBadge(count);
+    paymentRequestsListener = window.db.collection('paymentRequests').onSnapshot((snapshot) => {
+        const requests = [];
+        snapshot.forEach((doc) => {
+            if (doc.data().status === 'pending') {
+                requests.push({
+                    id: doc.id,
+                    ...doc.data(),
+                    requestedAt: doc.data().requestedAt?.toDate()
+                });
+            }
         });
+        
+        console.log('Live update: Loaded payment requests:', requests.length);
+        updatePaymentRequestsBadge(requests.length);
+    }, (error) => {
+        console.error('Error in payment requests listener:', error);
+        showToast('Fehler beim Live-Update der Zahlungsanfragen', 'error');
+    });
 }
 
 /**
@@ -355,15 +427,28 @@ function updatePaymentRequestsBadge(count) {
     }
 }
 
+/**
+ * Initialize payment request system
+ */
+function initializePaymentRequests() {
+    if (window.currentUser && !window.currentUser.isAdmin) {
+        setupUserPaymentRequestsListener();
+    }
+    
+    if (window.currentUser && window.currentUser.isAdmin) {
+        setupPaymentRequestsListener();
+    }
+}
+
 // Make functions globally available
 window.requestPayment = requestPayment;
 window.cancelPaymentRequest = cancelPaymentRequest;
-window.showPaymentRequestsModal = showPaymentRequestsModal;
 window.processPaymentRequest = processPaymentRequest;
+window.showPaymentRequestsModal = showPaymentRequestsModal;
+window.checkPaymentRequestExists = checkPaymentRequestExists;
+window.updatePaymentRequestButton = updatePaymentRequestButton;
+window.setupPaymentRequestsListener = setupPaymentRequestsListener;
+window.initializePaymentRequests = initializePaymentRequests;
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', () => {
-    if (window.currentUser?.isAdmin) {
-        setupPaymentRequestsListener();
-    }
-}); 
+// Remove DOMContentLoaded listener - initialization happens after login
+// Payment requests are initialized via initializePaymentRequests() in auth.js 
