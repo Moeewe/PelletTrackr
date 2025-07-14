@@ -63,18 +63,22 @@ function showEquipmentManager() {
         <div class="modal-body">
             <div class="card">
                 <div class="card-body">
+                    <div class="equipment-controls">
+                        <div class="control-row">
+                            <div class="search-container">
+                                <input type="text" id="equipmentSearchInput" placeholder="Equipment durchsuchen..." class="search-input" onkeyup="searchEquipment()">
+                                <button class="search-clear" onclick="clearEquipmentSearch()">×</button>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="category-tabs">
                         <button class="tab-btn active" onclick="showEquipmentCategory('keys')">Schlüssel</button>
                         <button class="tab-btn" onclick="showEquipmentCategory('hardware')">Hardware</button>
                         <button class="tab-btn" onclick="showEquipmentCategory('books')">Bücher</button>
                     </div>
                     
-                    <div class="equipment-search">
-                        <input type="text" id="equipmentSearchInput" placeholder="Equipment durchsuchen..." class="search-input" onkeyup="searchEquipment()">
-                        <button class="search-clear-btn" onclick="clearEquipmentSearch()" title="Suche löschen">×</button>
-                    </div>
-                    
-                    <div class="equipment-list" id="equipmentList">
+                    <div id="equipmentList" class="equipment-container">
                         <div class="loading">Equipment wird geladen...</div>
                     </div>
                 </div>
@@ -149,14 +153,14 @@ function clearEquipmentSearch() {
 function showEquipmentCategory(category) {
     currentEquipmentCategory = category;
     
-    // Update tab buttons - search in current modal
+    // Update tab buttons - use correct selector for equipment tabs
     const tabButtons = document.querySelectorAll('.category-tabs .tab-btn');
     tabButtons.forEach(btn => {
         btn.classList.remove('active');
     });
     
     // Set the correct tab as active based on category
-    const categoryTab = document.querySelector(`.tab-btn[onclick*="${category}"]`);
+    const categoryTab = document.querySelector(`.category-tabs .tab-btn[onclick*="${category}"]`);
     if (categoryTab) {
         categoryTab.classList.add('active');
     }

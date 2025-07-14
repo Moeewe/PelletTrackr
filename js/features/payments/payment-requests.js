@@ -258,39 +258,40 @@ async function checkPaymentRequestExists(entryId) {
 }
 
 /**
- * Admin: Get all pending payment requests
+ * Load pending payment requests
  */
 async function loadPendingPaymentRequests() {
     try {
-        console.log('Loading pending payment requests...');
-        
-        // Try with orderBy first, fallback to simple query if it fails
-        let requests;
+        // Try with fallback for orderBy issues
+        let querySnapshot;
         try {
-            requests = await window.db.collection('paymentRequests')
+            querySnapshot = await window.db.collection('paymentRequests')
                 .where('status', '==', 'pending')
                 .orderBy('requestedAt', 'desc')
                 .get();
-        } catch (orderError) {
-            console.warn('OrderBy failed, using simple query:', orderError);
-            requests = await window.db.collection('paymentRequests')
+        } catch (orderByError) {
+            console.log('OrderBy failed, using fallback query for payment requests');
+            querySnapshot = await window.db.collection('paymentRequests')
                 .where('status', '==', 'pending')
                 .get();
         }
-            
-        const paymentRequests = [];
-        requests.forEach(doc => {
+        
+        const requests = [];
+        querySnapshot.forEach((doc) => {
             const data = doc.data();
-            paymentRequests.push({
+            requests.push({
                 id: doc.id,
                 ...data,
-                // Ensure requestedAt is properly handled
-                requestedAt: data.requestedAt || null
+                requestedAt: data.requestedAt?.toDate() || new Date()
             });
         });
         
-        console.log(`Found ${paymentRequests.length} pending payment requests:`, paymentRequests);
-        return paymentRequests;
+        // Sort manually if orderBy failed
+        requests.sort((a, b) => (b.requestedAt || new Date()) - (a.requestedAt || new Date()));
+        
+        console.log('Loaded payment requests:', requests.length);
+        return requests;
+        
     } catch (error) {
         console.error('Error loading payment requests:', error);
         showToast('Fehler beim Laden der Zahlungsanfragen', 'error');
@@ -361,7 +362,7 @@ async function processPaymentRequest(requestId, approve = true) {
 }
 
 /**
- * Admin: Show payment requests modal
+ * Show payment requests modal
  */
 async function showPaymentRequestsModal() {
     try {
@@ -386,21 +387,29 @@ async function showPaymentRequestsModal() {
         
         showModalWithContent(modalContent);
         
-        // Load payment requests
-        const requests = await loadPendingPaymentRequests();
-        const container = document.getElementById('paymentRequestsList');
-        
-        if (container) {
-            if (requests.length === 0) {
-                container.innerHTML = '<p class="text-center">Keine offenen Zahlungsanfragen</p>';
-            } else {
-                container.innerHTML = renderPaymentRequestsList(requests);
+        // Load payment requests with better error handling
+        try {
+            const requests = await loadPendingPaymentRequests();
+            const container = document.getElementById('paymentRequestsList');
+            
+            if (container) {
+                if (requests.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><p>Keine offenen Zahlungsanfragen</p></div>';
+                } else {
+                    container.innerHTML = renderPaymentRequestsList(requests);
+                }
+            }
+        } catch (loadError) {
+            console.error('Error loading payment requests in modal:', loadError);
+            const container = document.getElementById('paymentRequestsList');
+            if (container) {
+                container.innerHTML = '<div class="error-state"><p>Fehler beim Laden der Zahlungsanfragen</p></div>';
             }
         }
         
     } catch (error) {
         console.error('Error showing payment requests modal:', error);
-        showToast('Fehler beim Laden der Zahlungsanfragen', 'error');
+        showToast('Fehler beim Öffnen der Zahlungsanfragen', 'error');
     }
 }
 

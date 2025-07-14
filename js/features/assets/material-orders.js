@@ -231,14 +231,14 @@ async function loadMaterialOrders() {
 function showOrderTab(tab) {
     currentOrderTab = tab;
     
-    // Update tab buttons
+    // Update tab buttons - use correct selector for material orders
     const tabButtons = document.querySelectorAll('.order-tabs .tab-btn');
     tabButtons.forEach(btn => {
         btn.classList.remove('active');
     });
     
     // Set the correct tab as active based on tab parameter
-    const activeTab = document.querySelector(`.tab-btn[onclick*="${tab}"]`);
+    const activeTab = document.querySelector(`.order-tabs .tab-btn[onclick*="${tab}"]`);
     if (activeTab) {
         activeTab.classList.add('active');
     }
@@ -250,14 +250,14 @@ function showOrderTab(tab) {
     });
     
     // Show selected tab content
-    const tabContent = document.getElementById(tab);
-    if (tabContent) {
-        tabContent.classList.add('active');
-        renderTabContent(tab);
+    const selectedContent = document.getElementById(tab);
+    if (selectedContent) {
+        selectedContent.classList.add('active');
     }
+    
+    // Render the appropriate content
+    renderTabContent(tab);
 }
-
-// getTabContentId function removed - no longer needed
 
 /**
  * Render tab content based on selected tab

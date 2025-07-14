@@ -49,22 +49,22 @@
 }
 
 .confirmation-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin: 0 auto 24px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 48px;
-  margin-bottom: 20px;
-  display: block;
+  font-weight: bold;
+  border: 2px solid #000000;
+  background: #ffc107;
+  color: #000000;
 }
 
 .confirmation-icon.flat-warning {
   background: #ffc107;
-  color: #000000;
-  width: 80px;
-  height: 80px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 36px;
-  font-weight: bold;
-  margin: 0 auto 20px auto;
   border: 2px solid #000000;
   border-radius: 0;
   box-shadow: none;
@@ -73,30 +73,25 @@
 .confirmation-message {
   font-size: 16px;
   line-height: 1.5;
-  color: #333333;
   margin-bottom: 24px;
-  white-space: pre-line;
-  font-weight: 400;
+  text-align: center;
 }
 
 .confirmation-buttons {
   display: flex;
   gap: 12px;
-  justify-content: flex-end;
+  justify-content: center;
 }
 
 .confirmation-buttons .btn {
   min-width: 100px;
-  padding: 10px 20px;
-  font-size: 14px;
-  font-weight: 500;
 }
 
-/* Responsive für kleinere Screens */
+/* Mobile adjustments */
 @media (max-width: 600px) {
   .confirmation-dialog {
-    margin: 10px;
-    max-width: calc(100% - 20px);
+    margin: 20px;
+    max-width: calc(100% - 40px);
   }
   
   .confirmation-content {
@@ -104,127 +99,103 @@
   }
   
   .confirmation-buttons {
-    flex-direction: column-reverse;
+    flex-direction: row;
     gap: 8px;
   }
   
   .confirmation-buttons .btn {
-    width: 100%;
-    max-width: none;
+    flex: 1;
+    min-width: 80px;
   }
 }
 
-/* ==================== EINHEITLICHE MODAL-STRUKTUR ==================== */
-
-/* Modal Container - Alle Modals verwenden dieselbe Struktur */
+/* ==================== MAIN MODAL STYLES ==================== */
 .modal {
-  display: none;
   position: fixed;
-  z-index: 10500; /* Höher als confirmation-overlay */
-  left: 0;
   top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
-  animation: fadeIn 0.3s ease;
-  overflow: hidden;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .modal.active {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+  animation: fadeIn 0.3s ease;
 }
 
-/* Modal Content - Basis für alle Modals */
 .modal-content {
   background: white;
   border: 2px solid #000000;
   border-radius: 0;
-  max-width: 900px;
+  max-width: 800px;
   width: 100%;
   max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   animation: slideIn 0.3s ease;
   position: relative;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
 }
 
-/* Modal Header - Einheitlich für alle Modals */
 .modal-header {
+  padding: 20px 24px;
+  border-bottom: 2px solid #000000;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px 32px;
-  border-bottom: 2px solid #000000;
-  background: white;
-  flex-shrink: 0;
-  z-index: 10;
-  width: 100%;
-  box-sizing: border-box;
-  position: relative; /* Für Status-Badge Positionierung */
+  background: #f8f9fa;
+  position: sticky;
+  top: 0;
+  z-index: 10001;
 }
 
 .modal-header h2,
 .modal-header h3 {
-  margin: 0 !important;
-  font-size: 24px !important;
-  font-weight: 600 !important;
-  color: #000000 !important;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #000000;
   flex: 1;
-  padding: 0 !important;
-  background: none !important;
-  border: none !important;
-  display: block !important;
-  min-width: auto !important;
-  text-align: left !important;
-  position: static !important;
-  width: auto !important;
-  text-transform: none !important;
-  letter-spacing: normal !important;
-  line-height: 1.2 !important;
 }
 
-/* Modal Body - Einheitlich für alle Modals */
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: #000000;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
 .modal-body {
-  padding: 32px;
-  line-height: 1.6;
-  flex: 1;
+  padding: 24px;
+  max-height: calc(90vh - 140px);
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  background: white;
-  color: #333;
 }
 
-/* Modal Footer - Einheitlich für alle Modals */
 .modal-footer {
-  padding: 24px 32px;
+  padding: 16px 24px;
   border-top: 2px solid #000000;
   display: flex;
-  gap: 16px;
   justify-content: flex-end;
-  background: white;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-}
-
-/* Modal Actions - Für Buttons innerhalb des Modal-Body */
-.modal-actions {
-  display: flex;
   gap: 12px;
-  justify-content: flex-end;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid #e0e0e0;
-}
-
-.modal-actions .btn {
-  min-width: 100px;
+  background: #f8f9fa;
+  position: sticky;
+  bottom: 0;
+  z-index: 10001;
 }
 
 /* ==================== MODAL CONTENT STYLES ==================== */
@@ -422,24 +393,6 @@
 }
 
 /* ==================== MODAL CLOSE BUTTON ==================== */
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 28px;
-  color: #666666;
-  cursor: pointer;
-  padding: 8px;
-  line-height: 1;
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  border-radius: 0;
-  flex-shrink: 0;
-}
 
 .close-btn:hover {
   background: #f0f0f0;
