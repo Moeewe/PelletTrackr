@@ -16,6 +16,17 @@ const EQUIPMENT_CATEGORIES = {
     'books': 'Bücher'
 };
 
+// Safe showToast function with fallback
+function safeShowToast(message, type = 'info') {
+    if (typeof window.showToast === 'function') {
+        window.safeShowToast(message, type);
+    } else if (window.toast && typeof window.toast[type] === 'function') {
+        window.toast[type](message);
+    } else {
+        console.log(`Toast (${type}): ${message}`);
+    }
+}
+
 /**
  * Setup real-time listener for equipment
  */
@@ -40,7 +51,7 @@ function setupEquipmentListener() {
             showEquipmentCategory(currentEquipmentCategory);
         }, (error) => {
             console.error('Error in equipment listener:', error);
-            showToast('Fehler beim Live-Update des Equipments', 'error');
+            safeShowToast('Fehler beim Live-Update des Equipments', 'error');
         });
         
         console.log("✅ Equipment listener registered");
@@ -127,7 +138,7 @@ async function loadEquipment() {
         
     } catch (error) {
         console.error('Error loading equipment:', error);
-        showToast('Fehler beim Laden der Ausrüstung', 'error');
+        safeShowToast('Fehler beim Laden der Ausrüstung', 'error');
     }
 }
 
@@ -192,6 +203,12 @@ function showEquipmentCategory(category) {
  */
 function renderEquipmentList(equipmentList) {
     const container = document.getElementById('equipmentList');
+    
+    // Add null check for container
+    if (!container) {
+        console.warn('Equipment list container not found');
+        return;
+    }
     
     if (equipmentList.length === 0) {
         container.innerHTML = `
@@ -364,7 +381,7 @@ async function saveEquipment() {
     if (equipmentData.requiresDeposit) {
         const depositAmount = parseFloat(formData.get('depositAmount'));
         if (isNaN(depositAmount) || depositAmount <= 0) {
-            showToast('Pfandbetrag muss eine positive Zahl sein', 'error');
+            safeShowToast('Pfandbetrag muss eine positive Zahl sein', 'error');
             return;
         }
         equipmentData.depositAmount = depositAmount;
@@ -372,20 +389,20 @@ async function saveEquipment() {
     }
     
     if (!equipmentData.name || !equipmentData.location) {
-        showToast('Name und Standort sind Pflichtfelder', 'error');
+        safeShowToast('Name und Standort sind Pflichtfelder', 'error');
         return;
     }
     
     try {
         await window.db.collection('equipment').add(equipmentData);
-        showToast('Equipment erfolgreich hinzugefügt', 'success');
+        safeShowToast('Equipment erfolgreich hinzugefügt', 'success');
         
         // Close the modal properly
         closeModal();
         
     } catch (error) {
         console.error('Error saving equipment:', error);
-        showToast('Fehler beim Speichern', 'error');
+        safeShowToast('Fehler beim Speichern', 'error');
     }
 }
 
@@ -395,7 +412,7 @@ async function saveEquipment() {
 function editEquipment(equipmentId) {
     const equipmentItem = equipment.find(item => item.id === equipmentId);
     if (!equipmentItem) {
-        showToast('Equipment nicht gefunden', 'error');
+        safeShowToast('Equipment nicht gefunden', 'error');
         return;
     }
     
@@ -497,7 +514,7 @@ async function updateEquipment(equipmentId) {
     if (equipmentData.requiresDeposit) {
         const depositAmount = parseFloat(document.getElementById('editEquipmentDepositAmount').value);
         if (isNaN(depositAmount) || depositAmount <= 0) {
-            showToast('Pfandbetrag muss eine positive Zahl sein', 'error');
+            safeShowToast('Pfandbetrag muss eine positive Zahl sein', 'error');
             return;
         }
         equipmentData.depositAmount = depositAmount;
@@ -508,20 +525,20 @@ async function updateEquipment(equipmentId) {
     }
     
     if (!equipmentData.name || !equipmentData.category) {
-        showToast('Bitte alle Pflichtfelder ausfüllen', 'error');
+        safeShowToast('Bitte alle Pflichtfelder ausfüllen', 'error');
         return;
     }
     
     try {
         await window.db.collection('equipment').doc(equipmentId).update(equipmentData);
         
-        showToast('Equipment erfolgreich aktualisiert', 'success');
+        safeShowToast('Equipment erfolgreich aktualisiert', 'success');
         closeModal();
         // Removed manual reload - real-time listener will handle the update
         
     } catch (error) {
         console.error('Error updating equipment:', error);
-        showToast('Fehler beim Aktualisieren', 'error');
+        safeShowToast('Fehler beim Aktualisieren', 'error');
     }
 }
 
@@ -544,7 +561,7 @@ async function borrowEquipment(equipmentId) {
     }
     
     if (!proceedWithBorrow) {
-        showToast('Ausleihe abgebrochen. Pfand muss vor der Ausleihe bezahlt werden.', 'warning');
+        safeShowToast('Ausleihe abgebrochen. Pfand muss vor der Ausleihe bezahlt werden.', 'warning');
         return;
     }
     
@@ -563,12 +580,12 @@ async function borrowEquipment(equipmentId) {
         
         await window.db.collection('equipment').doc(equipmentId).update(updateData);
         
-        showToast(`Equipment erfolgreich an ${userName} ausgeliehen`, 'success');
+        safeShowToast(`Equipment erfolgreich an ${userName} ausgeliehen`, 'success');
         // Removed manual reload - real-time listener will handle the update
         
     } catch (error) {
         console.error('Error borrowing equipment:', error);
-        showToast('Fehler beim Ausleihen', 'error');
+        safeShowToast('Fehler beim Ausleihen', 'error');
     }
 }
 
@@ -596,12 +613,12 @@ async function returnEquipment(equipmentId) {
         
         await window.db.collection('equipment').doc(equipmentId).update(updateData);
         
-        showToast('Equipment erfolgreich zurückgegeben', 'success');
+        safeShowToast('Equipment erfolgreich zurückgegeben', 'success');
         // Removed manual reload - real-time listener will handle the update
         
     } catch (error) {
         console.error('Error returning equipment:', error);
-        showToast('Fehler bei der Rückgabe', 'error');
+        safeShowToast('Fehler bei der Rückgabe', 'error');
     }
 }
 
@@ -618,12 +635,12 @@ async function markDepositAsPaid(equipmentId) {
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
-        showToast('Pfand als bezahlt markiert', 'success');
+        safeShowToast('Pfand als bezahlt markiert', 'success');
         // Removed manual reload - real-time listener will handle the update
         
     } catch (error) {
         console.error('Error marking deposit as paid:', error);
-        showToast('Fehler beim Markieren des Pfands', 'error');
+        safeShowToast('Fehler beim Markieren des Pfands', 'error');
     }
 }
 

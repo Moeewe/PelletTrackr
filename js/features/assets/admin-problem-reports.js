@@ -555,7 +555,8 @@ async function deleteEquipmentRequest(requestId) {
 window.showProblemReports = showProblemReports;
 window.closeProblemReports = closeProblemReports;
 window.loadProblemReports = loadProblemReports;
-window.updateProblemReportStatus = updateProblemReportStatus;
+window.updateProblemReportStatus = updateProblemStatus; // Alias for updateProblemStatus
+window.updateProblemStatus = updateProblemStatus;
 window.showEquipmentRequests = showEquipmentRequests;
 window.closeEquipmentRequests = closeEquipmentRequests;
 window.loadEquipmentRequests = loadEquipmentRequests;

@@ -517,7 +517,8 @@ async function editNote(entryId, currentNote) {
 window.showModal = showModal;
 window.showModalWithContent = showModalWithContent;
 window.closeModal = closeModal;
-window.showDetails = showDetails;
+window.showDetails = viewEntryDetails; // Alias for viewEntryDetails
+window.viewEntryDetails = viewEntryDetails;
 window.editUserEntry = editUserEntry;
 window.editEntry = editEntry;
 window.editNote = editNote;
