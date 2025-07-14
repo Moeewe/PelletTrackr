@@ -25,6 +25,7 @@
   max-width: 100%;
   box-sizing: border-box;
   letter-spacing: 0.5px;
+  text-transform: none !important;
 }
 
 .btn:hover {
