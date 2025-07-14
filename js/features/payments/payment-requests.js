@@ -337,31 +337,44 @@ async function processPaymentRequest(requestId, approve = true) {
  * Admin: Show payment requests modal
  */
 async function showPaymentRequestsModal() {
-    const requests = await loadPendingPaymentRequests();
-    
-    const modalContent = `
-        <div class="modal-header">
-            <h3>Zahlungsanfragen verwalten (${requests.length})</h3>
-            <button class="close-btn" onclick="closeModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div class="card">
-                <div class="card-body">
-                    <div id="paymentRequestsList">
-                        ${requests.length === 0 ? 
-                            '<p class="text-center">Keine offenen Zahlungsanfragen</p>' : 
-                            renderPaymentRequestsList(requests)
-                        }
+    try {
+        const modalContent = `
+            <div class="modal-header">
+                <h3>Zahlungsanfragen verwalten</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="card">
+                    <div class="card-body">
+                        <div id="paymentRequestsList" class="payment-requests-container">
+                            <div class="loading">Zahlungsanfragen werden geladen...</div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
-        </div>
-    `;
-    
-    showModalWithContent(modalContent);
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
+            </div>
+        `;
+        
+        showModalWithContent(modalContent);
+        
+        // Load payment requests
+        const requests = await loadPendingPaymentRequests();
+        const container = document.getElementById('paymentRequestsList');
+        
+        if (container) {
+            if (requests.length === 0) {
+                container.innerHTML = '<p class="text-center">Keine offenen Zahlungsanfragen</p>';
+            } else {
+                container.innerHTML = renderPaymentRequestsList(requests);
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error showing payment requests modal:', error);
+        showToast('Fehler beim Laden der Zahlungsanfragen', 'error');
+    }
 }
 
 /**

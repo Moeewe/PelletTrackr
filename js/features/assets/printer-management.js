@@ -110,19 +110,23 @@ function showPrinterManager() {
         <div class="modal-body">
             <div class="card">
                 <div class="card-body">
-                    <div class="form-group">
-                        <button class="btn btn-primary" onclick="showAddPrinterForm()">
-                            Neuen Drucker hinzufügen
-                        </button>
+                    <div class="printer-controls">
+                        <div class="control-row">
+                            <button class="btn btn-primary" onclick="showAddPrinterForm()">Neuen Drucker hinzufügen</button>
+                            <div class="search-container">
+                                <input type="text" id="printerSearchInput" placeholder="Drucker suchen..." class="search-input" onkeyup="searchPrinters()">
+                            </div>
+                        </div>
                     </div>
                     
-                    <div class="printer-grid" id="printerGrid">
+                    <div id="printerGrid" class="printer-grid">
                         <div class="loading">Drucker werden geladen...</div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="modal-footer">
+            <button class="btn btn-primary" onclick="showAddPrinterForm()">Drucker hinzufügen</button>
             <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
         </div>
     `;

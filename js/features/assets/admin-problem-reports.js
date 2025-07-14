@@ -388,7 +388,7 @@ async function loadEquipmentRequests() {
  * Filter equipment requests by status
  */
 function filterEquipmentRequests() {
-    const filter = document.getElementById('equipmentRequestStatusFilter').value;
+    const filter = document.getElementById('equipmentStatusFilter').value;
     renderEquipmentRequests(filter);
 }
 

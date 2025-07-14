@@ -81,6 +81,7 @@ function showEquipmentManager() {
             </div>
         </div>
         <div class="modal-footer">
+            <button class="btn btn-primary" onclick="showAddEquipmentForm()">Equipment hinzufügen</button>
             <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
         </div>
     `;

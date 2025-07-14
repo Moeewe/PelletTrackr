@@ -127,13 +127,34 @@ function showMaterialOrders() {
         <div class="modal-body">
             <div class="card">
                 <div class="card-body">
-                    <div id="materialOrdersContent">
-                        <div class="loading">Material-Bestellungen werden geladen...</div>
+                    <div class="order-tabs">
+                        <button class="tab-btn active" onclick="showOrderTab('requests')">Anfragen</button>
+                        <button class="tab-btn" onclick="showOrderTab('shopping')">Einkaufsliste</button>
+                        <button class="tab-btn" onclick="showOrderTab('history')">Verlauf</button>
+                    </div>
+                    
+                    <div id="requests" class="tab-content active">
+                        <div id="orderRequestsContent">
+                            <div class="loading">Bestellanfragen werden geladen...</div>
+                        </div>
+                    </div>
+                    
+                    <div id="shopping" class="tab-content">
+                        <div id="shoppingListContent">
+                            <div class="loading">Einkaufsliste wird geladen...</div>
+                        </div>
+                    </div>
+                    
+                    <div id="history" class="tab-content">
+                        <div id="orderHistoryContent">
+                            <div class="loading">Bestellverlauf wird geladen...</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="modal-footer">
+            <button class="btn btn-primary" onclick="showMaterialRequestForm()">Material anfragen</button>
             <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
         </div>
     `;
