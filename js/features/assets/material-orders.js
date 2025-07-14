@@ -79,7 +79,7 @@ async function submitMaterialRequest() {
     
     // Validation
     if (!formData.materialName || !formData.reason) {
-        showToast('Bitte füllen Sie mindestens Material und Begründung aus', 'error');
+        toast.error('Bitte füllen Sie mindestens Material und Begründung aus');
         return;
     }
     
@@ -101,7 +101,7 @@ async function submitMaterialRequest() {
         const quantityText = formData.quantity ? `\nMenge: ${formData.quantity}` : '';
         const manufacturerText = formData.manufacturer ? `\nHersteller: ${formData.manufacturer}` : '';
         
-        showToast(`Material-Anfrage erfolgreich gesendet!\n\nMaterial: ${formData.materialName}${quantityText}${manufacturerText}\nPriorität: ${getPriorityText(formData.priority)}\n\nEin Admin wird deine Anfrage prüfen und das Material bestellen.`, 'success', 8000);
+        toast.success(`Material-Anfrage erfolgreich gesendet!\n\nMaterial: ${formData.materialName}${quantityText}${manufacturerText}\nPriorität: ${getPriorityText(formData.priority)}\n\nEin Admin wird deine Anfrage prüfen und das Material bestellen.`);
         
         // Close modal
         closeMaterialRequestForm();
@@ -113,7 +113,7 @@ async function submitMaterialRequest() {
         
     } catch (error) {
         console.error('Error submitting material request:', error);
-        showToast('Fehler beim Senden der Anfrage', 'error');
+        toast.error('Fehler beim Senden der Anfrage');
     }
 }
 
@@ -209,7 +209,7 @@ function setupMaterialOrdersListener() {
         
     }, (error) => {
         console.error('Error in material orders listener:', error);
-        showToast('Fehler beim Live-Update der Bestellungen', 'error');
+        toast.error('Fehler beim Live-Update der Bestellungen');
     });
 }
 
@@ -234,7 +234,7 @@ async function loadMaterialOrders() {
         
     } catch (error) {
         console.error('Error loading material orders:', error);
-        showToast('Fehler beim Laden der Bestellungen', 'error');
+        toast.error('Fehler beim Laden der Bestellungen');
     }
 }
 
@@ -482,12 +482,12 @@ async function approveOrderRequest(requestId) {
             approvedBy: window.currentUser?.name || 'Admin'
         });
         
-        showToast('Anfrage genehmigt und zur Einkaufsliste hinzugefügt', 'success');
+        toast.success('Anfrage genehmigt und zur Einkaufsliste hinzugefügt');
         // Real-time listener will handle the update automatically
         
     } catch (error) {
         console.error('Error approving request:', error);
-        showToast('Fehler beim Genehmigen', 'error');
+        toast.error('Fehler beim Genehmigen');
         
         // Reset button state on error
         if (button) {
@@ -518,12 +518,12 @@ async function rejectOrderRequest(requestId) {
             rejectedBy: window.currentUser?.name || 'Admin'
         });
         
-        showToast('Anfrage abgelehnt', 'success');
+        toast.success('Anfrage abgelehnt');
         // Real-time listener will handle the update automatically
         
     } catch (error) {
         console.error('Error rejecting request:', error);
-        showToast('Fehler beim Ablehnen', 'error');
+        toast.error('Fehler beim Ablehnen');
         
         // Reset button state on error
         if (button) {
@@ -549,12 +549,12 @@ async function deleteOrderRequest(requestId) {
         button.textContent = 'Wird gelöscht...';
         
         await window.db.collection('materialOrders').doc(requestId).delete();
-        showToast('Bestellung erfolgreich gelöscht', 'success');
+        toast.success('Bestellung erfolgreich gelöscht');
         // Real-time listener will handle the update automatically
         
     } catch (error) {
         console.error('Error deleting request:', error);
-        showToast('Fehler beim Löschen', 'error');
+        toast.error('Fehler beim Löschen');
         
         // Reset button state on error
         if (button) {
@@ -575,12 +575,12 @@ async function markAsPurchased(requestId) {
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
-        showToast('Artikel als eingekauft markiert', 'success');
+        toast.success('Artikel als eingekauft markiert');
         // Real-time listener will automatically update the UI
         
     } catch (error) {
         console.error('Error marking as purchased:', error);
-        showToast('Fehler beim Markieren', 'error');
+        toast.error('Fehler beim Markieren');
     }
 }
 
@@ -597,12 +597,12 @@ async function cancelOrder(requestId) {
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
-        showToast('Bestellung storniert', 'success');
+        toast.success('Bestellung storniert');
         // Real-time listener will automatically update the UI
         
     } catch (error) {
         console.error('Error cancelling order:', error);
-        showToast('Fehler beim Stornieren', 'error');
+        toast.error('Fehler beim Stornieren');
     }
 }
 

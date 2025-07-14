@@ -78,13 +78,16 @@ class ToastManager {
             const dialog = document.createElement('div');
             dialog.className = 'confirmation-dialog';
             
-            // Minimalistisches Design ohne großes Icon
+            // Dialog mit flachem, eckigem Icon
             dialog.innerHTML = `
                 <div class="confirmation-content">
+                    <div class="confirmation-header">
+                        <div class="confirmation-icon flat-warning">!</div>
+                    </div>
                     <div class="confirmation-message">${message}</div>
                     <div class="confirmation-buttons">
-                        <button class="btn btn-primary confirm-yes">${confirmText}</button>
                         <button class="btn btn-secondary confirm-no">${cancelText}</button>
+                        <button class="btn btn-primary confirm-yes">${confirmText}</button>
                     </div>
                 </div>
             `;
@@ -187,6 +190,28 @@ function setButtonLoading(button, loading = true) {
 // Global instances
 const toast = new ToastManager();
 const loading = new LoadingManager();
+
+// Legacy showToast function for backward compatibility
+function showToast(message, type = 'info', duration = 5000) {
+    switch (type) {
+        case 'success':
+            toast.success(message);
+            break;
+        case 'error':
+            toast.error(message);
+            break;
+        case 'warning':
+            toast.warning(message);
+            break;
+        default:
+            toast.info(message);
+    }
+}
+
+// Make toast system globally available
+window.toast = toast;
+window.loading = loading;
+window.showToast = showToast;
 
 // Firebase Operations mit Loading States
 async function withLoading(operation, loadingMessage = 'Laden...', successMessage = null, errorMessage = null) {

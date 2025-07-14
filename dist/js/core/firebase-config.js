@@ -3,6 +3,7 @@
 
 // Firebase-Initialisierung bereits erfolgt?
 let firebaseInitialized = false;
+let connectionHealthy = true;
 
 // Warten bis Firebase SDK geladen ist
 function initializeFirebase() {
@@ -19,6 +20,7 @@ function initializeFirebase() {
       window.db = db;
       window.firebase = firebase;
       firebaseInitialized = true;
+      connectionHealthy = true;
       return true;
     }
 
@@ -37,10 +39,23 @@ function initializeFirebase() {
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
+    // Enable offline persistence
+    try {
+      db.enablePersistence({ synchronizeTabs: true });
+      console.log("📱 Firebase offline persistence enabled");
+    } catch (err) {
+      if (err.code == 'failed-precondition') {
+        console.warn("⚠️ Multiple tabs open, persistence only enabled in one tab");
+      } else if (err.code == 'unimplemented') {
+        console.warn("⚠️ Browser doesn't support persistence");
+      }
+    }
+
     // Global DB-Referenz für alle Module verfügbar machen
     window.db = db;
     window.firebase = firebase;
     firebaseInitialized = true;
+    connectionHealthy = true;
 
     console.log("🔥 Firebase erfolgreich initialisiert");
     return true;
@@ -49,6 +64,47 @@ function initializeFirebase() {
     return false;
   }
 }
+
+// Enhanced retry function for failed operations
+async function retryFirebaseOperation(operation, maxRetries = 3, delay = 1000) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await operation();
+    } catch (error) {
+      console.warn(`⚠️ Firebase operation failed (attempt ${i + 1}/${maxRetries}):`, error.message);
+      
+      if (i === maxRetries - 1) {
+        throw error;
+      }
+      
+      // Wait before retrying, with exponential backoff
+      await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+    }
+  }
+}
+
+// Global utility function for safe Firebase operations
+window.safeFirebaseOp = retryFirebaseOperation;
+
+// Retry user load function for user management
+async function retryUserLoad() {
+  console.log("🔄 Versuche Benutzer erneut zu laden...");
+  if (typeof loadUsersForManagement === 'function') {
+    try {
+      await loadUsersForManagement();
+      toast.success('Benutzer erfolgreich geladen');
+    } catch (error) {
+      console.error('Fehler beim erneuten Laden der Benutzer:', error);
+      toast.error('Fehler beim Laden der Benutzer: ' + error.message);
+    }
+  } else {
+    console.error('loadUsersForManagement function not available');
+    toast.error('Ladefunktion nicht verfügbar');
+  }
+}
+
+// Make retry function globally available
+window.retryUserLoad = retryUserLoad;
 
 // Firebase sofort initialisieren, wenn das Script geladen wird
 if (document.readyState === 'loading') {

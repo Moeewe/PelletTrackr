@@ -191,6 +191,28 @@ function setButtonLoading(button, loading = true) {
 const toast = new ToastManager();
 const loading = new LoadingManager();
 
+// Legacy showToast function for backward compatibility
+function showToast(message, type = 'info', duration = 5000) {
+    switch (type) {
+        case 'success':
+            toast.success(message);
+            break;
+        case 'error':
+            toast.error(message);
+            break;
+        case 'warning':
+            toast.warning(message);
+            break;
+        default:
+            toast.info(message);
+    }
+}
+
+// Make toast system globally available
+window.toast = toast;
+window.loading = loading;
+window.showToast = showToast;
+
 // Firebase Operations mit Loading States
 async function withLoading(operation, loadingMessage = 'Laden...', successMessage = null, errorMessage = null) {
     const loadingId = loading.show(loadingMessage);
