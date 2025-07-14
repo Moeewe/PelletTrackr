@@ -86,9 +86,10 @@ const ButtonFactory = {
     if (isPaid) {
       return createButton('NACHWEIS_PAID', `showPaymentProof('${entryId}')`);
     } else {
-      return createButton('NACHWEIS_UNPAID', `showPaymentProof('${entryId}')`, {
-        disabled: true,
-        title: 'Nachweis nach Zahlung verfügbar'
+      return createButton('PAYMENT_REQUEST', `requestPayment('${entryId}')`, {
+        title: 'Zahlungsanfrage an Admin senden',
+        id: `payment-request-btn-${entryId}`,
+        extraClasses: 'payment-request-btn'
       });
     }
   },

@@ -209,6 +209,11 @@ async function markEntryAsUnpaid(entryId) {
   }
 }
 
+// ==================== GLOBAL EXPORTS ====================
+// Export functions to window for global access
+window.markEntryAsPaid = markEntryAsPaid;
+window.markEntryAsUnpaid = markEntryAsUnpaid;
+
 /**
  * Clean up related payment requests when entry is marked as paid directly
  */

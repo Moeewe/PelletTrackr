@@ -324,3 +324,8 @@ async function updatePaymentStatus(entryId, paidStatus, successMessage) {
     window.toast?.error(`Fehler beim Aktualisieren: ${error.message}`);
   }
 }
+
+// ==================== GLOBAL EXPORTS ====================
+// Export functions to window for global access
+window.markEntryAsPaid = markEntryAsPaid;
+window.markEntryAsUnpaid = markEntryAsUnpaid;
