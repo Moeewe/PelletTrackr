@@ -3,42 +3,19 @@
 
 function showAdminLogin() {
   const passwordGroup = document.getElementById('passwordGroup');
-  const loginBtn = document.getElementById('loginBtn');
-  const adminBtn = document.getElementById('adminBtn');
+  const adminBtn = document.querySelector('.btn-secondary');
   
   if (passwordGroup.style.display === 'none' || passwordGroup.style.display === '') {
-    // In Admin-Modus wechseln
+    // Passwort-Feld anzeigen
     passwordGroup.style.display = 'block';
-    
-    // Haupt-Login-Button zu Nutzer-Login umwandeln (weiß mit schwarzen Outlines)
-    loginBtn.textContent = 'NUTZER LOGIN';
-    loginBtn.className = 'btn btn-secondary';
-    loginBtn.onclick = switchToUserLogin;
-    
-    // Admin-Button zu schwarzem Admin-Login umwandeln
-    adminBtn.textContent = 'ADMIN LOGIN';
-    adminBtn.className = 'btn btn-primary';
+    adminBtn.textContent = 'Admin Login';
     adminBtn.onclick = loginAsAdmin;
+  } else {
+    // Passwort-Feld verstecken
+    passwordGroup.style.display = 'none';
+    adminBtn.textContent = 'Als Admin anmelden';
+    adminBtn.onclick = showAdminLogin;
   }
-}
-
-function switchToUserLogin() {
-  const passwordGroup = document.getElementById('passwordGroup');
-  const loginBtn = document.getElementById('loginBtn');
-  const adminBtn = document.getElementById('adminBtn');
-  
-  // Zurück zum Nutzer-Modus
-  passwordGroup.style.display = 'none';
-  
-  // Haupt-Login-Button zurück zu normalem Login (schwarz)
-  loginBtn.textContent = 'LOGIN';
-  loginBtn.className = 'btn btn-primary';
-  loginBtn.onclick = loginAsUser;
-  
-  // Admin-Button zurück zu sekundärem Style (weiß mit schwarzen Outlines)
-  adminBtn.textContent = 'Als Admin anmelden';
-  adminBtn.className = 'btn btn-secondary';
-  adminBtn.onclick = showAdminLogin;
 }
 
 async function loginAsUser() {
@@ -56,65 +33,54 @@ async function loginAsUser() {
   try {
     const loadingId = loading.show('Anmeldung läuft...');
     
-    // Prüfen ob Kennung bereits von jemand anderem verwendet wird
-    const existingUser = await checkExistingKennung(kennung.toLowerCase(), name);
-    if (existingUser) {
+    // Verbesserte Benutzerprüfung und -verwaltung
+    const userResult = await findOrCreateUser(kennung.toLowerCase(), name, false);
+    
+    if (userResult.conflict) {
       loading.hide(loadingId);
       
       // Moderne Bestätigung verwenden
-      const confirmMessage = `FH-Kennung bereits registriert!
+      const confirmMessage = `Die Kennung "${kennung}" ist bereits für "${userResult.existingName}" registriert.
 
-Die Kennung "${kennung}" ist bereits für "${existingUser.name}" registriert.
-
-Möchtest du dich als "${existingUser.name}" anmelden?`;
+Möchtest du dich als "${userResult.existingName}" anmelden?`;
       
       const userChoice = await toast.confirm(
         confirmMessage,
-        `Als ${existingUser.name} anmelden`,
-        'Andere Kennung'
+        `Als "${userResult.existingName}" anmelden`,
+        'Andere Kennung verwenden'
       );
       
       if (userChoice) {
         // Als existierender User anmelden
         window.currentUser = {
-          name: existingUser.name,
+          name: userResult.existingName,
           kennung: kennung.toLowerCase(),
           isAdmin: false
         };
-        document.getElementById('userWelcome').textContent = `Willkommen zurück, ${existingUser.name}!`;
+        document.getElementById('userWelcome').textContent = `Willkommen zurück, ${userResult.existingName}!`;
         showScreen('userDashboard');
         initializeUserDashboard();
-        toast.success(`Willkommen zurück, ${existingUser.name}!`);
+        toast.success(`Willkommen zurück, ${userResult.existingName}!`);
       } else {
         toast.info('Bitte verwende eine andere FH-Kennung oder wende dich an den Administrator.');
         return;
       }
     } else {
-      // Neue Kombination - User in Firestore speichern
+      // Erfolgreiche Anmeldung (neuer oder existierender User)
       window.currentUser = {
-        name: name,
+        name: userResult.name,
         kennung: kennung.toLowerCase(),
         isAdmin: false
       };
       
-      try {
-        // User-Dokument in Firestore erstellen
-        await window.db.collection('users').add({
-          name: name,
-          kennung: kennung.toLowerCase(),
-          createdAt: new Date(),
-          updatedAt: new Date()
-        });
-        console.log('Neuer User in Firestore erstellt:', kennung.toLowerCase());
-      } catch (error) {
-        console.warn('Fehler beim Erstellen des User-Dokuments:', error);
-        // Trotzdem fortfahren - nicht kritisch für User-Login
-      }
+      const welcomeMessage = userResult.isExisting ? 
+        `Willkommen zurück, ${userResult.name}!` : 
+        `Willkommen, ${userResult.name}!`;
       
-      document.getElementById('userWelcome').textContent = `Willkommen, ${name}!`;
+      document.getElementById('userWelcome').textContent = welcomeMessage;
       showScreen('userDashboard');
       initializeUserDashboard();
-      toast.success(`Willkommen, ${name}!`);
+      toast.success(welcomeMessage);
     }
     
     loading.hide(loadingId);
@@ -177,6 +143,111 @@ function logout() {
 }
 
 // Benutzer-Validierung
+/**
+ * Sucht oder erstellt einen User und prüft auf Name-Konflikte
+ * @param {string} kennung - FH-Kennung des Users
+ * @param {string} name - Name des Users
+ * @param {boolean} isAdmin - Ob der User Admin-Rechte hat
+ * @returns {Object} Ergebnis der User-Suche/Erstellung
+ */
+async function findOrCreateUser(kennung, name, isAdmin = false) {
+  try {
+    console.log(`🔍 Suche User: kennung=${kennung}, name=${name}, isAdmin=${isAdmin}`);
+    
+    // 1. Prüfe users Collection
+    const usersSnapshot = await window.db.collection('users').where('kennung', '==', kennung).get();
+    let existingUserDoc = null;
+    let existingUserData = null;
+    
+    if (!usersSnapshot.empty) {
+      existingUserDoc = usersSnapshot.docs[0];
+      existingUserData = existingUserDoc.data();
+      console.log(`📋 Existierender User gefunden in users:`, existingUserData);
+    }
+    
+    // 2. Prüfe entries Collection für Name-Konflikte
+    const entriesSnapshot = await window.db.collection('entries').where('kennung', '==', kennung).get();
+    const entriesNames = new Set();
+    
+    if (!entriesSnapshot.empty) {
+      entriesSnapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.name) {
+          entriesNames.add(data.name);
+        }
+      });
+      console.log(`📝 Namen aus entries für ${kennung}:`, Array.from(entriesNames));
+    }
+    
+    // 3. Prüfe auf Name-Konflikte
+    if (existingUserData && existingUserData.name.toLowerCase() !== name.toLowerCase()) {
+      console.log(`⚠️ Name-Konflikt: Existierend=${existingUserData.name}, Eingegeben=${name}`);
+      return {
+        conflict: true,
+        existingName: existingUserData.name
+      };
+    }
+    
+    // Prüfe auch entries für Name-Konflikte
+    const conflictingNames = Array.from(entriesNames).filter(entryName => 
+      entryName.toLowerCase() !== name.toLowerCase()
+    );
+    
+    if (conflictingNames.length > 0) {
+      console.log(`⚠️ Name-Konflikt in entries: ${conflictingNames.join(', ')}`);
+      return {
+        conflict: true,
+        existingName: conflictingNames[0]
+      };
+    }
+    
+    // 4. User existiert bereits - aktualisiere ihn
+    if (existingUserDoc) {
+      console.log(`✏️ Aktualisiere existierenden User`);
+      await existingUserDoc.ref.update({
+        name: name,
+        lastLogin: new Date(),
+        isAdmin: isAdmin,
+        updatedAt: new Date()
+      });
+      
+      return {
+        conflict: false,
+        isExisting: true,
+        name: name,
+        kennung: kennung
+      };
+    }
+    
+    // 5. Erstelle neuen User
+    console.log(`➕ Erstelle neuen User`);
+    const newUserData = {
+      name: name,
+      kennung: kennung,
+      isAdmin: isAdmin,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastLogin: new Date(),
+      email: `${kennung}@fh-muenster.de` // Standard-Email
+    };
+    
+    await window.db.collection('users').add(newUserData);
+    console.log(`✅ Neuer User erstellt:`, newUserData);
+    
+    return {
+      conflict: false,
+      isExisting: false,
+      name: name,
+      kennung: kennung
+    };
+    
+  } catch (error) {
+    console.error('❌ Fehler beim User-Management:', error);
+    throw error;
+  }
+}
+
+// Legacy-Funktion für Rückwärtskompatibilität
 async function checkExistingKennung(kennung, currentName) {
   try {
     // Alle Drucke mit dieser Kennung abrufen
