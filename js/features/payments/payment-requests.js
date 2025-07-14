@@ -622,10 +622,10 @@ function renderPaymentRequestsList(requests) {
                         </div>
                         <div class="request-actions">
                             <button class="btn btn-success" onclick="processPaymentRequest('${request.id}', true)">
-                                ✅ Zahlung registrieren
+                                Zahlung registrieren
                             </button>
                             <button class="btn btn-danger" onclick="processPaymentRequest('${request.id}', false)">
-                                ❌ Ablehnen
+                                Ablehnen
                             </button>
                             <button class="btn btn-secondary" onclick="deletePaymentRequest('${request.id}')">
                                 🗑️ Löschen

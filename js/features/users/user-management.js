@@ -252,6 +252,15 @@ function renderUsersTable(users) {
     const lastEntryDate = user.lastEntry ? user.lastEntry.toLocaleDateString('de-DE') : 'Keine Drucke';
     const email = user.email || `${user.kennung}@fh-muenster.de`;
     
+    // Admin Checkbox für Mobile
+    const adminCheckbox = `
+      <label class="admin-checkbox">
+        <input type="checkbox" ${user.isAdmin ? 'checked' : ''} 
+               onchange="toggleAdminStatus('${user.kennung}', this.checked)">
+        <span class="checkbox-label">${user.isAdmin ? 'Admin' : 'User'}</span>
+      </label>
+    `;
+    
     // Status Badge basierend auf offenen Beträgen und Entry-Status
     let statusBadgeClass, statusBadgeText;
     if (user.entries.length === 0) {

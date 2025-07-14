@@ -39,9 +39,9 @@ function checkExistingSession() {
           initializePaymentRequests();
         }
         
-        // Show welcome toast
+        // Show welcome toast without name
         setTimeout(() => {
-          toast.success(`Automatisch angemeldet als ${session.user.name}`);
+          toast.success('Automatisch angemeldet');
         }, 500);
         
         return true;
@@ -157,7 +157,7 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
           initializePaymentRequests();
         }
         initializeUserDashboard();
-        toast.success(`Willkommen zurück, ${userResult.existingName}!`);
+        toast.success('Anmeldung erfolgreich');
       } else {
         toast.info('Bitte verwende eine andere FH-Kennung oder wende dich an den Administrator.');
         return;
@@ -184,7 +184,7 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
         initializePaymentRequests();
       }
       initializeUserDashboard();
-      toast.success(welcomeMessage);
+      toast.success('Anmeldung erfolgreich');
     }
     
     loading.hide(loadingId);
@@ -240,7 +240,7 @@ function loginAsAdmin() {
     }
     
     setButtonLoading(adminButton, false);
-    toast.success(`Willkommen im Admin-Bereich, ${name}!`);
+    toast.success('Admin-Anmeldung erfolgreich');
   }, 800);
 }
 
