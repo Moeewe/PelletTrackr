@@ -61,12 +61,12 @@ function renderUserEntries(entries) {
         <td data-label="Menge"><span class="cell-value">${entry.materialMenge.toFixed(2)} kg</span></td>
         <td data-label="Masterbatch"><span class="cell-value">${entry.masterbatch}</span></td>
         <td data-label="MB Menge"><span class="cell-value">${entry.masterbatchMenge.toFixed(2)} g</span></td>
-        <td data-label="Kosten"><span class="cell-value"><strong>${window.formatCurrency(entry.totalCost)}</strong></span></td>
+        <td data-label="Kosten"><span class="cell-value"><strong>${formatCurrency(entry.totalCost)}</strong></span></td>
         <td data-label="Status" class="status-cell"><span class="cell-value">${status}</span></td>
         <td data-label="Notizen" class="notes-cell" title="${jobNotes}">
           <span class="cell-value">
             ${truncatedNotes}
-            ${jobNotes.length > 0 ? `<button class="btn-edit-note" onclick="editNote('${entry.id}', '${escapeQuotes(jobNotes)}')">✏️</button>` : ''}
+            ${jobNotes.length > 0 ? `<button class="btn-edit-note" onclick="editNote('${entry.id}', '${escapeQuotes(jobNotes)}')">Bearbeiten</button>` : ''}
           </span>
         </td>
         <td data-label="Aktionen" class="actions">${actions}</td>
@@ -138,7 +138,7 @@ function renderUserEntries(entries) {
           
           <div class="entry-detail-row">
             <span class="entry-detail-label">Kosten</span>
-            <span class="entry-detail-value cost-value">${window.formatCurrency(entry.totalCost)}</span>
+            <span class="entry-detail-value cost-value">${formatCurrency(entry.totalCost)}</span>
           </div>
           
           ${jobNotes ? `
@@ -163,6 +163,9 @@ function renderUserEntries(entries) {
   `;
   
   tableDiv.innerHTML = containerHtml;
+  
+  // Check for existing payment requests and update button states
+  checkAndUpdatePaymentRequestButtons(entries);
 }
 
 // Admin-Drucke rendern (vollständige Version mit Card + Table für Admin)
@@ -234,12 +237,12 @@ function renderAdminEntries(entries) {
         <td data-label="Mat. Menge"><span class="cell-value">${(entry.materialMenge || 0).toFixed(2)} kg</span></td>
         <td data-label="Masterbatch"><span class="cell-value">${entry.masterbatch}</span></td>
         <td data-label="MB Menge"><span class="cell-value">${(entry.masterbatchMenge || 0).toFixed(2)} kg</span></td>
-        <td data-label="Kosten"><span class="cell-value"><strong>${window.formatCurrency(entry.totalCost)}</strong></span></td>
+        <td data-label="Kosten"><span class="cell-value"><strong>${formatCurrency(entry.totalCost)}</strong></span></td>
         <td data-label="Status"><span class="cell-value">${status}</span></td>
         <td data-label="Notizen" class="notes-cell" title="${jobNotes}">
           <span class="cell-value">
             ${truncatedNotes}
-            ${jobNotes.length > 0 ? `<button class="btn-edit-note" onclick="editNote('${entry.id}', '${escapeQuotes(jobNotes)}')">✏️</button>` : ''}
+            ${jobNotes.length > 0 ? `<button class="btn-edit-note" onclick="editNote('${entry.id}', '${escapeQuotes(jobNotes)}')">Bearbeiten</button>` : ''}
           </span>
         </td>
         <td class="actions" data-label="Aktionen">${actions}</td>
@@ -326,7 +329,7 @@ function renderAdminEntries(entries) {
           
           <div class="entry-detail-row">
             <span class="entry-detail-label">Kosten</span>
-            <span class="entry-detail-value cost-value">${window.formatCurrency(entry.totalCost)}</span>
+            <span class="entry-detail-value cost-value">${formatCurrency(entry.totalCost)}</span>
           </div>
           
           ${jobNotes ? `
@@ -353,8 +356,23 @@ function renderAdminEntries(entries) {
   tableDiv.innerHTML = containerHtml;
 }
 
-// ==================== GLOBAL EXPORTS ====================
-window.renderUserEntries = renderUserEntries;
-window.renderAdminEntries = renderAdminEntries;
-
-console.log("📊 Entry Rendering Module loaded");
+/**
+ * Check for existing payment requests and update button states
+ */
+async function checkAndUpdatePaymentRequestButtons(entries) {
+  if (!entries || !window.currentUser || window.currentUser.isAdmin) return;
+  
+  // Only check unpaid entries
+  const unpaidEntries = entries.filter(entry => !(entry.paid || entry.isPaid));
+  
+  for (const entry of unpaidEntries) {
+    try {
+      const requestExists = await checkPaymentRequestExists(entry.id);
+      if (requestExists) {
+        updatePaymentRequestButton(entry.id, true);
+      }
+    } catch (error) {
+      console.error('Error checking payment request for entry:', entry.id, error);
+    }
+  }
+}

@@ -45,11 +45,10 @@ function renderUserEntries(entries) {
     const jobNotes = entry.jobNotes || "";
     const truncatedNotes = jobNotes.length > 30 ? jobNotes.substring(0, 30) + "..." : jobNotes;
     
-    // Aktionen für User (Zahlungsnachweis, Details und Bearbeiten gruppiert)
+    // Aktionen für User (Zahlungsnachweis und Bearbeiten)
     const actions = `
       <div class="actions">
         ${ButtonFactory.showNachweis(entry.id, isPaid)}
-        ${ButtonFactory.viewDetails(entry.id)}
         ${ButtonFactory.editEntry(entry.id, true)}
       </div>`;
     
@@ -67,7 +66,7 @@ function renderUserEntries(entries) {
         <td data-label="Notizen" class="notes-cell" title="${jobNotes}">
           <span class="cell-value">
             ${truncatedNotes}
-            ${jobNotes.length > 0 ? `<button class="btn-edit-note" onclick="editNote('${entry.id}', '${escapeQuotes(jobNotes)}')">✏️</button>` : ''}
+            ${jobNotes.length > 0 ? `<button class="btn-edit-note" onclick="editNote('${entry.id}', '${escapeQuotes(jobNotes)}')">Bearbeiten</button>` : ''}
           </span>
         </td>
         <td data-label="Aktionen" class="actions">${actions}</td>
@@ -164,6 +163,9 @@ function renderUserEntries(entries) {
   `;
   
   tableDiv.innerHTML = containerHtml;
+  
+  // Check for existing payment requests and update button states
+  checkAndUpdatePaymentRequestButtons(entries);
 }
 
 // Admin-Drucke rendern (vollständige Version mit Card + Table für Admin)
@@ -219,7 +221,6 @@ function renderAdminEntries(entries) {
           `${ButtonFactory.undoPayment(entry.id)}
            ${ButtonFactory.showNachweis(entry.id, true)}`
         }
-        ${ButtonFactory.viewDetails(entry.id)}
         ${ButtonFactory.editEntry(entry.id)}
         ${ButtonFactory.deleteEntry(entry.id)}
       </div>
@@ -241,7 +242,7 @@ function renderAdminEntries(entries) {
         <td data-label="Notizen" class="notes-cell" title="${jobNotes}">
           <span class="cell-value">
             ${truncatedNotes}
-            ${jobNotes.length > 0 ? `<button class="btn-edit-note" onclick="editNote('${entry.id}', '${escapeQuotes(jobNotes)}')">✏️</button>` : ''}
+            ${jobNotes.length > 0 ? `<button class="btn-edit-note" onclick="editNote('${entry.id}', '${escapeQuotes(jobNotes)}')">Bearbeiten</button>` : ''}
           </span>
         </td>
         <td class="actions" data-label="Aktionen">${actions}</td>
@@ -353,4 +354,25 @@ function renderAdminEntries(entries) {
   `;
   
   tableDiv.innerHTML = containerHtml;
+}
+
+/**
+ * Check for existing payment requests and update button states
+ */
+async function checkAndUpdatePaymentRequestButtons(entries) {
+  if (!entries || !window.currentUser || window.currentUser.isAdmin) return;
+  
+  // Only check unpaid entries
+  const unpaidEntries = entries.filter(entry => !(entry.paid || entry.isPaid));
+  
+  for (const entry of unpaidEntries) {
+    try {
+      const requestExists = await checkPaymentRequestExists(entry.id);
+      if (requestExists) {
+        updatePaymentRequestButton(entry.id, true);
+      }
+    } catch (error) {
+      console.error('Error checking payment request for entry:', entry.id, error);
+    }
+  }
 }

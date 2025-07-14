@@ -64,34 +64,44 @@ async function loadUserEntries() {
 // Admin-Statistiken laden
 async function loadAdminStats() {
   try {
-    const snapshot = await window.db.collection('entries').get();
+    const entriesSnapshot = await window.db.collection('entries').get();
+    const usersSnapshot = await window.db.collection('users').get();
     
     let totalEntries = 0;
     let totalRevenue = 0;
     let pendingAmount = 0;
-    const users = new Set();
+    const activeUsers = new Set(); // Nutzer mit Einträgen
+    let totalRegisteredUsers = 0; // Alle registrierten Nutzer
     
-    snapshot.forEach(doc => {
+    // Registrierte Nutzer zählen
+    usersSnapshot.forEach(doc => {
+      totalRegisteredUsers++;
+    });
+    
+    // Einträge analysieren
+    entriesSnapshot.forEach(doc => {
       const entry = doc.data();
       totalEntries++;
       
-      if (entry.name) {
-        users.add(entry.name);
+      if (entry.kennung) {
+        activeUsers.add(entry.kennung); // Nutzer mit tatsächlichen Einträgen
       }
       
       const cost = entry.totalCost || 0;
       totalRevenue += cost;
       
-      if (!entry.paid) {
+      if (!entry.paid && !entry.isPaid) {
         pendingAmount += cost;
       }
     });
     
     // Stats anzeigen - alle registrierten Nutzer
     document.getElementById('adminTotalEntries').textContent = totalEntries;
-    document.getElementById('adminTotalUsers').textContent = users.size;
+    document.getElementById('adminTotalUsers').textContent = totalRegisteredUsers; // Alle registrierten Nutzer
     document.getElementById('adminTotalRevenue').textContent = formatCurrency(totalRevenue);
     document.getElementById('adminPendingAmount').textContent = formatCurrency(pendingAmount);
+    
+    console.log(`📊 Admin Stats: ${totalRegisteredUsers} registriert, ${activeUsers.size} aktiv, ${totalEntries} Einträge`);
     
   } catch (error) {
     console.error('Fehler beim Laden der Admin-Stats:', error);
