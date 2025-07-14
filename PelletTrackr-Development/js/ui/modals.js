@@ -6,6 +6,15 @@ function showModal(htmlContent) {
   // Erst alle anderen Modals schließen
   closeModal();
   
+  // Close any other open modals that might conflict
+  const existingModals = document.querySelectorAll('.modal.active');
+  existingModals.forEach(modal => {
+    if (modal.id !== 'modal') {
+      modal.classList.remove('active');
+      modal.style.display = 'none';
+    }
+  });
+  
   const modal = document.getElementById('modal');
   
   // Prüfen ob Content bereits modal-content Wrapper hat
@@ -15,6 +24,10 @@ function showModal(htmlContent) {
     // Content in modal-content Wrapper einbetten
     modal.innerHTML = `<div class="modal-content">${htmlContent}</div>`;
   }
+  
+  // Ensure proper z-index and display
+  modal.style.zIndex = '10000';
+  modal.style.display = 'flex';
   
   // Kurze Verzögerung für bessere Animation
   setTimeout(() => {
@@ -35,10 +48,20 @@ function closeModal() {
   const modal = document.getElementById('modal');
   if (modal) {
     modal.classList.remove('active');
+    modal.style.display = 'none';
     modal.innerHTML = '';
     // Restore body scrolling
     document.body.style.overflow = '';
   }
+  
+  // Also close any other potentially open modals
+  const otherModals = document.querySelectorAll('.modal.active');
+  otherModals.forEach(otherModal => {
+    if (otherModal.id !== 'modal') {
+      otherModal.classList.remove('active');
+      otherModal.style.display = 'none';
+    }
+  });
 }
 
 // ESC-Taste Support für Modals
@@ -138,12 +161,13 @@ async function viewEntryDetails(entryId) {
               </div>` : ''
             }
           </div>
+          <div class="card-footer">
+            <div class="button-group">
+              ${isPaid ? ButtonFactory.showNachweis(entryId, true) : ''}
+              ${ButtonFactory.closeModal()}
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-nachweis" ${!isPaid ? 'disabled' : ''} ${isPaid ? `onclick="showPaymentProof('${entry.id}')"` : ''}>Nachweis</button>
-        <button class="btn btn-edit" onclick="editUserEntry('${entry.id}')">Bearbeiten</button>
-        <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
       </div>
     `;
     
@@ -333,8 +357,7 @@ async function editEntry(entryId) {
               </div>
               
               <div class="detail-row highlight-yellow" style="margin-top: 24px;">
-                <span class="detail-label">Hinweis:</span>
-                <span class="detail-value">Als Admin kannst du alle Felder dieses Eintrags bearbeiten. Kosten werden automatisch neu berechnet.</span>
+                <strong>Admin-Berechtigung:</strong> Du kannst alle Felder dieses Eintrags bearbeiten. Kosten werden automatisch neu berechnet.
               </div>
             </form>
           </div>
@@ -410,18 +433,7 @@ async function saveEntryChanges(entryId) {
       
       if (!materialSnapshot.empty) {
         const materialData = materialSnapshot.docs[0].data();
-        
-        // Verwende Verkaufspreis (oder berechne ihn falls nicht vorhanden)
-        let materialPrice = materialData.sellingPrice;
-        if (!materialPrice) {
-          const netPrice = materialData.netPrice || materialData.price || 0;
-          const taxRate = materialData.taxRate || 19;
-          const markup = materialData.markup || 30;
-          const grossPrice = netPrice * (1 + taxRate / 100);
-          materialPrice = grossPrice * (1 + markup / 100);
-        }
-        
-        materialCost = materialMenge * materialPrice;
+        materialCost = materialMenge * (materialData.price || 0);
       }
     }
     
@@ -433,18 +445,7 @@ async function saveEntryChanges(entryId) {
       
       if (!masterbatchSnapshot.empty) {
         const masterbatchData = masterbatchSnapshot.docs[0].data();
-        
-        // Verwende Verkaufspreis (oder berechne ihn falls nicht vorhanden)
-        let masterbatchPrice = masterbatchData.sellingPrice;
-        if (!masterbatchPrice) {
-          const netPrice = masterbatchData.netPrice || masterbatchData.price || 0;
-          const taxRate = masterbatchData.taxRate || 19;
-          const markup = masterbatchData.markup || 30;
-          const grossPrice = netPrice * (1 + taxRate / 100);
-          masterbatchPrice = grossPrice * (1 + markup / 100);
-        }
-        
-        masterbatchCost = masterbatchMenge * masterbatchPrice;
+        masterbatchCost = masterbatchMenge * (masterbatchData.price || 0);
       }
     }
     

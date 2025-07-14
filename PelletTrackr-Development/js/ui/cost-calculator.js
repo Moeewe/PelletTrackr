@@ -97,8 +97,3 @@ function throttledCalculateCost() {
   clearTimeout(costCalculationTimeout);
   costCalculationTimeout = setTimeout(calculateCostPreview, 500);
 }
-
-// ==================== GLOBAL EXPORTS ====================
-// Export functions to global scope
-window.calculateCostPreview = calculateCostPreview;
-window.throttledCalculateCost = throttledCalculateCost;

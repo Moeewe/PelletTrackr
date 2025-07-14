@@ -31,7 +31,7 @@
 @import url('./styles/utilities.css');
 @import url('./styles/toast.css');
 
-/* ==================== CONFIRMATION DIALOG STYLES ==================== */
+/* ==================== CONFIRMATION DIALOG ==================== */
 .confirmation-overlay {
     position: fixed;
     top: 0;
@@ -55,7 +55,7 @@
 
 .confirmation-dialog {
     background: white;
-    border-radius: 8px;
+    border-radius: 0;
     max-width: 480px;
     width: 90%;
     padding: 0;
@@ -83,52 +83,40 @@
 .confirmation-icon {
     font-size: 48px;
     margin-bottom: 12px;
-    animation: bounce 2s infinite;
 }
 
-@keyframes bounce {
-    0%, 20%, 50%, 80%, 100% {
-        transform: translateY(0);
-    }
-    40% {
-        transform: translateY(-10px);
-    }
-    60% {
-        transform: translateY(-5px);
-    }
+.confirmation-icon.warning-triangle {
+    color: #f4c430;
+    font-size: 64px;
+    font-weight: bold;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 16px;
 }
 
 .confirmation-header h3 {
-    color: #333;
-    margin: 0;
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
+    margin: 0;
+    color: #333;
 }
 
 .confirmation-message {
-    color: #666;
     font-size: 16px;
     line-height: 1.5;
+    color: #555;
     margin-bottom: 24px;
-    white-space: pre-line;
 }
 
 .confirmation-buttons {
     display: flex;
     gap: 12px;
     justify-content: center;
-    flex-wrap: wrap;
 }
 
 .confirmation-buttons .btn {
-    min-width: 140px;
-    padding: 12px 24px;
-    font-size: 14px;
+    border-radius: 0;
+    min-width: 120px;
     font-weight: 500;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-transform: none;
 }
 
 .confirmation-buttons .btn-primary {
@@ -144,16 +132,14 @@
 
 .confirmation-buttons .btn-secondary {
     background: white;
-    color: #333;
-    border: 2px solid #ddd;
+    color: #000;
+    border: 2px solid #000;
 }
 
 .confirmation-buttons .btn-secondary:hover {
     background: #f5f5f5;
-    border-color: #bbb;
 }
 
-/* Mobile Responsiveness */
 @media (max-width: 768px) {
     .confirmation-dialog {
         width: 95%;
@@ -166,376 +152,358 @@
     
     .confirmation-buttons {
         flex-direction: column;
-        gap: 8px;
     }
     
     .confirmation-buttons .btn {
         width: 100%;
-        min-width: auto;
+        margin: 4px 0;
     }
 }
 
-/* ==================== MOBILE PRIORITY MATERIAL MANAGEMENT ==================== */
-.mobile-priority {
-    order: -1; /* Always appears first */
+/* ===== USER SERVICES STYLES ===== */
+.services-section {
+    background: white;
+    border: 2px solid #000000;
+    border-radius: 0;
+    padding: 32px;
+    margin-bottom: 24px;
 }
 
-.material-btn {
-    font-weight: 600;
-    font-size: 16px;
-    background: #000 !important;
-    color: white !important;
-    border: 2px solid #000 !important;
-    transition: all 0.2s ease;
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
 }
 
-.material-btn:hover {
-    background: #333 !important;
-    border-color: #333 !important;
-}
-
-@media (max-width: 768px) {
-    .mobile-priority {
-        order: -10;
-        margin-bottom: 24px;
-        padding-bottom: 24px;
-        border-bottom: 2px solid #eee;
-    }
-    
-    .mobile-priority .control-buttons {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
-    
-    .material-btn {
-        font-size: 18px;
-        padding: 16px 20px;
-        height: auto;
-        min-height: 50px;
-    }
-}
-
-/* ==================== SERVICES CARDS STYLES ==================== */
 .service-card {
-    border: 2px solid #ddd;
     background: #f8f9fa;
+    border: 2px solid #000000;
+    border-radius: 0;
+    padding: 20px;
     cursor: pointer;
     transition: all 0.2s ease;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
 }
 
 .service-card:hover {
-    border-color: #000;
-    background: white;
+    background: #e9ecef;
     transform: translateY(-2px);
 }
 
-.service-icon-container {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 12px;
+.service-header {
+    margin-bottom: 16px;
 }
 
-.service-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    font-weight: bold;
-    color: white;
-}
-
-.printer-icon {
-    background: #2196F3;
-    color: white;
-}
-
-.termine-icon {
-    background: #4CAF50;
+.service-title {
     font-size: 20px;
+    font-weight: 700;
+    color: #000000;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.leihe-icon {
-    background: #FF9800;
-    font-size: 20px;
-}
-
-.problem-icon {
-    background: #F44336;
-    font-size: 20px;
-}
-
-/* Status indicators for printer card */
-.service-status-indicators {
+.service-content {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    margin-top: 12px;
 }
 
-.service-status-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
+.service-description {
+    font-size: 14px;
+    color: #666666;
+    margin-bottom: 12px;
+    flex: 1;
 }
 
-.service-status-dot {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
+.service-action {
+    margin-top: auto;
+}
+
+/* Drucker Status Grid */
+.printer-status-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.status-item {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 10px;
-    color: white;
-    text-align: center;
+    padding: 8px;
+    border-radius: 4px;
+    min-height: 50px;
+}
+
+.status-number {
+    font-size: 24px;
+    font-weight: 700;
     line-height: 1;
 }
 
-.service-status-dot.status-available {
-    background: #4CAF50;
-}
-
-.service-status-dot.status-printing {
-    background: #FFEB00;
-    color: #000;
-}
-
-.service-status-dot.status-maintenance {
-    background: #FF9800;
-}
-
-.service-status-dot.status-broken {
-    background: #F44336;
-}
-
-.service-status-label {
-    color: #666;
-    font-size: 11px;
-}
-
-/* ==================== SERVICE CARDS STYLES ==================== */
-
-.stat-card.clickable .stat-label {
-    text-transform: none;
-    font-weight: 600;
-    margin-bottom: 4px;
-}
-
-.stat-card.clickable .stat-description {
+.status-label {
     font-size: 12px;
-    color: #666;
-    text-transform: none;
-}
-
-/* ==================== RESPONSIVE SERVICES ==================== */
-@media (max-width: 768px) {
-    .service-icon {
-        width: 50px;
-        height: 50px;
-        font-size: 20px;
-    }
-    
-    .service-status-indicators {
-        gap: 4px;
-    }
-    
-    .service-status-item {
-        font-size: 11px;
-        gap: 6px;
-    }
-    
-    .service-status-dot {
-        width: 14px;
-        height: 14px;
-        font-size: 9px;
-    }
-    
-    .service-status-label {
-        font-size: 10px;
-    }
-    
-    .stat-card.clickable .stat-description {
-        font-size: 11px;
-    }
-}
-
-/* ==================== USER STATUS BADGES ==================== */
-.entry-status-badges {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    align-items: center;
-}
-
-.entry-status-badge.status-admin {
-    background: #ffc107;
-    color: #000;
-    border: 2px solid #000;
-    font-weight: 600;
-}
-
-.entry-status-badge.status-user {
-    background: #e9ecef;
-    color: #495057;
-    border: 2px solid #000;
-    font-weight: 600;
-}
-
-.entry-card-header .entry-status-badges {
-    margin-top: 6px;
-}
-
-@media (max-width: 768px) {
-    .entry-status-badges {
-        flex-direction: column;
-        gap: 4px;
-    }
-    
-    .entry-status-badge {
-        font-size: 10px;
-        padding: 2px 6px;
-    }
-}
-
-/* ==================== PRINTER DETAILS MODAL ==================== */
-.printer-details-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-    max-height: 70vh;
-    overflow-y: auto;
-}
-
-.printer-detail-card {
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    padding: 16px;
-    background: white;
-    transition: all 0.2s ease;
-}
-
-.printer-detail-card:hover {
-    border-color: #000;
-    transform: translateY(-2px);
-}
-
-.printer-detail-card.printer-status-available {
-    border-color: #4CAF50;
-}
-
-.printer-detail-card.printer-status-printing {
-    border-color: #FFEB00;
-}
-
-.printer-detail-card.printer-status-maintenance {
-    border-color: #FF9800;
-}
-
-.printer-detail-card.printer-status-broken {
-    border-color: #F44336;
-}
-
-.printer-detail-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 8px;
-}
-
-.printer-name {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 600;
-    color: #000;
-}
-
-.printer-status-badge {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 600;
-    background: #f8f9fa;
-    border: 1px solid #ddd;
-}
-
-.status-icon {
-    font-size: 14px;
-}
-
-.printer-detail-body {
-    margin-bottom: 12px;
-}
-
-.printer-info-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 8px;
-    gap: 12px;
-}
-
-.info-label {
-    font-weight: 600;
-    color: #666;
-    min-width: 80px;
-    flex-shrink: 0;
-}
-
-.info-value {
-    color: #000;
-    text-align: right;
-    flex: 1;
-    word-wrap: break-word;
-}
-
-.printer-detail-footer {
-    border-top: 1px solid #eee;
-    padding-top: 12px;
+    font-weight: 500;
+    margin-top: 4px;
     text-align: center;
 }
 
+.status-available {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-busy {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-maintenance {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.status-broken {
+    background: #f5c6cb;
+    color: #721c24;
+}
+
+/* Button Styles */
 .btn-sm {
     padding: 8px 16px;
     font-size: 14px;
+    border-radius: 0;
+    border: 2px solid #000000;
+    font-weight: 600;
 }
 
-@media (max-width: 768px) {
-    .printer-details-grid {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
-    
-    .printer-detail-card {
-        padding: 12px;
-    }
-    
-    .printer-detail-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-    }
-    
-    .printer-status-badge {
-        align-self: flex-end;
-    }
-    
-    .printer-info-row {
-        flex-direction: column;
-        gap: 4px;
-    }
-    
-    .info-value {
-        text-align: left;
-    }
+/* Printer List Styles */
+.printer-list {
+    display: grid;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.printer-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    border: 2px solid #000000;
+    border-radius: 0;
+    background: #f8f9fa;
+}
+
+.printer-item.status-available {
+    background: #d4edda;
+    border-color: #155724;
+}
+
+.printer-item.status-in_use {
+    background: #fff3cd;
+    border-color: #856404;
+}
+
+.printer-item.status-maintenance {
+    background: #f8d7da;
+    border-color: #721c24;
+}
+
+.printer-item.status-broken {
+    background: #f5c6cb;
+    border-color: #721c24;
+}
+
+.printer-info h4 {
+    margin: 0 0 4px 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.printer-info p {
+    margin: 0;
+    font-size: 14px;
+    color: #666666;
+}
+
+.printer-status .status-badge {
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.status-badge.status-available {
+    background: #28a745;
+}
+
+.status-badge.status-in_use {
+    background: #ffc107;
+    color: #000000;
+}
+
+.status-badge.status-maintenance {
+    background: #dc3545;
+}
+
+.status-badge.status-broken {
+    background: #6c757d;
+}
+
+/* Notification Badge Styles */
+.notification-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #dc3545;
+    color: white;
+    border-radius: 50%;
+    padding: 4px 6px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    min-width: 20px;
+    text-align: center;
+    z-index: 10;
+}
+
+.btn {
+    position: relative;
+}
+
+/* Notification Overview Styles */
+.notification-overview {
+    display: grid;
+    gap: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.notification-item {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    border: 2px solid #000000;
+    border-radius: 0;
+    background: #f8f9fa;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.notification-item:hover {
+    background: #e9ecef;
+}
+
+.notification-icon {
+    font-size: 24px;
+    margin-right: 16px;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-content h4 {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.notification-content p {
+    margin: 0;
+    font-size: 14px;
+    color: #666666;
+}
+
+.notification-item .notification-badge {
+    position: static;
+    margin-left: auto;
+}
+
+.no-notifications {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666666;
+}
+
+.no-notifications-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+/* Request Item Styles */
+.requests-list {
+    display: grid;
+    gap: 16px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.request-item {
+    border: 2px solid #000000;
+    border-radius: 0;
+    background: #f8f9fa;
+    padding: 16px;
+}
+
+.request-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.request-header h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.request-priority {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.priority-low {
+    background: #d4edda;
+    color: #155724;
+}
+
+.priority-medium {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.priority-high {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.request-details {
+    margin-bottom: 12px;
+}
+
+.request-details p {
+    margin: 4px 0;
+    font-size: 14px;
+}
+
+.request-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.request-actions .btn {
+    padding: 6px 12px;
+    font-size: 12px;
 }

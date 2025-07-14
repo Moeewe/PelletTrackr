@@ -6,6 +6,15 @@ function showModal(htmlContent) {
   // Erst alle anderen Modals schließen
   closeModal();
   
+  // Close any other open modals that might conflict
+  const existingModals = document.querySelectorAll('.modal.active');
+  existingModals.forEach(modal => {
+    if (modal.id !== 'modal') {
+      modal.classList.remove('active');
+      modal.style.display = 'none';
+    }
+  });
+  
   const modal = document.getElementById('modal');
   
   // Prüfen ob Content bereits modal-content Wrapper hat
@@ -15,6 +24,10 @@ function showModal(htmlContent) {
     // Content in modal-content Wrapper einbetten
     modal.innerHTML = `<div class="modal-content">${htmlContent}</div>`;
   }
+  
+  // Ensure proper z-index and display
+  modal.style.zIndex = '10000';
+  modal.style.display = 'flex';
   
   // Kurze Verzögerung für bessere Animation
   setTimeout(() => {
@@ -35,10 +48,20 @@ function closeModal() {
   const modal = document.getElementById('modal');
   if (modal) {
     modal.classList.remove('active');
+    modal.style.display = 'none';
     modal.innerHTML = '';
     // Restore body scrolling
     document.body.style.overflow = '';
   }
+  
+  // Also close any other potentially open modals
+  const otherModals = document.querySelectorAll('.modal.active');
+  otherModals.forEach(otherModal => {
+    if (otherModal.id !== 'modal') {
+      otherModal.classList.remove('active');
+      otherModal.style.display = 'none';
+    }
+  });
 }
 
 // ESC-Taste Support für Modals

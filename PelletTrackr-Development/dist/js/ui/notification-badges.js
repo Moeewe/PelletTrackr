@@ -1,237 +1,423 @@
 /**
  * Notification Badge System
- * Updates badges on admin interface buttons to show pending tasks
+ * Monitors user requests and shows red badges in admin area for unprocessed items
  */
 
-// Badge update intervals
-let badgeUpdateInterval = null;
+// Global notification state
+let notificationListeners = [];
+let notificationCounts = {
+    problemReports: 0,
+    equipmentRequests: 0,
+    materialRequests: 0,
+    scheduleRequests: 0,
+    brokenPrinters: 0
+};
 
 /**
- * Initialize badge system
+ * Initialize notification badges
  */
-function initializeBadgeSystem() {
-    console.log('📋 Initializing notification badge system...');
-    updateAllBadges();
+function initializeNotificationBadges() {
+    console.log('🔔 Initializing notification badges...');
     
-    // Update badges every 30 seconds
-    if (badgeUpdateInterval) {
-        clearInterval(badgeUpdateInterval);
+    // Only initialize for admin users
+    if (!window.currentUser || !window.currentUser.isAdmin) {
+        console.log('🔔 Not admin user, skipping notification badges');
+        return;
     }
-    badgeUpdateInterval = setInterval(updateAllBadges, 30000);
+    
+    // Setup all notification listeners
+    setupProblemReportsBadge();
+    setupEquipmentRequestsBadge();
+    setupMaterialRequestsBadge();
+    setupScheduleRequestsBadge();
+    setupBrokenPrintersBadge();
+    
+    console.log('✅ Notification badges initialized');
 }
 
 /**
- * Update all notification badges
+ * Setup problem reports badge
  */
-async function updateAllBadges() {
-    try {
-        if (!window.db) return;
-        
-        // Update each badge type
-        await Promise.all([
-            updateUserManagerBadge(),
-            updateProblemReportsBadge(),
-            updateEquipmentBadge(),
-            updateMaterialOrdersBadge(),
-            updateReservationBadge(),
-            updateEquipmentRequestsBadge(),
-            updatePrinterManagerBadge()
-        ]);
-        
-    } catch (error) {
-        console.error('Error updating badges:', error);
+function setupProblemReportsBadge() {
+    if (!window.db) {
+        setTimeout(setupProblemReportsBadge, 500);
+        return;
     }
-}
-
-/**
- * Update user manager badge - counts users with unpaid amounts
- */
-async function updateUserManagerBadge() {
-    try {
-        let unpaidUsersCount = 0;
-        
-        const entriesSnapshot = await window.db.collection('entries').get();
-        const userDebts = new Map();
-        
-        entriesSnapshot.forEach(doc => {
-            const entry = doc.data();
-            if (!entry.paid && !entry.isPaid) {
-                const kennung = entry.kennung;
-                if (!userDebts.has(kennung)) {
-                    userDebts.set(kennung, 0);
-                }
-                userDebts.set(kennung, userDebts.get(kennung) + (entry.totalCost || 0));
-            }
+    
+    const listener = window.db.collection('problemReports')
+        .where('status', '==', 'open')
+        .onSnapshot((snapshot) => {
+            notificationCounts.problemReports = snapshot.size;
+            updateBadge('problem-reports', notificationCounts.problemReports);
         });
-        
-        unpaidUsersCount = userDebts.size;
-        updateBadge('userManagerBadge', unpaidUsersCount);
-        
-    } catch (error) {
-        console.error('Error updating user manager badge:', error);
-        updateBadge('userManagerBadge', 0);
-    }
+    
+    notificationListeners.push(listener);
 }
 
 /**
- * Update problem reports badge
+ * Setup equipment requests badge
  */
-async function updateProblemReportsBadge() {
-    try {
-        const problemsSnapshot = await window.db.collection('problemReports')
-            .where('status', '==', 'open')
-            .get();
-        
-        updateBadge('problemReportsBadge', problemsSnapshot.size);
-        
-    } catch (error) {
-        console.error('Error updating problem reports badge:', error);
-        updateBadge('problemReportsBadge', 0);
+function setupEquipmentRequestsBadge() {
+    if (!window.db) {
+        setTimeout(setupEquipmentRequestsBadge, 500);
+        return;
     }
-}
-
-/**
- * Update equipment badge - counts borrowed items
- */
-async function updateEquipmentBadge() {
-    try {
-        const equipmentSnapshot = await window.db.collection('equipment')
-            .where('status', '==', 'borrowed')
-            .get();
-        
-        updateBadge('equipmentBadge', equipmentSnapshot.size);
-        
-    } catch (error) {
-        console.error('Error updating equipment badge:', error);
-        updateBadge('equipmentBadge', 0);
-    }
-}
-
-/**
- * Update material orders badge
- */
-async function updateMaterialOrdersBadge() {
-    try {
-        const ordersSnapshot = await window.db.collection('materialOrders')
-            .where('status', '==', 'pending')
-            .get();
-        
-        updateBadge('materialOrdersBadge', ordersSnapshot.size);
-        
-    } catch (error) {
-        console.error('Error updating material orders badge:', error);
-        updateBadge('materialOrdersBadge', 0);
-    }
-}
-
-/**
- * Update reservation badge - counts today's reservations
- */
-async function updateReservationBadge() {
-    try {
-        const today = new Date();
-        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
-        
-        const reservationsSnapshot = await window.db.collection('reservations')
-            .where('date', '>=', startOfDay)
-            .where('date', '<', endOfDay)
-            .get();
-        
-        updateBadge('reservationBadge', reservationsSnapshot.size);
-        
-    } catch (error) {
-        console.error('Error updating reservation badge:', error);
-        updateBadge('reservationBadge', 0);
-    }
-}
-
-/**
- * Update equipment requests badge
- */
-async function updateEquipmentRequestsBadge() {
-    try {
-        const requestsSnapshot = await window.db.collection('equipmentRequests')
-            .where('status', '==', 'pending')
-            .get();
-        
-        updateBadge('equipmentRequestsBadge', requestsSnapshot.size);
-        
-    } catch (error) {
-        console.error('Error updating equipment requests badge:', error);
-        updateBadge('equipmentRequestsBadge', 0);
-    }
-}
-
-/**
- * Update printer manager badge - counts printers needing attention
- */
-async function updatePrinterManagerBadge() {
-    try {
-        let attentionCount = 0;
-        
-        const printersSnapshot = await window.db.collection('printers').get();
-        
-        printersSnapshot.forEach(doc => {
-            const printer = doc.data();
-            // Count printers that need attention (maintenance or broken)
-            if (printer.status === 'maintenance' || printer.status === 'broken') {
-                attentionCount++;
-            }
+    
+    const listener = window.db.collection('equipmentRequests')
+        .where('status', '==', 'pending')
+        .onSnapshot((snapshot) => {
+            notificationCounts.equipmentRequests = snapshot.size;
+            updateBadge('equipment-requests', notificationCounts.equipmentRequests);
         });
-        
-        updateBadge('printerManagerBadge', attentionCount);
-        
-    } catch (error) {
-        console.error('Error updating printer manager badge:', error);
-        updateBadge('printerManagerBadge', 0);
-    }
+    
+    notificationListeners.push(listener);
 }
 
 /**
- * Update individual badge display
+ * Setup material requests badge
+ */
+function setupMaterialRequestsBadge() {
+    if (!window.db) {
+        setTimeout(setupMaterialRequestsBadge, 500);
+        return;
+    }
+    
+    const listener = window.db.collection('materialRequests')
+        .where('status', '==', 'pending')
+        .onSnapshot((snapshot) => {
+            notificationCounts.materialRequests = snapshot.size;
+            updateBadge('material-requests', notificationCounts.materialRequests);
+        });
+    
+    notificationListeners.push(listener);
+}
+
+/**
+ * Setup schedule requests badge
+ */
+function setupScheduleRequestsBadge() {
+    if (!window.db) {
+        setTimeout(setupScheduleRequestsBadge, 500);
+        return;
+    }
+    
+    const listener = window.db.collection('scheduleRequests')
+        .where('status', '==', 'pending')
+        .onSnapshot((snapshot) => {
+            notificationCounts.scheduleRequests = snapshot.size;
+            updateBadge('schedule-requests', notificationCounts.scheduleRequests);
+        });
+    
+    notificationListeners.push(listener);
+}
+
+/**
+ * Setup broken printers badge
+ */
+function setupBrokenPrintersBadge() {
+    if (!window.db) {
+        setTimeout(setupBrokenPrintersBadge, 500);
+        return;
+    }
+    
+    const listener = window.db.collection('printers')
+        .where('status', '==', 'broken')
+        .onSnapshot((snapshot) => {
+            notificationCounts.brokenPrinters = snapshot.size;
+            updateBadge('broken-printers', notificationCounts.brokenPrinters);
+        });
+    
+    notificationListeners.push(listener);
+}
+
+/**
+ * Update badge display
  */
 function updateBadge(badgeId, count) {
-    const badge = document.getElementById(badgeId);
+    const badge = document.querySelector(`[data-badge="${badgeId}"]`);
     if (badge) {
-        badge.textContent = count;
-        badge.setAttribute('data-count', count);
-        badge.style.display = count > 0 ? 'flex' : 'none';
+        if (count > 0) {
+            badge.textContent = count > 99 ? '99+' : count.toString();
+            badge.style.display = 'inline-block';
+        } else {
+            badge.style.display = 'none';
+        }
     }
 }
 
 /**
- * Clear all badges
+ * Get total notification count
  */
-function clearAllBadges() {
-    const badges = [
-        'userManagerBadge',
-        'problemReportsBadge', 
-        'equipmentBadge',
-        'materialOrdersBadge',
-        'reservationBadge',
-        'equipmentRequestsBadge',
-        'printerManagerBadge'
-    ];
+function getTotalNotificationCount() {
+    return Object.values(notificationCounts).reduce((sum, count) => sum + count, 0);
+}
+
+/**
+ * Cleanup notification listeners
+ */
+function cleanupNotificationBadges() {
+    notificationListeners.forEach(listener => {
+        if (listener && typeof listener === 'function') {
+            listener();
+        }
+    });
+    notificationListeners = [];
+}
+
+/**
+ * Show admin notification overview
+ */
+function showAdminNotificationOverview() {
+    const totalCount = getTotalNotificationCount();
     
-    badges.forEach(badgeId => updateBadge(badgeId, 0));
+    const modalContent = `
+        <div class="modal-header">
+            <h3>Benachrichtigungen (${totalCount})</h3>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="notification-overview">
+                ${notificationCounts.problemReports > 0 ? `
+                    <div class="notification-item" onclick="showProblemReports()">
+                        <div class="notification-icon">🔧</div>
+                        <div class="notification-content">
+                            <h4>Problem-Meldungen</h4>
+                            <p>${notificationCounts.problemReports} neue Meldungen</p>
+                        </div>
+                        <div class="notification-badge">${notificationCounts.problemReports}</div>
+                    </div>
+                ` : ''}
+                
+                ${notificationCounts.equipmentRequests > 0 ? `
+                    <div class="notification-item" onclick="showEquipmentManager()">
+                        <div class="notification-icon">📦</div>
+                        <div class="notification-content">
+                            <h4>Equipment-Anfragen</h4>
+                            <p>${notificationCounts.equipmentRequests} neue Anfragen</p>
+                        </div>
+                        <div class="notification-badge">${notificationCounts.equipmentRequests}</div>
+                    </div>
+                ` : ''}
+                
+                ${notificationCounts.materialRequests > 0 ? `
+                    <div class="notification-item" onclick="showMaterialRequests()">
+                        <div class="notification-icon">🧱</div>
+                        <div class="notification-content">
+                            <h4>Material-Wünsche</h4>
+                            <p>${notificationCounts.materialRequests} neue Wünsche</p>
+                        </div>
+                        <div class="notification-badge">${notificationCounts.materialRequests}</div>
+                    </div>
+                ` : ''}
+                
+                ${notificationCounts.scheduleRequests > 0 ? `
+                    <div class="notification-item" onclick="showScheduleRequests()">
+                        <div class="notification-icon">📅</div>
+                        <div class="notification-content">
+                            <h4>Terminanfragen</h4>
+                            <p>${notificationCounts.scheduleRequests} neue Terminanfragen</p>
+                        </div>
+                        <div class="notification-badge">${notificationCounts.scheduleRequests}</div>
+                    </div>
+                ` : ''}
+                
+                ${notificationCounts.brokenPrinters > 0 ? `
+                    <div class="notification-item" onclick="showPrinterManager()">
+                        <div class="notification-icon">🖨️</div>
+                        <div class="notification-content">
+                            <h4>Defekte Drucker</h4>
+                            <p>${notificationCounts.brokenPrinters} Drucker benötigen Wartung</p>
+                        </div>
+                        <div class="notification-badge">${notificationCounts.brokenPrinters}</div>
+                    </div>
+                ` : ''}
+                
+                ${totalCount === 0 ? `
+                    <div class="no-notifications">
+                        <div class="no-notifications-icon">✅</div>
+                        <h4>Keine neuen Benachrichtigungen</h4>
+                        <p>Alle Anfragen wurden bearbeitet</p>
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
+        </div>
+    `;
+    
+    showModalWithContent(modalContent);
 }
 
 /**
- * Cleanup badge system
+ * Show material requests management
  */
-function cleanupBadgeSystem() {
-    if (badgeUpdateInterval) {
-        clearInterval(badgeUpdateInterval);
-        badgeUpdateInterval = null;
-    }
-    clearAllBadges();
+function showMaterialRequests() {
+    if (!window.db) return;
+    
+    window.db.collection('materialRequests')
+        .where('status', '==', 'pending')
+        .orderBy('createdAt', 'desc')
+        .get()
+        .then((snapshot) => {
+            const requests = [];
+            snapshot.forEach((doc) => {
+                requests.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+            
+            const modalContent = `
+                <div class="modal-header">
+                    <h3>Material-Wünsche (${requests.length})</h3>
+                    <button class="close-btn" onclick="closeModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="requests-list">
+                        ${requests.map(request => `
+                            <div class="request-item">
+                                <div class="request-header">
+                                    <h4>${request.name}</h4>
+                                    <span class="request-priority priority-${request.priority}">${request.priority}</span>
+                                </div>
+                                <div class="request-details">
+                                    <p><strong>Typ:</strong> ${request.type}</p>
+                                    <p><strong>Menge:</strong> ${request.quantity}</p>
+                                    <p><strong>Angefragt von:</strong> ${request.requestedBy} (${request.requestedByKennung})</p>
+                                    <p><strong>Begründung:</strong> ${request.reason}</p>
+                                    ${request.supplier ? `<p><strong>Lieferant:</strong> ${request.supplier}</p>` : ''}
+                                </div>
+                                <div class="request-actions">
+                                    <button class="btn btn-success btn-sm" onclick="processMaterialRequest('${request.id}', 'approved')">
+                                        Genehmigen
+                                    </button>
+                                    <button class="btn btn-danger btn-sm" onclick="processMaterialRequest('${request.id}', 'rejected')">
+                                        Ablehnen
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
+                </div>
+            `;
+            
+            showModalWithContent(modalContent);
+        });
 }
 
-// Global exports
-window.initializeBadgeSystem = initializeBadgeSystem;
-window.updateAllBadges = updateAllBadges;
-window.clearAllBadges = clearAllBadges;
-window.cleanupBadgeSystem = cleanupBadgeSystem;
+/**
+ * Show schedule requests management
+ */
+function showScheduleRequests() {
+    if (!window.db) return;
+    
+    window.db.collection('scheduleRequests')
+        .where('status', '==', 'pending')
+        .orderBy('createdAt', 'desc')
+        .get()
+        .then((snapshot) => {
+            const requests = [];
+            snapshot.forEach((doc) => {
+                requests.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+            
+            const modalContent = `
+                <div class="modal-header">
+                    <h3>Terminanfragen (${requests.length})</h3>
+                    <button class="close-btn" onclick="closeModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="requests-list">
+                        ${requests.map(request => `
+                            <div class="request-item">
+                                <div class="request-header">
+                                    <h4>Terminanfrage - ${request.date}</h4>
+                                </div>
+                                <div class="request-details">
+                                    <p><strong>Drucker:</strong> ${request.printerId}</p>
+                                    <p><strong>Zeit:</strong> ${request.timeFrom} - ${request.timeTo}</p>
+                                    <p><strong>Angefragt von:</strong> ${request.requestedBy} (${request.requestedByKennung})</p>
+                                    <p><strong>Zweck:</strong> ${request.purpose}</p>
+                                </div>
+                                <div class="request-actions">
+                                    <button class="btn btn-success btn-sm" onclick="processScheduleRequest('${request.id}', 'approved')">
+                                        Genehmigen
+                                    </button>
+                                    <button class="btn btn-danger btn-sm" onclick="processScheduleRequest('${request.id}', 'rejected')">
+                                        Ablehnen
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
+                </div>
+            `;
+            
+            showModalWithContent(modalContent);
+        });
+}
 
-console.log('📋 Notification Badge System loaded'); 
+/**
+ * Process material request
+ */
+async function processMaterialRequest(requestId, status) {
+    try {
+        await window.db.collection('materialRequests').doc(requestId).update({
+            status: status,
+            processedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            processedBy: window.currentUser.name
+        });
+        
+        toast.success(status === 'approved' ? 'Material-Wunsch genehmigt' : 'Material-Wunsch abgelehnt');
+        
+        // Refresh the modal
+        showMaterialRequests();
+        
+    } catch (error) {
+        console.error('Error processing material request:', error);
+        toast.error('Fehler beim Bearbeiten der Anfrage');
+    }
+}
+
+/**
+ * Process schedule request
+ */
+async function processScheduleRequest(requestId, status) {
+    try {
+        await window.db.collection('scheduleRequests').doc(requestId).update({
+            status: status,
+            processedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            processedBy: window.currentUser.name
+        });
+        
+        toast.success(status === 'approved' ? 'Terminanfrage genehmigt' : 'Terminanfrage abgelehnt');
+        
+        // Refresh the modal
+        showScheduleRequests();
+        
+    } catch (error) {
+        console.error('Error processing schedule request:', error);
+        toast.error('Fehler beim Bearbeiten der Terminanfrage');
+    }
+}
+
+// Global functions
+window.initializeNotificationBadges = initializeNotificationBadges;
+window.cleanupNotificationBadges = cleanupNotificationBadges;
+window.showAdminNotificationOverview = showAdminNotificationOverview;
+window.showMaterialRequests = showMaterialRequests;
+window.showScheduleRequests = showScheduleRequests;
+window.processMaterialRequest = processMaterialRequest;
+window.processScheduleRequest = processScheduleRequest;
+
+console.log('🔔 Notification Badges Module loaded'); 

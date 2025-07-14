@@ -62,6 +62,11 @@ function initializeUserDashboard() {
   if (typeof loadUserEntries === 'function') {
     loadUserEntries();
   }
+  
+  // User Services initialisieren
+  if (typeof initializeUserServices === 'function') {
+    initializeUserServices();
+  }
 }
 
 function initializeAdminDashboard() {
@@ -82,6 +87,11 @@ function initializeAdminDashboard() {
     setTimeout(() => {
       if (typeof loadAllEntries === 'function') loadAllEntries();
     }, 500);
+  }
+  
+  // Notification badges für Admin initialisieren
+  if (typeof initializeNotificationBadges === 'function') {
+    initializeNotificationBadges();
   }
 }
 
