@@ -193,7 +193,13 @@ function setupMaterialOrdersListener() {
         });
         
         console.log('Live update: Loaded material orders:', materialOrders.length);
-        showOrderTab(currentOrderTab);
+        
+        // Update current tab display if modal is open
+        const tabContent = document.querySelector('.tab-content.active');
+        if (tabContent) {
+            showOrderTab(currentOrderTab);
+        }
+        
     }, (error) => {
         console.error('Error in material orders listener:', error);
         showToast('Fehler beim Live-Update der Bestellungen', 'error');
@@ -309,46 +315,54 @@ function updateTabCounters() {
 }
 
 /**
- * Render order requests from users
+ * Render order requests tab
  */
 function renderOrderRequests() {
-    const container = document.getElementById('orderRequests');
-    const requests = materialOrders.filter(order => order.type === 'request');
+    const requests = materialOrders.filter(order => order.type === 'request' && order.status === 'pending');
+    const container = document.getElementById('orderRequestsContent');
+    
+    if (!container) return;
     
     if (requests.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <p>Keine Bestellanfragen vorhanden.</p>
+                <p>Keine offenen Materialanfragen vorhanden.</p>
+                <p>Nutzer können über den "Material anfragen" Button neue Anfragen erstellen.</p>
             </div>
         `;
         return;
     }
     
-    container.innerHTML = requests.map(request => `
-        <div class="order-request ${request.status || 'pending'}">
-            <div class="order-header">
-                <div class="order-user">${request.userName || 'Unbekannter User'}</div>
-                <div class="order-date">${request.createdAt ? request.createdAt.toLocaleDateString() : 'Unbekanntes Datum'}</div>
-            </div>
-            <div class="order-material">${request.materialName || 'Unbekanntes Material'}</div>
-            ${request.manufacturer ? `<div class="order-manufacturer">Hersteller: ${request.manufacturer}</div>` : ''}
-            ${request.quantity ? `<div class="order-quantity">Menge: ${request.quantity}</div>` : ''}
-            <div class="order-reason">"${request.reason || 'Kein Grund angegeben'}"</div>
-            <div class="order-priority">Dringlichkeit: ${getPriorityText(request.priority)}</div>
-            ${request.status === 'pending' ? `
-                <div class="order-actions">
-                    <button class="btn btn-success" onclick="approveOrderRequest('${request.id}')">Genehmigen</button>
-                    <button class="btn btn-danger" onclick="rejectOrderRequest('${request.id}')">Ablehnen</button>
-                    <button class="btn btn-secondary" onclick="deleteOrderRequest('${request.id}')">Löschen</button>
+    container.innerHTML = `
+        <div class="requests-list">
+            ${requests.map(request => `
+                <div class="request-item">
+                    <div class="request-header">
+                        <h4>${request.materialName}</h4>
+                        <span class="priority-badge priority-${request.priority}">${getPriorityText(request.priority)}</span>
+                    </div>
+                    <div class="request-details">
+                        <p><strong>Nutzer:</strong> ${request.userName} (${request.userKennung})</p>
+                        ${request.manufacturer ? `<p><strong>Hersteller:</strong> ${request.manufacturer}</p>` : ''}
+                        ${request.quantity ? `<p><strong>Menge:</strong> ${request.quantity}</p>` : ''}
+                        <p><strong>Begründung:</strong> ${request.reason}</p>
+                        <p><strong>Angefragt:</strong> ${request.createdAt ? request.createdAt.toLocaleString() : 'Unbekannt'}</p>
+                    </div>
+                    <div class="request-actions">
+                        <button class="btn btn-success btn-small" onclick="approveOrderRequest('${request.id}')">
+                            ✅ Genehmigen
+                        </button>
+                        <button class="btn btn-warning btn-small" onclick="rejectOrderRequest('${request.id}')">
+                            ❌ Ablehnen
+                        </button>
+                        <button class="btn btn-danger btn-small" onclick="deleteOrderRequest('${request.id}')">
+                            🗑️ Löschen
+                        </button>
+                    </div>
                 </div>
-            ` : `
-                <div class="order-status">Status: ${getStatusText(request.status)}</div>
-                <div class="order-actions">
-                    <button class="btn btn-danger" onclick="deleteOrderRequest('${request.id}')">Löschen</button>
-                </div>
-            `}
+            `).join('')}
         </div>
-    `).join('');
+    `;
 }
 
 /**
@@ -445,22 +459,34 @@ function renderOrderHistory() {
 }
 
 /**
- * Approve order request
+ * Approve order request and move to shopping list
  */
 async function approveOrderRequest(requestId) {
     try {
+        // Show immediate visual feedback
+        const button = event.target;
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Wird genehmigt...';
+        
         await window.db.collection('materialOrders').doc(requestId).update({
             status: 'approved',
             approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            approvedBy: window.currentUser?.name || 'Admin'
         });
         
         showToast('Anfrage genehmigt und zur Einkaufsliste hinzugefügt', 'success');
-        // Real-time listener will automatically update the UI
+        // Real-time listener will handle the update automatically
         
     } catch (error) {
         console.error('Error approving request:', error);
         showToast('Fehler beim Genehmigen', 'error');
+        
+        // Reset button state on error
+        if (button) {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
     }
 }
 
@@ -468,40 +494,66 @@ async function approveOrderRequest(requestId) {
  * Reject order request
  */
 async function rejectOrderRequest(requestId) {
-    const reason = prompt('Grund für Ablehnung (optional):');
-    
-    try {
-        await window.db.collection('materialOrders').doc(requestId).update({
-            status: 'rejected',
-            rejectionReason: reason || '',
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        showToast('Anfrage abgelehnt', 'success');
-        // Real-time listener will automatically update the UI
-        
-    } catch (error) {
-        console.error('Error rejecting request:', error);
-        showToast('Fehler beim Ablehnen', 'error');
-    }
-}
-
-/**
- * Delete order request permanently
- */
-async function deleteOrderRequest(requestId) {
-    if (!confirm('Möchten Sie diese Bestellung wirklich dauerhaft löschen?')) {
+    if (!confirm('Möchten Sie diese Anfrage wirklich ablehnen?')) {
         return;
     }
     
     try {
+        // Show immediate visual feedback
+        const button = event.target;
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Wird abgelehnt...';
+        
+        await window.db.collection('materialOrders').doc(requestId).update({
+            status: 'rejected',
+            rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            rejectedBy: window.currentUser?.name || 'Admin'
+        });
+        
+        showToast('Anfrage abgelehnt', 'success');
+        // Real-time listener will handle the update automatically
+        
+    } catch (error) {
+        console.error('Error rejecting request:', error);
+        showToast('Fehler beim Ablehnen', 'error');
+        
+        // Reset button state on error
+        if (button) {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+    }
+}
+
+/**
+ * Delete order request  
+ */
+async function deleteOrderRequest(requestId) {
+    if (!confirm('Möchten Sie diese Bestellung wirklich löschen?')) {
+        return;
+    }
+    
+    try {
+        // Show immediate visual feedback
+        const button = event.target;
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Wird gelöscht...';
+        
         await window.db.collection('materialOrders').doc(requestId).delete();
         showToast('Bestellung erfolgreich gelöscht', 'success');
-        // Real-time listener will automatically update the UI
+        // Real-time listener will handle the update automatically
         
     } catch (error) {
         console.error('Error deleting request:', error);
         showToast('Fehler beim Löschen', 'error');
+        
+        // Reset button state on error
+        if (button) {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
     }
 }
 

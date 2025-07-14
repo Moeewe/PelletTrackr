@@ -304,9 +304,17 @@ async function loadPendingPaymentRequests() {
  */
 async function processPaymentRequest(requestId, approve = true) {
     try {
+        // Show immediate visual feedback
+        const button = event.target;
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = approve ? 'Wird verarbeitet...' : 'Wird abgelehnt...';
+        
         const requestDoc = await window.db.collection('paymentRequests').doc(requestId).get();
         if (!requestDoc.exists) {
             showToast('Zahlungsanfrage nicht gefunden', 'error');
+            button.disabled = false;
+            button.textContent = originalText;
             return;
         }
         
@@ -320,7 +328,7 @@ async function processPaymentRequest(requestId, approve = true) {
                 paidAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             
-            // Update request status
+            // Update request status to approved and remove from pending
             await window.db.collection('paymentRequests').doc(requestId).update({
                 status: 'approved',
                 processedAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -329,7 +337,7 @@ async function processPaymentRequest(requestId, approve = true) {
             
             showToast('Zahlung registriert und Anfrage genehmigt', 'success');
         } else {
-            // Reject request
+            // Reject request - remove from pending
             await window.db.collection('paymentRequests').doc(requestId).update({
                 status: 'rejected',
                 processedAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -344,20 +352,18 @@ async function processPaymentRequest(requestId, approve = true) {
             loadAdminEntries();
         }
         
-        // Refresh the modal content if open
-        const container = document.getElementById('paymentRequestsList');
-        if (container) {
-            const requests = await loadPendingPaymentRequests();
-            if (requests.length === 0) {
-                container.innerHTML = '<p class="text-center">Keine offenen Zahlungsanfragen</p>';
-            } else {
-                container.innerHTML = renderPaymentRequestsList(requests);
-            }
-        }
+        // Real-time listener will handle the modal update automatically
+        // No manual reload needed like in problem reports
         
     } catch (error) {
         console.error('Error processing payment request:', error);
         showToast('Fehler beim Verarbeiten der Zahlungsanfrage', 'error');
+        
+        // Reset button state on error
+        if (button) {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
     }
 }
 
@@ -477,35 +483,35 @@ function renderPaymentRequestsList(requests) {
 }
 
 /**
- * Admin: Delete a payment request completely
+ * Delete payment request
  */
 async function deletePaymentRequest(requestId) {
-    if (!confirm('Möchten Sie diese Zahlungsanfrage wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
+    if (!confirm('Möchten Sie diese Zahlungsanfrage wirklich löschen?')) {
         return;
     }
     
     try {
-        console.log('Deleting payment request:', requestId);
+        // Show immediate visual feedback
+        const button = event.target;
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Wird gelöscht...';
         
         await window.db.collection('paymentRequests').doc(requestId).delete();
+        showToast('Zahlungsanfrage erfolgreich gelöscht', 'success');
         
-        showToast('Zahlungsanfrage wurde gelöscht', 'success');
-        
-        // Refresh the modal content
-        const requests = await loadPendingPaymentRequests();
-        const container = document.getElementById('paymentRequestsList');
-        
-        if (container) {
-            if (requests.length === 0) {
-                container.innerHTML = '<p class="text-center">Keine offenen Zahlungsanfragen</p>';
-            } else {
-                container.innerHTML = renderPaymentRequestsList(requests);
-            }
-        }
+        // Real-time listener will handle the modal update automatically
+        // No manual reload needed like in problem reports
         
     } catch (error) {
         console.error('Error deleting payment request:', error);
         showToast('Fehler beim Löschen der Zahlungsanfrage', 'error');
+        
+        // Reset button state on error
+        if (button) {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
     }
 }
 
@@ -533,24 +539,38 @@ function setupPaymentRequestsListener() {
         paymentRequestsListener();
     }
     
-    paymentRequestsListener = window.db.collection('paymentRequests').onSnapshot((snapshot) => {
-        const requests = [];
-        snapshot.forEach((doc) => {
-            if (doc.data().status === 'pending') {
+    paymentRequestsListener = window.db.collection('paymentRequests')
+        .where('status', '==', 'pending')
+        .onSnapshot((snapshot) => {
+            const requests = [];
+            snapshot.forEach((doc) => {
                 requests.push({
                     id: doc.id,
                     ...doc.data(),
                     requestedAt: doc.data().requestedAt?.toDate()
                 });
+            });
+            
+            // Sort by requested date
+            requests.sort((a, b) => (b.requestedAt || new Date()) - (a.requestedAt || new Date()));
+            
+            console.log('Live update: Loaded payment requests:', requests.length);
+            updatePaymentRequestsBadge(requests.length);
+            
+            // Update modal content if modal is open
+            const container = document.getElementById('paymentRequestsList');
+            if (container) {
+                if (requests.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><p>Keine offenen Zahlungsanfragen</p></div>';
+                } else {
+                    container.innerHTML = renderPaymentRequestsList(requests);
+                }
             }
+            
+        }, (error) => {
+            console.error('Error in payment requests listener:', error);
+            showToast('Fehler beim Live-Update der Zahlungsanfragen', 'error');
         });
-        
-        console.log('Live update: Loaded payment requests:', requests.length);
-        updatePaymentRequestsBadge(requests.length);
-    }, (error) => {
-        console.error('Error in payment requests listener:', error);
-        showToast('Fehler beim Live-Update der Zahlungsanfragen', 'error');
-    });
 }
 
 /**

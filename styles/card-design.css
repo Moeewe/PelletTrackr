@@ -1545,3 +1545,39 @@
 .tab-content.active {
     display: block;
 }
+
+/* Search clear button styling */
+.search-container {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.search-clear {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #666666;
+    cursor: pointer;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0;
+    transition: all 0.2s ease;
+}
+
+.search-clear:hover {
+    color: #000000;
+    background: #f0f0f0;
+}
+
+.search-clear:active {
+    transform: translateY(-50%) scale(0.95);
+}
