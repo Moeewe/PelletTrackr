@@ -566,6 +566,17 @@ function updatePaymentRequestsBadge(count) {
             badge.style.display = 'none';
         }
     }
+    
+    // Update any other potential badge locations
+    const otherBadges = document.querySelectorAll('.payment-request-badge');
+    otherBadges.forEach(badgeElement => {
+        if (count > 0) {
+            badgeElement.textContent = count;
+            badgeElement.style.display = 'inline-block';
+        } else {
+            badgeElement.style.display = 'none';
+        }
+    });
 }
 
 /**
