@@ -21,26 +21,31 @@ const EQUIPMENT_CATEGORIES = {
 function showEquipmentManager() {
     const modalContent = `
         <div class="modal-header">
-            <h3>Equipment-Verwaltung</h3>
-            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <h3>Equipment verwalten</h3>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
         </div>
         <div class="modal-body">
-            <div id="equipmentManagerContent">
-                <div class="category-tabs">
-                    <button class="tab-btn active" onclick="showEquipmentCategory('keys')">Schlüssel</button>
-                    <button class="tab-btn" onclick="showEquipmentCategory('hardware')">Hardware</button>
-                    <button class="tab-btn" onclick="showEquipmentCategory('books')">Bücher</button>
-                </div>
-                
-                <div class="equipment-search">
-                    <input type="text" id="equipmentSearchInput" placeholder="Equipment durchsuchen..." class="search-input" onkeyup="searchEquipment()">
-                    <button class="search-clear-btn" onclick="clearEquipmentSearch()" title="Suche löschen">×</button>
-                </div>
-                
-                <div class="equipment-list" id="equipmentList">
-                    <div class="loading">Equipment wird geladen...</div>
+            <div class="card">
+                <div class="card-body">
+                    <div class="category-tabs">
+                        <button class="tab-btn active" onclick="showEquipmentCategory('keys')">Schlüssel</button>
+                        <button class="tab-btn" onclick="showEquipmentCategory('hardware')">Hardware</button>
+                        <button class="tab-btn" onclick="showEquipmentCategory('books')">Bücher</button>
+                    </div>
+                    
+                    <div class="equipment-search">
+                        <input type="text" id="equipmentSearchInput" placeholder="Equipment durchsuchen..." class="search-input" onkeyup="searchEquipment()">
+                        <button class="search-clear-btn" onclick="clearEquipmentSearch()" title="Suche löschen">×</button>
+                    </div>
+                    
+                    <div class="equipment-list" id="equipmentList">
+                        <div class="loading">Equipment wird geladen...</div>
+                    </div>
                 </div>
             </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
         </div>
     `;
     

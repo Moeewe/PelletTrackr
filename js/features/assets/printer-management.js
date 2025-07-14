@@ -104,21 +104,26 @@ async function loadPrinters() {
 function showPrinterManager() {
     const modalContent = `
         <div class="modal-header">
-            <h3>Drucker-Verwaltung</h3>
-            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <h3>Drucker verwalten</h3>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
         </div>
         <div class="modal-body">
-            <div id="printerManagerContent">
-                <div class="modal-controls">
-                    <button class="btn btn-primary" onclick="showAddPrinterForm()">
-                        Neuer Drucker
-                    </button>
-                </div>
-                
-                <div class="printer-grid" id="printerGrid">
-                    <div class="loading">Drucker werden geladen...</div>
+            <div class="card">
+                <div class="card-body">
+                    <div class="form-group">
+                        <button class="btn btn-primary" onclick="showAddPrinterForm()">
+                            Neuen Drucker hinzufügen
+                        </button>
+                    </div>
+                    
+                    <div class="printer-grid" id="printerGrid">
+                        <div class="loading">Drucker werden geladen...</div>
+                    </div>
                 </div>
             </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
         </div>
     `;
     

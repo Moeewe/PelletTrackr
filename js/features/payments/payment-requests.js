@@ -252,16 +252,23 @@ async function showPaymentRequestsModal() {
     
     const modalContent = `
         <div class="modal-header">
-            <h3>Zahlungsanfragen (${requests.length})</h3>
-            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <h3>Zahlungsanfragen verwalten (${requests.length})</h3>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
         </div>
         <div class="modal-body">
-            <div id="paymentRequestsList">
-                ${requests.length === 0 ? 
-                    '<p>Keine offenen Zahlungsanfragen</p>' : 
-                    renderPaymentRequestsList(requests)
-                }
+            <div class="card">
+                <div class="card-body">
+                    <div id="paymentRequestsList">
+                        ${requests.length === 0 ? 
+                            '<p class="text-center">Keine offenen Zahlungsanfragen</p>' : 
+                            renderPaymentRequestsList(requests)
+                        }
+                    </div>
+                </div>
             </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
         </div>
     `;
     
