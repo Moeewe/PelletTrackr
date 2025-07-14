@@ -399,84 +399,82 @@ function editEquipment(equipmentId) {
         return;
     }
     
-    // Create edit modal
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'block';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Equipment bearbeiten</h3>
-                <button class="modal-close" onclick="closeEditEquipmentForm()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="editEquipmentForm" class="form">
-                    <div class="form-group">
-                        <label class="form-label">Equipment Name</label>
-                        <input type="text" id="editEquipmentName" class="form-input" value="${equipmentItem.name}" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Kategorie</label>
-                        <select id="editEquipmentCategory" class="form-select" required>
-                            ${Object.entries(EQUIPMENT_CATEGORIES).map(([key, name]) => `
-                                <option value="${key}" ${equipmentItem.category === key ? 'selected' : ''}>
-                                    ${name}
-                                </option>
-                            `).join('')}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Beschreibung</label>
-                        <textarea id="editEquipmentDescription" class="form-textarea" rows="3">${equipmentItem.description || ''}</textarea>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Status</label>
-                        <select id="editEquipmentStatus" class="form-select" required>
-                            <option value="available" ${equipmentItem.status === 'available' ? 'selected' : ''}>Verfügbar</option>
-                            <option value="borrowed" ${equipmentItem.status === 'borrowed' ? 'selected' : ''}>Ausgeliehen</option>
-                            <option value="maintenance" ${equipmentItem.status === 'maintenance' ? 'selected' : ''}>Wartung</option>
-                            <option value="broken" ${equipmentItem.status === 'broken' ? 'selected' : ''}>Defekt</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">
-                            <input type="checkbox" id="editEquipmentRequiresDeposit" ${equipmentItem.requiresDeposit ? 'checked' : ''}>
-                            Pfand erforderlich
-                        </label>
-                    </div>
-                    <div class="form-group deposit-group" style="display: ${equipmentItem.requiresDeposit ? 'block' : 'none'};">
-                        <label class="form-label">Pfandbetrag (€)</label>
-                        <input type="number" id="editEquipmentDepositAmount" class="form-input" value="${equipmentItem.depositAmount || 0}" min="0" step="0.01">
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeEditEquipmentForm()">Abbrechen</button>
-                        <button type="button" class="btn btn-primary" onclick="updateEquipment('${equipmentId}')">Speichern</button>
-                    </div>
-                </form>
-            </div>
+    // Create edit modal content using proper modal structure
+    const modalContent = `
+        <div class="modal-header">
+            <h3>Equipment bearbeiten</h3>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="editEquipmentForm" class="form">
+                <div class="form-group">
+                    <label class="form-label">Equipment Name</label>
+                    <input type="text" id="editEquipmentName" class="form-input" value="${equipmentItem.name}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Kategorie</label>
+                    <select id="editEquipmentCategory" class="form-select" required>
+                        ${Object.entries(EQUIPMENT_CATEGORIES).map(([key, name]) => `
+                            <option value="${key}" ${equipmentItem.category === key ? 'selected' : ''}>
+                                ${name}
+                            </option>
+                        `).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Beschreibung</label>
+                    <textarea id="editEquipmentDescription" class="form-textarea" rows="3">${equipmentItem.description || ''}</textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select id="editEquipmentStatus" class="form-select" required>
+                        <option value="available" ${equipmentItem.status === 'available' ? 'selected' : ''}>Verfügbar</option>
+                        <option value="borrowed" ${equipmentItem.status === 'borrowed' ? 'selected' : ''}>Ausgeliehen</option>
+                        <option value="maintenance" ${equipmentItem.status === 'maintenance' ? 'selected' : ''}>Wartung</option>
+                        <option value="broken" ${equipmentItem.status === 'broken' ? 'selected' : ''}>Defekt</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">
+                        <input type="checkbox" id="editEquipmentRequiresDeposit" ${equipmentItem.requiresDeposit ? 'checked' : ''}>
+                        Pfand erforderlich
+                    </label>
+                </div>
+                <div class="form-group deposit-group" style="display: ${equipmentItem.requiresDeposit ? 'block' : 'none'};">
+                    <label class="form-label">Pfandbetrag (€)</label>
+                    <input type="number" id="editEquipmentDepositAmount" class="form-input" value="${equipmentItem.depositAmount || 0}" min="0" step="0.01">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+                    <button type="button" class="btn btn-primary" onclick="updateEquipment('${equipmentId}')">Speichern</button>
+                </div>
+            </form>
         </div>
     `;
     
-    document.body.appendChild(modal);
-    modal.id = 'editEquipmentModal';
+    // Use proper modal system for correct z-index and display
+    showModalWithContent(modalContent);
     
-    // Add deposit toggle functionality
-    const depositCheckbox = document.getElementById('editEquipmentRequiresDeposit');
-    const depositGroup = document.querySelector('.deposit-group');
-    
-    depositCheckbox.addEventListener('change', function() {
-        depositGroup.style.display = this.checked ? 'block' : 'none';
-    });
+    // Add deposit toggle functionality after modal is shown
+    setTimeout(() => {
+        const depositCheckbox = document.getElementById('editEquipmentRequiresDeposit');
+        const depositGroup = document.querySelector('.deposit-group');
+        
+        if (depositCheckbox && depositGroup) {
+            depositCheckbox.addEventListener('change', function() {
+                depositGroup.style.display = this.checked ? 'block' : 'none';
+            });
+        }
+    }, 100);
 }
 
 /**
- * Close edit equipment form
+ * Close edit equipment form - DEPRECATED
+ * Now using standard closeModal() function
  */
 function closeEditEquipmentForm() {
-    const modal = document.getElementById('editEquipmentModal');
-    if (modal) {
-        modal.remove();
-    }
+    // Fallback - use standard modal close
+    closeModal();
 }
 
 /**
@@ -486,18 +484,18 @@ async function updateEquipment(equipmentId) {
     const form = document.getElementById('editEquipmentForm');
     if (!form) return;
     
-    const formData = new FormData(form);
+    // Get form values directly from elements since we're using IDs
     const equipmentData = {
-        name: formData.get('editEquipmentName').trim(),
-        category: formData.get('editEquipmentCategory'),
-        description: formData.get('editEquipmentDescription').trim(),
-        status: formData.get('editEquipmentStatus'),
-        requiresDeposit: formData.get('editEquipmentRequiresDeposit') === 'on',
+        name: document.getElementById('editEquipmentName').value.trim(),
+        category: document.getElementById('editEquipmentCategory').value,
+        description: document.getElementById('editEquipmentDescription').value.trim(),
+        status: document.getElementById('editEquipmentStatus').value,
+        requiresDeposit: document.getElementById('editEquipmentRequiresDeposit').checked,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
     
     if (equipmentData.requiresDeposit) {
-        const depositAmount = parseFloat(formData.get('editEquipmentDepositAmount'));
+        const depositAmount = parseFloat(document.getElementById('editEquipmentDepositAmount').value);
         if (isNaN(depositAmount) || depositAmount <= 0) {
             showToast('Pfandbetrag muss eine positive Zahl sein', 'error');
             return;
@@ -518,7 +516,7 @@ async function updateEquipment(equipmentId) {
         await window.db.collection('equipment').doc(equipmentId).update(equipmentData);
         
         showToast('Equipment erfolgreich aktualisiert', 'success');
-        closeEditEquipmentForm();
+        closeModal();
         // Removed manual reload - real-time listener will handle the update
         
     } catch (error) {
