@@ -1,6 +1,95 @@
 // ==================== AUTHENTICATION MODULE ====================
 // Login/Logout und Benutzer-Validierung
 
+// Auto-Login Session Management
+const SESSION_KEY = 'pelletTrackr_session';
+
+// Check for existing session on page load
+function checkExistingSession() {
+  const savedSession = localStorage.getItem(SESSION_KEY);
+  if (savedSession) {
+    try {
+      const session = JSON.parse(savedSession);
+      const sessionAge = Date.now() - session.timestamp;
+      
+      // Session valid for 7 days (7 * 24 * 60 * 60 * 1000)
+      if (sessionAge < 604800000) {
+        console.log('🔄 Auto-Login: Restoring session for', session.user.name);
+        
+        // Restore user session
+        window.currentUser = session.user;
+        
+        // Pre-fill form fields
+        document.getElementById('loginName').value = session.user.name;
+        document.getElementById('loginKennung').value = session.user.kennung;
+        
+        // Show appropriate dashboard
+        if (session.user.isAdmin) {
+          document.getElementById('adminWelcome').textContent = `Admin Dashboard - ${session.user.name}`;
+          showScreen('adminDashboard');
+          initializeAdminDashboard();
+        } else {
+          document.getElementById('userWelcome').textContent = `Willkommen zurück, ${session.user.name}!`;
+          showScreen('userDashboard');
+          initializeUserDashboard();
+        }
+        
+        // Initialize payment requests
+        if (typeof initializePaymentRequests === 'function') {
+          initializePaymentRequests();
+        }
+        
+        // Show welcome toast
+        setTimeout(() => {
+          toast.success(`Automatisch angemeldet als ${session.user.name}`);
+        }, 500);
+        
+        return true;
+      } else {
+        console.log('🕒 Auto-Login: Session expired, clearing localStorage');
+        localStorage.removeItem(SESSION_KEY);
+      }
+    } catch (error) {
+      console.error('❌ Auto-Login: Error parsing session:', error);
+      localStorage.removeItem(SESSION_KEY);
+    }
+  }
+  return false;
+}
+
+// Save session to localStorage
+function saveSession(user) {
+  const session = {
+    user: user,
+    timestamp: Date.now()
+  };
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+}
+
+// Admin view toggle functionality
+function toggleAdminView() {
+  if (!window.currentUser || !window.currentUser.isAdmin) {
+    toast.error('Nur Administratoren können die Ansicht wechseln');
+    return;
+  }
+  
+  const currentScreen = document.querySelector('.screen.active').id;
+  
+  if (currentScreen === 'userDashboard') {
+    // Switch to admin view
+    document.getElementById('adminWelcome').textContent = `Admin Dashboard - ${window.currentUser.name}`;
+    showScreen('adminDashboard');
+    initializeAdminDashboard();
+    toast.info('Zur Admin-Ansicht gewechselt');
+  } else if (currentScreen === 'adminDashboard') {
+    // Switch to user view
+    document.getElementById('userWelcome').textContent = `Willkommen, ${window.currentUser.name}!`;
+    showScreen('userDashboard');
+    initializeUserDashboard();
+    toast.info('Zur Benutzer-Ansicht gewechselt');
+  }
+}
+
 function showAdminLogin() {
   const passwordGroup = document.getElementById('passwordGroup');
   const adminBtn = document.querySelector('.btn-secondary');
@@ -57,6 +146,10 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
           kennung: kennung.toLowerCase(),
           isAdmin: false
         };
+        
+        // Save session
+        saveSession(window.currentUser);
+        
         document.getElementById('userWelcome').textContent = `Willkommen zurück, ${userResult.existingName}!`;
         showScreen('userDashboard');
         // Initialize payment requests BEFORE user dashboard to avoid race condition
@@ -76,6 +169,9 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
         kennung: kennung.toLowerCase(),
         isAdmin: false
       };
+      
+      // Save session
+      saveSession(window.currentUser);
       
       const welcomeMessage = userResult.isExisting ? 
         `Willkommen zurück, ${userResult.name}!` : 
@@ -128,6 +224,9 @@ function loginAsAdmin() {
       isAdmin: true
     };
     
+    // Save session
+    saveSession(window.currentUser);
+    
     // Admin Dashboard anzeigen
     document.getElementById('adminWelcome').textContent = `Admin Dashboard - ${name}`;
     showScreen('adminDashboard');
@@ -156,6 +255,9 @@ function logout() {
     paymentRequestsListener = null;
   }
   
+  // Clear session
+  localStorage.removeItem(SESSION_KEY);
+  
   window.currentUser = { name: '', kennung: '', isAdmin: false };
   showScreen('loginScreen');
   
@@ -163,6 +265,8 @@ function logout() {
   document.getElementById('loginName').value = '';
   document.getElementById('loginKennung').value = '';
   document.getElementById('adminPassword').value = '';
+  
+  toast.info('Erfolgreich abgemeldet');
 }
 
 // Benutzer-Validierung

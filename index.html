@@ -54,9 +54,13 @@
             <div class="dashboard-header">
                 <h1 class="logo">
                     <span class="highlight">Pellet</span>Trackr
+                    <span id="userAdminBadge" class="admin-badge" style="display: none;">Admin</span>
                 </h1>
                 <div class="user-info">
                     <span id="userWelcome">Willkommen!</span>
+                    <button id="adminToggleBtn" class="btn btn-secondary admin-toggle" onclick="toggleAdminView()" style="display: none;">
+                        Admin-Ansicht
+                    </button>
                     <button class="btn btn-link" onclick="logout()">Abmelden</button>
                 </div>
             </div>
@@ -163,6 +167,9 @@
                 </h1>
                 <div class="user-info">
                     <span id="adminWelcome">Admin Dashboard - Moritz</span>
+                    <button class="btn btn-secondary admin-toggle" onclick="toggleAdminView()">
+                        Benutzer-Ansicht
+                    </button>
                     <button class="btn btn-link" onclick="logout()">Abmelden</button>
                 </div>
             </div>
@@ -489,9 +496,9 @@
     <script src="js/core/firebase-config.js"></script>
     <script src="js/core/globals.js"></script>
     <script src="js/core/utils.js"></script>
-    <script src="js/core/app-init.js"></script>
-    <script src="js/core/auth.js"></script>
-    <script src="js/core/navigation.js"></script>
+    <script src="js/core/app-init.js?v=1.2"></script>
+    <script src="js/core/auth.js?v=1.4"></script>
+    <script src="js/core/navigation.js?v=1.2"></script>
     
     <!-- UI Modules -->
     <script src="js/ui/button-factory.js?v=1.2"></script>

@@ -11,8 +11,35 @@ function showScreen(screenId) {
   document.getElementById(screenId).classList.add('active');
 }
 
+// Update admin UI elements based on current user
+function updateAdminUI() {
+  const userAdminBadge = document.getElementById('userAdminBadge');
+  const adminToggleBtn = document.getElementById('adminToggleBtn');
+  
+  if (window.currentUser && window.currentUser.isAdmin) {
+    // Show admin badge and toggle button for admin users
+    if (userAdminBadge) {
+      userAdminBadge.style.display = 'inline-block';
+    }
+    if (adminToggleBtn) {
+      adminToggleBtn.style.display = 'inline-block';
+    }
+  } else {
+    // Hide admin elements for regular users
+    if (userAdminBadge) {
+      userAdminBadge.style.display = 'none';
+    }
+    if (adminToggleBtn) {
+      adminToggleBtn.style.display = 'none';
+    }
+  }
+}
+
 // Dashboard-Initialisierung
 function initializeUserDashboard() {
+  // Show/hide admin elements based on user type
+  updateAdminUI();
+  
   // Warten bis alle Funktionen verfügbar sind
   if (typeof loadMaterials === 'function' && typeof loadMasterbatches === 'function') {
     loadMaterials().then(() => {

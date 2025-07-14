@@ -19,8 +19,26 @@ function initializeApp() {
   // Firebase-Verbindung testen
   testFirebaseConnection();
   
-  // Login-Screen anzeigen
-  showScreen('loginScreen');
+  // Check for existing session (auto-login)
+  if (typeof checkExistingSession === 'function') {
+    const hasSession = checkExistingSession();
+    if (!hasSession) {
+      // No session found, show login screen
+      showScreen('loginScreen');
+    }
+  } else {
+    // Fallback if auth.js not loaded yet
+    setTimeout(() => {
+      if (typeof checkExistingSession === 'function') {
+        const hasSession = checkExistingSession();
+        if (!hasSession) {
+          showScreen('loginScreen');
+        }
+      } else {
+        showScreen('loginScreen');
+      }
+    }, 100);
+  }
   
   console.log("✅ PelletTrackr bereit!");
 }

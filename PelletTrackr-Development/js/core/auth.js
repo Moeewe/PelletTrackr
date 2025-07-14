@@ -1,6 +1,95 @@
 // ==================== AUTHENTICATION MODULE ====================
 // Login/Logout und Benutzer-Validierung
 
+// Auto-Login Session Management
+const SESSION_KEY = 'pelletTrackr_session';
+
+// Check for existing session on page load
+function checkExistingSession() {
+  const savedSession = localStorage.getItem(SESSION_KEY);
+  if (savedSession) {
+    try {
+      const session = JSON.parse(savedSession);
+      const sessionAge = Date.now() - session.timestamp;
+      
+      // Session valid for 7 days (7 * 24 * 60 * 60 * 1000)
+      if (sessionAge < 604800000) {
+        console.log('🔄 Auto-Login: Restoring session for', session.user.name);
+        
+        // Restore user session
+        window.currentUser = session.user;
+        
+        // Pre-fill form fields
+        document.getElementById('loginName').value = session.user.name;
+        document.getElementById('loginKennung').value = session.user.kennung;
+        
+        // Show appropriate dashboard
+        if (session.user.isAdmin) {
+          document.getElementById('adminWelcome').textContent = `Admin Dashboard - ${session.user.name}`;
+          showScreen('adminDashboard');
+          initializeAdminDashboard();
+        } else {
+          document.getElementById('userWelcome').textContent = `Willkommen zurück, ${session.user.name}!`;
+          showScreen('userDashboard');
+          initializeUserDashboard();
+        }
+        
+        // Initialize payment requests
+        if (typeof initializePaymentRequests === 'function') {
+          initializePaymentRequests();
+        }
+        
+        // Show welcome toast
+        setTimeout(() => {
+          toast.success(`Automatisch angemeldet als ${session.user.name}`);
+        }, 500);
+        
+        return true;
+      } else {
+        console.log('🕒 Auto-Login: Session expired, clearing localStorage');
+        localStorage.removeItem(SESSION_KEY);
+      }
+    } catch (error) {
+      console.error('❌ Auto-Login: Error parsing session:', error);
+      localStorage.removeItem(SESSION_KEY);
+    }
+  }
+  return false;
+}
+
+// Save session to localStorage
+function saveSession(user) {
+  const session = {
+    user: user,
+    timestamp: Date.now()
+  };
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+}
+
+// Admin view toggle functionality
+function toggleAdminView() {
+  if (!window.currentUser || !window.currentUser.isAdmin) {
+    toast.error('Nur Administratoren können die Ansicht wechseln');
+    return;
+  }
+  
+  const currentScreen = document.querySelector('.screen.active').id;
+  
+  if (currentScreen === 'userDashboard') {
+    // Switch to admin view
+    document.getElementById('adminWelcome').textContent = `Admin Dashboard - ${window.currentUser.name}`;
+    showScreen('adminDashboard');
+    initializeAdminDashboard();
+    toast.info('Zur Admin-Ansicht gewechselt');
+  } else if (currentScreen === 'adminDashboard') {
+    // Switch to user view
+    document.getElementById('userWelcome').textContent = `Willkommen, ${window.currentUser.name}!`;
+    showScreen('userDashboard');
+    initializeUserDashboard();
+    toast.info('Zur Benutzer-Ansicht gewechselt');
+  }
+}
+
 function showAdminLogin() {
   const passwordGroup = document.getElementById('passwordGroup');
   const adminBtn = document.querySelector('.btn-secondary');
@@ -46,8 +135,8 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
       
       const userChoice = await toast.confirm(
         confirmMessage,
-        `Als "${userResult.existingName}" anmelden`,
-        'Andere Kennung verwenden'
+        'Anmelden',
+        'Zurück'
       );
       
       if (userChoice) {
@@ -57,8 +146,16 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
           kennung: kennung.toLowerCase(),
           isAdmin: false
         };
+        
+        // Save session
+        saveSession(window.currentUser);
+        
         document.getElementById('userWelcome').textContent = `Willkommen zurück, ${userResult.existingName}!`;
         showScreen('userDashboard');
+        // Initialize payment requests BEFORE user dashboard to avoid race condition
+        if (typeof initializePaymentRequests === 'function') {
+          initializePaymentRequests();
+        }
         initializeUserDashboard();
         toast.success(`Willkommen zurück, ${userResult.existingName}!`);
       } else {
@@ -73,12 +170,19 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
         isAdmin: false
       };
       
+      // Save session
+      saveSession(window.currentUser);
+      
       const welcomeMessage = userResult.isExisting ? 
         `Willkommen zurück, ${userResult.name}!` : 
         `Willkommen, ${userResult.name}!`;
       
       document.getElementById('userWelcome').textContent = welcomeMessage;
       showScreen('userDashboard');
+      // Initialize payment requests BEFORE user dashboard to avoid race condition
+      if (typeof initializePaymentRequests === 'function') {
+        initializePaymentRequests();
+      }
       initializeUserDashboard();
       toast.success(welcomeMessage);
     }
@@ -93,7 +197,7 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
   }
 }
 
-async function loginAsAdmin() {
+function loginAsAdmin() {
   const name = document.getElementById('loginName').value.trim();
   const kennung = document.getElementById('loginKennung').value.trim();
   const password = document.getElementById('adminPassword').value;
@@ -112,17 +216,16 @@ async function loginAsAdmin() {
   // Admin-Login mit Loading-Effekt
   setButtonLoading(adminButton, true);
   
-  try {
-    const loadingId = loading.show('Admin-Anmeldung läuft...');
-    
-    // Admin-User in Datenbank erstellen/aktualisieren
-    await findOrCreateUser(kennung.toLowerCase(), name, true);
-    
+  // Kurze Verzögerung für UX
+  setTimeout(() => {
     window.currentUser = {
       name: name,
       kennung: kennung.toLowerCase(),
       isAdmin: true
     };
+    
+    // Save session
+    saveSession(window.currentUser);
     
     // Admin Dashboard anzeigen
     document.getElementById('adminWelcome').textContent = `Admin Dashboard - ${name}`;
@@ -131,89 +234,44 @@ async function loginAsAdmin() {
     // Admin Dashboard initialisieren
     initializeAdminDashboard();
     
-    loading.hide(loadingId);
+    // Initialize payment requests for admin
+    if (typeof initializePaymentRequests === 'function') {
+      initializePaymentRequests();
+    }
+    
     setButtonLoading(adminButton, false);
     toast.success(`Willkommen im Admin-Bereich, ${name}!`);
-    
-  } catch (error) {
-    console.error('Admin login error:', error);
-    loading.hideAll();
-    setButtonLoading(adminButton, false);
-    toast.error('Fehler bei der Admin-Anmeldung: ' + error.message);
-  }
+  }, 800);
 }
 
 function logout() {
-  console.log("👋 User logout initiated...");
-  
-  // Global cleanup of all listeners and components
-  if (typeof window.globalCleanup === 'function') {
-    window.globalCleanup();
+  // Clean up payment request listeners
+  if (typeof userPaymentRequestsListener !== 'undefined' && userPaymentRequestsListener) {
+    userPaymentRequestsListener();
+    userPaymentRequestsListener = null;
+  }
+  if (typeof paymentRequestsListener !== 'undefined' && paymentRequestsListener) {
+    paymentRequestsListener();
+    paymentRequestsListener = null;
   }
   
-  // Legacy cleanup for specific components
-  if (typeof cleanupUserDashboard === 'function') {
-    cleanupUserDashboard();
-  }
+  // Clear session
+  localStorage.removeItem(SESSION_KEY);
   
-  // Clear user state
   window.currentUser = { name: '', kennung: '', isAdmin: false };
-  
-  // Reset app initialization flags
-  if (typeof window.appInitialized !== 'undefined') {
-    window.appInitialized = false;
-  }
-  
-  // Clear form data
-  const fieldsToReset = [
-    'loginName', 'loginKennung', 'adminPassword',
-    'material', 'materialMenge', 'masterbatch', 'masterbatchMenge',
-    'jobName', 'jobNotes'
-  ];
-  
-  fieldsToReset.forEach(fieldId => {
-    const field = document.getElementById(fieldId);
-    if (field) {
-      field.value = '';
-    }
-  });
-  
-  // Reset cost preview
-  const costPreview = document.getElementById('costPreview');
-  if (costPreview) {
-    costPreview.textContent = '0,00 €';
-  }
-  
-  // Close all modals
-  if (typeof closeAllModals === 'function') {
-    closeAllModals();
-  }
-  
-  // Clear any stored data
-  try {
-    sessionStorage.removeItem('currentUser');
-    localStorage.removeItem('lastLogin');
-  } catch (error) {
-    console.warn("Could not clear storage:", error);
-  }
-  
-  // Return to login screen
   showScreen('loginScreen');
   
-  // Re-initialize app for next login
-  setTimeout(() => {
-    if (typeof window.retryAppInitialization === 'function') {
-      window.retryAppInitialization();
-    }
-  }, 500);
+  // Felder zurücksetzen
+  document.getElementById('loginName').value = '';
+  document.getElementById('loginKennung').value = '';
+  document.getElementById('adminPassword').value = '';
   
-  console.log("✅ Logout completed successfully");
+  toast.info('Erfolgreich abgemeldet');
 }
 
-// ==================== VERBESSERTES USER-MANAGEMENT SYSTEM ====================
-
+// Benutzer-Validierung
 /**
- * Findet oder erstellt einen User in der Datenbank
+ * Sucht oder erstellt einen User und prüft auf Name-Konflikte
  * @param {string} kennung - FH-Kennung des Users
  * @param {string} name - Name des Users
  * @param {boolean} isAdmin - Ob der User Admin-Rechte hat
@@ -319,11 +377,28 @@ async function findOrCreateUser(kennung, name, isAdmin = false) {
 // Legacy-Funktion für Rückwärtskompatibilität
 async function checkExistingKennung(kennung, currentName) {
   try {
-    const result = await findOrCreateUser(kennung, currentName, false);
-    if (result.conflict) {
-      return { name: result.existingName };
+    // Alle Drucke mit dieser Kennung abrufen
+    const snapshot = await window.db.collection('entries').where('kennung', '==', kennung).get();
+    
+    if (!snapshot.empty) {
+      // Erste Drucke prüfen um zu sehen ob ein anderer Name verwendet wird
+      const existingNames = new Set();
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.name && data.name.toLowerCase() !== currentName.toLowerCase()) {
+          existingNames.add(data.name);
+        }
+      });
+      
+      if (existingNames.size > 0) {
+        // Ersten anderen Namen zurückgeben
+        return {
+          name: Array.from(existingNames)[0]
+        };
+      }
     }
-    return null;
+    
+    return null; // Keine Konflikte gefunden
   } catch (error) {
     console.error('Fehler beim Prüfen der FH-Kennung:', error);
     return null;
