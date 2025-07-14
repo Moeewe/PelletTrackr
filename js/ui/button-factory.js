@@ -92,7 +92,8 @@ const ButtonFactory = {
     } else {
       return createButton('PAYMENT_REQUEST', `requestPayment('${entryId}')`, {
         title: 'Zahlungsanfrage an Admin senden',
-        id: `payment-request-btn-${entryId}`
+        id: `payment-request-btn-${entryId}`,
+        extraClasses: 'payment-request-btn'
       });
     }
   },

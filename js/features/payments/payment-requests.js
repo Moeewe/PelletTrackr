@@ -13,6 +13,18 @@ async function requestPayment(entryId) {
     try {
         console.log('Requesting payment for entry:', entryId);
         
+        // Check if Firebase is available
+        if (!window.db) {
+            showToast('Firebase nicht verfügbar. Bitte Seite neu laden.', 'error');
+            return;
+        }
+        
+        // Check if user is logged in
+        if (!window.currentUser) {
+            showToast('Bitte melden Sie sich zuerst an', 'error');
+            return;
+        }
+        
         // Get entry details
         const entryDoc = await window.db.collection('entries').doc(entryId).get();
         if (!entryDoc.exists) {
@@ -65,15 +77,78 @@ async function requestPayment(entryId) {
  * Update payment request button state
  */
 function updatePaymentRequestButton(entryId, requested = false) {
-    const buttons = document.querySelectorAll(`[onclick*="requestPayment('${entryId}')"]`);
+    // Multiple selectors to find the button
+    const selectors = [
+        `#payment-request-btn-${entryId}`,
+        `[onclick*="requestPayment('${entryId}')"]`,
+        `[onclick*="cancelPaymentRequest('${entryId}')"]`,
+        `.payment-request-btn[onclick*="${entryId}"]`
+    ];
+    
+    let buttons = [];
+    selectors.forEach(selector => {
+        const found = document.querySelectorAll(selector);
+        found.forEach(btn => {
+            if (!buttons.includes(btn)) {
+                buttons.push(btn);
+            }
+        });
+    });
+    
     buttons.forEach(button => {
         if (requested) {
-            button.textContent = 'Anfrage gesendet';
-            button.disabled = true;
-            button.style.opacity = '0.6';
-            button.onclick = null;
+            button.textContent = 'Zahlungsanfrage zurücknehmen';
+            button.className = 'btn btn-undo payment-request-btn';
+            button.style.opacity = '1';
+            button.onclick = () => cancelPaymentRequest(entryId);
+            button.title = 'Zahlungsanfrage zurückziehen';
+            button.setAttribute('data-state', 'requested');
+        } else {
+            button.textContent = 'Zahlung anweisen';
+            button.className = 'btn btn-payment-request payment-request-btn';
+            button.style.opacity = '1';
+            button.onclick = () => requestPayment(entryId);
+            button.title = 'Zahlungsanfrage an Admin senden';
+            button.setAttribute('data-state', 'available');
         }
     });
+}
+
+/**
+ * User cancels/withdraws a payment request
+ */
+async function cancelPaymentRequest(entryId) {
+    try {
+        console.log('Cancelling payment request for entry:', entryId);
+        
+        // Find the pending payment request
+        const requests = await window.db.collection('paymentRequests')
+            .where('entryId', '==', entryId)
+            .where('status', '==', 'pending')
+            .get();
+            
+        if (requests.empty) {
+            showToast('Keine aktive Zahlungsanfrage gefunden', 'warning');
+            return;
+        }
+        
+                 // Mark payment request as cancelled instead of deleting
+         const requestDoc = requests.docs[0];
+         await window.db.collection('paymentRequests').doc(requestDoc.id).update({
+             status: 'cancelled',
+             cancelledAt: firebase.firestore.FieldValue.serverTimestamp(),
+             cancelledBy: window.currentUser.name
+         });
+         
+         showToast('Zahlungsanfrage zurückgezogen', 'success');
+        
+        // Update button state
+        updatePaymentRequestButton(entryId, false);
+        
+    } catch (error) {
+        console.error('Error cancelling payment request:', error);
+        showToast('Fehler beim Zurückziehen der Zahlungsanfrage', 'error');
+    }
 }
 
 /**
@@ -272,6 +347,12 @@ function updatePaymentRequestsBadge(count) {
         }
     }
 }
+
+// Make functions globally available
+window.requestPayment = requestPayment;
+window.cancelPaymentRequest = cancelPaymentRequest;
+window.showPaymentRequestsModal = showPaymentRequestsModal;
+window.processPaymentRequest = processPaymentRequest;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
