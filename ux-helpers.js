@@ -78,16 +78,16 @@ class ToastManager {
             const dialog = document.createElement('div');
             dialog.className = 'confirmation-dialog';
             
-            // Dialog mit gelbem Warndreieck
+            // Dialog mit flachem, eckigem Icon
             dialog.innerHTML = `
                 <div class="confirmation-content">
                     <div class="confirmation-header">
-                        <div class="confirmation-icon warning-triangle">⚠</div>
+                        <div class="confirmation-icon flat-warning">!</div>
                     </div>
                     <div class="confirmation-message">${message}</div>
                     <div class="confirmation-buttons">
-                        <button class="btn btn-primary confirm-yes">${confirmText}</button>
                         <button class="btn btn-secondary confirm-no">${cancelText}</button>
+                        <button class="btn btn-primary confirm-yes">${confirmText}</button>
                     </div>
                 </div>
             `;
