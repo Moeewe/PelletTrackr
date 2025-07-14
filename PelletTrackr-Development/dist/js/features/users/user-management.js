@@ -1,24 +1,13 @@
 // ==================== USER MANAGEMENT SYSTEM ====================
 
-function showUserManagerModal() {
+function showUserManager() {
   if (!window.checkAdminAccess()) return;
-  document.getElementById('overlay').style.display = 'block';
-  document.getElementById('userManagerModal').style.display = 'block';
+  document.getElementById('userManager').classList.add('active');
   loadUsersForManagement();
 }
 
-function closeUserManagerModal() {
-  document.getElementById('overlay').style.display = 'none';
-  document.getElementById('userManagerModal').style.display = 'none';
-}
-
-// Legacy function for backward compatibility
-function showUserManager() {
-  showUserManagerModal();
-}
-
 function closeUserManager() {
-  closeUserManagerModal();
+  document.getElementById('userManager').classList.remove('active');
 }
 
 async function loadUsersForManagement() {
@@ -67,10 +56,10 @@ async function loadUsersForManagement() {
       });
     });
     
-    // 3. Benutzer-Daten zusammenführen
+    // 3. Benutzer-Daten zusammenführen - NUR registrierte Benutzer
     const userMap = new Map();
     
-    // Alle registrierten Benutzer aus users-Collection
+    // Nur registrierte Benutzer aus users-Collection verarbeiten
     usersData.forEach((userData, kennung) => {
       const entries = entriesData.get(kennung) || [];
       
@@ -111,52 +100,24 @@ async function loadUsersForManagement() {
       });
     });
     
-    // 4. Benutzer mit Einträgen aber ohne users-Eintrag hinzufügen (Legacy-Daten)
+    // 4. Warnung für Legacy-Daten anzeigen, aber nicht zu userMap hinzufügen
+    const legacyUsers = [];
     entriesData.forEach((entries, kennung) => {
       if (!userMap.has(kennung)) {
-        console.log(`⚠️ Legacy-User ohne users-Eintrag gefunden: ${kennung}`);
-        
-        // Ersten Eintrag für Name verwenden
-        const firstEntry = entries[0];
-        if (firstEntry) {
-          let totalCost = 0;
-          let paidAmount = 0;
-          let unpaidAmount = 0;
-          let firstEntryDate = null;
-          let lastEntryDate = null;
-          
-          entries.forEach(entry => {
-            totalCost += entry.totalCost || 0;
-            if (entry.paid || entry.isPaid) {
-              paidAmount += entry.totalCost || 0;
-            } else {
-              unpaidAmount += entry.totalCost || 0;
-            }
-            
-            const entryDate = entry.timestamp ? entry.timestamp.toDate() : new Date();
-            if (!firstEntryDate || entryDate < firstEntryDate) firstEntryDate = entryDate;
-            if (!lastEntryDate || entryDate > lastEntryDate) lastEntryDate = entryDate;
-          });
-          
-          userMap.set(kennung, {
-            docId: null, // Kein users-Dokument
-            name: firstEntry.name,
-            kennung: kennung,
-            email: `${kennung}@fh-muenster.de`,
-            isAdmin: false,
-            createdAt: firstEntryDate,
-            lastLogin: lastEntryDate,
-            entries: entries,
-            totalCost: totalCost,
-            paidAmount: paidAmount,
-            unpaidAmount: unpaidAmount,
-            firstEntry: firstEntryDate,
-            lastEntry: lastEntryDate,
-            isLegacy: true
-          });
-        }
+        legacyUsers.push({
+          kennung: kennung,
+          entriesCount: entries.length,
+          firstEntryName: entries[0]?.name || 'Unbekannt'
+        });
       }
     });
+    
+    if (legacyUsers.length > 0) {
+      console.warn(`⚠️ ${legacyUsers.length} Legacy-Benutzer mit Einträgen aber ohne users-Eintrag gefunden:`);
+      legacyUsers.forEach(legacy => {
+        console.warn(`  - ${legacy.kennung} (${legacy.entriesCount} Einträge, Name: ${legacy.firstEntryName})`);
+      });
+    }
     
     const users = Array.from(userMap.values());
     
@@ -170,7 +131,7 @@ async function loadUsersForManagement() {
     // Global speichern für Suche und Sortierung
     window.allUsers = users;
     
-    console.log(`✅ ${users.length} Benutzer geladen`);
+    console.log(`✅ ${users.length} registrierte Benutzer geladen (${legacyUsers.length} Legacy-Benutzer ignoriert)`);
     renderUsersTable(users);
     
   } catch (error) {
@@ -197,12 +158,6 @@ async function loadUsersForManagement() {
   }
 }
 
-function retryUserLoad() {
-  console.log("🔄 Erneuter Versuch, Benutzer zu laden...");
-  document.getElementById("usersTable").innerHTML = '<p>Lade Benutzer erneut...</p>';
-  loadUsersForManagement();
-}
-
 function renderUsersTable(users) {
   const tableDiv = document.getElementById("usersTable");
   
@@ -223,12 +178,12 @@ function renderUsersTable(users) {
               <th onclick="sortUsersBy('kennung')">FH-Kennung</th>
               <th onclick="sortUsersBy('email')">E-Mail</th>
               <th onclick="sortUsersBy('isAdmin')">Admin</th>
-              <th onclick="sortUsersBy('lastLogin')">Letzter Login</th>
               <th onclick="sortUsersBy('entries')">Drucke</th>
               <th onclick="sortUsersBy('totalCost')">Gesamtkosten</th>
               <th onclick="sortUsersBy('paidAmount')">Bezahlt</th>
               <th onclick="sortUsersBy('unpaidAmount')">Offen</th>
               <th onclick="sortUsersBy('status')">Status</th>
+              <th onclick="sortUsersBy('lastEntry')">Letzter Druck</th>
               <th>Aktionen</th>
             </tr>
           </thead>
@@ -236,44 +191,41 @@ function renderUsersTable(users) {
   `;
   
   users.forEach(user => {
-    const lastLoginDate = user.lastLogin ? 
-      user.lastLogin.toLocaleDateString('de-DE', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit' 
-      }) : 
-      (user.lastEntry ? user.lastEntry.toLocaleDateString('de-DE') : 'Nie');
-    
+    const lastEntryDate = user.lastEntry ? user.lastEntry.toLocaleDateString('de-DE') : 'Keine Drucke';
     const email = user.email || `${user.kennung}@fh-muenster.de`;
     
-    // Admin Badge
-    const adminBadge = user.isAdmin ? 
-      '<span class="entry-status-badge status-admin">ADMIN</span>' : 
-      '<span class="entry-status-badge status-user">USER</span>';
+    // Admin Checkbox
+    const adminCheckbox = `
+      <label class="admin-checkbox">
+        <input type="checkbox" ${user.isAdmin ? 'checked' : ''} 
+               onchange="toggleAdminStatus('${user.kennung}', this.checked)">
+        <span class="checkbox-label">${user.isAdmin ? 'Admin' : 'User'}</span>
+      </label>
+    `;
     
-    // Status Badge für Desktop-Tabelle
-    const statusBadge = user.unpaidAmount > 0 ? 
-      '<span class="entry-status-badge status-unpaid">OFFEN</span>' : 
-      '<span class="entry-status-badge status-paid">BEZAHLT</span>';
-    
-    // Legacy-Indikator
-    const legacyIndicator = user.isLegacy ? ' <small>(Legacy)</small>' : '';
+    // Status Badge für Desktop-Tabelle - Nutzer ohne Drucke als "aktiv" markieren
+    let statusBadge;
+    if (user.entries.length === 0) {
+      statusBadge = '<span class="entry-status-badge status-new">NEU</span>';
+    } else if (user.unpaidAmount > 0) {
+      statusBadge = '<span class="entry-status-badge status-unpaid">OFFEN</span>';
+    } else {
+      statusBadge = '<span class="entry-status-badge status-paid">BEZAHLT</span>';
+    }
     
     // Tabellen-Zeile für Desktop
     containerHtml += `
       <tr>
-        <td><span class="cell-value">${user.name}${legacyIndicator}</span></td>
+        <td><span class="cell-value">${user.name}</span></td>
         <td><span class="cell-value">${user.kennung}</span></td>
         <td><span class="cell-value">${email}</span></td>
-        <td>${adminBadge}</td>
-        <td><span class="cell-value">${lastLoginDate}</span></td>
+        <td>${adminCheckbox}</td>
         <td><span class="cell-value">${user.entries.length}</span></td>
         <td><span class="cell-value"><strong>${window.formatCurrency(user.totalCost)}</strong></span></td>
         <td><span class="cell-value">${window.formatCurrency(user.paidAmount)}</span></td>
         <td><span class="cell-value">${window.formatCurrency(user.unpaidAmount)}</span></td>
         <td>${statusBadge}</td>
+        <td><span class="cell-value">${lastEntryDate}</span></td>
         <td class="actions">
           <div class="entry-actions">
             ${ButtonFactory.editUser(user.kennung)}
@@ -297,39 +249,28 @@ function renderUsersTable(users) {
 
   // Card-Struktur für Mobile
   users.forEach(user => {
-    const lastLoginDate = user.lastLogin ? 
-      user.lastLogin.toLocaleDateString('de-DE', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit' 
-      }) : 
-      (user.lastEntry ? user.lastEntry.toLocaleDateString('de-DE') : 'Nie');
-    
+    const lastEntryDate = user.lastEntry ? user.lastEntry.toLocaleDateString('de-DE') : 'Keine Drucke';
     const email = user.email || `${user.kennung}@fh-muenster.de`;
     
-    // Status Badge basierend auf offenen Beträgen
-    const statusBadgeClass = user.unpaidAmount > 0 ? 'status-unpaid' : 'status-paid';
-    const statusBadgeText = user.unpaidAmount > 0 ? 'OFFEN' : 'BEZAHLT';
-    
-    // Admin Badge für Mobile
-    const adminBadge = user.isAdmin ? 
-      '<span class="entry-status-badge status-admin">ADMIN</span>' : 
-      '<span class="entry-status-badge status-user">USER</span>';
-    
-    // Legacy-Indikator
-    const legacyIndicator = user.isLegacy ? ' <small>(Legacy)</small>' : '';
+    // Status Badge basierend auf offenen Beträgen und Entry-Status
+    let statusBadgeClass, statusBadgeText;
+    if (user.entries.length === 0) {
+      statusBadgeClass = 'status-new';
+      statusBadgeText = 'NEU';
+    } else if (user.unpaidAmount > 0) {
+      statusBadgeClass = 'status-unpaid';
+      statusBadgeText = 'OFFEN';
+    } else {
+      statusBadgeClass = 'status-paid';
+      statusBadgeText = 'BEZAHLT';
+    }
     
     containerHtml += `
       <div class="entry-card">
         <!-- Card Header mit User-Name und Status -->
         <div class="entry-card-header">
-          <h3 class="entry-job-title">${user.name}${legacyIndicator}</h3>
-          <div class="entry-status-badges">
-            ${adminBadge}
-            <span class="entry-status-badge ${statusBadgeClass}">${statusBadgeText}</span>
-          </div>
+          <h3 class="entry-job-title">${user.name}</h3>
+          <span class="entry-status-badge ${statusBadgeClass}">${statusBadgeText}</span>
         </div>
         
         <!-- Card Body mit Detail-Zeilen -->
@@ -345,8 +286,8 @@ function renderUsersTable(users) {
           </div>
           
           <div class="entry-detail-row">
-            <span class="entry-detail-label">Letzter Login</span>
-            <span class="entry-detail-value">${lastLoginDate}</span>
+            <span class="entry-detail-label">Admin</span>
+            <span class="entry-detail-value">${adminCheckbox}</span>
           </div>
           
           <div class="entry-detail-row">
@@ -371,7 +312,7 @@ function renderUsersTable(users) {
           
           <div class="entry-detail-row">
             <span class="entry-detail-label">Letzter Druck</span>
-            <span class="entry-detail-value">${lastLoginDate}</span>
+            <span class="entry-detail-value">${lastEntryDate}</span>
           </div>
         </div>
         
@@ -421,6 +362,10 @@ function sortUsersBy(field) {
         aVal = (a.email || `${a.kennung}@fh-muenster.de`).toLowerCase();
         bVal = (b.email || `${b.kennung}@fh-muenster.de`).toLowerCase();
         break;
+      case 'isAdmin':
+        aVal = a.isAdmin ? 1 : 0;
+        bVal = b.isAdmin ? 1 : 0;
+        break;
       case 'entries':
         aVal = a.entries.length;
         bVal = b.entries.length;
@@ -438,8 +383,8 @@ function sortUsersBy(field) {
         bVal = b.unpaidAmount;
         break;
       case 'lastEntry':
-        aVal = a.lastEntry.getTime();
-        bVal = b.lastEntry.getTime();
+        aVal = a.lastEntry ? a.lastEntry.getTime() : 0; // Nutzer ohne Entries ganz unten
+        bVal = b.lastEntry ? b.lastEntry.getTime() : 0;
         break;
       default:
         return 0;
@@ -468,6 +413,48 @@ function searchUsers() {
   });
 
   renderUsersTable(filteredUsers);
+}
+
+// ==================== ADMIN STATUS TOGGLE ====================
+
+/**
+ * Toggle admin status for a user
+ */
+async function toggleAdminStatus(kennung, isAdmin) {
+  try {
+    const user = window.allUsers.find(u => u.kennung === kennung);
+    if (!user) {
+      toast.error('Benutzer nicht gefunden');
+      return;
+    }
+    
+    // Update in database
+    await window.db.collection('users').doc(user.docId).update({
+      isAdmin: isAdmin,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    // Update local data
+    user.isAdmin = isAdmin;
+    
+    // Update checkbox label
+    const checkboxLabel = document.querySelector(`input[onchange*="'${kennung}'"]`).nextElementSibling;
+    if (checkboxLabel) {
+      checkboxLabel.textContent = isAdmin ? 'Admin' : 'User';
+    }
+    
+    toast.success(`${user.name} ${isAdmin ? 'als Admin' : 'als User'} markiert`);
+    
+  } catch (error) {
+    console.error('Error toggling admin status:', error);
+    toast.error('Fehler beim Aktualisieren des Admin-Status');
+    
+    // Revert checkbox state on error
+    const checkbox = document.querySelector(`input[onchange*="'${kennung}'"]`);
+    if (checkbox) {
+      checkbox.checked = !isAdmin;
+    }
+  }
 }
 
 // ==================== USER DETAILS & ACTIONS ====================
@@ -793,7 +780,7 @@ async function editUser(kennung) {
   }
   
   // Erst das User-Manager-Modal schließen (wie bei Material/Masterbatch)
-  closeUserManagerModal();
+  document.getElementById('userManager').classList.remove('active');
   
   // Direkt das Edit-Modal öffnen
   showEditUserForm(kennung);
@@ -935,63 +922,67 @@ async function updateUser(oldKennung) {
 function showAddUserDialog() {
   if (!window.checkAdminAccess()) return;
   
-  // WICHTIG: Erst userManager Modal schließen
-  closeUserManagerModal();
-  
-  // Kurze Verzögerung damit das erste Modal geschlossen wird
-  setTimeout(() => {
-    const modalHtml = `
-      <div class="modal-header">
-        <h2>Neuen Benutzer Hinzufügen</h2>
-        <button class="close-btn" onclick="closeModal()">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="card">
-          <div class="card-body">
-            <div class="form-group">
-              <label class="form-label">Vollständiger Name</label>
-              <input type="text" id="newUserName" class="form-input" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">FH-Kennung</label>
-              <input type="text" id="newUserKennung" class="form-input" required>
-              <div id="kennungCheck" style="margin-top: 8px;"></div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">E-Mail Adresse</label>
-              <input type="email" id="newUserEmail" class="form-input">
-              <small>Optional - Standard: kennung@fh-muenster.de</small>
-            </div>
+  const modalHtml = `
+    <div class="modal-header">
+      <h3>Neuen Benutzer hinzufügen</h3>
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="card">
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Vollständiger Name</label>
+            <input type="text" id="newUserName" class="form-input" placeholder="Vorname Nachname" required>
           </div>
-          <div class="card-footer">
-            ${ButtonFactory.primary('BENUTZER HINZUFÜGEN', 'createNewUser()')}
-            ${ButtonFactory.cancelModal()}
+          <div class="form-group">
+            <label class="form-label">FH-Kennung</label>
+            <input type="text" id="newUserKennung" class="form-input" placeholder="z.B. mw123456" required>
+            <div id="kennungValidation" class="form-hint">Kennung verfügbar</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">E-Mail Adresse</label>
+            <input type="email" id="newUserEmail" class="form-input" placeholder="wird automatisch ausgefüllt">
+            <small class="form-hint">Optional - Standard: kennung@fh-muenster.de</small>
           </div>
         </div>
+        <div class="card-footer">
+          <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+          <button class="btn btn-primary" onclick="createNewUser()">Benutzer hinzufügen</button>
+        </div>
       </div>
-    `;
+    </div>
+  `;
+  
+  showModalWithContent(modalHtml);
+  
+  // Email Auto-Generation nach Modal-Rendering aktivieren
+  setTimeout(() => {
+    const kennungInput = document.getElementById('newUserKennung');
+    const emailInput = document.getElementById('newUserEmail');
+    const validationDiv = document.getElementById('kennungValidation');
     
-    window.showModal(modalHtml);
-    
-    // Event Listener für Kennung-Validierung und Auto-Email-Generierung
-    document.getElementById('newUserKennung').addEventListener('input', function() {
-      const kennung = this.value.trim().toLowerCase();
-      const checkDiv = document.getElementById('kennungCheck');
-      const emailField = document.getElementById('newUserEmail');
-      
-      // Auto-generate email when kennung changes
-      if (kennung && !emailField.value) {
-        emailField.value = `${kennung}@fh-muenster.de`;
-      }
-      
-      if (kennung && window.allUsers && window.allUsers.find(u => u.kennung === kennung)) {
-        checkDiv.innerHTML = '<span style="color: #dc3545;">Diese Kennung existiert bereits!</span>';
-      } else if (kennung) {
-        checkDiv.innerHTML = '<span style="color: #28a745;">✅ Kennung verfügbar</span>';
-      } else {
-        checkDiv.innerHTML = '';
-      }
-    });
+    if (kennungInput && emailInput) {
+      // Auto-generierung bei Eingabe
+      kennungInput.addEventListener('input', function() {
+        const kennung = this.value.trim().toLowerCase();
+        if (kennung) {
+          emailInput.value = `${kennung}@fh-muenster.de`;
+          
+          // Prüfen ob Kennung bereits existiert
+          if (window.allUsers && window.allUsers.find(u => u.kennung === kennung)) {
+            validationDiv.style.color = '#ff0000';
+            validationDiv.textContent = '❌ Kennung bereits vergeben';
+          } else {
+            validationDiv.style.color = '#00aa00';
+            validationDiv.textContent = '✅ Kennung verfügbar';
+          }
+        } else {
+          emailInput.value = '';
+          validationDiv.style.color = '#666';
+          validationDiv.textContent = 'Kennung verfügbar';
+        }
+      });
+    }
   }, 100);
 }
 
@@ -1037,10 +1028,8 @@ async function createNewUser() {
     }
     window.closeModal();
     
-    // User-Manager wieder öffnen und Daten neu laden
-    setTimeout(() => {
-      showUserManagerModal();
-    }, 100);
+    // Nutzer-Liste neu laden
+    loadUsersForManagement();
     
   } catch (error) {
     console.error('Fehler beim Erstellen des Benutzers:', error);
@@ -1059,14 +1048,13 @@ function closeEditUserModal() {
   window.closeModal();
   // Nach dem Schließen des Edit-Modals, User-Manager wieder öffnen
   setTimeout(() => {
-    showUserManagerModal();
+    document.getElementById('userManager').classList.add('active');
+    loadUsersForManagement();
   }, 100);
 }
 
 // ==================== GLOBAL EXPORTS ====================
 // Funktionen global verfügbar machen
-window.showUserManagerModal = showUserManagerModal;
-window.closeUserManagerModal = closeUserManagerModal;
 window.showAddUserDialog = showAddUserDialog;
 window.editUser = editUser;
 window.showUserDetails = showUserDetails;
@@ -1077,11 +1065,8 @@ window.createNewUser = createNewUser;
 window.showUserManager = showUserManager;
 window.closeUserManager = closeUserManager;
 window.loadUsersForManagement = loadUsersForManagement;
-window.retryUserLoad = retryUserLoad;
 window.sortUsersBy = sortUsersBy;
-window.searchUsers = searchUsers;
-window.showEditUserForm = showEditUserForm;
-window.updateUser = updateUser;
+window.showEditUserForm = showEditUserForm; // Export the function
 window.closeEditUserModal = closeEditUserModal;
 
 // ==================== USER MANAGEMENT MODULE ====================

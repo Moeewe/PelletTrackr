@@ -16,6 +16,17 @@ const EQUIPMENT_CATEGORIES = {
     'books': 'Bücher'
 };
 
+// Safe showToast function with fallback
+function safeShowToast(message, type = 'info') {
+    if (typeof window.showToast === 'function') {
+        window.safeShowToast(message, type);
+    } else if (window.toast && typeof window.toast[type] === 'function') {
+        window.toast[type](message);
+    } else {
+        console.log(`Toast (${type}): ${message}`);
+    }
+}
+
 /**
  * Setup real-time listener for equipment
  */
@@ -192,6 +203,12 @@ function showEquipmentCategory(category) {
  */
 function renderEquipmentList(equipmentList) {
     const container = document.getElementById('equipmentList');
+    
+    // Add null check for container
+    if (!container) {
+        console.warn('Equipment list container not found');
+        return;
+    }
     
     if (equipmentList.length === 0) {
         container.innerHTML = `
@@ -446,6 +463,7 @@ function editEquipment(equipmentId) {
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+                    <button type="button" class="btn btn-danger" onclick="deleteEquipment('${equipmentId}')">Löschen</button>
                     <button type="button" class="btn btn-primary" onclick="updateEquipment('${equipmentId}')">Speichern</button>
                 </div>
             </form>
@@ -522,6 +540,37 @@ async function updateEquipment(equipmentId) {
     } catch (error) {
         console.error('Error updating equipment:', error);
         safeShowToast('Fehler beim Aktualisieren', 'error');
+    }
+}
+
+/**
+ * Delete equipment with confirmation
+ */
+async function deleteEquipment(equipmentId) {
+    const equipmentItem = equipment.find(item => item.id === equipmentId);
+    if (!equipmentItem) {
+        safeShowToast('Equipment nicht gefunden', 'error');
+        return;
+    }
+    
+    // Show confirmation dialog
+    const confirmed = await toast.confirm(
+        `Möchtest du "${equipmentItem.name}" wirklich löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden.`,
+        'Löschen',
+        'Abbrechen'
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+        await window.db.collection('equipment').doc(equipmentId).delete();
+        
+        safeShowToast('Equipment erfolgreich gelöscht', 'success');
+        closeModal(); // Close the edit modal and return to equipment list
+        
+    } catch (error) {
+        console.error('Error deleting equipment:', error);
+        safeShowToast('Fehler beim Löschen', 'error');
     }
 }
 

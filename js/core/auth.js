@@ -144,7 +144,7 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
         window.currentUser = {
           name: userResult.existingName,
           kennung: kennung.toLowerCase(),
-          isAdmin: false
+          isAdmin: userResult.isAdmin || false
         };
         
         // Save session
@@ -167,7 +167,7 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
       window.currentUser = {
         name: userResult.name,
         kennung: kennung.toLowerCase(),
-        isAdmin: false
+        isAdmin: userResult.isAdmin || false
       };
       
       // Save session
@@ -334,7 +334,6 @@ async function findOrCreateUser(kennung, name, isAdmin = false) {
       await existingUserDoc.ref.update({
         name: name,
         lastLogin: new Date(),
-        isAdmin: isAdmin,
         updatedAt: new Date()
       });
       
@@ -342,7 +341,8 @@ async function findOrCreateUser(kennung, name, isAdmin = false) {
         conflict: false,
         isExisting: true,
         name: name,
-        kennung: kennung
+        kennung: kennung,
+        isAdmin: existingUserData.isAdmin || false  // Use existing admin status from database
       };
     }
     
@@ -365,7 +365,8 @@ async function findOrCreateUser(kennung, name, isAdmin = false) {
       conflict: false,
       isExisting: false,
       name: name,
-      kennung: kennung
+      kennung: kennung,
+      isAdmin: isAdmin
     };
     
   } catch (error) {

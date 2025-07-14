@@ -134,7 +134,7 @@
   border: none !important;
   padding: 6px 12px !important;
   font-size: 12px !important;
-  border-radius: 4px !important;
+  border-radius: 0 !important;
   font-weight: 500 !important;
   transition: all 0.2s ease !important;
   margin-right: 8px !important;
@@ -143,6 +143,31 @@
 .admin-toggle:hover {
   background: #45a049 !important;
   transform: translateY(-1px) !important;
+}
+
+.admin-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.admin-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.admin-checkbox .checkbox-label {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.admin-checkbox input[type="checkbox"]:checked + .checkbox-label {
+  color: #ff4444;
+  font-weight: 600;
 }
 
 .tagline {

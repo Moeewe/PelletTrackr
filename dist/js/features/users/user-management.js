@@ -177,6 +177,7 @@ function renderUsersTable(users) {
               <th onclick="sortUsersBy('name')">Name</th>
               <th onclick="sortUsersBy('kennung')">FH-Kennung</th>
               <th onclick="sortUsersBy('email')">E-Mail</th>
+              <th onclick="sortUsersBy('isAdmin')">Admin</th>
               <th onclick="sortUsersBy('entries')">Drucke</th>
               <th onclick="sortUsersBy('totalCost')">Gesamtkosten</th>
               <th onclick="sortUsersBy('paidAmount')">Bezahlt</th>
@@ -192,6 +193,15 @@ function renderUsersTable(users) {
   users.forEach(user => {
     const lastEntryDate = user.lastEntry ? user.lastEntry.toLocaleDateString('de-DE') : 'Keine Drucke';
     const email = user.email || `${user.kennung}@fh-muenster.de`;
+    
+    // Admin Checkbox
+    const adminCheckbox = `
+      <label class="admin-checkbox">
+        <input type="checkbox" ${user.isAdmin ? 'checked' : ''} 
+               onchange="toggleAdminStatus('${user.kennung}', this.checked)">
+        <span class="checkbox-label">${user.isAdmin ? 'Admin' : 'User'}</span>
+      </label>
+    `;
     
     // Status Badge für Desktop-Tabelle - Nutzer ohne Drucke als "aktiv" markieren
     let statusBadge;
@@ -209,6 +219,7 @@ function renderUsersTable(users) {
         <td><span class="cell-value">${user.name}</span></td>
         <td><span class="cell-value">${user.kennung}</span></td>
         <td><span class="cell-value">${email}</span></td>
+        <td>${adminCheckbox}</td>
         <td><span class="cell-value">${user.entries.length}</span></td>
         <td><span class="cell-value"><strong>${window.formatCurrency(user.totalCost)}</strong></span></td>
         <td><span class="cell-value">${window.formatCurrency(user.paidAmount)}</span></td>
@@ -272,6 +283,11 @@ function renderUsersTable(users) {
           <div class="entry-detail-row">
             <span class="entry-detail-label">E-Mail</span>
             <span class="entry-detail-value">${email}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Admin</span>
+            <span class="entry-detail-value">${adminCheckbox}</span>
           </div>
           
           <div class="entry-detail-row">
@@ -346,6 +362,10 @@ function sortUsersBy(field) {
         aVal = (a.email || `${a.kennung}@fh-muenster.de`).toLowerCase();
         bVal = (b.email || `${b.kennung}@fh-muenster.de`).toLowerCase();
         break;
+      case 'isAdmin':
+        aVal = a.isAdmin ? 1 : 0;
+        bVal = b.isAdmin ? 1 : 0;
+        break;
       case 'entries':
         aVal = a.entries.length;
         bVal = b.entries.length;
@@ -393,6 +413,48 @@ function searchUsers() {
   });
 
   renderUsersTable(filteredUsers);
+}
+
+// ==================== ADMIN STATUS TOGGLE ====================
+
+/**
+ * Toggle admin status for a user
+ */
+async function toggleAdminStatus(kennung, isAdmin) {
+  try {
+    const user = window.allUsers.find(u => u.kennung === kennung);
+    if (!user) {
+      toast.error('Benutzer nicht gefunden');
+      return;
+    }
+    
+    // Update in database
+    await window.db.collection('users').doc(user.docId).update({
+      isAdmin: isAdmin,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    // Update local data
+    user.isAdmin = isAdmin;
+    
+    // Update checkbox label
+    const checkboxLabel = document.querySelector(`input[onchange*="'${kennung}'"]`).nextElementSibling;
+    if (checkboxLabel) {
+      checkboxLabel.textContent = isAdmin ? 'Admin' : 'User';
+    }
+    
+    toast.success(`${user.name} ${isAdmin ? 'als Admin' : 'als User'} markiert`);
+    
+  } catch (error) {
+    console.error('Error toggling admin status:', error);
+    toast.error('Fehler beim Aktualisieren des Admin-Status');
+    
+    // Revert checkbox state on error
+    const checkbox = document.querySelector(`input[onchange*="'${kennung}'"]`);
+    if (checkbox) {
+      checkbox.checked = !isAdmin;
+    }
+  }
 }
 
 // ==================== USER DETAILS & ACTIONS ====================
@@ -891,7 +953,7 @@ function showAddUserDialog() {
     </div>
   `;
   
-  window.showModal(modalHtml);
+  showModalWithContent(modalHtml);
   
   // Email Auto-Generation nach Modal-Rendering aktivieren
   setTimeout(() => {
