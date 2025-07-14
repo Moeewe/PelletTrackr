@@ -245,6 +245,7 @@ async function requestPayment(entryId) {
         
         await window.db.collection('paymentRequests').add(paymentRequest);
         
+        console.log('✅ Payment request created successfully for entry:', entryId);
         showToast('Zahlungsanfrage gesendet! Der Admin wird benachrichtigt.', 'success');
         
         // EXPLICIT button update instead of relying on real-time listener
@@ -257,6 +258,13 @@ async function requestPayment(entryId) {
         
         // Also update user payment request status
         updateUserPaymentRequestStatus();
+        
+        // Force update of admin badge if admin is logged in
+        if (window.currentUser?.isAdmin) {
+            setTimeout(() => {
+                updatePaymentRequestsBadge();
+            }, 500);
+        }
         
     } catch (error) {
         console.error('Error requesting payment:', error);
@@ -724,7 +732,17 @@ function setupPaymentRequestsListener() {
 /**
  * Update payment requests badge in admin interface
  */
-function updatePaymentRequestsBadge(count) {
+async function updatePaymentRequestsBadge(count) {
+    // If no count provided, get current count from database
+    if (count === undefined) {
+        try {
+            count = await getPendingPaymentRequestsCount();
+        } catch (error) {
+            console.error('Error getting payment requests count:', error);
+            count = 0;
+        }
+    }
+    
     const badge = document.querySelector('[data-badge="payment-requests"]');
     if (badge) {
         if (count > 0) {
@@ -758,10 +776,19 @@ function initializePaymentRequests() {
     
     if (window.currentUser && !window.currentUser.isAdmin) {
         setupUserPaymentRequestsListener();
+        console.log('✅ User payment requests listener initialized');
     }
     
     if (window.currentUser && window.currentUser.isAdmin) {
         setupPaymentRequestsListener();
+        console.log('✅ Admin payment requests listener initialized');
+    }
+    
+    // Always update badge count for admins
+    if (window.currentUser && window.currentUser.isAdmin) {
+        setTimeout(() => {
+            updatePaymentRequestsBadge();
+        }, 1000);
     }
     
     console.log('Payment requests system initialized with payment status coupling');

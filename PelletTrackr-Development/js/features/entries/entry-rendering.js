@@ -66,7 +66,6 @@ function renderUserEntries(entries) {
         <td data-label="Notizen" class="notes-cell" title="${jobNotes}">
           <span class="cell-value">
             ${truncatedNotes}
-            ${jobNotes.length > 0 ? `<button class="btn-edit-note" onclick="editNote('${entry.id}', '${escapeQuotes(jobNotes)}')">Bearbeiten</button>` : ''}
           </span>
         </td>
         <td data-label="Aktionen" class="actions">${actions}</td>
@@ -242,7 +241,6 @@ function renderAdminEntries(entries) {
         <td data-label="Notizen" class="notes-cell" title="${jobNotes}">
           <span class="cell-value">
             ${truncatedNotes}
-            ${jobNotes.length > 0 ? `<button class="btn-edit-note" onclick="editNote('${entry.id}', '${escapeQuotes(jobNotes)}')">Bearbeiten</button>` : ''}
           </span>
         </td>
         <td class="actions" data-label="Aktionen">${actions}</td>
