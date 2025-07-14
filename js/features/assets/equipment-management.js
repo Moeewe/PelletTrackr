@@ -264,69 +264,67 @@ function getEquipmentStatusText(status) {
  * Show add equipment form
  */
 function showAddEquipmentForm() {
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'block';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Equipment hinzufügen</h3>
-                <button class="modal-close" onclick="closeAddEquipmentForm()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="equipmentForm" class="form">
-                    <div class="form-group">
-                        <label class="form-label">Name</label>
-                        <input type="text" id="equipmentName" class="form-input" placeholder="z.B. Schlüssel Labor 1, Zangensatz, etc.">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Kategorie</label>
-                        <select id="equipmentCategory" class="form-select">
-                            ${Object.entries(EQUIPMENT_CATEGORIES).map(([key, name]) => `
-                                <option value="${key}">${name}</option>
-                            `).join('')}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Beschreibung</label>
-                        <textarea id="equipmentDescription" class="form-textarea" placeholder="Beschreibung des Equipment..." rows="3"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Status</label>
-                        <select id="equipmentStatus" class="form-select">
-                            <option value="available">Verfügbar</option>
-                            <option value="maintenance">Wartung</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Pfand-System</label>
-                        <div class="form-checkbox-group">
-                            <label class="form-checkbox">
-                                <input type="checkbox" id="requiresDeposit" class="form-checkbox-input">
-                                <span class="form-checkbox-label">Pfand erforderlich</span>
-                            </label>
-                            <input type="number" id="depositAmount" class="form-input" placeholder="Pfand-Betrag €" step="0.01" style="display: none;">
+    const modalContent = `
+        <div class="modal-header">
+            <h3>Equipment hinzufügen</h3>
+            <button class="close-btn" onclick="closeAddEquipmentForm()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="card">
+                <div class="card-body">
+                    <form id="addEquipmentForm" class="form">
+                        <div class="form-group">
+                            <label class="form-label">Name</label>
+                            <input type="text" name="name" class="form-input" placeholder="z.B. Schlüssel Labor 1, Zangensatz, etc." required>
                         </div>
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeAddEquipmentForm()">Abbrechen</button>
-                        <button type="button" class="btn btn-primary" onclick="saveEquipment()">Speichern</button>
-                    </div>
-                </form>
+                        <div class="form-group">
+                            <label class="form-label">Kategorie</label>
+                            <select name="category" class="form-select" required>
+                                ${Object.entries(EQUIPMENT_CATEGORIES).map(([key, name]) => `
+                                    <option value="${key}" ${key === currentEquipmentCategory ? 'selected' : ''}>${name}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Standort</label>
+                            <input type="text" name="location" class="form-input" placeholder="z.B. Labor 1, Werkstatt, Büro..." required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Beschreibung</label>
+                            <textarea name="description" class="form-textarea" placeholder="Beschreibung des Equipment..." rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Pfand-System</label>
+                            <div class="form-checkbox-group">
+                                <label class="form-checkbox">
+                                    <input type="checkbox" name="requiresDeposit" class="form-checkbox-input" onchange="toggleDepositAmount()">
+                                    <span class="form-checkbox-label">Pfand erforderlich</span>
+                                </label>
+                                <input type="number" name="depositAmount" id="depositAmountInput" class="form-input" placeholder="Pfand-Betrag €" step="0.01" style="display: none;">
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeAddEquipmentForm()">Abbrechen</button>
+            <button type="button" class="btn btn-primary" onclick="saveEquipment()">Equipment hinzufügen</button>
         </div>
     `;
     
-    document.body.appendChild(modal);
-    modal.id = 'addEquipmentModal';
+    showModalWithContent(modalContent);
+}
+
+/**
+ * Toggle deposit amount field visibility
+ */
+function toggleDepositAmount() {
+    const depositAmount = document.getElementById('depositAmountInput');
+    const checkbox = document.querySelector('input[name="requiresDeposit"]');
     
-    // Set default category
-    document.getElementById('equipmentCategory').value = currentEquipmentCategory;
-    
-    // Add event listener for deposit checkbox
-    document.getElementById('requiresDeposit').addEventListener('change', function() {
-        const depositAmount = document.getElementById('depositAmount');
-        if (this.checked) {
+    if (checkbox && depositAmount) {
+        if (checkbox.checked) {
             depositAmount.style.display = 'block';
             depositAmount.required = true;
         } else {
@@ -334,56 +332,57 @@ function showAddEquipmentForm() {
             depositAmount.required = false;
             depositAmount.value = '';
         }
-    });
+    }
 }
 
 /**
- * Close add equipment form
+ * Close add equipment form and return to equipment manager
  */
 function closeAddEquipmentForm() {
-    const modal = document.getElementById('addEquipmentModal');
-    if (modal) {
-        modal.remove();
-    }
+    // Return to equipment manager
+    showEquipmentManager();
 }
 
 /**
  * Save equipment
  */
 async function saveEquipment() {
-    const form = document.getElementById('equipmentForm');
+    const form = document.getElementById('addEquipmentForm');
     if (!form) return;
     
     const formData = new FormData(form);
     const equipmentData = {
-        name: formData.get('equipmentName').trim(),
-        category: formData.get('equipmentCategory'),
-        description: formData.get('equipmentDescription').trim(),
-        status: formData.get('equipmentStatus'),
+        name: formData.get('name').trim(),
+        category: formData.get('category'),
+        location: formData.get('location').trim(),
+        description: formData.get('description').trim(),
         requiresDeposit: formData.get('requiresDeposit') === 'on',
-        depositAmount: formData.get('requiresDeposit') === 'on' ? 
-            parseFloat(formData.get('depositAmount')) || 0 : 0,
-        depositPaid: false, // Initially no deposit paid
+        status: 'available',
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
     
-    if (!equipmentData.name) {
-        showToast('Bitte geben Sie einen Namen ein', 'error');
-        return;
+    if (equipmentData.requiresDeposit) {
+        const depositAmount = parseFloat(formData.get('depositAmount'));
+        if (isNaN(depositAmount) || depositAmount <= 0) {
+            showToast('Pfandbetrag muss eine positive Zahl sein', 'error');
+            return;
+        }
+        equipmentData.depositAmount = depositAmount;
+        equipmentData.depositPaid = false;
     }
     
-    if (equipmentData.requiresDeposit && !equipmentData.depositAmount) {
-        showToast('Bitte geben Sie einen Pfand-Betrag ein', 'error');
+    if (!equipmentData.name || !equipmentData.location) {
+        showToast('Name und Standort sind Pflichtfelder', 'error');
         return;
     }
     
     try {
         await window.db.collection('equipment').add(equipmentData);
-        
         showToast('Equipment erfolgreich hinzugefügt', 'success');
-        closeAddEquipmentForm();
-        // Removed manual reload - real-time listener will handle the update
+        
+        // Return to equipment manager
+        showEquipmentManager();
         
     } catch (error) {
         console.error('Error saving equipment:', error);
@@ -646,30 +645,21 @@ async function markDepositAsPaid(equipmentId) {
 
 // ==================== GLOBAL EXPORTS ====================
 // Equipment Management-Funktionen global verfügbar machen
+// Make functions globally available
 window.showEquipmentManager = showEquipmentManager;
 window.closeEquipmentManager = closeEquipmentManager;
-window.loadEquipment = loadEquipment;
 window.showEquipmentCategory = showEquipmentCategory;
 window.searchEquipment = searchEquipment;
 window.clearEquipmentSearch = clearEquipmentSearch;
-window.borrowEquipment = borrowEquipment;
-window.returnEquipment = returnEquipment;
-window.editEquipment = editEquipment;
 window.showAddEquipmentForm = showAddEquipmentForm;
+window.toggleDepositAmount = toggleDepositAmount;
 window.closeAddEquipmentForm = closeAddEquipmentForm;
 window.saveEquipment = saveEquipment;
-window.markDepositAsPaid = markDepositAsPaid;
-window.showAddCategoryForm = showAddCategoryForm;
-window.closeAddCategoryForm = closeAddCategoryForm;
-window.saveCategory = saveCategory;
-window.showManageCategoriesForm = showManageCategoriesForm;
-window.closeManageCategoriesForm = closeManageCategoriesForm;
-window.editCategory = editCategory;
-window.closeEditCategoryForm = closeEditCategoryForm;
-window.updateCategory = updateCategory;
-window.deleteCategory = deleteCategory;
-window.deleteEquipmentRequest = deleteEquipmentRequest;
+window.editEquipment = editEquipment;
 window.closeEditEquipmentForm = closeEditEquipmentForm;
 window.updateEquipment = updateEquipment;
+window.borrowEquipment = borrowEquipment;
+window.returnEquipment = returnEquipment;
+window.markDepositAsPaid = markDepositAsPaid;
 
 console.log("🔧 Equipment Management Module geladen"); 
