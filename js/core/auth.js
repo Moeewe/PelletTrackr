@@ -59,11 +59,11 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
         };
         document.getElementById('userWelcome').textContent = `Willkommen zurück, ${userResult.existingName}!`;
         showScreen('userDashboard');
-        initializeUserDashboard();
-        // Initialize payment requests for user
+        // Initialize payment requests BEFORE user dashboard to avoid race condition
         if (typeof initializePaymentRequests === 'function') {
           initializePaymentRequests();
         }
+        initializeUserDashboard();
         toast.success(`Willkommen zurück, ${userResult.existingName}!`);
       } else {
         toast.info('Bitte verwende eine andere FH-Kennung oder wende dich an den Administrator.');
@@ -83,11 +83,11 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
       
       document.getElementById('userWelcome').textContent = welcomeMessage;
       showScreen('userDashboard');
-      initializeUserDashboard();
-      // Initialize payment requests for user
+      // Initialize payment requests BEFORE user dashboard to avoid race condition
       if (typeof initializePaymentRequests === 'function') {
         initializePaymentRequests();
       }
+      initializeUserDashboard();
       toast.success(welcomeMessage);
     }
     

@@ -19,27 +19,38 @@ function setupUserPaymentRequestsListener() {
     
     // Only set up listener for logged-in users
     if (!window.currentUser || window.currentUser.isAdmin) {
+        console.log('Skipping user payment request listener - not a regular user');
+        return;
+    }
+    
+    // Retry if database is not ready
+    if (!window.db) {
+        console.log('Database not ready, retrying user payment request listener in 500ms...');
+        setTimeout(setupUserPaymentRequestsListener, 500);
         return;
     }
     
     try {
+        console.log(`Setting up payment request listener for user: ${window.currentUser.kennung}`);
+        
         userPaymentRequestsListener = window.db.collection('paymentRequests')
             .where('userId', '==', window.currentUser.kennung)
             .onSnapshot((snapshot) => {
-                console.log('Live update: Payment requests changed for user');
+                console.log('Live update: Payment requests changed for user', window.currentUser.kennung);
                 
                 // Update button states for all current entries
-                if (typeof checkAndUpdatePaymentRequestButtons === 'function') {
-                    // Get current entries from the DOM and update buttons
-                    updateAllPaymentRequestButtons();
-                }
+                updateAllPaymentRequestButtons();
             }, (error) => {
                 console.error('Error in user payment requests listener:', error);
+                // Retry setting up listener after error
+                setTimeout(setupUserPaymentRequestsListener, 2000);
             });
         
-        console.log("✅ User payment requests listener registered");
+        console.log("✅ User payment requests listener registered successfully");
     } catch (error) {
         console.error("❌ Failed to setup user payment requests listener:", error);
+        // Retry after error
+        setTimeout(setupUserPaymentRequestsListener, 2000);
     }
 }
 
@@ -50,8 +61,20 @@ async function updateAllPaymentRequestButtons() {
     if (!window.currentUser || window.currentUser.isAdmin) return;
     
     try {
+        // Small delay to ensure DOM is ready
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         // Get all entry rows currently displayed
         const entryRows = document.querySelectorAll('.entry-row, .entry-card');
+        
+        if (entryRows.length === 0) {
+            // No entries visible yet, try again in a moment
+            console.log('No entry rows found, retrying in 500ms...');
+            setTimeout(updateAllPaymentRequestButtons, 500);
+            return;
+        }
+        
+        console.log(`Updating payment request buttons for ${entryRows.length} entries`);
         
         for (const row of entryRows) {
             // Extract entry ID from payment request button
@@ -66,8 +89,12 @@ async function updateAllPaymentRequestButtons() {
                 }
             }
         }
+        
+        console.log('✅ Payment request buttons updated successfully');
     } catch (error) {
         console.error('Error updating payment request buttons:', error);
+        // Retry once after 1 second on error
+        setTimeout(updateAllPaymentRequestButtons, 1000);
     }
 }
 
