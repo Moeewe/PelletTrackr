@@ -250,6 +250,11 @@ async function requestPayment(entryId) {
         // EXPLICIT button update instead of relying on real-time listener
         updatePaymentRequestButton(entryId, true);
         
+        // Also update user interface for non-admin users
+        if (!window.currentUser?.isAdmin) {
+            updateUserPaymentButton(entryId, false); // User requested payment, so not paid
+        }
+        
         // Also update user payment request status
         updateUserPaymentRequestStatus();
         
@@ -329,6 +334,11 @@ async function cancelPaymentRequest(entryId) {
         
         // EXPLICIT button update instead of relying on real-time listener
         updatePaymentRequestButton(entryId, false);
+        
+        // Also update user interface for non-admin users
+        if (!window.currentUser?.isAdmin) {
+            updateUserPaymentButton(entryId, false); // User cancelled payment request, so not paid
+        }
         
         // Also update user payment request status
         updateUserPaymentRequestStatus();
@@ -757,6 +767,62 @@ function initializePaymentRequests() {
     console.log('Payment requests system initialized with payment status coupling');
 }
 
+/**
+ * Update user payment button state immediately (for non-admin users)
+ */
+function updateUserPaymentButton(entryId, isPaid) {
+    // Find entry row by looking for buttons with the specific entryId
+    const entryRows = document.querySelectorAll('tr.entry-row');
+    entryRows.forEach(row => {
+        const buttons = row.querySelectorAll(`[onclick*="${entryId}"]`);
+        if (buttons.length > 0) {
+            // This row contains buttons for our entry
+            const actionsCell = row.querySelector('td.actions, td[data-label="Aktionen"]');
+            if (actionsCell) {
+                const actionsDiv = actionsCell.querySelector('.actions');
+                if (actionsDiv) {
+                    // Generate new buttons based on payment status
+                    const newButtonsHtml = `
+                        ${window.ButtonFactory.showNachweis(entryId, isPaid)}
+                        ${window.ButtonFactory.editEntry(entryId, true)}
+                    `;
+                    actionsDiv.innerHTML = newButtonsHtml;
+                }
+            }
+        }
+    });
+    
+    // Find entry card by looking for buttons with the specific entryId
+    const entryCards = document.querySelectorAll('.entry-card');
+    entryCards.forEach(card => {
+        const buttons = card.querySelectorAll(`[onclick*="${entryId}"]`);
+        if (buttons.length > 0) {
+            // This card contains buttons for our entry
+            // Update status badge
+            const statusBadge = card.querySelector('.entry-status-badge');
+            if (statusBadge) {
+                if (isPaid) {
+                    statusBadge.className = 'entry-status-badge status-paid';
+                    statusBadge.textContent = 'BEZAHLT';
+                } else {
+                    statusBadge.className = 'entry-status-badge status-unpaid';
+                    statusBadge.textContent = 'OFFEN';
+                }
+            }
+            
+            // Update card footer buttons
+            const cardFooter = card.querySelector('.entry-card-footer');
+            if (cardFooter) {
+                const newButtonsHtml = `
+                    ${window.ButtonFactory.showNachweis(entryId, isPaid)}
+                    ${window.ButtonFactory.editEntry(entryId, true)}
+                `;
+                cardFooter.innerHTML = newButtonsHtml;
+            }
+        }
+    });
+}
+
 // Make functions globally available
 window.requestPayment = requestPayment;
 window.cancelPaymentRequest = cancelPaymentRequest;
@@ -765,6 +831,7 @@ window.deletePaymentRequest = deletePaymentRequest;
 window.showPaymentRequestsModal = showPaymentRequestsModal;
 window.checkPaymentRequestExists = checkPaymentRequestExists;
 window.updatePaymentRequestButton = updatePaymentRequestButton;
+window.updateUserPaymentButton = updateUserPaymentButton;
 window.setupPaymentRequestsListener = setupPaymentRequestsListener;
 window.initializePaymentRequests = initializePaymentRequests;
 
