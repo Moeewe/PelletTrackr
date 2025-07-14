@@ -14,81 +14,147 @@ async function loadUsersForManagement() {
   try {
     console.log("🔄 Lade Benutzer für Verwaltung...");
     
-    // 1. ALLE Benutzer aus der users-Sammlung laden
-    const usersSnapshot = await window.db.collection("users").get();
-    const userMap = new Map();
+    // Check if Firebase is available
+    if (!window.db) {
+      console.error("❌ Firebase nicht verfügbar beim Laden der Benutzer");
+      document.getElementById("usersTable").innerHTML = '<p>Datenbankverbindung nicht verfügbar. Bitte laden Sie die Seite neu.</p>';
+      return;
+    }
     
-    // Erstelle User-Objekte für alle registrierten User
+    // 1. Benutzerinformationen aus users-Sammlung laden (Primärquelle)
+    console.log("🔍 Versuche users-Sammlung zu laden...");
+    const usersSnapshot = await window.safeFirebaseOp(
+      () => window.db.collection("users").get(),
+      3 // Max 3 retry attempts
+    );
+    const usersData = new Map();
+    
     usersSnapshot.forEach(doc => {
       const userData = doc.data();
-      userMap.set(userData.kennung, {
+      usersData.set(userData.kennung, {
+        docId: doc.id,
+        ...userData
+      });
+    });
+    
+    // 2. Alle Einträge laden, um Statistiken zu berechnen
+    console.log("🔍 Versuche entries-Sammlung zu laden...");
+    const entriesSnapshot = await window.safeFirebaseOp(
+      () => window.db.collection("entries").get(),
+      3 // Max 3 retry attempts
+    );
+    const entriesData = new Map();
+    
+    entriesSnapshot.forEach(doc => {
+      const entry = doc.data();
+      if (!entriesData.has(entry.kennung)) {
+        entriesData.set(entry.kennung, []);
+      }
+      entriesData.get(entry.kennung).push({
+        id: doc.id,
+        ...entry
+      });
+    });
+    
+    // 3. Benutzer-Daten zusammenführen - NUR registrierte Benutzer
+    const userMap = new Map();
+    
+    // Nur registrierte Benutzer aus users-Collection verarbeiten
+    usersData.forEach((userData, kennung) => {
+      const entries = entriesData.get(kennung) || [];
+      
+      // Statistiken berechnen
+      let totalCost = 0;
+      let paidAmount = 0;
+      let unpaidAmount = 0;
+      let firstEntry = null;
+      let lastEntry = null;
+      
+      entries.forEach(entry => {
+        totalCost += entry.totalCost || 0;
+        if (entry.paid || entry.isPaid) {
+          paidAmount += entry.totalCost || 0;
+        } else {
+          unpaidAmount += entry.totalCost || 0;
+        }
+        
+        const entryDate = entry.timestamp ? entry.timestamp.toDate() : new Date();
+        if (!firstEntry || entryDate < firstEntry) firstEntry = entryDate;
+        if (!lastEntry || entryDate > lastEntry) lastEntry = entryDate;
+      });
+      
+      userMap.set(kennung, {
+        docId: userData.docId,
         name: userData.name,
         kennung: userData.kennung,
         email: userData.email || `${userData.kennung}@fh-muenster.de`,
         isAdmin: userData.isAdmin || false,
         createdAt: userData.createdAt,
         lastLogin: userData.lastLogin,
-        entries: [],
-        totalCost: 0,
-        paidAmount: 0,
-        unpaidAmount: 0,
-        firstEntry: null, // Kein Standard-Datum für Nutzer ohne Entries
-        lastEntry: null   // Kein Standard-Datum für Nutzer ohne Entries
+        entries: entries,
+        totalCost: totalCost,
+        paidAmount: paidAmount,
+        unpaidAmount: unpaidAmount,
+        firstEntry: firstEntry,
+        lastEntry: lastEntry
       });
     });
     
-    // 2. Dann alle Einträge laden und den Usern zuordnen
-    const entriesSnapshot = await window.db.collection("entries").get();
-    
-    entriesSnapshot.forEach(doc => {
-      const entry = doc.data();
-      
-      // Prüfen ob User in userMap existiert, sonst aus Entry-Daten erstellen
-      if (!userMap.has(entry.kennung)) {
-        userMap.set(entry.kennung, {
-          name: entry.name,
-          kennung: entry.kennung,
-          email: `${entry.kennung}@fh-muenster.de`, // Standard-Email
-          entries: [],
-          totalCost: 0,
-          paidAmount: 0,
-          unpaidAmount: 0,
-          firstEntry: entry.timestamp ? entry.timestamp.toDate() : new Date(),
-          lastEntry: entry.timestamp ? entry.timestamp.toDate() : new Date()
+    // 4. Warnung für Legacy-Daten anzeigen, aber nicht zu userMap hinzufügen
+    const legacyUsers = [];
+    entriesData.forEach((entries, kennung) => {
+      if (!userMap.has(kennung)) {
+        legacyUsers.push({
+          kennung: kennung,
+          entriesCount: entries.length,
+          firstEntryName: entries[0]?.name || 'Unbekannt'
         });
       }
-      
-      const user = userMap.get(entry.kennung);
-      user.entries.push({
-        id: doc.id,
-        ...entry
-      });
-      
-      user.totalCost += entry.totalCost || 0;
-      if (entry.paid || entry.isPaid) {
-        user.paidAmount += entry.totalCost || 0;
-      } else {
-        user.unpaidAmount += entry.totalCost || 0;
-      }
-      
-      // Datum-Updates nur bei vorhandenen Entries
-      if (entry.timestamp) {
-        const entryDate = entry.timestamp.toDate();
-        if (!user.firstEntry || entryDate < user.firstEntry) user.firstEntry = entryDate;
-        if (!user.lastEntry || entryDate > user.lastEntry) user.lastEntry = entryDate;
-      }
     });
     
+    if (legacyUsers.length > 0) {
+      console.warn(`⚠️ ${legacyUsers.length} Legacy-Benutzer mit Einträgen aber ohne users-Eintrag gefunden:`);
+      legacyUsers.forEach(legacy => {
+        console.warn(`  - ${legacy.kennung} (${legacy.entriesCount} Einträge, Name: ${legacy.firstEntryName})`);
+      });
+    }
+    
     const users = Array.from(userMap.values());
+    
+    // Nach letztem Login sortieren (neueste zuerst)
+    users.sort((a, b) => {
+      const aDate = a.lastLogin || a.lastEntry || a.createdAt || new Date(0);
+      const bDate = b.lastLogin || b.lastEntry || b.createdAt || new Date(0);
+      return bDate - aDate;
+    });
     
     // Global speichern für Suche und Sortierung
     window.allUsers = users;
     
+    console.log(`✅ ${users.length} registrierte Benutzer geladen (${legacyUsers.length} Legacy-Benutzer ignoriert)`);
     renderUsersTable(users);
     
   } catch (error) {
-    console.error("Fehler beim Laden der Benutzer:", error);
-    document.getElementById("usersTable").innerHTML = '<p>Fehler beim Laden der Benutzer.</p>';
+    console.error("❌ Fehler beim Laden der Benutzer:", error);
+    let errorMessage = 'Unbekannter Fehler beim Laden der Benutzer.';
+    
+    if (error.code === 'permission-denied') {
+      errorMessage = 'Zugriff auf die Benutzerdaten verweigert. Bitte überprüfen Sie Ihre Berechtigung.';
+    } else if (error.code === 'unavailable') {
+      errorMessage = 'Datenbankverbindung unterbrochen. Bitte versuchen Sie es später erneut.';
+    } else if (error.message.includes('users')) {
+      errorMessage = 'Fehler beim Laden der Benutzer-Sammlung. Möglicherweise existiert die Sammlung noch nicht.';
+    } else if (error.message.includes('entries')) {
+      errorMessage = 'Fehler beim Laden der Einträge-Sammlung.';
+    }
+    
+    document.getElementById("usersTable").innerHTML = `
+      <div class="error-message">
+        <p><strong>Fehler:</strong> ${errorMessage}</p>
+        <p><strong>Details:</strong> ${error.message}</p>
+        <button class="btn btn-primary" onclick="retryUserLoad()">Erneut versuchen</button>
+      </div>
+    `;
   }
 }
 

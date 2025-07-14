@@ -101,8 +101,15 @@ async function submitMaterialRequest() {
         const quantityText = formData.quantity ? `\nMenge: ${formData.quantity}` : '';
         const manufacturerText = formData.manufacturer ? `\nHersteller: ${formData.manufacturer}` : '';
         
-        showToast(`✅ Material-Anfrage erfolgreich gesendet!\n\nMaterial: ${formData.materialName}${quantityText}${manufacturerText}\nPriorität: ${getPriorityText(formData.priority)}\n\nEin Admin wird deine Anfrage prüfen und das Material bestellen.`, 'success', 8000);
+        showToast(`Material-Anfrage erfolgreich gesendet!\n\nMaterial: ${formData.materialName}${quantityText}${manufacturerText}\nPriorität: ${getPriorityText(formData.priority)}\n\nEin Admin wird deine Anfrage prüfen und das Material bestellen.`, 'success', 8000);
+        
+        // Close modal
         closeMaterialRequestForm();
+        
+        // Refresh admin view if material orders modal is open
+        if (document.getElementById('materialOrdersModal') && document.getElementById('materialOrdersModal').style.display === 'block') {
+            loadMaterialOrders();
+        }
         
     } catch (error) {
         console.error('Error submitting material request:', error);

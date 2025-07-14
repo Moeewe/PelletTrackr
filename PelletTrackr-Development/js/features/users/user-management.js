@@ -67,10 +67,10 @@ async function loadUsersForManagement() {
       });
     });
     
-    // 3. Benutzer-Daten zusammenführen
+    // 3. Benutzer-Daten zusammenführen - NUR registrierte Benutzer
     const userMap = new Map();
     
-    // Alle registrierten Benutzer aus users-Collection
+    // Nur registrierte Benutzer aus users-Collection verarbeiten
     usersData.forEach((userData, kennung) => {
       const entries = entriesData.get(kennung) || [];
       
@@ -111,52 +111,24 @@ async function loadUsersForManagement() {
       });
     });
     
-    // 4. Benutzer mit Einträgen aber ohne users-Eintrag hinzufügen (Legacy-Daten)
+    // 4. Warnung für Legacy-Daten anzeigen, aber nicht zu userMap hinzufügen
+    const legacyUsers = [];
     entriesData.forEach((entries, kennung) => {
       if (!userMap.has(kennung)) {
-        console.log(`⚠️ Legacy-User ohne users-Eintrag gefunden: ${kennung}`);
-        
-        // Ersten Eintrag für Name verwenden
-        const firstEntry = entries[0];
-        if (firstEntry) {
-          let totalCost = 0;
-          let paidAmount = 0;
-          let unpaidAmount = 0;
-          let firstEntryDate = null;
-          let lastEntryDate = null;
-          
-          entries.forEach(entry => {
-            totalCost += entry.totalCost || 0;
-            if (entry.paid || entry.isPaid) {
-              paidAmount += entry.totalCost || 0;
-            } else {
-              unpaidAmount += entry.totalCost || 0;
-            }
-            
-            const entryDate = entry.timestamp ? entry.timestamp.toDate() : new Date();
-            if (!firstEntryDate || entryDate < firstEntryDate) firstEntryDate = entryDate;
-            if (!lastEntryDate || entryDate > lastEntryDate) lastEntryDate = entryDate;
-          });
-          
-          userMap.set(kennung, {
-            docId: null, // Kein users-Dokument
-            name: firstEntry.name,
-            kennung: kennung,
-            email: `${kennung}@fh-muenster.de`,
-            isAdmin: false,
-            createdAt: firstEntryDate,
-            lastLogin: lastEntryDate,
-            entries: entries,
-            totalCost: totalCost,
-            paidAmount: paidAmount,
-            unpaidAmount: unpaidAmount,
-            firstEntry: firstEntryDate,
-            lastEntry: lastEntryDate,
-            isLegacy: true
-          });
-        }
+        legacyUsers.push({
+          kennung: kennung,
+          entriesCount: entries.length,
+          firstEntryName: entries[0]?.name || 'Unbekannt'
+        });
       }
     });
+    
+    if (legacyUsers.length > 0) {
+      console.warn(`⚠️ ${legacyUsers.length} Legacy-Benutzer mit Einträgen aber ohne users-Eintrag gefunden:`);
+      legacyUsers.forEach(legacy => {
+        console.warn(`  - ${legacy.kennung} (${legacy.entriesCount} Einträge, Name: ${legacy.firstEntryName})`);
+      });
+    }
     
     const users = Array.from(userMap.values());
     
@@ -170,7 +142,7 @@ async function loadUsersForManagement() {
     // Global speichern für Suche und Sortierung
     window.allUsers = users;
     
-    console.log(`✅ ${users.length} Benutzer geladen`);
+    console.log(`✅ ${users.length} registrierte Benutzer geladen (${legacyUsers.length} Legacy-Benutzer ignoriert)`);
     renderUsersTable(users);
     
   } catch (error) {
