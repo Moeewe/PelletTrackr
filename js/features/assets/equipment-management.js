@@ -7,6 +7,7 @@
 let equipment = [];
 let currentEquipmentCategory = 'keys';
 let filteredEquipment = [];
+let equipmentListener = null;
 
 // Fixed categories - no more dynamic categories
 const EQUIPMENT_CATEGORIES = {
@@ -14,6 +15,41 @@ const EQUIPMENT_CATEGORIES = {
     'hardware': 'Hardware', 
     'books': 'Bücher'
 };
+
+/**
+ * Setup real-time listener for equipment
+ */
+function setupEquipmentListener() {
+    // Clean up existing listener
+    if (equipmentListener) {
+        equipmentListener();
+        equipmentListener = null;
+    }
+    
+    try {
+        equipmentListener = window.db.collection('equipment').onSnapshot((snapshot) => {
+            equipment = [];
+            snapshot.forEach((doc) => {
+                equipment.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+            
+            console.log('Live update: Loaded equipment:', equipment.length);
+            showEquipmentCategory(currentEquipmentCategory);
+        }, (error) => {
+            console.error('Error in equipment listener:', error);
+            showToast('Fehler beim Live-Update des Equipments', 'error');
+        });
+        
+        console.log("✅ Equipment listener registered");
+    } catch (error) {
+        console.error("❌ Failed to setup equipment listener:", error);
+        // Fallback to manual loading
+        loadEquipment();
+    }
+}
 
 /**
  * Show equipment manager modal
@@ -50,15 +86,19 @@ function showEquipmentManager() {
     `;
     
     showModalWithContent(modalContent);
-    loadEquipment();
+    setupEquipmentListener();
 }
 
 /**
  * Close equipment manager modal
  */
 function closeEquipmentManager() {
-    document.getElementById('overlay').style.display = 'none';
-    document.getElementById('equipmentModal').style.display = 'none';
+    // Clean up listener
+    if (equipmentListener) {
+        equipmentListener();
+        equipmentListener = null;
+    }
+    closeModal();
 }
 
 /**
@@ -310,37 +350,39 @@ function closeAddEquipmentForm() {
  * Save equipment
  */
 async function saveEquipment() {
-    const formData = {
-        name: document.getElementById('equipmentName').value.trim(),
-        category: document.getElementById('equipmentCategory').value,
-        description: document.getElementById('equipmentDescription').value.trim(),
-        status: document.getElementById('equipmentStatus').value,
-        requiresDeposit: document.getElementById('requiresDeposit').checked,
-        depositAmount: document.getElementById('requiresDeposit').checked ? 
-            parseFloat(document.getElementById('depositAmount').value) || 0 : 0,
-        depositPaid: false // Initially no deposit paid
+    const form = document.getElementById('equipmentForm');
+    if (!form) return;
+    
+    const formData = new FormData(form);
+    const equipmentData = {
+        name: formData.get('equipmentName').trim(),
+        category: formData.get('equipmentCategory'),
+        description: formData.get('equipmentDescription').trim(),
+        status: formData.get('equipmentStatus'),
+        requiresDeposit: formData.get('requiresDeposit') === 'on',
+        depositAmount: formData.get('requiresDeposit') === 'on' ? 
+            parseFloat(formData.get('depositAmount')) || 0 : 0,
+        depositPaid: false, // Initially no deposit paid
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
     
-    if (!formData.name) {
+    if (!equipmentData.name) {
         showToast('Bitte geben Sie einen Namen ein', 'error');
         return;
     }
     
-    if (formData.requiresDeposit && !formData.depositAmount) {
+    if (equipmentData.requiresDeposit && !equipmentData.depositAmount) {
         showToast('Bitte geben Sie einen Pfand-Betrag ein', 'error');
         return;
     }
     
     try {
-        await window.db.collection('equipment').add({
-            ...formData,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        await window.db.collection('equipment').add(equipmentData);
         
         showToast('Equipment erfolgreich hinzugefügt', 'success');
         closeAddEquipmentForm();
-        await loadEquipment(); // Reload to show new equipment immediately
+        // Removed manual reload - real-time listener will handle the update
         
     } catch (error) {
         console.error('Error saving equipment:', error);
@@ -442,34 +484,43 @@ function closeEditEquipmentForm() {
  * Update equipment
  */
 async function updateEquipment(equipmentId) {
-    const name = document.getElementById('editEquipmentName').value.trim();
-    const category = document.getElementById('editEquipmentCategory').value;
-    const description = document.getElementById('editEquipmentDescription').value.trim();
-    const status = document.getElementById('editEquipmentStatus').value;
-    const requiresDeposit = document.getElementById('editEquipmentRequiresDeposit').checked;
-    const depositAmount = parseFloat(document.getElementById('editEquipmentDepositAmount').value) || 0;
+    const form = document.getElementById('editEquipmentForm');
+    if (!form) return;
     
-    if (!name || !category) {
+    const formData = new FormData(form);
+    const equipmentData = {
+        name: formData.get('editEquipmentName').trim(),
+        category: formData.get('editEquipmentCategory'),
+        description: formData.get('editEquipmentDescription').trim(),
+        status: formData.get('editEquipmentStatus'),
+        requiresDeposit: formData.get('editEquipmentRequiresDeposit') === 'on',
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    
+    if (equipmentData.requiresDeposit) {
+        const depositAmount = parseFloat(formData.get('editEquipmentDepositAmount'));
+        if (isNaN(depositAmount) || depositAmount <= 0) {
+            showToast('Pfandbetrag muss eine positive Zahl sein', 'error');
+            return;
+        }
+        equipmentData.depositAmount = depositAmount;
+    } else {
+        // Remove deposit fields if not required
+        equipmentData.depositAmount = firebase.firestore.FieldValue.delete();
+        equipmentData.depositPaid = firebase.firestore.FieldValue.delete();
+    }
+    
+    if (!equipmentData.name || !equipmentData.category) {
         showToast('Bitte alle Pflichtfelder ausfüllen', 'error');
         return;
     }
     
     try {
-        const updateData = {
-            name: name,
-            category: category,
-            description: description,
-            status: status,
-            requiresDeposit: requiresDeposit,
-            depositAmount: requiresDeposit ? depositAmount : 0,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
-        await window.db.collection('equipment').doc(equipmentId).update(updateData);
+        await window.db.collection('equipment').doc(equipmentId).update(equipmentData);
         
         showToast('Equipment erfolgreich aktualisiert', 'success');
         closeEditEquipmentForm();
-        await loadEquipment(); // Reload to show updated data
+        // Removed manual reload - real-time listener will handle the update
         
     } catch (error) {
         console.error('Error updating equipment:', error);
@@ -516,7 +567,7 @@ async function borrowEquipment(equipmentId) {
         await window.db.collection('equipment').doc(equipmentId).update(updateData);
         
         showToast(`Equipment erfolgreich an ${userName} ausgeliehen`, 'success');
-        await loadEquipment(); // Reload to show updated status
+        // Removed manual reload - real-time listener will handle the update
         
     } catch (error) {
         console.error('Error borrowing equipment:', error);
@@ -549,7 +600,7 @@ async function returnEquipment(equipmentId) {
         await window.db.collection('equipment').doc(equipmentId).update(updateData);
         
         showToast('Equipment erfolgreich zurückgegeben', 'success');
-        await loadEquipment(); // Reload to show updated status
+        // Removed manual reload - real-time listener will handle the update
         
     } catch (error) {
         console.error('Error returning equipment:', error);
@@ -571,7 +622,7 @@ async function markDepositAsPaid(equipmentId) {
         });
         
         showToast('Pfand als bezahlt markiert', 'success');
-        await loadEquipment(); // Reload to show updated status
+        // Removed manual reload - real-time listener will handle the update
         
     } catch (error) {
         console.error('Error marking deposit as paid:', error);

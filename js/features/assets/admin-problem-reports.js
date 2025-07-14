@@ -6,6 +6,84 @@
 // Global state
 let problemReports = [];
 let equipmentRequests = [];
+let problemReportsListener = null;
+let equipmentRequestsListener = null;
+
+/**
+ * Setup real-time listener for problem reports
+ */
+function setupProblemReportsListener() {
+    // Clean up existing listener
+    if (problemReportsListener) {
+        problemReportsListener();
+        problemReportsListener = null;
+    }
+    
+    try {
+        problemReportsListener = window.db.collection('problemReports')
+            .orderBy('reportedAt', 'desc')
+            .onSnapshot((snapshot) => {
+                problemReports = [];
+                snapshot.forEach((doc) => {
+                    problemReports.push({
+                        id: doc.id,
+                        ...doc.data(),
+                        reportedAt: doc.data().reportedAt?.toDate()
+                    });
+                });
+                
+                console.log('Live update: Loaded problem reports:', problemReports.length);
+                renderProblemReports();
+            }, (error) => {
+                console.error('Error in problem reports listener:', error);
+                showToast('Fehler beim Live-Update der Problem-Meldungen', 'error');
+            });
+        
+        console.log("✅ Problem reports listener registered");
+    } catch (error) {
+        console.error("❌ Failed to setup problem reports listener:", error);
+        // Fallback to manual loading
+        loadProblemReports();
+    }
+}
+
+/**
+ * Setup real-time listener for equipment requests
+ */
+function setupEquipmentRequestsListener() {
+    // Clean up existing listener
+    if (equipmentRequestsListener) {
+        equipmentRequestsListener();
+        equipmentRequestsListener = null;
+    }
+    
+    try {
+        equipmentRequestsListener = window.db.collection('equipmentRequests')
+            .orderBy('requestedAt', 'desc')
+            .onSnapshot((snapshot) => {
+                equipmentRequests = [];
+                snapshot.forEach((doc) => {
+                    equipmentRequests.push({
+                        id: doc.id,
+                        ...doc.data(),
+                        requestedAt: doc.data().requestedAt?.toDate()
+                    });
+                });
+                
+                console.log('Live update: Loaded equipment requests:', equipmentRequests.length);
+                renderEquipmentRequests();
+            }, (error) => {
+                console.error('Error in equipment requests listener:', error);
+                showToast('Fehler beim Live-Update der Equipment-Anfragen', 'error');
+            });
+        
+        console.log("✅ Equipment requests listener registered");
+    } catch (error) {
+        console.error("❌ Failed to setup equipment requests listener:", error);
+        // Fallback to manual loading
+        loadEquipmentRequests();
+    }
+}
 
 /**
  * Show problem reports modal
@@ -40,13 +118,18 @@ function showProblemReports() {
     `;
     
     showModalWithContent(modalContent);
-    loadProblemReports();
+    setupProblemReportsListener();
 }
 
 /**
  * Close problem reports modal
  */
 function closeProblemReports() {
+    // Clean up listeners
+    if (problemReportsListener) {
+        problemReportsListener();
+        problemReportsListener = null;
+    }
     closeModal();
 }
 
@@ -195,7 +278,7 @@ async function updateProblemStatus(reportId, newStatus) {
         }
         
         showToast('Status erfolgreich aktualisiert', 'success');
-        loadProblemReports();
+        // Removed manual reload - real-time listener will handle the update
         
     } catch (error) {
         console.error('Error updating problem status:', error);
@@ -214,11 +297,11 @@ async function deleteProblemReport(reportId) {
     try {
         await window.db.collection('problemReports').doc(reportId).delete();
         showToast('Problem-Meldung erfolgreich gelöscht', 'success');
-        loadProblemReports();
+        // Removed manual reload - real-time listener will handle the update
         
     } catch (error) {
         console.error('Error deleting problem report:', error);
-        showToast('Fehler beim Löschen', 'error');
+        showToast('Fehler beim Löschen der Problem-Meldung', 'error');
     }
 }
 
@@ -226,51 +309,50 @@ async function deleteProblemReport(reportId) {
  * Show equipment requests modal
  */
 function showEquipmentRequests() {
-    document.getElementById('overlay').style.display = 'block';
-    
-    // Create modal dynamically
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'block';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Ausleih-Anfragen</h3>
-                <button class="modal-close" onclick="closeEquipmentRequests()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="table-controls">
-                    <select id="equipmentRequestStatusFilter" class="sort-select" onchange="filterEquipmentRequests()">
-                        <option value="all">Alle anzeigen</option>
-                        <option value="pending">Ausstehend</option>
-                        <option value="approved">Genehmigt</option>
-                        <option value="rejected">Abgelehnt</option>
-                        <option value="active">Aktiv</option>
-                        <option value="returned">Zurückgegeben</option>
-                    </select>
-                </div>
-                <div id="equipmentRequestsList" class="equipment-requests-container">
-                    <!-- Equipment requests will be loaded here -->
+    const modalContent = `
+        <div class="modal-header">
+            <h3>Equipment-Anfragen verwalten</h3>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="card">
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">Filter nach Status</label>
+                        <select id="equipmentStatusFilter" class="form-input" onchange="filterEquipmentRequests()">
+                            <option value="all">Alle anzeigen</option>
+                            <option value="pending">Offen</option>
+                            <option value="approved">Genehmigt</option>
+                            <option value="given">Ausgegeben</option>
+                            <option value="returned">Zurückgegeben</option>
+                            <option value="rejected">Abgelehnt</option>
+                        </select>
+                    </div>
+                    <div id="equipmentRequestsList" class="equipment-requests-container">
+                        <!-- Equipment requests will be loaded here -->
+                    </div>
                 </div>
             </div>
         </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
+        </div>
     `;
     
-    document.body.appendChild(modal);
-    modal.id = 'equipmentRequestsModal';
-    
-    loadEquipmentRequests();
+    showModalWithContent(modalContent);
+    setupEquipmentRequestsListener();
 }
 
 /**
  * Close equipment requests modal
  */
 function closeEquipmentRequests() {
-    document.getElementById('overlay').style.display = 'none';
-    const modal = document.getElementById('equipmentRequestsModal');
-    if (modal) {
-        modal.remove();
+    // Clean up listeners
+    if (equipmentRequestsListener) {
+        equipmentRequestsListener();
+        equipmentRequestsListener = null;
     }
+    closeModal();
 }
 
 /**
@@ -401,7 +483,7 @@ async function updateEquipmentRequestStatus(requestId, newStatus) {
         });
         
         showToast('Status erfolgreich aktualisiert', 'success');
-        loadEquipmentRequests();
+        // Removed manual reload - real-time listener will handle the update
         
     } catch (error) {
         console.error('Error updating equipment request status:', error);
@@ -410,30 +492,18 @@ async function updateEquipmentRequestStatus(requestId, newStatus) {
 }
 
 /**
- * Mark equipment as given out
+ * Mark equipment as given
  */
 async function markEquipmentAsGiven(requestId) {
     try {
-        const request = equipmentRequests.find(r => r.id === requestId);
-        if (!request) return;
-        
-        // Update equipment status to borrowed
-        await window.db.collection('equipment').doc(request.equipmentId).update({
-            status: 'borrowed',
-            borrowedBy: request.userName,
-            borrowedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        // Update request status to active
         await window.db.collection('equipmentRequests').doc(requestId).update({
-            status: 'active',
-            givenOutAt: firebase.firestore.FieldValue.serverTimestamp(),
+            status: 'given',
+            givenAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
         showToast('Equipment als ausgegeben markiert', 'success');
-        loadEquipmentRequests();
+        // Removed manual reload - real-time listener will handle the update
         
     } catch (error) {
         console.error('Error marking equipment as given:', error);
@@ -446,19 +516,6 @@ async function markEquipmentAsGiven(requestId) {
  */
 async function markEquipmentAsReturned(requestId) {
     try {
-        const request = equipmentRequests.find(r => r.id === requestId);
-        if (!request) return;
-        
-        // Update equipment status to available
-        await window.db.collection('equipment').doc(request.equipmentId).update({
-            status: 'available',
-            borrowedBy: firebase.firestore.FieldValue.delete(),
-            borrowedAt: firebase.firestore.FieldValue.delete(),
-            returnedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        // Update request status to returned
         await window.db.collection('equipmentRequests').doc(requestId).update({
             status: 'returned',
             returnedAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -466,29 +523,30 @@ async function markEquipmentAsReturned(requestId) {
         });
         
         showToast('Equipment als zurückgegeben markiert', 'success');
-        loadEquipmentRequests();
+        // Removed manual reload - real-time listener will handle the update
         
     } catch (error) {
         console.error('Error marking equipment as returned:', error);
         showToast('Fehler beim Markieren als zurückgegeben', 'error');
     }
-} 
+}
 
 /**
  * Delete equipment request
  */
 async function deleteEquipmentRequest(requestId) {
-    if (!confirm('Möchten Sie diese Ausleih-Anfrage wirklich löschen?')) {
+    if (!confirm('Möchten Sie diese Equipment-Anfrage wirklich löschen?')) {
         return;
     }
-
+    
     try {
         await window.db.collection('equipmentRequests').doc(requestId).delete();
-        showToast('Ausleih-Anfrage erfolgreich gelöscht', 'success');
-        loadEquipmentRequests();
+        showToast('Equipment-Anfrage erfolgreich gelöscht', 'success');
+        // Removed manual reload - real-time listener will handle the update
+        
     } catch (error) {
         console.error('Error deleting equipment request:', error);
-        showToast('Fehler beim Löschen', 'error');
+        showToast('Fehler beim Löschen der Equipment-Anfrage', 'error');
     }
 } 
 
