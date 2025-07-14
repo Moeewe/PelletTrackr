@@ -1,255 +1,130 @@
 // ==================== ENTRY MANAGEMENT MODULE ====================
 // CRUD-Operationen für Drucke (Create, Read, Update, Delete)
 
-// Validation helper functions
-function validateUserSession() {
-  if (!window.currentUser || !window.currentUser.name || !window.currentUser.kennung) {
-    console.error("❌ Invalid user session");
-    window.toast?.error("Sitzung ungültig. Bitte melden Sie sich erneut an.");
-    return false;
-  }
-  return true;
-}
-
-function validateFirebaseConnection() {
-  if (!window.db || !window.firebase) {
-    console.error("❌ Firebase not available");
-    window.toast?.error("Datenbankverbindung nicht verfügbar. Bitte versuchen Sie es später erneut.");
-    return false;
-  }
-  return true;
-}
-
-function getFormValue(elementId, defaultValue = '') {
-  try {
-    const element = document.getElementById(elementId);
-    return element ? element.value.trim() : defaultValue;
-  } catch (error) {
-    console.warn(`Could not get value for ${elementId}:`, error);
-    return defaultValue;
-  }
-}
-
 // Neuen Druck hinzufügen
 async function addEntry() {
-  // Validate session and Firebase connection
-  if (!validateUserSession() || !validateFirebaseConnection()) {
-    return;
-  }
-
-  // Safe form data extraction
-  const formData = {
-    name: window.currentUser.name,
-    kennung: window.currentUser.kennung,
-    material: getFormValue("material"),
-    materialMenge: getFormValue("materialMenge"),
-    masterbatch: getFormValue("masterbatch"),
-    masterbatchMenge: getFormValue("masterbatchMenge"),
-    jobName: getFormValue("jobName"),
-    jobNotes: getFormValue("jobNotes")
-  };
+  // Verwende die aktuellen User-Daten
+  const name = window.currentUser.name;
+  const kennung = window.currentUser.kennung;
+  const material = document.getElementById("material").value.trim();
+  const materialMenge = document.getElementById("materialMenge").value.trim();
+  const masterbatch = document.getElementById("masterbatch").value.trim();
+  const masterbatchMenge = document.getElementById("masterbatchMenge").value.trim();
+  const jobName = document.getElementById("jobName").value.trim();
+  const jobNotes = document.getElementById("jobNotes").value.trim();
 
   // Validierung - nur Job-Name ist erforderlich
-  if (!formData.jobName) {
-    window.toast?.warning("Bitte einen Job-Namen eingeben!");
+  if (!jobName) {
+    toast.warning("Bitte einen Job-Namen eingeben!");
     return;
   }
 
   // Prüfe ob mindestens ein Material ausgewählt ist
-  const hasMaterial = formData.material && formData.materialMenge && 
-    formData.material !== "Material auswählen... (optional)" && 
-    formData.material !== "Material auswählen..." && 
-    formData.material !== "Lade Materialien..." &&
-    formData.material !== "Firebase nicht verfügbar" &&
-    formData.material !== "Fehler beim Laden";
-    
-  const hasMasterbatch = formData.masterbatch && formData.masterbatchMenge && 
-    formData.masterbatch !== "Masterbatch auswählen... (optional)" && 
-    formData.masterbatch !== "Masterbatch auswählen..." && 
-    formData.masterbatch !== "Lade Masterbatches..." &&
-    formData.masterbatch !== "Firebase nicht verfügbar" &&
-    formData.masterbatch !== "Fehler beim Laden";
+  const hasMaterial = material && materialMenge && 
+    material !== "Material auswählen... (optional)" && 
+    material !== "Material auswählen..." && 
+    material !== "Lade Materialien...";
+  const hasMasterbatch = masterbatch && masterbatchMenge && 
+    masterbatch !== "Masterbatch auswählen... (optional)" && 
+    masterbatch !== "Masterbatch auswählen..." && 
+    masterbatch !== "Lade Masterbatches...";
   
   if (!hasMaterial && !hasMasterbatch) {
-    window.toast?.warning("Bitte wählen Sie mindestens Material oder Masterbatch aus!");
+    toast.warning("Bitte wählen Sie mindestens Material oder Masterbatch aus!");
     return;
   }
 
-  // Enhanced number validation
-  let materialMengeNum = 0;
-  let masterbatchMengeNum = 0;
+  // Validierung der ausgewählten Mengen
+  const materialMengeNum = hasMaterial ? parseGermanNumber(materialMenge) : 0;
+  const masterbatchMengeNum = hasMasterbatch ? parseGermanNumber(masterbatchMenge) : 0;
 
-  if (hasMaterial) {
-    try {
-      materialMengeNum = window.parseGermanNumber(formData.materialMenge);
-      if (isNaN(materialMengeNum) || materialMengeNum <= 0 || materialMengeNum > 10000) {
-        window.toast?.warning("Bitte eine gültige Materialmenge eingeben (0,1 - 10.000 kg)!");
-        return;
-      }
-    } catch (error) {
-      window.toast?.warning("Ungültiges Materialmengenformat. Verwenden Sie z.B. '1,5' für 1,5 kg");
-      return;
-    }
+  if (hasMaterial && (isNaN(materialMengeNum) || materialMengeNum <= 0)) {
+    toast.warning("Bitte eine gültige Materialmenge eingeben!");
+    return;
   }
 
-  if (hasMasterbatch) {
-    try {
-      masterbatchMengeNum = window.parseGermanNumber(formData.masterbatchMenge);
-      if (isNaN(masterbatchMengeNum) || masterbatchMengeNum <= 0 || masterbatchMengeNum > 10000) {
-        window.toast?.warning("Bitte eine gültige Masterbatch-Menge eingeben (0,1 - 10.000 g)!");
-        return;
-      }
-    } catch (error) {
-      window.toast?.warning("Ungültiges Masterbatch-Mengenformat. Verwenden Sie z.B. '12,5' für 12,5 g");
-      return;
-    }
+  if (hasMasterbatch && (isNaN(masterbatchMengeNum) || masterbatchMengeNum <= 0)) {
+    toast.warning("Bitte eine gültige Masterbatch-Menge eingeben!");
+    return;
   }
 
   try {
-    let materialData = null;
-    let masterbatchData = null;
-    let materialCost = 0;
-    let masterbatchCost = 0;
-
-    // Material-Daten abrufen (falls ausgewählt)
-    if (hasMaterial) {
-      try {
-        const materialSnapshot = await window.safeFirebaseOp(async () => {
-          return await window.db.collection("materials").where("name", "==", formData.material).get();
-        });
-        
-        if (materialSnapshot.empty) {
-          throw new Error(`Material "${formData.material}" nicht in der Datenbank gefunden`);
-        }
-        
-        materialData = materialSnapshot.docs[0].data();
-        if (!materialData.price || typeof materialData.price !== 'number') {
-          throw new Error(`Material "${formData.material}" hat keinen gültigen Preis`);
-        }
-        
-        materialCost = materialMengeNum * materialData.price;
-      } catch (error) {
-        console.error("Material loading error:", error);
-        throw new Error(`Fehler beim Laden der Materialdaten: ${error.message}`);
-      }
-    }
-
-    // Masterbatch-Daten abrufen (falls ausgewählt)
-    if (hasMasterbatch) {
-      try {
-        const masterbatchSnapshot = await window.safeFirebaseOp(async () => {
-          return await window.db.collection("masterbatches").where("name", "==", formData.masterbatch).get();
-        });
-        
-        if (masterbatchSnapshot.empty) {
-          throw new Error(`Masterbatch "${formData.masterbatch}" nicht in der Datenbank gefunden`);
-        }
-        
-        masterbatchData = masterbatchSnapshot.docs[0].data();
-        if (!masterbatchData.price || typeof masterbatchData.price !== 'number') {
-          throw new Error(`Masterbatch "${formData.masterbatch}" hat keinen gültigen Preis`);
-        }
-        
-        masterbatchCost = masterbatchMengeNum * masterbatchData.price;
-      } catch (error) {
-        console.error("Masterbatch loading error:", error);
-        throw new Error(`Fehler beim Laden der Masterbatch-Daten: ${error.message}`);
-      }
-    }
-
-    // Gesamtkosten berechnen
-    const totalCost = materialCost + masterbatchCost;
-    
-    if (totalCost <= 0 || totalCost > 100000) {
-      throw new Error(`Ungültige Gesamtkosten: ${window.formatCurrency(totalCost)}`);
-    }
-
     await withLoading(async () => {
+      let materialData = null;
+      let masterbatchData = null;
+      let materialCost = 0;
+      let masterbatchCost = 0;
+
+      // Material-Daten abrufen (falls ausgewählt)
+      if (hasMaterial) {
+        const materialSnapshot = await window.db.collection("materials").where("name", "==", material).get();
+        if (materialSnapshot.empty) {
+          throw new Error("Material nicht gefunden");
+        }
+        materialData = materialSnapshot.docs[0].data();
+        materialCost = materialMengeNum * materialData.price;
+      }
+
+      // Masterbatch-Daten abrufen (falls ausgewählt)
+      if (hasMasterbatch) {
+        const masterbatchSnapshot = await window.db.collection("masterbatches").where("name", "==", masterbatch).get();
+        if (masterbatchSnapshot.empty) {
+          throw new Error("Masterbatch nicht gefunden");
+        }
+        masterbatchData = masterbatchSnapshot.docs[0].data();
+        masterbatchCost = masterbatchMengeNum * masterbatchData.price;
+      }
+
+      // Gesamtkosten berechnen
+      const totalCost = materialCost + masterbatchCost;
+
       // Druck in Firestore speichern
       const entry = {
-        name: formData.name,
-        kennung: formData.kennung,
-        material: formData.material || "",
+        name: name,
+        kennung: kennung,
+        material: material || "",
         materialMenge: materialMengeNum,
         materialPrice: materialData ? materialData.price : 0,
         materialCost: materialCost,
-        masterbatch: formData.masterbatch || "",
+        masterbatch: masterbatch || "",
         masterbatchMenge: masterbatchMengeNum,
         masterbatchPrice: masterbatchData ? masterbatchData.price : 0,
         masterbatchCost: masterbatchCost,
         totalCost: totalCost,
-        jobName: formData.jobName || "3D-Druck Auftrag",
-        jobNotes: formData.jobNotes || "",
+        jobName: jobName || "3D-Druck Auftrag", // Default if empty
+        jobNotes: jobNotes || "",
         timestamp: window.firebase.firestore.FieldValue.serverTimestamp(),
-        paid: false,
-        createdAt: new Date().toISOString(),
-        version: "2.0"
+        paid: false
       };
 
-      await window.safeFirebaseOp(async () => {
-        return await window.db.collection("entries").add(entry);
-      });
+      await window.db.collection("entries").add(entry);
 
       clearForm();
       
-      // Dashboard aktualisieren with error handling
-      try {
-        if (!window.currentUser.isAdmin) {
-          if (typeof loadUserStats === 'function') loadUserStats();
-          if (typeof loadUserEntries === 'function') loadUserEntries();
-        } else {
-          if (typeof loadAdminStats === 'function') loadAdminStats();
-          if (typeof loadAllEntries === 'function') loadAllEntries();
-        }
-      } catch (dashboardError) {
-        console.warn("Dashboard update failed:", dashboardError);
-        // Don't throw - entry was saved successfully
+      // Dashboard aktualisieren
+      if (!window.currentUser.isAdmin) {
+        loadUserStats();
+        loadUserEntries();
+      } else {
+        loadAdminStats();
+        loadAllEntries();
       }
     }, 
     'Druck wird gespeichert...', 
-    `✅ 3D-Druck erfolgreich hinzugefügt!\n\nJob: ${formData.jobName || "3D-Druck Auftrag"}\nKosten: ${window.formatCurrency(totalCost)}\n\nDer Druck wurde zu deinen Aufträgen hinzugefügt.`, 
+    'Druck erfolgreich gespeichert!', 
     'Fehler beim Speichern des Drucks');
     
   } catch (error) {
-    console.error("Entry creation error:", error);
-    window.toast?.error(`Fehler beim Erstellen des Drucks: ${error.message}`);
+    console.error("Fehler beim Speichern:", error);
+    // Error Toast wird bereits von withLoading() gehandhabt
   }
 }
 
-// Enhanced form clearing with error handling
-function clearForm() {
-  const fieldsToReset = [
-    { id: "material", value: "" },
-    { id: "materialMenge", value: "" },
-    { id: "masterbatch", value: "" },
-    { id: "masterbatchMenge", value: "" },
-    { id: "jobName", value: "" },
-    { id: "jobNotes", value: "" },
-    { id: "costPreview", value: "0,00 €", property: "textContent" }
-  ];
-  
-  fieldsToReset.forEach(({ id, value, property = "value" }) => {
-    try {
-      const element = document.getElementById(id);
-      if (element) {
-        element[property] = value;
-      }
-    } catch (error) {
-      console.warn(`Could not reset field ${id}:`, error);
-    }
-  });
-}
-
-// Druck löschen with enhanced validation
+// Druck löschen
 async function deleteEntry(entryId) {
-  if (!checkAdminAccess() || !validateFirebaseConnection()) return;
+  if (!checkAdminAccess()) return;
   
-  if (!entryId || typeof entryId !== 'string') {
-    window.toast?.error("Ungültige Entry-ID");
-    return;
-  }
-  
-  const confirmed = await window.toast?.confirm(
+  const confirmed = await toast.confirm(
     'Möchtest du diesen Druck wirklich löschen?',
     'Löschen',
     'Abbrechen'
@@ -259,69 +134,84 @@ async function deleteEntry(entryId) {
   
   try {
     await withLoading(async () => {
-      await window.safeFirebaseOp(async () => {
-        return await window.db.collection('entries').doc(entryId).delete();
-      });
-      
-      // Safe dashboard refresh
-      try {
-        if (typeof loadAdminStats === 'function') loadAdminStats();
-        if (typeof loadAllEntries === 'function') loadAllEntries();
-      } catch (refreshError) {
-        console.warn("Dashboard refresh failed:", refreshError);
-      }
+      await window.db.collection('entries').doc(entryId).delete();
+      loadAdminStats();
+      loadAllEntries();
     }, 
     'Druck wird gelöscht...', 
     'Druck gelöscht!', 
     'Fehler beim Löschen');
     
   } catch (error) {
-    console.error('Delete entry error:', error);
-    window.toast?.error(`Fehler beim Löschen: ${error.message}`);
+    console.error('Fehler beim Löschen:', error);
   }
 }
 
-// Enhanced payment status updates
+// Druck als bezahlt markieren - Enhanced with payment request coupling
 async function markEntryAsPaid(entryId) {
-  return updatePaymentStatus(entryId, true, 'Als bezahlt markiert!');
-}
-
-async function markEntryAsUnpaid(entryId) {
-  return updatePaymentStatus(entryId, false, 'Als unbezahlt markiert!');
-}
-
-async function updatePaymentStatus(entryId, paidStatus, successMessage) {
-  if (!checkAdminAccess() || !validateFirebaseConnection()) return;
-  
-  if (!entryId || typeof entryId !== 'string') {
-    window.toast?.error("Ungültige Entry-ID");
-    return;
-  }
+  if (!checkAdminAccess()) return;
   
   try {
     await withLoading(async () => {
-      await window.safeFirebaseOp(async () => {
-        return await window.db.collection('entries').doc(entryId).update({ 
-          paid: paidStatus,
-          updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
-        });
-      });
+      // Enhanced payment status update with better coupling
+      const updateData = { 
+        paid: true,
+        paidAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+        paymentMethod: 'admin_direct',
+        processedByAdmin: window.currentUser?.name || 'Admin',
+        updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+      };
       
-      // Safe dashboard refresh
-      try {
-        if (typeof loadAdminStats === 'function') loadAdminStats();
-        if (typeof loadAllEntries === 'function') loadAllEntries();
-      } catch (refreshError) {
-        console.warn("Dashboard refresh failed:", refreshError);
-      }
+      await window.db.collection('entries').doc(entryId).update(updateData);
+      
+      // Clean up related payment requests when marking as paid
+      await cleanupRelatedPaymentRequests(entryId);
+      
+      // EXPLICIT button update for admin interface
+      updateAdminPaymentButton(entryId, true);
+      
+      loadAdminStats();
+      loadAllEntries();
     }, 
     'Status wird aktualisiert...', 
-    successMessage, 
+    'Als bezahlt markiert!', 
     'Fehler beim Aktualisieren');
     
   } catch (error) {
-    console.error('Payment status update error:', error);
-    window.toast?.error(`Fehler beim Aktualisieren: ${error.message}`);
+    console.error('Fehler beim Markieren als bezahlt:', error);
+  }
+}
+
+// Druck als unbezahlt markieren - Enhanced with payment request coupling
+async function markEntryAsUnpaid(entryId) {
+  if (!checkAdminAccess()) return;
+  
+  try {
+    await withLoading(async () => {
+      // Enhanced payment status update with metadata cleanup
+      const updateData = { 
+        paid: false,
+        paidAt: null,
+        paymentMethod: null,
+        processedByAdmin: null,
+        requestId: null,
+        updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+      };
+      
+      await window.db.collection('entries').doc(entryId).update(updateData);
+      
+      // EXPLICIT button update for admin interface
+      updateAdminPaymentButton(entryId, false);
+      
+      loadAdminStats();
+      loadAllEntries();
+    }, 
+    'Status wird aktualisiert...', 
+    'Als unbezahlt markiert!', 
+    'Fehler beim Aktualisieren');
+    
+  } catch (error) {
+    console.error('Fehler beim Markieren als unbezahlt:', error);
   }
 }
 
@@ -329,3 +219,129 @@ async function updatePaymentStatus(entryId, paidStatus, successMessage) {
 // Export functions to window for global access
 window.markEntryAsPaid = markEntryAsPaid;
 window.markEntryAsUnpaid = markEntryAsUnpaid;
+
+/**
+ * Update admin payment button state immediately
+ */
+function updateAdminPaymentButton(entryId, isPaid) {
+    // Find the entry row
+    const entryRow = document.querySelector(`#entry-${entryId}`);
+    if (!entryRow) return;
+    
+    // Find the actions cell
+    const actionsCell = entryRow.querySelector('.actions');
+    if (!actionsCell) return;
+    
+    // Update the button HTML based on payment status
+    const newButtonsHtml = isPaid ? 
+        `${window.ButtonFactory.undoPayment(entryId)}
+         ${window.ButtonFactory.showNachweis(entryId, true)}` :
+        `${window.ButtonFactory.registerPayment(entryId)}`;
+    
+    // Update the buttons (preserve edit and delete buttons)
+    const editButton = actionsCell.querySelector(`[onclick*="editEntry('${entryId}')"]`);
+    const deleteButton = actionsCell.querySelector(`[onclick*="deleteEntry('${entryId}')"]`);
+    
+    // Get the existing non-payment buttons
+    const editButtonHtml = editButton ? editButton.outerHTML : '';
+    const deleteButtonHtml = deleteButton ? deleteButton.outerHTML : '';
+    
+    // Update the actions cell with new payment buttons + existing buttons
+    actionsCell.innerHTML = `
+        ${newButtonsHtml}
+        ${editButtonHtml}
+        ${deleteButtonHtml}
+    `;
+    
+    // Also update the status badge
+    const statusBadge = entryRow.querySelector('.entry-status-badge');
+    if (statusBadge) {
+        if (isPaid) {
+            statusBadge.className = 'entry-status-badge status-paid';
+            statusBadge.textContent = 'Bezahlt';
+        } else {
+            statusBadge.className = 'entry-status-badge status-unpaid';
+            statusBadge.textContent = 'Offen';
+        }
+    }
+    
+    // Update mobile cards as well
+    const entryCard = document.querySelector(`[data-entry-id="${entryId}"]`);
+    if (entryCard) {
+        const cardActions = entryCard.querySelector('.card-actions');
+        if (cardActions) {
+            const cardEditButton = cardActions.querySelector(`[onclick*="editEntry('${entryId}')"]`);
+            const cardDeleteButton = cardActions.querySelector(`[onclick*="deleteEntry('${entryId}')"]`);
+            
+            const cardEditButtonHtml = cardEditButton ? cardEditButton.outerHTML : '';
+            const cardDeleteButtonHtml = cardDeleteButton ? cardDeleteButton.outerHTML : '';
+            
+            cardActions.innerHTML = `
+                ${newButtonsHtml}
+                ${cardEditButtonHtml}
+                ${cardDeleteButtonHtml}
+            `;
+        }
+        
+        // Update mobile card status badge
+        const cardStatusBadge = entryCard.querySelector('.status-badge');
+        if (cardStatusBadge) {
+            if (isPaid) {
+                cardStatusBadge.className = 'status-badge status-paid';
+                cardStatusBadge.textContent = 'BEZAHLT';
+            } else {
+                cardStatusBadge.className = 'status-badge status-unpaid';
+                cardStatusBadge.textContent = 'OFFEN';
+            }
+        }
+    }
+}
+
+/**
+ * Clean up related payment requests when entry is marked as paid directly
+ */
+async function cleanupRelatedPaymentRequests(entryId) {
+  try {
+    const pendingRequests = await window.db.collection('paymentRequests')
+      .where('entryId', '==', entryId)
+      .where('status', '==', 'pending')
+      .get();
+      
+    if (!pendingRequests.empty) {
+      const batch = window.db.batch();
+      
+      pendingRequests.forEach(doc => {
+        batch.update(doc.ref, {
+          status: 'resolved',
+          resolvedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+          resolvedBy: 'admin_direct_payment',
+          adminNotes: 'Zahlung wurde direkt vom Admin registriert'
+        });
+      });
+      
+      await batch.commit();
+      console.log(`Cleaned up ${pendingRequests.size} payment requests for entry ${entryId} after direct payment`);
+    }
+  } catch (error) {
+    console.error('Error cleaning up payment requests:', error);
+  }
+}
+
+// Formular zurücksetzen
+function clearForm() {
+  const material = document.getElementById("material");
+  const materialMenge = document.getElementById("materialMenge");
+  const masterbatch = document.getElementById("masterbatch");
+  const masterbatchMenge = document.getElementById("masterbatchMenge");
+  const jobName = document.getElementById("jobName");
+  const jobNotes = document.getElementById("jobNotes");
+  const costPreview = document.getElementById("costPreview");
+  
+  if (material) material.value = '';
+  if (materialMenge) materialMenge.value = '';
+  if (masterbatch) masterbatch.value = '';
+  if (masterbatchMenge) masterbatchMenge.value = '';
+  if (jobName) jobName.value = '';
+  if (jobNotes) jobNotes.value = '';
+  if (costPreview) costPreview.textContent = '0,00 €';
+}

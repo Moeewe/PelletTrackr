@@ -7,6 +7,7 @@
 let equipment = [];
 let currentEquipmentCategory = 'keys';
 let filteredEquipment = [];
+let equipmentListener = null;
 
 // Fixed categories - no more dynamic categories
 const EQUIPMENT_CATEGORIES = {
@@ -16,20 +17,93 @@ const EQUIPMENT_CATEGORIES = {
 };
 
 /**
+ * Setup real-time listener for equipment
+ */
+function setupEquipmentListener() {
+    // Clean up existing listener
+    if (equipmentListener) {
+        equipmentListener();
+        equipmentListener = null;
+    }
+    
+    try {
+        equipmentListener = window.db.collection('equipment').onSnapshot((snapshot) => {
+            equipment = [];
+            snapshot.forEach((doc) => {
+                equipment.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+            
+            console.log('Live update: Loaded equipment:', equipment.length);
+            showEquipmentCategory(currentEquipmentCategory);
+        }, (error) => {
+            console.error('Error in equipment listener:', error);
+            showToast('Fehler beim Live-Update des Equipments', 'error');
+        });
+        
+        console.log("✅ Equipment listener registered");
+    } catch (error) {
+        console.error("❌ Failed to setup equipment listener:", error);
+        // Fallback to manual loading
+        loadEquipment();
+    }
+}
+
+/**
  * Show equipment manager modal
  */
 function showEquipmentManager() {
-    document.getElementById('overlay').style.display = 'block';
-    document.getElementById('equipmentModal').style.display = 'block';
-    loadEquipment();
+    const modalContent = `
+        <div class="modal-header">
+            <h3>Equipment verwalten</h3>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="card">
+                <div class="card-body">
+                    <div class="equipment-controls">
+                        <div class="control-row">
+                            <div class="search-container">
+                                <input type="text" id="equipmentSearchInput" placeholder="Equipment durchsuchen..." class="search-input" onkeyup="searchEquipment()">
+                                <button class="search-clear" onclick="clearEquipmentSearch()">×</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="category-tabs">
+                        <button class="tab-btn active" onclick="showEquipmentCategory('keys')">Schlüssel</button>
+                        <button class="tab-btn" onclick="showEquipmentCategory('hardware')">Hardware</button>
+                        <button class="tab-btn" onclick="showEquipmentCategory('books')">Bücher</button>
+                    </div>
+                    
+                    <div id="equipmentList" class="equipment-container">
+                        <div class="loading">Equipment wird geladen...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" onclick="showAddEquipmentForm()">Equipment hinzufügen</button>
+            <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
+        </div>
+    `;
+    
+    showModalWithContent(modalContent);
+    setupEquipmentListener();
 }
 
 /**
  * Close equipment manager modal
  */
 function closeEquipmentManager() {
-    document.getElementById('overlay').style.display = 'none';
-    document.getElementById('equipmentModal').style.display = 'none';
+    // Clean up listener
+    if (equipmentListener) {
+        equipmentListener();
+        equipmentListener = null;
+    }
+    closeModal();
 }
 
 /**
@@ -61,18 +135,7 @@ async function loadEquipment() {
  * Search equipment based on name, description, or category
  */
 function searchEquipment() {
-    const searchTerm = document.getElementById('equipmentSearchInput').value.toLowerCase();
-    
-    if (searchTerm.trim() === '') {
-        filteredEquipment = equipment;
-    } else {
-        filteredEquipment = equipment.filter(item => 
-            item.name.toLowerCase().includes(searchTerm) ||
-            (item.description && item.description.toLowerCase().includes(searchTerm)) ||
-            (item.category && item.category.toLowerCase().includes(searchTerm))
-        );
-    }
-    
+    // Trigger category display which will handle search filtering
     showEquipmentCategory(currentEquipmentCategory);
 }
 
@@ -81,7 +144,6 @@ function searchEquipment() {
  */
 function clearEquipmentSearch() {
     document.getElementById('equipmentSearchInput').value = '';
-    filteredEquipment = equipment;
     showEquipmentCategory(currentEquipmentCategory);
 }
 
@@ -91,29 +153,36 @@ function clearEquipmentSearch() {
 function showEquipmentCategory(category) {
     currentEquipmentCategory = category;
     
-    // Update tab buttons - search within equipment modal only
-    const equipmentModal = document.getElementById('equipmentModal');
-    if (equipmentModal) {
-        equipmentModal.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        
-        // Find the clicked tab button or set first one as active
-        const clickedBtn = event?.target;
-        if (clickedBtn && clickedBtn.classList.contains('tab-btn')) {
-            clickedBtn.classList.add('active');
-        } else {
-            // Set the tab for the current category as active
-            const categoryTab = equipmentModal.querySelector(`.tab-btn[onclick*="${category}"]`);
-            if (categoryTab) {
-                categoryTab.classList.add('active');
-            }
-        }
+    // Update tab buttons - use correct selector for equipment tabs
+    const tabButtons = document.querySelectorAll('.category-tabs .tab-btn');
+    tabButtons.forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Set the correct tab as active based on category
+    const categoryTab = document.querySelector(`.category-tabs .tab-btn[onclick*="${category}"]`);
+    if (categoryTab) {
+        categoryTab.classList.add('active');
     }
     
-    // Filter equipment by category from filteredEquipment (search results)
-    const categoryEquipment = filteredEquipment.filter(item => item.category === category);
-    renderEquipmentList(categoryEquipment);
+    // Filter equipment by category from all equipment (not just search results)
+    const categoryEquipment = equipment.filter(item => item.category === category);
+    
+    // Apply search filter if there's a search term
+    const searchInput = document.getElementById('equipmentSearchInput');
+    if (searchInput && searchInput.value.trim()) {
+        const searchTerm = searchInput.value.toLowerCase();
+        const filteredCategoryEquipment = categoryEquipment.filter(item => {
+            return (
+                (item.name && item.name.toLowerCase().includes(searchTerm)) ||
+                (item.description && item.description.toLowerCase().includes(searchTerm)) ||
+                (item.location && item.location.toLowerCase().includes(searchTerm))
+            );
+        });
+        renderEquipmentList(filteredCategoryEquipment);
+    } else {
+        renderEquipmentList(categoryEquipment);
+    }
 }
 
 
@@ -194,69 +263,67 @@ function getEquipmentStatusText(status) {
  * Show add equipment form
  */
 function showAddEquipmentForm() {
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'block';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Equipment hinzufügen</h3>
-                <button class="modal-close" onclick="closeAddEquipmentForm()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="equipmentForm" class="form">
-                    <div class="form-group">
-                        <label class="form-label">Name</label>
-                        <input type="text" id="equipmentName" class="form-input" placeholder="z.B. Schlüssel Labor 1, Zangensatz, etc.">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Kategorie</label>
-                        <select id="equipmentCategory" class="form-select">
-                            ${Object.entries(EQUIPMENT_CATEGORIES).map(([key, name]) => `
-                                <option value="${key}">${name}</option>
-                            `).join('')}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Beschreibung</label>
-                        <textarea id="equipmentDescription" class="form-textarea" placeholder="Beschreibung des Equipment..." rows="3"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Status</label>
-                        <select id="equipmentStatus" class="form-select">
-                            <option value="available">Verfügbar</option>
-                            <option value="maintenance">Wartung</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Pfand-System</label>
-                        <div class="form-checkbox-group">
-                            <label class="form-checkbox">
-                                <input type="checkbox" id="requiresDeposit" class="form-checkbox-input">
-                                <span class="form-checkbox-label">Pfand erforderlich</span>
-                            </label>
-                            <input type="number" id="depositAmount" class="form-input" placeholder="Pfand-Betrag €" step="0.01" style="display: none;">
+    const modalContent = `
+        <div class="modal-header">
+            <h3>Equipment hinzufügen</h3>
+            <button class="close-btn" onclick="closeAddEquipmentForm()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="card">
+                <div class="card-body">
+                    <form id="addEquipmentForm" class="form">
+                        <div class="form-group">
+                            <label class="form-label">Name</label>
+                            <input type="text" name="name" class="form-input" placeholder="z.B. Schlüssel Labor 1, Zangensatz, etc." required>
                         </div>
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeAddEquipmentForm()">Abbrechen</button>
-                        <button type="button" class="btn btn-primary" onclick="saveEquipment()">Speichern</button>
-                    </div>
-                </form>
+                        <div class="form-group">
+                            <label class="form-label">Kategorie</label>
+                            <select name="category" class="form-select" required>
+                                ${Object.entries(EQUIPMENT_CATEGORIES).map(([key, name]) => `
+                                    <option value="${key}" ${key === currentEquipmentCategory ? 'selected' : ''}>${name}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Standort</label>
+                            <input type="text" name="location" class="form-input" placeholder="z.B. Labor 1, Werkstatt, Büro..." required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Beschreibung</label>
+                            <textarea name="description" class="form-textarea" placeholder="Beschreibung des Equipment..." rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Pfand-System</label>
+                            <div class="form-checkbox-group">
+                                <label class="form-checkbox">
+                                    <input type="checkbox" name="requiresDeposit" class="form-checkbox-input" onchange="toggleDepositAmount()">
+                                    <span class="form-checkbox-label">Pfand erforderlich</span>
+                                </label>
+                                <input type="number" name="depositAmount" id="depositAmountInput" class="form-input" placeholder="Pfand-Betrag €" step="0.01" style="display: none;">
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeAddEquipmentForm()">Abbrechen</button>
+            <button type="button" class="btn btn-primary" onclick="saveEquipment()">Equipment hinzufügen</button>
         </div>
     `;
     
-    document.body.appendChild(modal);
-    modal.id = 'addEquipmentModal';
+    showModalWithContent(modalContent);
+}
+
+/**
+ * Toggle deposit amount field visibility
+ */
+function toggleDepositAmount() {
+    const depositAmount = document.getElementById('depositAmountInput');
+    const checkbox = document.querySelector('input[name="requiresDeposit"]');
     
-    // Set default category
-    document.getElementById('equipmentCategory').value = currentEquipmentCategory;
-    
-    // Add event listener for deposit checkbox
-    document.getElementById('requiresDeposit').addEventListener('change', function() {
-        const depositAmount = document.getElementById('depositAmount');
-        if (this.checked) {
+    if (checkbox && depositAmount) {
+        if (checkbox.checked) {
             depositAmount.style.display = 'block';
             depositAmount.required = true;
         } else {
@@ -264,54 +331,57 @@ function showAddEquipmentForm() {
             depositAmount.required = false;
             depositAmount.value = '';
         }
-    });
+    }
 }
 
 /**
- * Close add equipment form
+ * Close add equipment form and return to equipment manager
  */
 function closeAddEquipmentForm() {
-    const modal = document.getElementById('addEquipmentModal');
-    if (modal) {
-        modal.remove();
-    }
+    // Return to equipment manager
+    showEquipmentManager();
 }
 
 /**
  * Save equipment
  */
 async function saveEquipment() {
-    const formData = {
-        name: document.getElementById('equipmentName').value.trim(),
-        category: document.getElementById('equipmentCategory').value,
-        description: document.getElementById('equipmentDescription').value.trim(),
-        status: document.getElementById('equipmentStatus').value,
-        requiresDeposit: document.getElementById('requiresDeposit').checked,
-        depositAmount: document.getElementById('requiresDeposit').checked ? 
-            parseFloat(document.getElementById('depositAmount').value) || 0 : 0,
-        depositPaid: false // Initially no deposit paid
+    const form = document.getElementById('addEquipmentForm');
+    if (!form) return;
+    
+    const formData = new FormData(form);
+    const equipmentData = {
+        name: formData.get('name').trim(),
+        category: formData.get('category'),
+        location: formData.get('location').trim(),
+        description: formData.get('description').trim(),
+        requiresDeposit: formData.get('requiresDeposit') === 'on',
+        status: 'available',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
     
-    if (!formData.name) {
-        showToast('Bitte geben Sie einen Namen ein', 'error');
-        return;
+    if (equipmentData.requiresDeposit) {
+        const depositAmount = parseFloat(formData.get('depositAmount'));
+        if (isNaN(depositAmount) || depositAmount <= 0) {
+            showToast('Pfandbetrag muss eine positive Zahl sein', 'error');
+            return;
+        }
+        equipmentData.depositAmount = depositAmount;
+        equipmentData.depositPaid = false;
     }
     
-    if (formData.requiresDeposit && !formData.depositAmount) {
-        showToast('Bitte geben Sie einen Pfand-Betrag ein', 'error');
+    if (!equipmentData.name || !equipmentData.location) {
+        showToast('Name und Standort sind Pflichtfelder', 'error');
         return;
     }
     
     try {
-        await window.db.collection('equipment').add({
-            ...formData,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
+        await window.db.collection('equipment').add(equipmentData);
         showToast('Equipment erfolgreich hinzugefügt', 'success');
-        closeAddEquipmentForm();
-        await loadEquipment(); // Reload to show new equipment immediately
+        
+        // Return to equipment manager
+        showEquipmentManager();
         
     } catch (error) {
         console.error('Error saving equipment:', error);
@@ -329,118 +399,125 @@ function editEquipment(equipmentId) {
         return;
     }
     
-    // Create edit modal
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'block';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Equipment bearbeiten</h3>
-                <button class="modal-close" onclick="closeEditEquipmentForm()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="editEquipmentForm" class="form">
-                    <div class="form-group">
-                        <label class="form-label">Equipment Name</label>
-                        <input type="text" id="editEquipmentName" class="form-input" value="${equipmentItem.name}" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Kategorie</label>
-                        <select id="editEquipmentCategory" class="form-select" required>
-                            ${Object.entries(EQUIPMENT_CATEGORIES).map(([key, name]) => `
-                                <option value="${key}" ${equipmentItem.category === key ? 'selected' : ''}>
-                                    ${name}
-                                </option>
-                            `).join('')}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Beschreibung</label>
-                        <textarea id="editEquipmentDescription" class="form-textarea" rows="3">${equipmentItem.description || ''}</textarea>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Status</label>
-                        <select id="editEquipmentStatus" class="form-select" required>
-                            <option value="available" ${equipmentItem.status === 'available' ? 'selected' : ''}>Verfügbar</option>
-                            <option value="borrowed" ${equipmentItem.status === 'borrowed' ? 'selected' : ''}>Ausgeliehen</option>
-                            <option value="maintenance" ${equipmentItem.status === 'maintenance' ? 'selected' : ''}>Wartung</option>
-                            <option value="broken" ${equipmentItem.status === 'broken' ? 'selected' : ''}>Defekt</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">
-                            <input type="checkbox" id="editEquipmentRequiresDeposit" ${equipmentItem.requiresDeposit ? 'checked' : ''}>
-                            Pfand erforderlich
-                        </label>
-                    </div>
-                    <div class="form-group deposit-group" style="display: ${equipmentItem.requiresDeposit ? 'block' : 'none'};">
-                        <label class="form-label">Pfandbetrag (€)</label>
-                        <input type="number" id="editEquipmentDepositAmount" class="form-input" value="${equipmentItem.depositAmount || 0}" min="0" step="0.01">
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeEditEquipmentForm()">Abbrechen</button>
-                        <button type="button" class="btn btn-primary" onclick="updateEquipment('${equipmentId}')">Speichern</button>
-                    </div>
-                </form>
-            </div>
+    // Create edit modal content using proper modal structure
+    const modalContent = `
+        <div class="modal-header">
+            <h3>Equipment bearbeiten</h3>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="editEquipmentForm" class="form">
+                <div class="form-group">
+                    <label class="form-label">Equipment Name</label>
+                    <input type="text" id="editEquipmentName" class="form-input" value="${equipmentItem.name}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Kategorie</label>
+                    <select id="editEquipmentCategory" class="form-select" required>
+                        ${Object.entries(EQUIPMENT_CATEGORIES).map(([key, name]) => `
+                            <option value="${key}" ${equipmentItem.category === key ? 'selected' : ''}>
+                                ${name}
+                            </option>
+                        `).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Beschreibung</label>
+                    <textarea id="editEquipmentDescription" class="form-textarea" rows="3">${equipmentItem.description || ''}</textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select id="editEquipmentStatus" class="form-select" required>
+                        <option value="available" ${equipmentItem.status === 'available' ? 'selected' : ''}>Verfügbar</option>
+                        <option value="borrowed" ${equipmentItem.status === 'borrowed' ? 'selected' : ''}>Ausgeliehen</option>
+                        <option value="maintenance" ${equipmentItem.status === 'maintenance' ? 'selected' : ''}>Wartung</option>
+                        <option value="broken" ${equipmentItem.status === 'broken' ? 'selected' : ''}>Defekt</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">
+                        <input type="checkbox" id="editEquipmentRequiresDeposit" ${equipmentItem.requiresDeposit ? 'checked' : ''}>
+                        Pfand erforderlich
+                    </label>
+                </div>
+                <div class="form-group deposit-group" style="display: ${equipmentItem.requiresDeposit ? 'block' : 'none'};">
+                    <label class="form-label">Pfandbetrag (€)</label>
+                    <input type="number" id="editEquipmentDepositAmount" class="form-input" value="${equipmentItem.depositAmount || 0}" min="0" step="0.01">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+                    <button type="button" class="btn btn-primary" onclick="updateEquipment('${equipmentId}')">Speichern</button>
+                </div>
+            </form>
         </div>
     `;
     
-    document.body.appendChild(modal);
-    modal.id = 'editEquipmentModal';
+    // Use proper modal system for correct z-index and display
+    showModalWithContent(modalContent);
     
-    // Add deposit toggle functionality
-    const depositCheckbox = document.getElementById('editEquipmentRequiresDeposit');
-    const depositGroup = document.querySelector('.deposit-group');
-    
-    depositCheckbox.addEventListener('change', function() {
-        depositGroup.style.display = this.checked ? 'block' : 'none';
-    });
+    // Add deposit toggle functionality after modal is shown
+    setTimeout(() => {
+        const depositCheckbox = document.getElementById('editEquipmentRequiresDeposit');
+        const depositGroup = document.querySelector('.deposit-group');
+        
+        if (depositCheckbox && depositGroup) {
+            depositCheckbox.addEventListener('change', function() {
+                depositGroup.style.display = this.checked ? 'block' : 'none';
+            });
+        }
+    }, 100);
 }
 
 /**
- * Close edit equipment form
+ * Close edit equipment form - DEPRECATED
+ * Now using standard closeModal() function
  */
 function closeEditEquipmentForm() {
-    const modal = document.getElementById('editEquipmentModal');
-    if (modal) {
-        modal.remove();
-    }
+    // Fallback - use standard modal close
+    closeModal();
 }
 
 /**
  * Update equipment
  */
 async function updateEquipment(equipmentId) {
-    const name = document.getElementById('editEquipmentName').value.trim();
-    const category = document.getElementById('editEquipmentCategory').value;
-    const description = document.getElementById('editEquipmentDescription').value.trim();
-    const status = document.getElementById('editEquipmentStatus').value;
-    const requiresDeposit = document.getElementById('editEquipmentRequiresDeposit').checked;
-    const depositAmount = parseFloat(document.getElementById('editEquipmentDepositAmount').value) || 0;
+    const form = document.getElementById('editEquipmentForm');
+    if (!form) return;
     
-    if (!name || !category) {
+    // Get form values directly from elements since we're using IDs
+    const equipmentData = {
+        name: document.getElementById('editEquipmentName').value.trim(),
+        category: document.getElementById('editEquipmentCategory').value,
+        description: document.getElementById('editEquipmentDescription').value.trim(),
+        status: document.getElementById('editEquipmentStatus').value,
+        requiresDeposit: document.getElementById('editEquipmentRequiresDeposit').checked,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    
+    if (equipmentData.requiresDeposit) {
+        const depositAmount = parseFloat(document.getElementById('editEquipmentDepositAmount').value);
+        if (isNaN(depositAmount) || depositAmount <= 0) {
+            showToast('Pfandbetrag muss eine positive Zahl sein', 'error');
+            return;
+        }
+        equipmentData.depositAmount = depositAmount;
+    } else {
+        // Remove deposit fields if not required
+        equipmentData.depositAmount = firebase.firestore.FieldValue.delete();
+        equipmentData.depositPaid = firebase.firestore.FieldValue.delete();
+    }
+    
+    if (!equipmentData.name || !equipmentData.category) {
         showToast('Bitte alle Pflichtfelder ausfüllen', 'error');
         return;
     }
     
     try {
-        const updateData = {
-            name: name,
-            category: category,
-            description: description,
-            status: status,
-            requiresDeposit: requiresDeposit,
-            depositAmount: requiresDeposit ? depositAmount : 0,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
-        await window.db.collection('equipment').doc(equipmentId).update(updateData);
+        await window.db.collection('equipment').doc(equipmentId).update(equipmentData);
         
         showToast('Equipment erfolgreich aktualisiert', 'success');
-        closeEditEquipmentForm();
-        await loadEquipment(); // Reload to show updated data
+        closeModal();
+        // Removed manual reload - real-time listener will handle the update
         
     } catch (error) {
         console.error('Error updating equipment:', error);
@@ -487,7 +564,7 @@ async function borrowEquipment(equipmentId) {
         await window.db.collection('equipment').doc(equipmentId).update(updateData);
         
         showToast(`Equipment erfolgreich an ${userName} ausgeliehen`, 'success');
-        await loadEquipment(); // Reload to show updated status
+        // Removed manual reload - real-time listener will handle the update
         
     } catch (error) {
         console.error('Error borrowing equipment:', error);
@@ -520,7 +597,7 @@ async function returnEquipment(equipmentId) {
         await window.db.collection('equipment').doc(equipmentId).update(updateData);
         
         showToast('Equipment erfolgreich zurückgegeben', 'success');
-        await loadEquipment(); // Reload to show updated status
+        // Removed manual reload - real-time listener will handle the update
         
     } catch (error) {
         console.error('Error returning equipment:', error);
@@ -542,7 +619,7 @@ async function markDepositAsPaid(equipmentId) {
         });
         
         showToast('Pfand als bezahlt markiert', 'success');
-        await loadEquipment(); // Reload to show updated status
+        // Removed manual reload - real-time listener will handle the update
         
     } catch (error) {
         console.error('Error marking deposit as paid:', error);
@@ -565,30 +642,21 @@ async function markDepositAsPaid(equipmentId) {
 
 // ==================== GLOBAL EXPORTS ====================
 // Equipment Management-Funktionen global verfügbar machen
+// Make functions globally available
 window.showEquipmentManager = showEquipmentManager;
 window.closeEquipmentManager = closeEquipmentManager;
-window.loadEquipment = loadEquipment;
 window.showEquipmentCategory = showEquipmentCategory;
 window.searchEquipment = searchEquipment;
 window.clearEquipmentSearch = clearEquipmentSearch;
-window.borrowEquipment = borrowEquipment;
-window.returnEquipment = returnEquipment;
-window.editEquipment = editEquipment;
 window.showAddEquipmentForm = showAddEquipmentForm;
+window.toggleDepositAmount = toggleDepositAmount;
 window.closeAddEquipmentForm = closeAddEquipmentForm;
 window.saveEquipment = saveEquipment;
-window.markDepositAsPaid = markDepositAsPaid;
-window.showAddCategoryForm = showAddCategoryForm;
-window.closeAddCategoryForm = closeAddCategoryForm;
-window.saveCategory = saveCategory;
-window.showManageCategoriesForm = showManageCategoriesForm;
-window.closeManageCategoriesForm = closeManageCategoriesForm;
-window.editCategory = editCategory;
-window.closeEditCategoryForm = closeEditCategoryForm;
-window.updateCategory = updateCategory;
-window.deleteCategory = deleteCategory;
-window.deleteEquipmentRequest = deleteEquipmentRequest;
+window.editEquipment = editEquipment;
 window.closeEditEquipmentForm = closeEditEquipmentForm;
 window.updateEquipment = updateEquipment;
+window.borrowEquipment = borrowEquipment;
+window.returnEquipment = returnEquipment;
+window.markDepositAsPaid = markDepositAsPaid;
 
 console.log("🔧 Equipment Management Module geladen"); 
