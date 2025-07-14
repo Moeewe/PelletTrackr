@@ -1,0 +1,3 @@
+# Git Submodules Configuration
+# Currently no submodules are used in this project
+# This file exists to prevent Git submodule errors during deployment 
