@@ -401,4 +401,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Wait for Firebase initialization
         document.addEventListener('firebase-ready', initializePrinterManagement);
     }
-}); 
+});
+
+// Export functions to global scope
+window.showPrinterManager = showPrinterManager;
+window.closePrinterManager = closePrinterManager;

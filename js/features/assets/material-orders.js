@@ -528,4 +528,8 @@ async function cancelOrder(requestId) {
         console.error('Error cancelling order:', error);
         showToast('Fehler beim Stornieren', 'error');
     }
-} 
+}
+
+// Export functions to global scope
+window.showMaterialOrders = showMaterialOrders;
+window.closeMaterialOrders = closeMaterialOrders;
