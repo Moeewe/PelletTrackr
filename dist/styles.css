@@ -24,7 +24,144 @@
 @import url('./styles/forms.css');
 @import url('./styles/tables.css');
 @import url('./styles/modals.css');
+@import url('./styles/modal-enhancements.css');
+@import url('./styles/card-design.css');
 @import url('./styles/responsive.css');
 @import url('./styles/footer.css');
 @import url('./styles/utilities.css');
 @import url('./styles/toast.css');
+
+/* ==================== CONFIRMATION DIALOG ==================== */
+.confirmation-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.confirmation-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.confirmation-dialog {
+    background: white;
+    border-radius: 8px;
+    max-width: 480px;
+    width: 90%;
+    padding: 0;
+    transform: scale(0.8);
+    transition: all 0.3s ease;
+    border: 2px solid #000;
+}
+
+.confirmation-dialog.show {
+    transform: scale(1);
+}
+
+.confirmation-content {
+    padding: 24px;
+    text-align: center;
+}
+
+.confirmation-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.confirmation-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-10px);
+    }
+    60% {
+        transform: translateY(-5px);
+    }
+}
+
+.confirmation-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #000;
+}
+
+.confirmation-message {
+    margin: 20px 0;
+    line-height: 1.6;
+    color: #333;
+    white-space: pre-line;
+}
+
+.confirmation-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 24px;
+}
+
+.confirmation-buttons .btn {
+    min-width: 140px;
+    padding: 12px 20px;
+    font-weight: 500;
+}
+
+.confirmation-buttons .btn-primary {
+    background: #000;
+    color: white;
+    border: 2px solid #000;
+}
+
+.confirmation-buttons .btn-primary:hover {
+    background: #333;
+    border-color: #333;
+}
+
+.confirmation-buttons .btn-secondary {
+    background: white;
+    color: #000;
+    border: 2px solid #000;
+}
+
+.confirmation-buttons .btn-secondary:hover {
+    background: #f5f5f5;
+}
+
+@media (max-width: 768px) {
+    .confirmation-dialog {
+        width: 95%;
+        margin: 20px;
+    }
+    
+    .confirmation-content {
+        padding: 20px;
+    }
+    
+    .confirmation-buttons {
+        flex-direction: column;
+    }
+    
+    .confirmation-buttons .btn {
+        width: 100%;
+        margin: 4px 0;
+    }
+}

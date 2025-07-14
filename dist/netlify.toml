@@ -2,10 +2,60 @@
   publish = "dist"
   command = "bash build.sh"
 
+# Production Context (master branch)
+[context.production]
+  command = "bash build.sh"
+  
+[context.production.environment]
+  NODE_VERSION = "18"
+  BRANCH = "production"
+
+# Production-Dev Context (Preview Branch)
+[context.branch-deploy]
+  command = "bash build.sh"
+
+[context.branch-deploy.environment]
+  NODE_VERSION = "18"
+  BRANCH = "production-dev"
+
+# Deploy Preview für Pull Requests
+[context.deploy-preview]
+  command = "bash build.sh"
+
+[context.deploy-preview.environment]
+  NODE_VERSION = "18"
+  BRANCH = "deploy-preview"
+
+# Branch-spezifische Konfiguration für Production-Dev
+[context."Production-Dev"]
+  command = "bash build.sh"
+
+[context."Production-Dev".environment]
+  NODE_VERSION = "18"
+  BRANCH = "production-dev"
+  ENV = "staging"
+
+# Redirects für SPA
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
-[context.production.environment]
-  NODE_VERSION = "18"
+# Header für bessere Performance
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+
+[[headers]]
+  for = "/styles/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"

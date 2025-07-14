@@ -24,13 +24,16 @@ async function loadUsersForManagement() {
       userMap.set(userData.kennung, {
         name: userData.name,
         kennung: userData.kennung,
-        email: userData.email,
+        email: userData.email || `${userData.kennung}@fh-muenster.de`,
+        isAdmin: userData.isAdmin || false,
+        createdAt: userData.createdAt,
+        lastLogin: userData.lastLogin,
         entries: [],
         totalCost: 0,
         paidAmount: 0,
         unpaidAmount: 0,
-        firstEntry: new Date(),
-        lastEntry: new Date()
+        firstEntry: null, // Kein Standard-Datum für Nutzer ohne Entries
+        lastEntry: null   // Kein Standard-Datum für Nutzer ohne Entries
       });
     });
     
@@ -121,13 +124,18 @@ function renderUsersTable(users) {
   `;
   
   users.forEach(user => {
-    const lastEntryDate = user.lastEntry.toLocaleDateString('de-DE');
+    const lastEntryDate = user.lastEntry ? user.lastEntry.toLocaleDateString('de-DE') : 'Keine Drucke';
     const email = user.email || `${user.kennung}@fh-muenster.de`;
     
-    // Status Badge für Desktop-Tabelle
-    const statusBadge = user.unpaidAmount > 0 ? 
-      '<span class="entry-status-badge status-unpaid">OFFEN</span>' : 
-      '<span class="entry-status-badge status-paid">BEZAHLT</span>';
+    // Status Badge für Desktop-Tabelle - Nutzer ohne Drucke als "aktiv" markieren
+    let statusBadge;
+    if (user.entries.length === 0) {
+      statusBadge = '<span class="entry-status-badge status-new">NEU</span>';
+    } else if (user.unpaidAmount > 0) {
+      statusBadge = '<span class="entry-status-badge status-unpaid">OFFEN</span>';
+    } else {
+      statusBadge = '<span class="entry-status-badge status-paid">BEZAHLT</span>';
+    }
     
     // Tabellen-Zeile für Desktop
     containerHtml += `
@@ -164,12 +172,21 @@ function renderUsersTable(users) {
 
   // Card-Struktur für Mobile
   users.forEach(user => {
-    const lastEntryDate = user.lastEntry.toLocaleDateString('de-DE');
+    const lastEntryDate = user.lastEntry ? user.lastEntry.toLocaleDateString('de-DE') : 'Keine Drucke';
     const email = user.email || `${user.kennung}@fh-muenster.de`;
     
-    // Status Badge basierend auf offenen Beträgen
-    const statusBadgeClass = user.unpaidAmount > 0 ? 'status-unpaid' : 'status-paid';
-    const statusBadgeText = user.unpaidAmount > 0 ? 'OFFEN' : 'BEZAHLT';
+    // Status Badge basierend auf offenen Beträgen und Entry-Status
+    let statusBadgeClass, statusBadgeText;
+    if (user.entries.length === 0) {
+      statusBadgeClass = 'status-new';
+      statusBadgeText = 'NEU';
+    } else if (user.unpaidAmount > 0) {
+      statusBadgeClass = 'status-unpaid';
+      statusBadgeText = 'OFFEN';
+    } else {
+      statusBadgeClass = 'status-paid';
+      statusBadgeText = 'BEZAHLT';
+    }
     
     containerHtml += `
       <div class="entry-card">
@@ -280,8 +297,8 @@ function sortUsersBy(field) {
         bVal = b.unpaidAmount;
         break;
       case 'lastEntry':
-        aVal = a.lastEntry.getTime();
-        bVal = b.lastEntry.getTime();
+        aVal = a.lastEntry ? a.lastEntry.getTime() : 0; // Nutzer ohne Entries ganz unten
+        bVal = b.lastEntry ? b.lastEntry.getTime() : 0;
         break;
       default:
         return 0;

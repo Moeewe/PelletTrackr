@@ -26,22 +26,26 @@
   text-align: center;
 }
 
-/* Entry Form Container - Grauer Hintergrund */
+/* Entry Form Container - Sauberes weißes Design */
 .entry-form,
 .form-section {
-  background: #f8f9fa;
-  border: none;
-  border-radius: 8px;
-  padding: 30px;
-  margin-bottom: 40px;
+  background: white;
+  border: 2px solid #000000;
+  border-radius: 0;
+  padding: 32px;
+  margin-bottom: 24px;
 }
 
 .form-section h2 {
   font-size: 24px;
-  font-weight: 600;
+  font-weight: 700;
   color: #000000;
   margin-bottom: 24px;
-  text-align: left;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #000000;
 }
 
 /* Form Layout */
@@ -130,22 +134,21 @@
   margin-top: 4px;
 }
 
-/* Cost Preview */
+/* Cost Preview - Einheitliches Design */
 .cost-preview {
-  background: #FFEB00;
+  background: white;
   color: #000000;
   padding: 24px;
+  border: 2px solid #000000;
   border-radius: 0;
   text-align: center;
-  margin: 40px 0;
-  display: block;
-  border: 2px solid #000000;
-  transition: all 0.2s ease;
-  min-height: 80px;
+  margin: 24px 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  min-height: 80px;
+  transition: all 0.2s ease;
 }
 
 .cost-preview.calculating {
@@ -200,24 +203,24 @@
   margin-bottom: 16px;
   text-align: left;
   position: relative;
-  padding-left: 20px;
-}
-
-.control-title::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 10px;
-  height: 10px;
-  background: #FFEB00;
 }
 
 .control-buttons {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* Ensure Asset Management buttons are clickable */
+.control-buttons .btn {
+  pointer-events: auto;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+}
+
+.control-section[style*="display: none"] {
+  display: none !important;
 }
 
 /* Login Form Specific Styles */

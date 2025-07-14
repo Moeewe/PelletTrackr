@@ -589,6 +589,17 @@
   letter-spacing: 0.5px;
 }
 
+.status-new {
+  background: #e3f2fd;
+  color: #0d47a1;
+  padding: 6px 12px;
+  border-radius: 0; /* Scharfe Kanten */
+  font-weight: 500;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 /* Action Columns */
 .actions {
   display: flex;

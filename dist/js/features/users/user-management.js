@@ -14,30 +14,41 @@ async function loadUsersForManagement() {
   try {
     console.log("🔄 Lade Benutzer für Verwaltung...");
     
-    // Alle Einträge laden, um Benutzer zu extrahieren
-    const snapshot = await window.db.collection("entries").get();
-    
-    // Benutzerinformationen aus users-Sammlung laden
+    // 1. ALLE Benutzer aus der users-Sammlung laden
     const usersSnapshot = await window.db.collection("users").get();
-    const usersData = new Map();
-    
-    usersSnapshot.forEach(doc => {
-      const userData = doc.data();
-      usersData.set(userData.kennung, userData);
-    });
-    
     const userMap = new Map();
     
-    snapshot.forEach(doc => {
+    // Erstelle User-Objekte für alle registrierten User
+    usersSnapshot.forEach(doc => {
+      const userData = doc.data();
+      userMap.set(userData.kennung, {
+        name: userData.name,
+        kennung: userData.kennung,
+        email: userData.email || `${userData.kennung}@fh-muenster.de`,
+        isAdmin: userData.isAdmin || false,
+        createdAt: userData.createdAt,
+        lastLogin: userData.lastLogin,
+        entries: [],
+        totalCost: 0,
+        paidAmount: 0,
+        unpaidAmount: 0,
+        firstEntry: null, // Kein Standard-Datum für Nutzer ohne Entries
+        lastEntry: null   // Kein Standard-Datum für Nutzer ohne Entries
+      });
+    });
+    
+    // 2. Dann alle Einträge laden und den Usern zuordnen
+    const entriesSnapshot = await window.db.collection("entries").get();
+    
+    entriesSnapshot.forEach(doc => {
       const entry = doc.data();
-      const userKey = `${entry.name}_${entry.kennung}`;
       
-      if (!userMap.has(userKey)) {
-        const userData = usersData.get(entry.kennung) || {};
-        userMap.set(userKey, {
+      // Prüfen ob User in userMap existiert, sonst aus Entry-Daten erstellen
+      if (!userMap.has(entry.kennung)) {
+        userMap.set(entry.kennung, {
           name: entry.name,
           kennung: entry.kennung,
-          email: userData.email, // E-Mail aus users-Sammlung
+          email: `${entry.kennung}@fh-muenster.de`, // Standard-Email
           entries: [],
           totalCost: 0,
           paidAmount: 0,
@@ -47,7 +58,7 @@ async function loadUsersForManagement() {
         });
       }
       
-      const user = userMap.get(userKey);
+      const user = userMap.get(entry.kennung);
       user.entries.push({
         id: doc.id,
         ...entry
@@ -60,10 +71,12 @@ async function loadUsersForManagement() {
         user.unpaidAmount += entry.totalCost || 0;
       }
       
-      // Datum-Updates
-      const entryDate = entry.timestamp ? entry.timestamp.toDate() : new Date();
-      if (entryDate < user.firstEntry) user.firstEntry = entryDate;
-      if (entryDate > user.lastEntry) user.lastEntry = entryDate;
+      // Datum-Updates nur bei vorhandenen Entries
+      if (entry.timestamp) {
+        const entryDate = entry.timestamp.toDate();
+        if (!user.firstEntry || entryDate < user.firstEntry) user.firstEntry = entryDate;
+        if (!user.lastEntry || entryDate > user.lastEntry) user.lastEntry = entryDate;
+      }
     });
     
     const users = Array.from(userMap.values());
@@ -87,55 +100,157 @@ function renderUsersTable(users) {
     return;
   }
   
-  let tableHtml = `
-    <table>
-      <thead>
-        <tr>
-          <th onclick="sortUsersBy('name')">Name</th>
-          <th onclick="sortUsersBy('kennung')">FH-Kennung</th>
-          <th onclick="sortUsersBy('email')">E-Mail</th>
-          <th onclick="sortUsersBy('entries')">Drucke</th>
-          <th onclick="sortUsersBy('totalCost')">Gesamtkosten</th>
-          <th onclick="sortUsersBy('paidAmount')">Bezahlt</th>
-          <th onclick="sortUsersBy('unpaidAmount')">Offen</th>
-          <th onclick="sortUsersBy('lastEntry')">Letzter Druck</th>
-          <th>Aktionen</th>
-        </tr>
-      </thead>
-      <tbody>
+  // Container mit Tabelle UND Cards erstellen
+  let containerHtml = `
+    <div class="entries-container">
+      <!-- Desktop Tabelle -->
+      <div class="data-table">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="sortUsersBy('name')">Name</th>
+              <th onclick="sortUsersBy('kennung')">FH-Kennung</th>
+              <th onclick="sortUsersBy('email')">E-Mail</th>
+              <th onclick="sortUsersBy('entries')">Drucke</th>
+              <th onclick="sortUsersBy('totalCost')">Gesamtkosten</th>
+              <th onclick="sortUsersBy('paidAmount')">Bezahlt</th>
+              <th onclick="sortUsersBy('unpaidAmount')">Offen</th>
+              <th onclick="sortUsersBy('status')">Status</th>
+              <th onclick="sortUsersBy('lastEntry')">Letzter Druck</th>
+              <th>Aktionen</th>
+            </tr>
+          </thead>
+          <tbody>
   `;
   
   users.forEach(user => {
-    const lastEntryDate = user.lastEntry.toLocaleDateString('de-DE');
-    const statusClass = user.unpaidAmount > 0 ? 'status-unpaid' : 'status-paid';
+    const lastEntryDate = user.lastEntry ? user.lastEntry.toLocaleDateString('de-DE') : 'Keine Drucke';
     const email = user.email || `${user.kennung}@fh-muenster.de`;
     
-    tableHtml += `
+    // Status Badge für Desktop-Tabelle - Nutzer ohne Drucke als "aktiv" markieren
+    let statusBadge;
+    if (user.entries.length === 0) {
+      statusBadge = '<span class="entry-status-badge status-new">NEU</span>';
+    } else if (user.unpaidAmount > 0) {
+      statusBadge = '<span class="entry-status-badge status-unpaid">OFFEN</span>';
+    } else {
+      statusBadge = '<span class="entry-status-badge status-paid">BEZAHLT</span>';
+    }
+    
+    // Tabellen-Zeile für Desktop
+    containerHtml += `
       <tr>
-        <td data-label="Name"><span class="cell-value">${user.name}</span></td>
-        <td data-label="FH-Kennung"><span class="cell-value">${user.kennung}</span></td>
-        <td data-label="E-Mail"><span class="cell-value">${email}</span></td>
-        <td data-label="Drucke"><span class="cell-value">${user.entries.length}</span></td>
-        <td data-label="Gesamtkosten"><span class="cell-value"><strong>${window.formatCurrency(user.totalCost)}</strong></span></td>
-        <td data-label="Bezahlt"><span class="cell-value">${window.formatCurrency(user.paidAmount)}</span></td>
-        <td data-label="Offen" class="${statusClass}"><span class="cell-value">${window.formatCurrency(user.unpaidAmount)}</span></td>
-        <td data-label="Letzter Druck"><span class="cell-value">${lastEntryDate}</span></td>
-        <td data-label="Aktionen" class="actions">
-          <button class="btn-small btn-secondary" onclick="editUser('${user.kennung}')">Bearbeiten</button>
-          <button class="btn-small btn-tertiary" onclick="showUserDetails('${user.kennung}')">Details</button>
-          <button class="btn-small btn-warning" onclick="sendPaymentReminder('${user.kennung}')">Mahnung</button>
-          <button class="btn-small btn-danger" onclick="deleteUser('${user.kennung}')">Löschen</button>
+        <td><span class="cell-value">${user.name}</span></td>
+        <td><span class="cell-value">${user.kennung}</span></td>
+        <td><span class="cell-value">${email}</span></td>
+        <td><span class="cell-value">${user.entries.length}</span></td>
+        <td><span class="cell-value"><strong>${window.formatCurrency(user.totalCost)}</strong></span></td>
+        <td><span class="cell-value">${window.formatCurrency(user.paidAmount)}</span></td>
+        <td><span class="cell-value">${window.formatCurrency(user.unpaidAmount)}</span></td>
+        <td>${statusBadge}</td>
+        <td><span class="cell-value">${lastEntryDate}</span></td>
+        <td class="actions">
+          <div class="entry-actions">
+            ${ButtonFactory.editUser(user.kennung)}
+            ${user.unpaidAmount > 0 ? ButtonFactory.sendReminder(user.kennung) : ''}
+            ${user.unpaidAmount > 0 ? ButtonFactory.sendUrgentReminder(user.kennung) : ''}
+            ${ButtonFactory.deleteUser(user.kennung)}
+          </div>
         </td>
       </tr>
     `;
   });
   
-  tableHtml += `
-      </tbody>
-    </table>
+  containerHtml += `
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Mobile Cards -->
+      <div class="entry-cards">
+  `;
+
+  // Card-Struktur für Mobile
+  users.forEach(user => {
+    const lastEntryDate = user.lastEntry ? user.lastEntry.toLocaleDateString('de-DE') : 'Keine Drucke';
+    const email = user.email || `${user.kennung}@fh-muenster.de`;
+    
+    // Status Badge basierend auf offenen Beträgen und Entry-Status
+    let statusBadgeClass, statusBadgeText;
+    if (user.entries.length === 0) {
+      statusBadgeClass = 'status-new';
+      statusBadgeText = 'NEU';
+    } else if (user.unpaidAmount > 0) {
+      statusBadgeClass = 'status-unpaid';
+      statusBadgeText = 'OFFEN';
+    } else {
+      statusBadgeClass = 'status-paid';
+      statusBadgeText = 'BEZAHLT';
+    }
+    
+    containerHtml += `
+      <div class="entry-card">
+        <!-- Card Header mit User-Name und Status -->
+        <div class="entry-card-header">
+          <h3 class="entry-job-title">${user.name}</h3>
+          <span class="entry-status-badge ${statusBadgeClass}">${statusBadgeText}</span>
+        </div>
+        
+        <!-- Card Body mit Detail-Zeilen -->
+        <div class="entry-card-body">
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">FH-Kennung</span>
+            <span class="entry-detail-value">${user.kennung}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">E-Mail</span>
+            <span class="entry-detail-value">${email}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Anzahl Drucke</span>
+            <span class="entry-detail-value">${user.entries.length}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Gesamtkosten</span>
+            <span class="entry-detail-value cost-value">${window.formatCurrency(user.totalCost)}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Bezahlt</span>
+            <span class="entry-detail-value">${window.formatCurrency(user.paidAmount)}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Offen</span>
+            <span class="entry-detail-value ${user.unpaidAmount > 0 ? 'cost-value' : ''}">${window.formatCurrency(user.unpaidAmount)}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Letzter Druck</span>
+            <span class="entry-detail-value">${lastEntryDate}</span>
+          </div>
+        </div>
+        
+        <!-- Card Footer mit Admin-Buttons -->
+        <div class="entry-card-footer">
+          ${ButtonFactory.editUser(user.kennung)}
+          ${user.unpaidAmount > 0 ? ButtonFactory.sendReminder(user.kennung) : ''}
+          ${user.unpaidAmount > 0 ? ButtonFactory.sendUrgentReminder(user.kennung) : ''}
+          ${ButtonFactory.deleteUser(user.kennung)}
+        </div>
+      </div>
+    `;
+  });
+  
+  containerHtml += `
+      </div>
+    </div>
   `;
   
-  tableDiv.innerHTML = tableHtml;
+  tableDiv.innerHTML = containerHtml;
 }
 
 // ==================== SORTING & SEARCHING ====================
@@ -182,8 +297,8 @@ function sortUsersBy(field) {
         bVal = b.unpaidAmount;
         break;
       case 'lastEntry':
-        aVal = a.lastEntry.getTime();
-        bVal = b.lastEntry.getTime();
+        aVal = a.lastEntry ? a.lastEntry.getTime() : 0; // Nutzer ohne Entries ganz unten
+        bVal = b.lastEntry ? b.lastEntry.getTime() : 0;
         break;
       default:
         return 0;
@@ -218,88 +333,263 @@ function searchUsers() {
 
 function showUserDetails(kennung) {
   const user = window.allUsers.find(u => u.kennung === kennung);
-  if (!user) return;
+  if (!user) {
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Benutzer nicht gefunden!');
+    } else {
+      alert('Benutzer nicht gefunden!');
+    }
+    return;
+  }
   
   const modalHtml = `
     <div class="modal-header">
-      <h2>Benutzer Details: ${user.name}</h2>
+      <h2>${user.name}</h2>
       <button class="close-btn" onclick="closeModal()">&times;</button>
     </div>
     <div class="modal-body">
-      <div class="user-details">
-        <div class="detail-section">
-          <h3>Basisinformationen</h3>
-          <p><strong>Name:</strong> ${user.name}</p>
-          <p><strong>FH-Kennung:</strong> ${user.kennung}</p>
-          <p><strong>Erster Druck:</strong> ${user.firstEntry.toLocaleDateString('de-DE')}</p>
-          <p><strong>Letzter Druck:</strong> ${user.lastEntry.toLocaleDateString('de-DE')}</p>
+      <div class="card">
+        <div class="card-body">
+          <div class="detail-row">
+            <span class="detail-label">FH-KENNUNG</span>
+            <span class="detail-value">${user.kennung}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">ERSTER DRUCK</span>
+            <span class="detail-value">${user.firstEntry.toLocaleDateString('de-DE')}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">LETZTER DRUCK</span>
+            <span class="detail-value">${user.lastEntry.toLocaleDateString('de-DE')}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">ANZAHL DRUCKE</span>
+            <span class="detail-value">${user.entries.length}</span>
+          </div>
+          
+          <div class="detail-row highlight-total">
+            <span class="detail-label">GESAMTKOSTEN:</span>
+            <span class="detail-value">${window.formatCurrency(user.totalCost)}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">BEZAHLT</span>
+            <span class="detail-value">${window.formatCurrency(user.paidAmount)}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">OFFEN</span>
+            <span class="detail-value">${window.formatCurrency(user.unpaidAmount)}</span>
+          </div>
         </div>
-        
-        <div class="detail-section">
-          <h3>Statistiken</h3>
-          <p><strong>Anzahl Drucke:</strong> ${user.entries.length}</p>
-          <p><strong>Gesamtkosten:</strong> ${window.formatCurrency(user.totalCost)}</p>
-          <p><strong>Bezahlt:</strong> ${window.formatCurrency(user.paidAmount)}</p>
-          <p><strong>Offen:</strong> ${window.formatCurrency(user.unpaidAmount)}</p>
-        </div>
-        
-        <div class="detail-section">
-          <h3>Letzte Drucke</h3>
-          <div class="recent-entries">
-            ${user.entries.slice(0, 5).map(entry => `
-              <div class="entry-item">
-                <span>${entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt'}</span>
-                <span>${entry.jobName || '3D-Druck'}</span>
-                <span>${window.formatCurrency(entry.totalCost)}</span>
-                <span class="${entry.paid || entry.isPaid ? 'status-paid' : 'status-unpaid'}">
-                  ${entry.paid || entry.isPaid ? 'Bezahlt' : 'Offen'}
-                </span>
-              </div>
-            `).join('')}
+        <div class="card-footer">
+          <div class="button-group">
+            ${ButtonFactory.closeModal()}
           </div>
         </div>
       </div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
-    </div>
   `;
   
-  window.showModal(modalHtml);
+  window.showModalWithContent(modalHtml);
 }
 
 function sendPaymentReminder(kennung) {
   const user = window.allUsers.find(u => u.kennung === kennung);
-  if (!user) return;
-  
-  if (user.unpaidAmount <= 0) {
-    alert('Dieser Benutzer hat keine offenen Beträge.');
+  if (!user) {
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Benutzer nicht gefunden!');
+    } else {
+      alert('Benutzer nicht gefunden!');
+    }
     return;
   }
   
-  const subject = encodeURIComponent(`Zahlungserinnerung FGF 3D-Druck - ${user.name}`);
+  if (user.unpaidAmount <= 0) {
+    if (window.toast && typeof window.toast.info === 'function') {
+      window.toast.info('Dieser Benutzer hat keine offenen Beträge.');
+    } else {
+      alert('Dieser Benutzer hat keine offenen Beträge.');
+    }
+    return;
+  }
+  
+  const subject = encodeURIComponent(`🔔 Zahlungserinnerung - FGF 3D-Druck Service | ${user.name}`);
   const openEntries = user.entries.filter(e => !(e.paid || e.isPaid));
+  const currentDate = new Date().toLocaleDateString('de-DE');
   
-  const body = encodeURIComponent(`Hallo ${user.name},
+  // Professionelle E-Mail Vorlage im Zahlungsnachweis-Stil
+  const body = encodeURIComponent(`Sehr geehrte/r ${user.name},
 
-hiermit möchten wir Sie freundlich an die offenen Beträge für Ihre 3D-Drucke erinnern:
+═════════════════════════════════════════════════════════
+               🟨 PelletTrackr - ZAHLUNGSERINNERUNG 🟨
+═════════════════════════════════════════════════════════
 
-OFFENE DRUCKE:
-${openEntries.map(entry => 
-  `- ${entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt'}: ${entry.jobName || '3D-Druck'} - ${window.formatCurrency(entry.totalCost)}`
-).join('\n')}
+Datum: ${currentDate}
+FH-Kennung: ${user.kennung}
+E-Mail: ${user.email || `${user.kennung}@fh-muenster.de`}
 
-GESAMTBETRAG: ${window.formatCurrency(user.unpaidAmount)}
+─────────────────────────────────────────────────────────
+📋 OFFENE DRUCKAUFTRÄGE
+─────────────────────────────────────────────────────────
 
-Bitte überweisen Sie den Betrag zeitnah oder melden Sie sich bei Fragen.
-
-Mit freundlichen Grüßen
-Ihr FGF 3D-Druck Team
-
----
-Diese E-Mail wurde automatisch generiert von PelletTrackr.`);
+${openEntries.map((entry, index) => {
+  const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
+  const jobName = entry.jobName || '3D-Druck Auftrag';
+  const material = entry.material || 'Material';
+  const amount = entry.materialMenge ? `${entry.materialMenge.toFixed(2)} kg` : 'N/A';
   
-  const mailtoLink = `mailto:${user.kennung}@fh-muenster.de?subject=${subject}&body=${body}`;
+  return `${index + 1}. ${jobName}
+   Datum: ${date}
+   Material: ${material} (${amount})
+   Betrag: ${window.formatCurrency(entry.totalCost)}`;
+}).join('\n\n')}
+
+─────────────────────────────────────────────────────────
+💰 ZUSAMMENFASSUNG
+─────────────────────────────────────────────────────────
+
+Anzahl offener Drucke: ${openEntries.length}
+Bereits bezahlt: ${window.formatCurrency(user.paidAmount)}
+
+🟨 GESAMTBETRAG OFFEN: ${window.formatCurrency(user.unpaidAmount)} 🟨
+
+═════════════════════════════════════════════════════════
+📞 KONTAKT & INFORMATION
+═════════════════════════════════════════════════════════
+
+Bitte überweisen Sie den offenen Betrag zeitnah oder melden 
+Sie sich bei Fragen an das FGF Team.
+
+💡 Zahlungshinweis:
+Nach erfolgter Zahlung erhalten Sie automatisch einen 
+Zahlungsnachweis über das PelletTrackr System.
+
+─────────────────────────────────────────────────────────
+🏢 Mit freundlichen Grüßen
+FGF 3D-Druck Service Team
+Fachhochschule Münster
+
+🤖 Diese E-Mail wurde automatisch generiert von PelletTrackr
+   Generiert am: ${currentDate}
+═════════════════════════════════════════════════════════`);
+  
+  const email = user.email || `${user.kennung}@fh-muenster.de`;
+  const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
+  window.open(mailtoLink, '_blank');
+}
+
+function sendUrgentReminder(kennung) {
+  const user = window.allUsers.find(u => u.kennung === kennung);
+  if (!user) {
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Benutzer nicht gefunden!');
+    } else {
+      alert('Benutzer nicht gefunden!');
+    }
+    return;
+  }
+  
+  if (user.unpaidAmount <= 0) {
+    if (window.toast && typeof window.toast.info === 'function') {
+      window.toast.info('Dieser Benutzer hat keine offenen Beträge.');
+    } else {
+      alert('Dieser Benutzer hat keine offenen Beträge.');
+    }
+    return;
+  }
+  
+  const subject = encodeURIComponent(`🚨 DRINGENDE MAHNUNG - FGF 3D-Druck Service | ${user.name}`);
+  const openEntries = user.entries.filter(e => !(e.paid || e.isPaid));
+  const currentDate = new Date().toLocaleDateString('de-DE');
+  const oldestEntry = openEntries.reduce((oldest, entry) => {
+    const entryDate = entry.timestamp ? entry.timestamp.toDate() : new Date();
+    const oldestDate = oldest.timestamp ? oldest.timestamp.toDate() : new Date();
+    return entryDate < oldestDate ? entry : oldest;
+  }, openEntries[0]);
+  
+  const daysSinceOldest = oldestEntry ? Math.floor((new Date() - (oldestEntry.timestamp ? oldestEntry.timestamp.toDate() : new Date())) / (1000 * 60 * 60 * 24)) : 0;
+  
+  // Dringende Mahnung mit stärkerem Ton
+  const body = encodeURIComponent(`Sehr geehrte/r ${user.name},
+
+🚨═════════════════════════════════════════════════════════🚨
+                   DRINGENDE ZAHLUNGSMAHNUNG
+                    FGF 3D-Druck Service
+🚨═════════════════════════════════════════════════════════🚨
+
+⚠️  WICHTIGER HINWEIS: ZAHLUNGSRÜCKSTAND  ⚠️
+
+Datum: ${currentDate}
+FH-Kennung: ${user.kennung}
+E-Mail: ${user.email || `${user.kennung}@fh-muenster.de`}
+
+─────────────────────────────────────────────────────────
+⏰ ZAHLUNGSRÜCKSTAND INFORMATION
+─────────────────────────────────────────────────────────
+
+Ältester offener Eintrag: ${daysSinceOldest} Tage überfällig
+Erste Zahlungserinnerung: Bereits versendet
+
+📋 OFFENE DRUCKAUFTRÄGE (${openEntries.length} Stück):
+
+${openEntries.map((entry, index) => {
+  const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
+  const jobName = entry.jobName || '3D-Druck Auftrag';
+  const material = entry.material || 'Material';
+  const amount = entry.materialMenge ? `${entry.materialMenge.toFixed(2)} kg` : 'N/A';
+  const daysOld = entry.timestamp ? Math.floor((new Date() - entry.timestamp.toDate()) / (1000 * 60 * 60 * 24)) : 0;
+  
+  return `${index + 1}. ${jobName} (${daysOld} Tage alt)
+   📅 Datum: ${date}
+   🧱 Material: ${material} (${amount})
+   💰 Betrag: ${window.formatCurrency(entry.totalCost)}`;
+}).join('\n\n')}
+
+─────────────────────────────────────────────────────────
+💸 FINANZIELLE ZUSAMMENFASSUNG
+─────────────────────────────────────────────────────────
+
+Bereits bezahlt: ${window.formatCurrency(user.paidAmount)}
+Anzahl offener Drucke: ${openEntries.length}
+
+🚨 GESAMTBETRAG ÜBERFÄLLIG: ${window.formatCurrency(user.unpaidAmount)} 🚨
+
+═════════════════════════════════════════════════════════
+⚡ SOFORTIGE ZAHLUNG ERFORDERLICH ⚡
+═════════════════════════════════════════════════════════
+
+Bitte begleichen Sie den überfälligen Betrag UMGEHEND.
+
+🔴 Bei weiterer Zahlungsverzögerung können folgende 
+   Maßnahmen eingeleitet werden:
+   • Sperrung des 3D-Druck Services
+   • Weiterleitung an die Verwaltung
+   • Zusätzliche Verwaltungsgebühren
+
+💡 So begleichen Sie Ihre Rechnung:
+   1. Sofortige Überweisung des Gesamtbetrags
+   2. Bei Fragen: Kontakt mit dem FGF Team
+   3. Zahlungsnachweis wird automatisch erstellt
+
+─────────────────────────────────────────────────────────
+📞 DRINGENDER KONTAKT
+─────────────────────────────────────────────────────────
+
+Bei Zahlungsschwierigkeiten oder Fragen kontaktieren Sie 
+SOFORT das FGF Team zur Klärung der Situation.
+
+🏢 FGF 3D-Druck Service Team
+   Fachhochschule Münster
+
+🤖 DRINGENDE MAHNUNG - Generiert am: ${currentDate}
+🚨═════════════════════════════════════════════════════════🚨`);
+  
+  const email = user.email || `${user.kennung}@fh-muenster.de`;
+  const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
   window.open(mailtoLink, '_blank');
 }
 
@@ -327,14 +617,22 @@ async function deleteUser(kennung) {
     
     await batch.commit();
     
-    alert('Benutzer und alle zugehörigen Daten wurden gelöscht.');
+    if (window.toast && typeof window.toast.success === 'function') {
+      window.toast.success('Benutzer und alle zugehörigen Daten wurden gelöscht.');
+    } else {
+      alert('Benutzer und alle zugehörigen Daten wurden gelöscht.');
+    }
     loadUsersForManagement();
     window.loadAdminStats();
     window.loadAllEntries();
     
   } catch (error) {
     console.error('Fehler beim Löschen des Benutzers:', error);
-    alert('Fehler beim Löschen: ' + error.message);
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Fehler beim Löschen: ' + error.message);
+    } else {
+      alert('Fehler beim Löschen: ' + error.message);
+    }
   }
 }
 
@@ -345,7 +643,29 @@ async function editUser(kennung) {
   
   const user = window.allUsers.find(u => u.kennung === kennung);
   if (!user) {
-    alert('Benutzer nicht gefunden!');
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Benutzer nicht gefunden!');
+    } else {
+      alert('Benutzer nicht gefunden!');
+    }
+    return;
+  }
+  
+  // Erst das User-Manager-Modal schließen (wie bei Material/Masterbatch)
+  document.getElementById('userManager').classList.remove('active');
+  
+  // Direkt das Edit-Modal öffnen
+  showEditUserForm(kennung);
+}
+
+async function showEditUserForm(kennung) {
+  const user = window.allUsers.find(u => u.kennung === kennung);
+  if (!user) {
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Benutzer nicht gefunden!');
+    } else {
+      alert('Benutzer nicht gefunden!');
+    }
     return;
   }
   
@@ -353,27 +673,31 @@ async function editUser(kennung) {
   
   const modalHtml = `
     <div class="modal-header">
-      <h3>Benutzer bearbeiten</h3>
-      <button class="close-btn" onclick="closeModal()">&times;</button>
+      <h2>${user.name} - Bearbeiten</h2>
+      <button class="close-btn" onclick="closeEditUserModal()">&times;</button>
     </div>
     <div class="modal-body">
-      <div class="form-group">
-        <label class="form-label">Name</label>
-        <input type="text" id="editUserName" class="form-input" value="${user.name}" required>
+      <div class="card">
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Vollständiger Name</label>
+            <input type="text" id="editUserName" class="form-input" value="${user.name}" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">FH-Kennung</label>
+            <input type="text" id="editUserKennung" class="form-input" value="${user.kennung}" required>
+            <small>Achtung: Änderung der Kennung aktualisiert alle zugehörigen Einträge!</small>
+          </div>
+          <div class="form-group">
+            <label class="form-label">E-Mail Adresse</label>
+            <input type="email" id="editUserEmail" class="form-input" value="${currentEmail}">
+          </div>
+        </div>
+        <div class="card-footer">
+          ${ButtonFactory.primary('ÄNDERUNGEN SPEICHERN', `updateUser('${kennung}')`)}
+          <button class="btn btn-secondary" onclick="closeEditUserModal()">Abbrechen</button>
+        </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">FH-Kennung</label>
-        <input type="text" id="editUserKennung" class="form-input" value="${user.kennung}" required>
-        <small>Achtung: Änderung der Kennung aktualisiert alle verknüpften Einträge!</small>
-      </div>
-      <div class="form-group">
-        <label class="form-label">E-Mail</label>
-        <input type="email" id="editUserEmail" class="form-input" value="${currentEmail}">
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
-      <button class="btn btn-primary" onclick="updateUser('${kennung}')">Speichern</button>
     </div>
   `;
   
@@ -386,7 +710,21 @@ async function updateUser(oldKennung) {
   const newEmail = document.getElementById('editUserEmail').value.trim();
   
   if (!newName || !newKennung) {
-    alert('Name und FH-Kennung sind erforderlich!');
+    if (window.toast && typeof window.toast.warning === 'function') {
+      window.toast.warning('Name und FH-Kennung sind erforderlich!');
+    } else {
+      alert('Name und FH-Kennung sind erforderlich!');
+    }
+    return;
+  }
+  
+  // Prüfen ob neue Kennung bereits existiert (außer bei unveränderter Kennung)
+  if (newKennung !== oldKennung && window.allUsers && window.allUsers.find(u => u.kennung === newKennung)) {
+    if (window.toast && typeof window.toast.warning === 'function') {
+      window.toast.warning('Diese FH-Kennung wird bereits verwendet!');
+    } else {
+      alert('Diese FH-Kennung wird bereits verwendet!');
+    }
     return;
   }
   
@@ -430,15 +768,24 @@ async function updateUser(oldKennung) {
     
     await batch.commit();
     
-    alert('Benutzer erfolgreich aktualisiert!');
-    window.closeModal();
-    loadUsersForManagement();
-    window.loadAdminStats();
-    window.loadAllEntries();
+    if (window.toast && typeof window.toast.success === 'function') {
+      window.toast.success('Benutzer erfolgreich aktualisiert!');
+    } else {
+      alert('Benutzer erfolgreich aktualisiert!');
+    }
+    closeEditUserModal(); // Verwende die spezielle Close-Funktion
+    
+    // Admin Dashboard aktualisieren falls verfügbar
+    if (window.loadAdminStats) window.loadAdminStats();
+    if (window.loadAllEntries) window.loadAllEntries();
     
   } catch (error) {
     console.error('Fehler beim Aktualisieren des Benutzers:', error);
-    alert('Fehler beim Speichern: ' + error.message);
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Fehler beim Speichern: ' + error.message);
+    } else {
+      alert('Fehler beim Speichern: ' + error.message);
+    }
   }
 }
 
@@ -453,48 +800,62 @@ function showAddUserDialog() {
       <button class="close-btn" onclick="closeModal()">&times;</button>
     </div>
     <div class="modal-body">
-      <div class="form-group">
-        <label class="form-label">Name</label>
-        <input type="text" id="newUserName" class="form-input" required>
+      <div class="card">
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Vollständiger Name</label>
+            <input type="text" id="newUserName" class="form-input" placeholder="Vorname Nachname" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">FH-Kennung</label>
+            <input type="text" id="newUserKennung" class="form-input" placeholder="z.B. mw123456" required>
+            <div id="kennungValidation" class="form-hint">Kennung verfügbar</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">E-Mail Adresse</label>
+            <input type="email" id="newUserEmail" class="form-input" placeholder="wird automatisch ausgefüllt">
+            <small class="form-hint">Optional - Standard: kennung@fh-muenster.de</small>
+          </div>
+        </div>
+        <div class="card-footer">
+          <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+          <button class="btn btn-primary" onclick="createNewUser()">Benutzer hinzufügen</button>
+        </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">FH-Kennung</label>
-        <input type="text" id="newUserKennung" class="form-input" required>
-        <div id="kennungCheck" style="margin-top: 8px;"></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">E-Mail</label>
-        <input type="email" id="newUserEmail" class="form-input">
-        <small>Optional - Standard: kennung@fh-muenster.de</small>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
-      <button class="btn btn-primary" onclick="createNewUser()">Hinzufügen</button>
     </div>
   `;
   
   window.showModal(modalHtml);
   
-  // Event Listener für Kennung-Validierung und Auto-Email-Generierung
-  document.getElementById('newUserKennung').addEventListener('input', function() {
-    const kennung = this.value.trim().toLowerCase();
-    const checkDiv = document.getElementById('kennungCheck');
-    const emailField = document.getElementById('newUserEmail');
+  // Email Auto-Generation nach Modal-Rendering aktivieren
+  setTimeout(() => {
+    const kennungInput = document.getElementById('newUserKennung');
+    const emailInput = document.getElementById('newUserEmail');
+    const validationDiv = document.getElementById('kennungValidation');
     
-    // Auto-generate email when kennung changes
-    if (kennung && !emailField.value) {
-      emailField.value = `${kennung}@fh-muenster.de`;
+    if (kennungInput && emailInput) {
+      // Auto-generierung bei Eingabe
+      kennungInput.addEventListener('input', function() {
+        const kennung = this.value.trim().toLowerCase();
+        if (kennung) {
+          emailInput.value = `${kennung}@fh-muenster.de`;
+          
+          // Prüfen ob Kennung bereits existiert
+          if (window.allUsers && window.allUsers.find(u => u.kennung === kennung)) {
+            validationDiv.style.color = '#ff0000';
+            validationDiv.textContent = '❌ Kennung bereits vergeben';
+          } else {
+            validationDiv.style.color = '#00aa00';
+            validationDiv.textContent = '✅ Kennung verfügbar';
+          }
+        } else {
+          emailInput.value = '';
+          validationDiv.style.color = '#666';
+          validationDiv.textContent = 'Kennung verfügbar';
+        }
+      });
     }
-    
-    if (kennung && window.allUsers.find(u => u.kennung === kennung)) {
-      checkDiv.innerHTML = '<span style="color: #dc3545;">Diese Kennung existiert bereits!</span>';
-    } else if (kennung) {
-      checkDiv.innerHTML = '<span style="color: #28a745;">✅ Kennung verfügbar</span>';
-    } else {
-      checkDiv.innerHTML = '';
-    }
-  });
+  }, 100);
 }
 
 async function createNewUser() {
@@ -503,34 +864,82 @@ async function createNewUser() {
   const email = document.getElementById('newUserEmail').value.trim();
   
   if (!name || !kennung) {
-    alert('Name und FH-Kennung sind erforderlich!');
+    if (window.toast && typeof window.toast.warning === 'function') {
+      window.toast.warning('Name und FH-Kennung sind erforderlich!');
+    } else {
+      alert('Name und FH-Kennung sind erforderlich!');
+    }
     return;
   }
   
   // Prüfen ob Kennung bereits existiert
-  if (window.allUsers.find(u => u.kennung === kennung)) {
-    alert('Diese FH-Kennung wird bereits verwendet!');
+  if (window.allUsers && window.allUsers.find(u => u.kennung === kennung)) {
+    if (window.toast && typeof window.toast.warning === 'function') {
+      window.toast.warning('Diese FH-Kennung wird bereits verwendet!');
+    } else {
+      alert('Diese FH-Kennung wird bereits verwendet!');
+    }
     return;
   }
   
   try {
     // User-Dokument erstellen
-    await window.db.collection('users').add({
+    const userRef = await window.db.collection('users').add({
       name: name,
       kennung: kennung,
       email: email || `${kennung}@fh-muenster.de`,
-      createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
+      createdAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
     });
     
-    alert('Benutzer erfolgreich hinzugefügt!');
+    console.log('Neuer Benutzer erstellt mit ID:', userRef.id);
+    if (window.toast && typeof window.toast.success === 'function') {
+      window.toast.success('Benutzer erfolgreich hinzugefügt!');
+    } else {
+      alert('Benutzer erfolgreich hinzugefügt!');
+    }
     window.closeModal();
+    
+    // Nutzer-Liste neu laden
     loadUsersForManagement();
     
   } catch (error) {
     console.error('Fehler beim Erstellen des Benutzers:', error);
-    alert('Fehler beim Erstellen: ' + error.message);
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error('Fehler beim Erstellen: ' + error.message);
+    } else {
+      alert('Fehler beim Erstellen: ' + error.message);
+    }
   }
 }
+
+// ==================== SPECIAL CLOSE FUNCTIONS ====================
+
+// Close-Funktion für Edit-User-Modal, die zurück zum User-Manager führt
+function closeEditUserModal() {
+  window.closeModal();
+  // Nach dem Schließen des Edit-Modals, User-Manager wieder öffnen
+  setTimeout(() => {
+    document.getElementById('userManager').classList.add('active');
+    loadUsersForManagement();
+  }, 100);
+}
+
+// ==================== GLOBAL EXPORTS ====================
+// Funktionen global verfügbar machen
+window.showAddUserDialog = showAddUserDialog;
+window.editUser = editUser;
+window.showUserDetails = showUserDetails;
+window.sendPaymentReminder = sendPaymentReminder;
+window.sendUrgentReminder = sendUrgentReminder;
+window.deleteUser = deleteUser;
+window.createNewUser = createNewUser;
+window.showUserManager = showUserManager;
+window.closeUserManager = closeUserManager;
+window.loadUsersForManagement = loadUsersForManagement;
+window.sortUsersBy = sortUsersBy;
+window.showEditUserForm = showEditUserForm; // Export the function
+window.closeEditUserModal = closeEditUserModal;
 
 // ==================== USER MANAGEMENT MODULE ====================
 

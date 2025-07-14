@@ -93,7 +93,82 @@
 .data-table .actions .btn,
 .data-table .actions .btn-small {
   flex-shrink: 0; /* Buttons behalten ihre Größe */
-  min-width: auto;
+  min-width: 110px;
+  min-height: 44px; /* Better touch targets on desktop */
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 2px solid #000000;
+  border-radius: 0;
+  background: white;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.data-table .actions .btn:hover,
+.data-table .actions .btn-small:hover {
+  background: #000000;
+  color: white;
+}
+
+.data-table .actions .btn-primary {
+  background: #000000;
+  color: white;
+}
+
+.data-table .actions .btn-primary:hover {
+  background: #333333;
+}
+
+.data-table .actions .btn-success {
+  background: #4CAF50;
+  border-color: #4CAF50;
+  color: white;
+}
+
+.data-table .actions .btn-success:hover {
+  background: #45a049;
+  border-color: #45a049;
+}
+
+.data-table .actions .btn-danger {
+  background: #FF5722;
+  border-color: #FF5722;
+  color: white;
+}
+
+.data-table .actions .btn-danger:hover {
+  background: #e64a19;
+  border-color: #e64a19;
+}
+
+.data-table .actions .btn-nachweis {
+  background: #FFEB00;
+  border-color: #000000;
+  color: #000000;
+}
+
+.data-table .actions .btn-nachweis:hover {
+  background: #e6d200;
+}
+
+.data-table .actions .btn-tertiary {
+  background: white;
+  color: #000000;
+  border: 2px solid #000000;
+}
+
+.data-table .actions .btn-tertiary:hover {
+  border-color: #000000;
+  color: #000000;
+  background: #f8f8f8;
 }
 
 /* Responsive Card Layout für Mobile */
@@ -333,15 +408,17 @@
   
   .data-table .actions {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column; /* Stack buttons vertically on mobile */
     gap: 12px;
     justify-content: flex-start;
+    width: 100%;
   }
   
   .data-table .actions .btn {
     flex: 1;
     min-width: 120px;
-    padding: 12px 16px;
+    min-height: 48px; /* Improved touch target size for mobile */
+    padding: 14px 16px;
     font-size: 14px;
     font-weight: 600;
     border: 2px solid #000000;
@@ -352,53 +429,79 @@
     letter-spacing: 0.5px;
     cursor: pointer;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
   }
   
   .data-table .actions .btn:hover {
     background: #000000;
     color: white;
   }
-  
-  .data-table .actions .btn-primary {
+   .data-table .actions .btn-primary {
     background: #000000;
     color: white;
   }
-  
+
   .data-table .actions .btn-primary:hover {
     background: #333333;
   }
-  
+
   .data-table .actions .btn-success {
-    background: #28a745;
-    border-color: #28a745;
+    background: #4CAF50; /* Harmonisches Grün */
+    border-color: #4CAF50;
     color: white;
   }
-  
+
   .data-table .actions .btn-success:hover {
-    background: #1e7e34;
-    border-color: #1e7e34;
+    background: #45a049;
+    border-color: #45a049;
   }
-  
+
   .data-table .actions .btn-danger {
-    background: #dc3545;
-    border-color: #dc3545;
+    background: #FF5722; /* Harmonisches Orange-Rot */
+    border-color: #FF5722;
     color: white;
   }
-  
+
   .data-table .actions .btn-danger:hover {
-    background: #c82333;
-    border-color: #c82333;
+    background: #e64a19;
+    border-color: #e64a19;
   }
-  
+
+  .data-table .actions .btn-undo {
+    background: #757575; /* Harmonisches Grau für Rückgängig */
+    border-color: #757575;
+    color: white;
+  }
+
+  .data-table .actions .btn-undo:hover {
+    background: #616161;
+    border-color: #616161;
+  }
+
   /* Nachweis Button */
   .data-table .actions .btn-nachweis {
     background: #FFEB00;
     border-color: #000000;
     color: #000000;
   }
-  
+
   .data-table .actions .btn-nachweis:hover {
     background: #e6d200;
+  }
+
+  .data-table .actions .btn-tertiary {
+    background: white;
+    color: #000000;
+    border: 2px solid #000000;
+  }
+
+  .data-table .actions .btn-tertiary:hover {
+    border-color: #000000;
+    color: #000000;
+    background: #f8f8f8;
   }
 }
 
@@ -486,6 +589,17 @@
   letter-spacing: 0.5px;
 }
 
+.status-new {
+  background: #e3f2fd;
+  color: #0d47a1;
+  padding: 6px 12px;
+  border-radius: 0; /* Scharfe Kanten */
+  font-weight: 500;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 /* Action Columns */
 .actions {
   display: flex;
@@ -565,47 +679,47 @@
 }
 
 .data-table td.actions .btn-tertiary {
-  background: #f8f9fa;
-  border-color: #dee2e6;
-  color: #495057;
+  background: white;
+  border-color: #000000;
+  color: #000000;
 }
 
 .data-table td.actions .btn-tertiary:hover {
-  background: #e9ecef;
-  border-color: #adb5bd;
+  background: #f8f8f8;
+  border-color: #000000;
 }
 
 .data-table td.actions .btn-success {
-  background: #28a745;
-  border-color: #28a745;
+  background: #4CAF50;
+  border-color: #4CAF50;
   color: white;
 }
 
 .data-table td.actions .btn-success:hover {
-  background: #1e7e34;
-  border-color: #1e7e34;
+  background: #45a049;
+  border-color: #45a049;
 }
 
 .data-table td.actions .btn-danger {
-  background: #dc3545;
-  border-color: #dc3545;
+  background: #FF5722;
+  border-color: #FF5722;
   color: white;
 }
 
 .data-table td.actions .btn-danger:hover {
-  background: #c82333;
-  border-color: #c82333;
+  background: #e64a19;
+  border-color: #e64a19;
 }
 
 .data-table td.actions .btn-warning {
-  background: #ffc107;
-  border-color: #ffc107;
+  background: #FFEB00;
+  border-color: #000000;
   color: #000000;
 }
 
 .data-table td.actions .btn-warning:hover {
-  background: #e0a800;
-  border-color: #e0a800;
+  background: #e6d200;
+  border-color: #000000;
 }
 
 .data-table td.actions .btn-nachweis {
@@ -754,47 +868,47 @@
 }
 
 .actions-cell .actions .btn-tertiary {
-  background: #f8f9fa;
-  border-color: #dee2e6;
-  color: #495057;
+  background: white;
+  border-color: #000000;
+  color: #000000;
 }
 
 .actions-cell .actions .btn-tertiary:hover {
-  background: #e9ecef;
-  border-color: #adb5bd;
+  background: #f8f8f8;
+  border-color: #000000;
 }
 
 .actions-cell .actions .btn-success {
-  background: #28a745;
-  border-color: #28a745;
+  background: #4CAF50;
+  border-color: #4CAF50;
   color: white;
 }
 
 .actions-cell .actions .btn-success:hover {
-  background: #1e7e34;
-  border-color: #1e7e34;
+  background: #45a049;
+  border-color: #45a049;
 }
 
 .actions-cell .actions .btn-danger {
-  background: #dc3545;
-  border-color: #dc3545;
+  background: #FF5722;
+  border-color: #FF5722;
   color: white;
 }
 
 .actions-cell .actions .btn-danger:hover {
-  background: #c82333;
-  border-color: #c82333;
+  background: #e64a19;
+  border-color: #e64a19;
 }
 
 .actions-cell .actions .btn-warning {
-  background: #ffc107;
-  border-color: #ffc107;
+  background: #FFEB00;
+  border-color: #000000;
   color: #000000;
 }
 
 .actions-cell .actions .btn-warning:hover {
-  background: #e0a800;
-  border-color: #e0a800;
+  background: #e6d200;
+  border-color: #000000;
 }
 
 .actions-cell .actions .btn-nachweis {
