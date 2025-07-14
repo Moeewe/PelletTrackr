@@ -211,6 +211,18 @@
   gap: 12px;
 }
 
+/* Ensure Asset Management buttons are clickable */
+.control-buttons .btn {
+  pointer-events: auto;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+}
+
+.control-section[style*="display: none"] {
+  display: none !important;
+}
+
 /* Login Form Specific Styles */
 .login-form {
   width: 100%;
