@@ -335,11 +335,11 @@ function toggleDepositAmount() {
 }
 
 /**
- * Close add equipment form and return to equipment manager
+ * Close add equipment form
  */
 function closeAddEquipmentForm() {
-    // Return to equipment manager
-    showEquipmentManager();
+    // Close the modal properly
+    closeModal();
 }
 
 /**
@@ -380,8 +380,8 @@ async function saveEquipment() {
         await window.db.collection('equipment').add(equipmentData);
         showToast('Equipment erfolgreich hinzugefügt', 'success');
         
-        // Return to equipment manager
-        showEquipmentManager();
+        // Close the modal properly
+        closeModal();
         
     } catch (error) {
         console.error('Error saving equipment:', error);
