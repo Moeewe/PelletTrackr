@@ -5,7 +5,7 @@
 
 // Global order state
 let materialOrders = [];
-let currentOrderTab = 'requests';
+let currentOrderTab = 'wishes';
 let materialOrdersListener = null;
 
 /**
@@ -123,19 +123,38 @@ async function submitMaterialRequest() {
 function showMaterialOrders() {
     const modalContent = `
         <div class="modal-header">
-            <h3>Material-Bestellungen verwalten</h3>
+            <h3>Bestellungen verwalten</h3>
             <button class="close-btn" onclick="closeModal()">&times;</button>
         </div>
         <div class="modal-body">
             <div class="card">
                 <div class="card-body">
                     <div class="order-tabs">
-                        <button class="tab-btn active" onclick="showOrderTab('requests')">Anfragen</button>
-                        <button class="tab-btn" onclick="showOrderTab('shopping')">Einkaufsliste</button>
-                        <button class="tab-btn" onclick="showOrderTab('history')">Verlauf</button>
+                        <button class="tab-btn active" onclick="showOrderTab('wishes')">
+                            Material-Wünsche
+                            <span class="badge" id="wishesCounter" style="display: none;">0</span>
+                        </button>
+                        <button class="tab-btn" onclick="showOrderTab('requests')">
+                            Bestellanfragen
+                            <span class="badge" id="requestsCounter" style="display: none;">0</span>
+                        </button>
+                        <button class="tab-btn" onclick="showOrderTab('shopping')">
+                            Einkaufsliste
+                            <span class="badge" id="shoppingCounter" style="display: none;">0</span>
+                        </button>
+                        <button class="tab-btn" onclick="showOrderTab('history')">
+                            Verlauf
+                            <span class="badge" id="historyCounter" style="display: none;">0</span>
+                        </button>
                     </div>
                     
-                    <div id="requests" class="tab-content active">
+                    <div id="wishes" class="tab-content active">
+                        <div id="materialWishesContent">
+                            <div class="loading">Material-Wünsche werden geladen...</div>
+                        </div>
+                    </div>
+                    
+                    <div id="requests" class="tab-content">
                         <div id="orderRequestsContent">
                             <div class="loading">Bestellanfragen werden geladen...</div>
                         </div>
@@ -156,7 +175,7 @@ function showMaterialOrders() {
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-primary" onclick="showMaterialRequestForm()">Material anfragen</button>
+            <button class="btn btn-primary" onclick="showMaterialRequestForm()">Material-Wunsch hinzufügen</button>
             <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
         </div>
     `;
@@ -277,6 +296,9 @@ function showOrderTab(tab) {
  */
 function renderTabContent(tab) {
     switch (tab) {
+        case 'wishes':
+            renderMaterialWishes();
+            break;
         case 'requests':
             renderOrderRequests();
             break;
@@ -296,14 +318,21 @@ function renderTabContent(tab) {
  * Update tab counters with current counts
  */
 function updateTabCounters() {
+    const wishesCount = materialOrders.filter(order => order.type === 'request').length;
     const requestsCount = materialOrders.filter(order => order.type === 'request' && order.status === 'pending').length;
     const shoppingCount = materialOrders.filter(order => order.status === 'approved').length;
-    const ordersCount = materialOrders.filter(order => order.status === 'purchased').length;
+    const historyCount = materialOrders.filter(order => order.status === 'purchased' || order.status === 'delivered' || order.status === 'rejected').length;
     
     // Update counter elements
+    const wishesCounter = document.getElementById('wishesCounter');
     const requestsCounter = document.getElementById('requestsCounter');
     const shoppingCounter = document.getElementById('shoppingCounter');
-    const ordersCounter = document.getElementById('ordersCounter');
+    const historyCounter = document.getElementById('historyCounter');
+    
+    if (wishesCounter) {
+        wishesCounter.textContent = wishesCount;
+        wishesCounter.style.display = wishesCount > 0 ? 'inline-block' : 'none';
+    }
     
     if (requestsCounter) {
         requestsCounter.textContent = requestsCount;
@@ -315,9 +344,9 @@ function updateTabCounters() {
         shoppingCounter.style.display = shoppingCount > 0 ? 'inline-block' : 'none';
     }
     
-    if (ordersCounter) {
-        ordersCounter.textContent = ordersCount;
-        ordersCounter.style.display = ordersCount > 0 ? 'inline-block' : 'none';
+    if (historyCounter) {
+        historyCounter.textContent = historyCount;
+        historyCounter.style.display = historyCount > 0 ? 'inline-block' : 'none';
     }
 }
 
@@ -366,6 +395,68 @@ function renderOrderRequests() {
                             Löschen
                         </button>
                     </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+/**
+ * Render material wishes tab
+ */
+function renderMaterialWishes() {
+    const wishes = materialOrders.filter(order => order.type === 'request');
+    const container = document.getElementById('materialWishesContent');
+    
+    if (wishes.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <p>Keine Material-Wünsche vorhanden.</p>
+                <button class="btn btn-primary" onclick="showMaterialRequestForm()">Material-Wunsch hinzufügen</button>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = `
+        <div class="material-wishes-header">
+            <h4>Material-Wünsche (${wishes.length})</h4>
+            <button class="btn btn-primary" onclick="showMaterialRequestForm()">Material-Wunsch hinzufügen</button>
+        </div>
+        <div class="material-wishes-list">
+            ${wishes.map(wish => `
+                <div class="material-wish-item ${wish.status === 'pending' ? 'pending' : wish.status === 'approved' ? 'approved' : 'rejected'}">
+                    <div class="wish-header">
+                        <div class="wish-material">
+                            <strong>${wish.materialName || 'Unbekanntes Material'}</strong>
+                            ${wish.manufacturer ? `<span class="manufacturer">${wish.manufacturer}</span>` : ''}
+                        </div>
+                        <div class="wish-status status-${wish.status}">
+                            ${getStatusText(wish.status)}
+                        </div>
+                    </div>
+                    <div class="wish-details">
+                        <div class="wish-info">
+                            <span class="wish-user">von ${wish.userName || 'Unbekannt'}</span>
+                            <span class="wish-date">${wish.createdAt ? wish.createdAt.toLocaleDateString('de-DE') : 'Unbekannt'}</span>
+                            <span class="wish-priority priority-${wish.priority}">${getPriorityText(wish.priority)}</span>
+                        </div>
+                        <div class="wish-reason">${wish.reason || 'Keine Begründung'}</div>
+                        ${wish.quantity ? `<div class="wish-quantity">Menge: ${wish.quantity}</div>` : ''}
+                    </div>
+                    ${window.currentUser?.isAdmin ? `
+                        <div class="wish-actions">
+                            <button class="btn btn-success btn-small" onclick="approveOrderRequest('${wish.id}')">
+                                Genehmigen
+                            </button>
+                            <button class="btn btn-warning btn-small" onclick="rejectOrderRequest('${wish.id}')">
+                                Ablehnen
+                            </button>
+                            <button class="btn btn-danger btn-small" onclick="deleteOrderRequest('${wish.id}')">
+                                Löschen
+                            </button>
+                        </div>
+                    ` : ''}
                 </div>
             `).join('')}
         </div>
@@ -436,33 +527,60 @@ function renderShoppingList() {
 }
 
 /**
- * Render order history (purchased items)
+ * Render order history with deletion functionality
  */
 function renderOrderHistory() {
     const container = document.getElementById('orderHistoryContent');
-    const orders = materialOrders.filter(order => order.status === 'purchased');
+    const orders = materialOrders.filter(order => order.status === 'purchased' || order.status === 'delivered' || order.status === 'rejected');
     
     if (orders.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <p>Keine eingekauften Bestellungen vorhanden.</p>
+                <p>Keine Bestellungen im Verlauf vorhanden.</p>
             </div>
         `;
         return;
     }
     
-    container.innerHTML = orders.map(order => `
-        <div class="order-request purchased">
-            <div class="order-header">
-                <div class="order-user">${order.materialName || 'Unbekanntes Material'}</div>
-                <div class="order-date">${order.purchasedAt ? order.purchasedAt.toDate().toLocaleDateString() : 'Unbekanntes Datum'}</div>
-            </div>
-            ${order.manufacturer ? `<div class="order-manufacturer">Hersteller: ${order.manufacturer}</div>` : ''}
-            <div class="order-material">Menge: ${order.quantity || 'Nicht angegeben'}</div>
-            <div class="order-reason">Eingekauft von: ${order.userName || 'Unbekannt'}</div>
-            <div class="order-priority">Ursprünglich angefragt: ${order.createdAt ? order.createdAt.toLocaleDateString() : 'Unbekannt'}</div>
+    container.innerHTML = `
+        <div class="history-header">
+            <h4>Bestellverlauf (${orders.length})</h4>
+            ${window.currentUser?.isAdmin ? `<button class="btn btn-warning btn-small" onclick="clearAllHistory()">Verlauf leeren</button>` : ''}
         </div>
-    `).join('');
+        <div class="history-list">
+            ${orders.map(order => `
+                <div class="history-item status-${order.status}">
+                    <div class="history-header">
+                        <div class="history-material">
+                            <strong>${order.materialName || 'Unbekanntes Material'}</strong>
+                            ${order.manufacturer ? `<span class="manufacturer">${order.manufacturer}</span>` : ''}
+                        </div>
+                        <div class="history-status status-${order.status}">
+                            ${getStatusText(order.status)}
+                        </div>
+                        ${window.currentUser?.isAdmin ? `
+                            <div class="history-actions">
+                                <button class="btn btn-danger btn-small" onclick="deleteHistoryItem('${order.id}')">
+                                    Löschen
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="history-details">
+                        <div class="history-info">
+                            <span class="history-user">von ${order.userName || 'Unbekannt'}</span>
+                            <span class="history-date">erstellt: ${order.createdAt ? order.createdAt.toLocaleDateString('de-DE') : 'Unbekannt'}</span>
+                            ${order.purchasedAt ? `<span class="history-purchased">eingekauft: ${order.purchasedAt.toDate().toLocaleDateString('de-DE')}</span>` : ''}
+                            ${order.deliveredAt ? `<span class="history-delivered">geliefert: ${order.deliveredAt.toDate().toLocaleDateString('de-DE')}</span>` : ''}
+                        </div>
+                        <div class="history-reason">${order.reason || 'Keine Begründung'}</div>
+                        ${order.quantity ? `<div class="history-quantity">Menge: ${order.quantity}</div>` : ''}
+                        <div class="history-priority">Priorität: ${getPriorityText(order.priority)}</div>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
 }
 
 /**
@@ -603,6 +721,74 @@ async function cancelOrder(requestId) {
     } catch (error) {
         console.error('Error cancelling order:', error);
         toast.error('Fehler beim Stornieren');
+    }
+}
+
+/**
+ * Delete single history item
+ */
+async function deleteHistoryItem(orderId) {
+    if (!window.currentUser?.isAdmin) {
+        toast.error('Keine Berechtigung zum Löschen');
+        return;
+    }
+    
+    const confirmed = await toast.confirm(
+        'Möchten Sie diesen Eintrag wirklich aus dem Verlauf löschen?',
+        'Eintrag löschen',
+        'Abbrechen'
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+        await window.db.collection('materialOrders').doc(orderId).delete();
+        toast.success('Eintrag aus dem Verlauf gelöscht');
+        
+    } catch (error) {
+        console.error('Error deleting history item:', error);
+        toast.error('Fehler beim Löschen des Eintrags');
+    }
+}
+
+/**
+ * Clear all history items
+ */
+async function clearAllHistory() {
+    if (!window.currentUser?.isAdmin) {
+        toast.error('Keine Berechtigung zum Löschen');
+        return;
+    }
+    
+    const confirmed = await toast.confirm(
+        'Möchten Sie wirklich den gesamten Bestellverlauf löschen?\n\nDieser Vorgang kann nicht rückgängig gemacht werden.',
+        'Verlauf leeren',
+        'Abbrechen'
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+        const historyItems = materialOrders.filter(order => 
+            order.status === 'purchased' || order.status === 'delivered' || order.status === 'rejected'
+        );
+        
+        if (historyItems.length === 0) {
+            toast.info('Kein Verlauf zum Löschen vorhanden');
+            return;
+        }
+        
+        const batch = window.db.batch();
+        historyItems.forEach(item => {
+            batch.delete(window.db.collection('materialOrders').doc(item.id));
+        });
+        
+        await batch.commit();
+        toast.success(`${historyItems.length} Einträge aus dem Verlauf gelöscht`);
+        
+    } catch (error) {
+        console.error('Error clearing history:', error);
+        toast.error('Fehler beim Leeren des Verlaufs');
     }
 }
 

@@ -5,34 +5,31 @@
 
 // Global notification state
 let notificationListeners = [];
+// Global notification counts
 let notificationCounts = {
-    problemReports: 0,
-    equipmentRequests: 0,
+    paymentRequests: 0,
     materialRequests: 0,
-    scheduleRequests: 0,
-    brokenPrinters: 0
+    brokenPrinters: 0,
+    problemReports: 0,
+    printerStatusChanges: 0,
+    printerDefectReports: 0
 };
 
 /**
- * Initialize notification badges
+ * Initialize all notification badges
  */
-function initializeNotificationBadges() {
-    console.log('🔔 Initializing notification badges...');
-    
-    // Only initialize for admin users
-    if (!window.currentUser || !window.currentUser.isAdmin) {
-        console.log('🔔 Not admin user, skipping notification badges');
-        return;
+function initNotificationBadges() {
+    try {
+        setupPaymentRequestsBadge();
+        setupMaterialRequestsBadge();
+        setupBrokenPrintersBadge();
+        setupProblemReportsBadge();
+        setupPrinterStatusChangesBadge();
+        setupPrinterDefectReportsBadge();
+        console.log('✅ Notification badges initialized');
+    } catch (error) {
+        console.error('❌ Error initializing notification badges:', error);
     }
-    
-    // Setup all notification listeners
-    setupProblemReportsBadge();
-    setupEquipmentRequestsBadge();
-    setupMaterialRequestsBadge();
-    setupScheduleRequestsBadge();
-    setupBrokenPrintersBadge();
-    
-    console.log('✅ Notification badges initialized');
 }
 
 /**
@@ -92,24 +89,7 @@ function setupMaterialRequestsBadge() {
     notificationListeners.push(listener);
 }
 
-/**
- * Setup schedule requests badge
- */
-function setupScheduleRequestsBadge() {
-    if (!window.db) {
-        setTimeout(setupScheduleRequestsBadge, 500);
-        return;
-    }
-    
-    const listener = window.db.collection('scheduleRequests')
-        .where('status', '==', 'pending')
-        .onSnapshot((snapshot) => {
-            notificationCounts.scheduleRequests = snapshot.size;
-            updateBadge('schedule-requests', notificationCounts.scheduleRequests);
-        });
-    
-    notificationListeners.push(listener);
-}
+
 
 /**
  * Setup broken printers badge
@@ -210,17 +190,6 @@ function showAdminNotificationOverview() {
                     </div>
                 ` : ''}
                 
-                ${notificationCounts.scheduleRequests > 0 ? `
-                    <div class="notification-item" onclick="showScheduleRequests()">
-                        <div class="notification-icon">📅</div>
-                        <div class="notification-content">
-                            <h4>Terminanfragen</h4>
-                            <p>${notificationCounts.scheduleRequests} neue Terminanfragen</p>
-                        </div>
-                        <div class="notification-badge">${notificationCounts.scheduleRequests}</div>
-                    </div>
-                ` : ''}
-                
                 ${notificationCounts.brokenPrinters > 0 ? `
                     <div class="notification-item" onclick="showPrinterManager()">
                         <div class="notification-icon">🖨️</div>
@@ -293,64 +262,6 @@ function showMaterialRequests() {
                                         Genehmigen
                                     </button>
                                     <button class="btn btn-danger btn-sm" onclick="processMaterialRequest('${request.id}', 'rejected')">
-                                        Ablehnen
-                                    </button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
-                </div>
-            `;
-            
-            showModalWithContent(modalContent);
-        });
-}
-
-/**
- * Show schedule requests management
- */
-function showScheduleRequests() {
-    if (!window.db) return;
-    
-    window.db.collection('scheduleRequests')
-        .where('status', '==', 'pending')
-        .orderBy('createdAt', 'desc')
-        .get()
-        .then((snapshot) => {
-            const requests = [];
-            snapshot.forEach((doc) => {
-                requests.push({
-                    id: doc.id,
-                    ...doc.data()
-                });
-            });
-            
-            const modalContent = `
-                <div class="modal-header">
-                    <h3>Terminanfragen (${requests.length})</h3>
-                    <button class="close-btn" onclick="closeModal()">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="requests-list">
-                        ${requests.map(request => `
-                            <div class="request-item">
-                                <div class="request-header">
-                                    <h4>Terminanfrage - ${request.date}</h4>
-                                </div>
-                                <div class="request-details">
-                                    <p><strong>Drucker:</strong> ${request.printerId}</p>
-                                    <p><strong>Zeit:</strong> ${request.timeFrom} - ${request.timeTo}</p>
-                                    <p><strong>Angefragt von:</strong> ${request.requestedBy} (${request.requestedByKennung})</p>
-                                    <p><strong>Zweck:</strong> ${request.purpose}</p>
-                                </div>
-                                <div class="request-actions">
-                                    <button class="btn btn-success btn-sm" onclick="processScheduleRequest('${request.id}', 'approved')">
-                                        Genehmigen
-                                    </button>
-                                    <button class="btn btn-danger btn-sm" onclick="processScheduleRequest('${request.id}', 'rejected')">
                                         Ablehnen
                                     </button>
                                 </div>

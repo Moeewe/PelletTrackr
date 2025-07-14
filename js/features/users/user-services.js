@@ -118,7 +118,7 @@ function updatePrinterStatusDisplay() {
 }
 
 /**
- * Show printer status modal
+ * Show printer status modal with clickable status cycling
  */
 function showPrinterStatus() {
     const modalContent = `
@@ -136,9 +136,28 @@ function showPrinterStatus() {
                             <p class="printer-description">${printer.description || 'Keine Beschreibung'}</p>
                         </div>
                         <div class="printer-status">
-                            <span class="status-badge status-${printer.status}">
-                                ${getStatusText(printer.status)}
-                            </span>
+                            <div class="status-buttons">
+                                <button class="status-btn ${printer.status === 'available' ? 'active' : ''}" 
+                                        onclick="cyclePrinterStatus('${printer.id}', 'available')">
+                                    <span class="status-icon">✓</span>
+                                    <span class="status-text">Verfügbar</span>
+                                </button>
+                                <button class="status-btn ${printer.status === 'printing' ? 'active' : ''}" 
+                                        onclick="cyclePrinterStatus('${printer.id}', 'printing')">
+                                    <span class="status-icon">🖨️</span>
+                                    <span class="status-text">In Betrieb</span>
+                                </button>
+                                <button class="status-btn ${printer.status === 'maintenance' ? 'active' : ''}" 
+                                        onclick="cyclePrinterStatus('${printer.id}', 'maintenance')">
+                                    <span class="status-icon">🔧</span>
+                                    <span class="status-text">Wartung</span>
+                                </button>
+                                <button class="status-btn ${printer.status === 'broken' ? 'active' : ''}" 
+                                        onclick="cyclePrinterStatus('${printer.id}', 'broken')">
+                                    <span class="status-icon">⚠️</span>
+                                    <span class="status-text">Defekt</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `).join('')}
@@ -153,46 +172,68 @@ function showPrinterStatus() {
 }
 
 /**
- * Show scheduling modal
+ * Cycle printer status when user clicks on status button
  */
-function showScheduling() {
+async function cyclePrinterStatus(printerId, newStatus) {
+    try {
+        await window.db.collection('printers').doc(printerId).update({
+            status: newStatus,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            lastStatusChangeBy: window.currentUser?.name || 'Unbekannt',
+            lastStatusChangeAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        // Update local data
+        const printerIndex = userPrinters.findIndex(p => p.id === printerId);
+        if (printerIndex !== -1) {
+            userPrinters[printerIndex].status = newStatus;
+        }
+        
+        // Show success message
+        const statusText = getStatusText(newStatus);
+        toast.success(`Drucker-Status auf "${statusText}" gesetzt`);
+        
+        // Refresh the modal display
+        showPrinterStatus();
+        
+    } catch (error) {
+        console.error('Error updating printer status:', error);
+        toast.error('Fehler beim Aktualisieren des Drucker-Status');
+    }
+}
+
+/**
+ * Show material request modal
+ */
+function showMaterialRequest() {
     const modalContent = `
         <div class="modal-header">
-            <h3>Drucker Terminbuchung</h3>
+            <h3>Material-Wunsch</h3>
             <button class="close-btn" onclick="closeModal()">&times;</button>
         </div>
         <div class="modal-body">
             <div class="form">
                 <div class="form-group">
-                    <label class="form-label">Drucker auswählen</label>
-                    <select id="schedulePrinter" class="form-select">
-                        <option value="">Drucker wählen...</option>
-                        ${userPrinters.filter(p => p.status === 'available').map(printer => `
-                            <option value="${printer.id}">${printer.name} - ${printer.location}</option>
-                        `).join('')}
-                    </select>
+                    <label class="form-label">Material/Filament</label>
+                    <input type="text" id="materialType" class="form-input" placeholder="z.B. PLA, PETG, TPU...">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Datum</label>
-                    <input type="date" id="scheduleDate" class="form-input" min="${new Date().toISOString().split('T')[0]}">
+                    <label class="form-label">Farbe</label>
+                    <input type="text" id="materialColor" class="form-input" placeholder="z.B. Schwarz, Weiß, Rot...">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Uhrzeit (von)</label>
-                    <input type="time" id="scheduleTimeFrom" class="form-input">
+                    <label class="form-label">Hersteller (optional)</label>
+                    <input type="text" id="materialBrand" class="form-input" placeholder="z.B. Prusament, eSUN...">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Uhrzeit (bis)</label>
-                    <input type="time" id="scheduleTimeTo" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Zweck</label>
-                    <textarea id="schedulePurpose" class="form-textarea" placeholder="Wofür benötigen Sie den Drucker?" rows="3"></textarea>
+                    <label class="form-label">Begründung</label>
+                    <textarea id="materialReason" class="form-textarea" placeholder="Warum benötigen Sie dieses Material?" rows="3"></textarea>
                 </div>
             </div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
-            <button class="btn btn-primary" onclick="submitScheduleRequest()">Termin anfragen</button>
+            <button class="btn btn-primary" onclick="submitMaterialRequest()">Wunsch senden</button>
         </div>
     `;
     
@@ -302,102 +343,6 @@ function showProblemReport() {
     `;
     
     showModalWithContent(modalContent);
-}
-
-/**
- * Show material request modal
- */
-function showMaterialRequest() {
-    const modalContent = `
-        <div class="modal-header">
-            <h3>Material-Wunsch</h3>
-            <button class="close-btn" onclick="closeModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div class="form">
-                <div class="form-group">
-                    <label class="form-label">Material-Typ</label>
-                    <select id="materialType" class="form-select">
-                        <option value="">Typ auswählen...</option>
-                        <option value="filament">Filament</option>
-                        <option value="masterbatch">Masterbatch</option>
-                        <option value="tools">Werkzeuge</option>
-                        <option value="parts">Ersatzteile</option>
-                        <option value="other">Sonstiges</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Gewünschtes Material</label>
-                    <input type="text" id="materialName" class="form-input" placeholder="z.B. PLA Schwarz, PETG Transparent">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Geschätzte Menge</label>
-                    <input type="text" id="materialQuantity" class="form-input" placeholder="z.B. 1kg, 5 Stück">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Priorität</label>
-                    <select id="materialPriority" class="form-select">
-                        <option value="low">Niedrig</option>
-                        <option value="medium" selected>Mittel</option>
-                        <option value="high">Hoch</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Begründung</label>
-                    <textarea id="materialReason" class="form-textarea" placeholder="Warum wird dieses Material benötigt?" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Lieferantenvorschlag (optional)</label>
-                    <input type="text" id="materialSupplier" class="form-input" placeholder="z.B. Amazon, Conrad, etc.">
-                </div>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
-            <button class="btn btn-primary" onclick="submitMaterialRequest()">Wunsch einreichen</button>
-        </div>
-    `;
-    
-    showModalWithContent(modalContent);
-}
-
-/**
- * Submit schedule request
- */
-async function submitScheduleRequest() {
-    const printerId = document.getElementById('schedulePrinter').value;
-    const date = document.getElementById('scheduleDate').value;
-    const timeFrom = document.getElementById('scheduleTimeFrom').value;
-    const timeTo = document.getElementById('scheduleTimeTo').value;
-    const purpose = document.getElementById('schedulePurpose').value;
-    
-    if (!printerId || !date || !timeFrom || !timeTo || !purpose) {
-        toast.error('Bitte alle Felder ausfüllen');
-        return;
-    }
-    
-    try {
-        const scheduleData = {
-            printerId,
-            date,
-            timeFrom,
-            timeTo,
-            purpose,
-            requestedBy: window.currentUser.name,
-            requestedByKennung: window.currentUser.kennung,
-            status: 'pending',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
-        await window.db.collection('scheduleRequests').add(scheduleData);
-        
-        toast.success('Terminanfrage erfolgreich gesendet');
-        closeModal();
-        
-    } catch (error) {
-        console.error('Error submitting schedule request:', error);
-        toast.error('Fehler beim Senden der Terminanfrage');
-    }
 }
 
 /**
@@ -544,11 +489,10 @@ function cleanupUserServices() {
 window.initializeUserServices = initializeUserServices;
 window.cleanupUserServices = cleanupUserServices;
 window.showPrinterStatus = showPrinterStatus;
-window.showScheduling = showScheduling;
+window.cyclePrinterStatus = cyclePrinterStatus;
 window.showEquipmentRequest = showEquipmentRequest;
 window.showProblemReport = showProblemReport;
 window.showMaterialRequest = showMaterialRequest;
-window.submitScheduleRequest = submitScheduleRequest;
 window.submitEquipmentRequest = submitEquipmentRequest;
 window.submitProblemReport = submitProblemReport;
 window.submitMaterialRequest = submitMaterialRequest;

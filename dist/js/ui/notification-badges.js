@@ -5,34 +5,31 @@
 
 // Global notification state
 let notificationListeners = [];
+// Global notification counts
 let notificationCounts = {
-    problemReports: 0,
-    equipmentRequests: 0,
+    paymentRequests: 0,
     materialRequests: 0,
-    scheduleRequests: 0,
-    brokenPrinters: 0
+    brokenPrinters: 0,
+    problemReports: 0,
+    printerStatusChanges: 0,
+    printerDefectReports: 0
 };
 
 /**
- * Initialize notification badges
+ * Initialize all notification badges
  */
-function initializeNotificationBadges() {
-    console.log('🔔 Initializing notification badges...');
-    
-    // Only initialize for admin users
-    if (!window.currentUser || !window.currentUser.isAdmin) {
-        console.log('🔔 Not admin user, skipping notification badges');
-        return;
+function initNotificationBadges() {
+    try {
+        setupPaymentRequestsBadge();
+        setupMaterialRequestsBadge();
+        setupBrokenPrintersBadge();
+        setupProblemReportsBadge();
+        setupPrinterStatusChangesBadge();
+        setupPrinterDefectReportsBadge();
+        console.log('✅ Notification badges initialized');
+    } catch (error) {
+        console.error('❌ Error initializing notification badges:', error);
     }
-    
-    // Setup all notification listeners
-    setupProblemReportsBadge();
-    setupEquipmentRequestsBadge();
-    setupMaterialRequestsBadge();
-    setupScheduleRequestsBadge();
-    setupBrokenPrintersBadge();
-    
-    console.log('✅ Notification badges initialized');
 }
 
 /**
@@ -207,17 +204,6 @@ function showAdminNotificationOverview() {
                             <p>${notificationCounts.materialRequests} neue Wünsche</p>
                         </div>
                         <div class="notification-badge">${notificationCounts.materialRequests}</div>
-                    </div>
-                ` : ''}
-                
-                ${notificationCounts.scheduleRequests > 0 ? `
-                    <div class="notification-item" onclick="showScheduleRequests()">
-                        <div class="notification-icon">📅</div>
-                        <div class="notification-content">
-                            <h4>Terminanfragen</h4>
-                            <p>${notificationCounts.scheduleRequests} neue Terminanfragen</p>
-                        </div>
-                        <div class="notification-badge">${notificationCounts.scheduleRequests}</div>
                     </div>
                 ` : ''}
                 

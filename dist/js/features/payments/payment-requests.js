@@ -628,7 +628,7 @@ function renderPaymentRequestsList(requests) {
                                 Ablehnen
                             </button>
                             <button class="btn btn-secondary" onclick="deletePaymentRequest('${request.id}')">
-                                🗑️ Löschen
+                                Löschen
                             </button>
                         </div>
                     </div>

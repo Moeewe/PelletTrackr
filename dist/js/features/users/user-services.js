@@ -118,7 +118,7 @@ function updatePrinterStatusDisplay() {
 }
 
 /**
- * Show printer status modal
+ * Show printer status modal with clickable status cycling
  */
 function showPrinterStatus() {
     const modalContent = `
@@ -136,9 +136,28 @@ function showPrinterStatus() {
                             <p class="printer-description">${printer.description || 'Keine Beschreibung'}</p>
                         </div>
                         <div class="printer-status">
-                            <span class="status-badge status-${printer.status}">
-                                ${getStatusText(printer.status)}
-                            </span>
+                            <div class="status-buttons">
+                                <button class="status-btn ${printer.status === 'available' ? 'active' : ''}" 
+                                        onclick="cyclePrinterStatus('${printer.id}', 'available')">
+                                    <span class="status-icon">✓</span>
+                                    <span class="status-text">Verfügbar</span>
+                                </button>
+                                <button class="status-btn ${printer.status === 'printing' ? 'active' : ''}" 
+                                        onclick="cyclePrinterStatus('${printer.id}', 'printing')">
+                                    <span class="status-icon">🖨️</span>
+                                    <span class="status-text">In Betrieb</span>
+                                </button>
+                                <button class="status-btn ${printer.status === 'maintenance' ? 'active' : ''}" 
+                                        onclick="cyclePrinterStatus('${printer.id}', 'maintenance')">
+                                    <span class="status-icon">🔧</span>
+                                    <span class="status-text">Wartung</span>
+                                </button>
+                                <button class="status-btn ${printer.status === 'broken' ? 'active' : ''}" 
+                                        onclick="cyclePrinterStatus('${printer.id}', 'broken')">
+                                    <span class="status-icon">⚠️</span>
+                                    <span class="status-text">Defekt</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `).join('')}
@@ -150,6 +169,37 @@ function showPrinterStatus() {
     `;
     
     showModalWithContent(modalContent);
+}
+
+/**
+ * Cycle printer status when user clicks on status button
+ */
+async function cyclePrinterStatus(printerId, newStatus) {
+    try {
+        await window.db.collection('printers').doc(printerId).update({
+            status: newStatus,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            lastStatusChangeBy: window.currentUser?.name || 'Unbekannt',
+            lastStatusChangeAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        // Update local data
+        const printerIndex = userPrinters.findIndex(p => p.id === printerId);
+        if (printerIndex !== -1) {
+            userPrinters[printerIndex].status = newStatus;
+        }
+        
+        // Show success message
+        const statusText = getStatusText(newStatus);
+        toast.success(`Drucker-Status auf "${statusText}" gesetzt`);
+        
+        // Refresh the modal display
+        showPrinterStatus();
+        
+    } catch (error) {
+        console.error('Error updating printer status:', error);
+        toast.error('Fehler beim Aktualisieren des Drucker-Status');
+    }
 }
 
 /**
@@ -544,6 +594,7 @@ function cleanupUserServices() {
 window.initializeUserServices = initializeUserServices;
 window.cleanupUserServices = cleanupUserServices;
 window.showPrinterStatus = showPrinterStatus;
+window.cyclePrinterStatus = cyclePrinterStatus;
 window.showScheduling = showScheduling;
 window.showEquipmentRequest = showEquipmentRequest;
 window.showProblemReport = showProblemReport;
