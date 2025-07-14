@@ -247,7 +247,11 @@ async function requestPayment(entryId) {
         
         showToast('Zahlungsanfrage gesendet! Der Admin wird benachrichtigt.', 'success');
         
-        // Button will be updated automatically by the real-time listener
+        // EXPLICIT button update instead of relying on real-time listener
+        updatePaymentRequestButton(entryId, true);
+        
+        // Also update user payment request status
+        updateUserPaymentRequestStatus();
         
     } catch (error) {
         console.error('Error requesting payment:', error);
@@ -323,7 +327,11 @@ async function cancelPaymentRequest(entryId) {
         
         showToast('Zahlungsanfrage zurückgezogen', 'success');
         
-        // Button will be updated automatically by the real-time listener
+        // EXPLICIT button update instead of relying on real-time listener
+        updatePaymentRequestButton(entryId, false);
+        
+        // Also update user payment request status
+        updateUserPaymentRequestStatus();
         
     } catch (error) {
         console.error('Error cancelling payment request:', error);

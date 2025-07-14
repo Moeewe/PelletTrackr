@@ -167,6 +167,9 @@ async function markEntryAsPaid(entryId) {
       // Clean up related payment requests when marking as paid
       await cleanupRelatedPaymentRequests(entryId);
       
+      // EXPLICIT button update for admin interface
+      updateAdminPaymentButton(entryId, true);
+      
       loadAdminStats();
       loadAllEntries();
     }, 
@@ -197,6 +200,9 @@ async function markEntryAsUnpaid(entryId) {
       
       await window.db.collection('entries').doc(entryId).update(updateData);
       
+      // EXPLICIT button update for admin interface
+      updateAdminPaymentButton(entryId, false);
+      
       loadAdminStats();
       loadAllEntries();
     }, 
@@ -213,6 +219,83 @@ async function markEntryAsUnpaid(entryId) {
 // Export functions to window for global access
 window.markEntryAsPaid = markEntryAsPaid;
 window.markEntryAsUnpaid = markEntryAsUnpaid;
+
+/**
+ * Update admin payment button state immediately
+ */
+function updateAdminPaymentButton(entryId, isPaid) {
+    // Find the entry row
+    const entryRow = document.querySelector(`#entry-${entryId}`);
+    if (!entryRow) return;
+    
+    // Find the actions cell
+    const actionsCell = entryRow.querySelector('.actions');
+    if (!actionsCell) return;
+    
+    // Update the button HTML based on payment status
+    const newButtonsHtml = isPaid ? 
+        `${window.ButtonFactory.undoPayment(entryId)}
+         ${window.ButtonFactory.showNachweis(entryId, true)}` :
+        `${window.ButtonFactory.registerPayment(entryId)}`;
+    
+    // Update the buttons (preserve edit and delete buttons)
+    const editButton = actionsCell.querySelector(`[onclick*="editEntry('${entryId}')"]`);
+    const deleteButton = actionsCell.querySelector(`[onclick*="deleteEntry('${entryId}')"]`);
+    
+    // Get the existing non-payment buttons
+    const editButtonHtml = editButton ? editButton.outerHTML : '';
+    const deleteButtonHtml = deleteButton ? deleteButton.outerHTML : '';
+    
+    // Update the actions cell with new payment buttons + existing buttons
+    actionsCell.innerHTML = `
+        ${newButtonsHtml}
+        ${editButtonHtml}
+        ${deleteButtonHtml}
+    `;
+    
+    // Also update the status badge
+    const statusBadge = entryRow.querySelector('.entry-status-badge');
+    if (statusBadge) {
+        if (isPaid) {
+            statusBadge.className = 'entry-status-badge status-paid';
+            statusBadge.textContent = 'Bezahlt';
+        } else {
+            statusBadge.className = 'entry-status-badge status-unpaid';
+            statusBadge.textContent = 'Offen';
+        }
+    }
+    
+    // Update mobile cards as well
+    const entryCard = document.querySelector(`[data-entry-id="${entryId}"]`);
+    if (entryCard) {
+        const cardActions = entryCard.querySelector('.card-actions');
+        if (cardActions) {
+            const cardEditButton = cardActions.querySelector(`[onclick*="editEntry('${entryId}')"]`);
+            const cardDeleteButton = cardActions.querySelector(`[onclick*="deleteEntry('${entryId}')"]`);
+            
+            const cardEditButtonHtml = cardEditButton ? cardEditButton.outerHTML : '';
+            const cardDeleteButtonHtml = cardDeleteButton ? cardDeleteButton.outerHTML : '';
+            
+            cardActions.innerHTML = `
+                ${newButtonsHtml}
+                ${cardEditButtonHtml}
+                ${cardDeleteButtonHtml}
+            `;
+        }
+        
+        // Update mobile card status badge
+        const cardStatusBadge = entryCard.querySelector('.status-badge');
+        if (cardStatusBadge) {
+            if (isPaid) {
+                cardStatusBadge.className = 'status-badge status-paid';
+                cardStatusBadge.textContent = 'BEZAHLT';
+            } else {
+                cardStatusBadge.className = 'status-badge status-unpaid';
+                cardStatusBadge.textContent = 'OFFEN';
+            }
+        }
+    }
+}
 
 /**
  * Clean up related payment requests when entry is marked as paid directly
