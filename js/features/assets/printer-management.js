@@ -168,9 +168,7 @@ function renderPrinterGrid() {
         grid.innerHTML = `
             <div class="empty-state">
                 <p>Noch keine Drucker hinzugefügt.</p>
-                <button class="btn btn-primary" onclick="showAddPrinterForm()">
-                    Ersten Drucker hinzufügen
-                </button>
+                <p>Verwenden Sie den Button unten, um Ihren ersten Drucker hinzuzufügen.</p>
             </div>
         `;
         return;

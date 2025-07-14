@@ -825,7 +825,7 @@ function showAddUserDialog() {
     </div>
   `;
   
-  window.showModal(modalHtml);
+  showModalWithContent(modalHtml);
   
   // Email Auto-Generation nach Modal-Rendering aktivieren
   setTimeout(() => {

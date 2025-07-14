@@ -1247,3 +1247,301 @@
         width: 100%;
     }
 }
+
+/* ===== PRINTER MANAGEMENT STYLES ===== */
+
+.printer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.printer-card {
+    background: white;
+    border: 2px solid #000000;
+    border-radius: 0;
+    padding: 20px;
+    transition: transform 0.2s ease;
+}
+
+.printer-card:hover {
+    transform: translateY(-2px);
+}
+
+.printer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.printer-name {
+    margin: 0 0 5px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #000000;
+}
+
+.printer-model {
+    margin: 0;
+    font-size: 14px;
+    color: #666666;
+}
+
+.printer-status {
+    padding: 4px 8px;
+    border-radius: 0;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    border: 1px solid #000000;
+}
+
+.printer-status.available {
+    background: #d4edda;
+    color: #155724;
+}
+
+.printer-status.printing {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.printer-status.maintenance {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.printer-status.offline {
+    background: #e2e3e5;
+    color: #495057;
+}
+
+.printer-details {
+    margin-bottom: 20px;
+}
+
+.printer-detail {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.printer-detail-label {
+    font-weight: 600;
+    color: #000000;
+}
+
+.printer-detail-value {
+    color: #666666;
+    text-align: right;
+}
+
+.printer-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.printer-actions .btn-small {
+    padding: 8px 12px;
+    font-size: 13px;
+    width: 100%;
+    margin: 0;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .printer-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .printer-card {
+        padding: 15px;
+    }
+    
+    .printer-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .printer-detail {
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .printer-detail-value {
+        text-align: left;
+    }
+}
+
+/* Equipment Management Styles */
+.equipment-container {
+    margin-top: 20px;
+}
+
+.equipment-item {
+    background: white;
+    border: 2px solid #000000;
+    border-radius: 0;
+    padding: 20px;
+    margin-bottom: 15px;
+    transition: transform 0.2s ease;
+}
+
+.equipment-item:hover {
+    transform: translateY(-2px);
+}
+
+.equipment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.equipment-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #000000;
+    margin: 0;
+}
+
+.equipment-status-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+}
+
+.equipment-status {
+    padding: 4px 8px;
+    border-radius: 0;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    border: 1px solid #000000;
+}
+
+.equipment-status.available {
+    background: #d4edda;
+    color: #155724;
+}
+
+.equipment-status.borrowed {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.equipment-status.maintenance {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.equipment-deposit {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 0;
+    border: 1px solid #000000;
+}
+
+.equipment-deposit.paid {
+    background: #d4edda;
+    color: #155724;
+}
+
+.equipment-deposit.unpaid {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.equipment-info {
+    color: #666666;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.equipment-current-user {
+    background: #f8f9fa;
+    padding: 10px;
+    border-left: 4px solid #007bff;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+.equipment-deposit-status {
+    margin-top: 5px;
+    font-size: 12px;
+}
+
+.deposit-paid {
+    color: #155724;
+    font-weight: 600;
+}
+
+.deposit-unpaid {
+    color: #721c24;
+    font-weight: 600;
+}
+
+.equipment-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.equipment-actions .btn {
+    font-size: 13px;
+    padding: 8px 12px;
+}
+
+@media (max-width: 768px) {
+    .equipment-actions {
+        flex-direction: column;
+    }
+    
+    .equipment-actions .btn {
+        width: 100%;
+    }
+}
+
+/* Category and Order Tabs */
+.category-tabs,
+.order-tabs {
+    display: flex;
+    border-bottom: 2px solid #000000;
+    margin-bottom: 20px;
+}
+
+.category-tabs .tab-btn,
+.order-tabs .tab-btn {
+    background: white;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.category-tabs .tab-btn:hover,
+.order-tabs .tab-btn:hover {
+    background: #f8f9fa;
+}
+
+.category-tabs .tab-btn.active,
+.order-tabs .tab-btn.active {
+    border-bottom-color: #000000;
+    background: #f8f9fa;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
