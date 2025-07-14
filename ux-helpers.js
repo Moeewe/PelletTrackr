@@ -78,9 +78,12 @@ class ToastManager {
             const dialog = document.createElement('div');
             dialog.className = 'confirmation-dialog';
             
-            // Minimalistisches Design ohne großes Icon
+            // Dialog mit gelbem Warndreieck
             dialog.innerHTML = `
                 <div class="confirmation-content">
+                    <div class="confirmation-header">
+                        <div class="confirmation-icon warning-triangle">⚠</div>
+                    </div>
                     <div class="confirmation-message">${message}</div>
                     <div class="confirmation-buttons">
                         <button class="btn btn-primary confirm-yes">${confirmText}</button>

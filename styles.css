@@ -55,7 +55,7 @@
 
 .confirmation-dialog {
     background: white;
-    border-radius: 8px;
+    border-radius: 0;
     max-width: 480px;
     width: 90%;
     padding: 0;
@@ -83,45 +83,39 @@
 .confirmation-icon {
     font-size: 48px;
     margin-bottom: 12px;
-    animation: bounce 2s infinite;
 }
 
-@keyframes bounce {
-    0%, 20%, 50%, 80%, 100% {
-        transform: translateY(0);
-    }
-    40% {
-        transform: translateY(-10px);
-    }
-    60% {
-        transform: translateY(-5px);
-    }
+.confirmation-icon.warning-triangle {
+    color: #f4c430;
+    font-size: 64px;
+    font-weight: bold;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 16px;
 }
 
 .confirmation-header h3 {
-    margin: 0;
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
-    color: #000;
+    margin: 0;
+    color: #333;
 }
 
 .confirmation-message {
-    margin: 20px 0;
-    line-height: 1.6;
-    color: #333;
-    white-space: pre-line;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #555;
+    margin-bottom: 24px;
 }
 
 .confirmation-buttons {
     display: flex;
     gap: 12px;
     justify-content: center;
-    margin-top: 24px;
 }
 
 .confirmation-buttons .btn {
-    min-width: 140px;
-    padding: 12px 20px;
+    border-radius: 0;
+    min-width: 120px;
     font-weight: 500;
 }
 
