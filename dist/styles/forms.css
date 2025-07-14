@@ -113,6 +113,27 @@
   resize: vertical;
 }
 
+/* Form Checkbox */
+.form-checkbox {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin-bottom: 16px;
+}
+
+.form-checkbox-input {
+  margin-right: 12px;
+  width: auto !important;
+  cursor: pointer;
+}
+
+.form-checkbox-label {
+  font-size: 16px;
+  color: #000000;
+  cursor: pointer;
+  font-weight: 500;
+}
+
 /* Form Hints */
 .form-hint {
   font-size: 14px;

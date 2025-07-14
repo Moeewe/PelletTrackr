@@ -19,7 +19,7 @@ const EQUIPMENT_CATEGORIES = {
 // Safe showToast function with fallback
 function safeShowToast(message, type = 'info') {
     if (typeof window.showToast === 'function') {
-        window.safeShowToast(message, type);
+        window.showToast(message, type);
     } else if (window.toast && typeof window.toast[type] === 'function') {
         window.toast[type](message);
     } else {
