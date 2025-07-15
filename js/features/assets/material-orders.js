@@ -708,18 +708,44 @@ function renderShoppingList() {
         return;
     }
     
+    // Sort by priority: high -> medium -> low
+    shoppingItems.sort((a, b) => {
+        const priorityOrder = { 'high': 3, 'medium': 2, 'low': 1 };
+        return (priorityOrder[b.priority] || 1) - (priorityOrder[a.priority] || 1);
+    });
+    
     container.innerHTML = shoppingItems.map(item => `
         <div class="shopping-list-item">
-            <div class="shopping-item-info">
-                <div class="shopping-item-name">${item.materialName || 'Unbekanntes Material'}</div>
-                <div class="shopping-item-details">
-                    ${item.manufacturer ? `Hersteller: ${item.manufacturer}<br>` : ''}
-                    Angefragt von: ${item.userName || 'Unbekannt'}<br>
-                    Menge: ${item.quantity || 'Nicht angegeben'}
-                </div>
+            <div class="shopping-priority priority-${item.priority}">
+                ${getPriorityText(item.priority)}
             </div>
-            <div class="shopping-item-quantity">
-                Dringlichkeit: ${getPriorityText(item.priority)}
+            <div class="shopping-item-content">
+                <div class="shopping-item-header">
+                    <h4 class="shopping-item-name">${item.materialName || 'Unbekanntes Material'}</h4>
+                    <div class="shopping-item-source">${item.source === 'admin' ? 'Admin-Bestellung' : 'Nutzerwunsch'}</div>
+                </div>
+                <div class="shopping-item-details">
+                    <div class="detail-row">
+                        <span class="detail-label">Von:</span>
+                        <span class="detail-value">${item.userName || item.createdBy || 'Unbekannt'}</span>
+                    </div>
+                    ${item.manufacturer ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Hersteller:</span>
+                            <span class="detail-value">${item.manufacturer}</span>
+                        </div>
+                    ` : ''}
+                    ${item.quantity ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Menge:</span>
+                            <span class="detail-value">${item.quantity}</span>
+                        </div>
+                    ` : ''}
+                    <div class="detail-row">
+                        <span class="detail-label">Begründung:</span>
+                        <span class="detail-value">${item.reason || 'Keine Begründung'}</span>
+                    </div>
+                </div>
             </div>
             <div class="shopping-item-actions">
                 <button class="btn btn-success" onclick="markAsPurchased('${item.id}')">Eingekauft</button>
@@ -730,7 +756,7 @@ function renderShoppingList() {
 }
 
 /**
- * Render order history with deletion functionality
+ * Render order history with card layout and delete functionality for rejected items
  */
 function renderOrderHistory() {
     const container = document.getElementById('orderHistoryContent');
@@ -740,7 +766,15 @@ function renderOrderHistory() {
         return;
     }
     
-    const orders = materialOrders.filter(order => order.status === 'purchased' || order.status === 'delivered' || order.status === 'rejected');
+    const orders = materialOrders.filter(order => 
+        order.status === 'purchased' || 
+        order.status === 'delivered' || 
+        order.status === 'rejected'
+    ).sort((a, b) => {
+        const dateA = a.updatedAt || a.createdAt || new Date(0);
+        const dateB = b.updatedAt || b.createdAt || new Date(0);
+        return dateB - dateA; // Newest first
+    });
     
     if (orders.length === 0) {
         container.innerHTML = `
@@ -752,42 +786,80 @@ function renderOrderHistory() {
     }
     
     container.innerHTML = `
-        <div class="history-header">
-            <h4>Bestellverlauf (${orders.length})</h4>
-            ${window.currentUser?.isAdmin ? `<button class="btn btn-warning btn-small" onclick="clearAllHistory()">Verlauf leeren</button>` : ''}
-        </div>
-        <div class="history-list">
-            ${orders.map(order => `
-                <div class="history-item status-${order.status}">
-                    <div class="history-header">
-                        <div class="history-material">
-                            <strong>${order.materialName || 'Unbekanntes Material'}</strong>
-                            ${order.manufacturer ? `<span class="manufacturer">${order.manufacturer}</span>` : ''}
+        <div class="history-cards">
+            ${orders.map(order => {
+                const statusClass = `status-${order.status}`;
+                const statusText = getStatusText(order.status);
+                const sourcePerson = order.userName || order.createdBy || 'Unbekannt';
+                const sourceType = order.source === 'admin' ? 'Admin-Bestellung' : 'Nutzerwunsch';
+                const processDate = order.updatedAt || order.createdAt;
+                const processDateStr = processDate ? processDate.toLocaleDateString('de-DE') : 'Unbekannt';
+                
+                return `
+                    <div class="history-card ${statusClass}">
+                        <div class="history-card-header">
+                            <div class="history-card-title">
+                                <h4 class="material-name">${order.materialName || 'Unbekanntes Material'}</h4>
+                                <div class="source-type">${sourceType}</div>
+                            </div>
+                            <div class="history-card-status">
+                                <span class="status-badge ${statusClass}">${statusText}</span>
+                            </div>
                         </div>
-                        <div class="history-status status-${order.status}">
-                            ${getStatusText(order.status)}
+                        
+                        <div class="history-card-body">
+                            <div class="detail-row">
+                                <span class="detail-label">Von:</span>
+                                <span class="detail-value">${sourcePerson}</span>
+                            </div>
+                            ${order.manufacturer ? `
+                                <div class="detail-row">
+                                    <span class="detail-label">Hersteller:</span>
+                                    <span class="detail-value">${order.manufacturer}</span>
+                                </div>
+                            ` : ''}
+                            ${order.quantity ? `
+                                <div class="detail-row">
+                                    <span class="detail-label">Menge:</span>
+                                    <span class="detail-value">${order.quantity}</span>
+                                </div>
+                            ` : ''}
+                            <div class="detail-row">
+                                <span class="detail-label">Dringlichkeit:</span>
+                                <span class="detail-value">${getPriorityText(order.priority)}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Datum:</span>
+                                <span class="detail-value">${processDateStr}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Begründung:</span>
+                                <span class="detail-value">${order.reason || 'Keine Begründung'}</span>
+                            </div>
+                            ${order.rejectedBy ? `
+                                <div class="detail-row">
+                                    <span class="detail-label">Abgelehnt von:</span>
+                                    <span class="detail-value">${order.rejectedBy}</span>
+                                </div>
+                            ` : ''}
+                            ${order.approvedBy ? `
+                                <div class="detail-row">
+                                    <span class="detail-label">Genehmigt von:</span>
+                                    <span class="detail-value">${order.approvedBy}</span>
+                                </div>
+                            ` : ''}
                         </div>
-                        ${window.currentUser?.isAdmin ? `
-                            <div class="history-actions">
-                                <button class="btn btn-danger btn-small" onclick="deleteHistoryItem('${order.id}')">
+                        
+                        ${order.status === 'rejected' ? `
+                            <div class="history-card-actions">
+                                <button class="btn btn-danger btn-small" onclick="deleteOrderRequest('${order.id}')">
                                     Löschen
                                 </button>
                             </div>
                         ` : ''}
                     </div>
-                    <div class="history-details">
-                        <div class="history-info">
-                            <span class="history-user">von ${order.userName || 'Unbekannt'}</span>
-                            <span class="history-date">erstellt: ${order.createdAt ? order.createdAt.toLocaleDateString('de-DE') : 'Unbekannt'}</span>
-                            ${order.purchasedAt ? `<span class="history-purchased">eingekauft: ${order.purchasedAt.toDate().toLocaleDateString('de-DE')}</span>` : ''}
-                            ${order.deliveredAt ? `<span class="history-delivered">geliefert: ${order.deliveredAt.toDate().toLocaleDateString('de-DE')}</span>` : ''}
-                        </div>
-                        <div class="history-reason">${order.reason || 'Keine Begründung'}</div>
-                        ${order.quantity ? `<div class="history-quantity">Menge: ${order.quantity}</div>` : ''}
-                        <div class="history-priority">Priorität: ${getPriorityText(order.priority)}</div>
-                    </div>
-                </div>
-            `).join('')}
+                `;
+            }).join('')}
         </div>
     `;
 }
