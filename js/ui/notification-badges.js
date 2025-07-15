@@ -21,11 +21,10 @@ let notificationCounts = {
  */
 function initNotificationBadges() {
     try {
-        setupMaterialRequestsBadge();
+        // Only setup badges that exist in HTML
         setupMaterialOrdersBadge();
-        setupBrokenPrintersBadge();
         setupProblemReportsBadge();
-        setupEquipmentRequestsBadge();
+        // setupPaymentRequestsBadge(); // Will be added when payment system is active
         console.log('✅ Notification badges initialized');
     } catch (error) {
         console.error('❌ Error initializing notification badges:', error);
@@ -60,11 +59,16 @@ function setupProblemReportsBadge() {
         return;
     }
     
+    console.log('🔄 Setting up problem reports badge listener...');
+    
     const listener = window.db.collection('problemReports')
         .where('status', '==', 'open')
         .onSnapshot((snapshot) => {
             notificationCounts.problemReports = snapshot.size;
+            console.log(`🔔 Problem Reports Badge: ${snapshot.size} open reports found`);
             updateBadge('problem-reports', notificationCounts.problemReports);
+        }, (error) => {
+            console.error('❌ Problem reports badge listener error:', error);
         });
     
     notificationListeners.push(listener);
@@ -90,43 +94,30 @@ function setupEquipmentRequestsBadge() {
 }
 
 /**
- * Setup material requests badge
+ * Setup material requests badge - DISABLED (no HTML element)
  */
 function setupMaterialRequestsBadge() {
-    if (!window.db) {
-        setTimeout(setupMaterialRequestsBadge, 500);
-        return;
-    }
-    
-    const listener = window.db.collection('materialRequests')
-        .where('status', '==', 'pending')
-        .onSnapshot((snapshot) => {
-            notificationCounts.materialRequests = snapshot.size;
-            updateBadge('material-requests', notificationCounts.materialRequests);
-        });
-    
-    notificationListeners.push(listener);
+    console.log('⚠️ Material requests badge disabled - no HTML element exists');
+    // Badge element doesn't exist in HTML
+    return;
 }
 
-
+/**
+ * Setup equipment requests badge - DISABLED (no HTML element)  
+ */
+function setupEquipmentRequestsBadge() {
+    console.log('⚠️ Equipment requests badge disabled - no HTML element exists');
+    // Badge element doesn't exist in HTML
+    return;
+}
 
 /**
- * Setup broken printers badge
+ * Setup broken printers badge - DISABLED (no HTML element)
  */
 function setupBrokenPrintersBadge() {
-    if (!window.db) {
-        setTimeout(setupBrokenPrintersBadge, 500);
-        return;
-    }
-    
-    const listener = window.db.collection('printers')
-        .where('status', '==', 'broken')
-        .onSnapshot((snapshot) => {
-            notificationCounts.brokenPrinters = snapshot.size;
-            updateBadge('broken-printers', notificationCounts.brokenPrinters);
-        });
-    
-    notificationListeners.push(listener);
+    console.log('⚠️ Broken printers badge disabled - no HTML element exists');
+    // Badge element doesn't exist in HTML  
+    return;
 }
 
 /**
