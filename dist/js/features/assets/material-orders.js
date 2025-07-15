@@ -980,7 +980,7 @@ function getPriorityIcon(priority) {
  */
 function getStatusText(status) {
     const statusMap = {
-        'pending': 'Ausstehend',
+        'pending': 'Offen',
         'approved': 'Genehmigt',
         'rejected': 'Abgelehnt',
         'ordered': 'Bestellt',
@@ -1090,7 +1090,7 @@ async function renderUserWishes() {
  */
 function getWishStatusText(status) {
     const statusMap = {
-        'pending': 'Ausstehend',
+        'pending': 'Offen',
         'approved': 'Genehmigt', 
         'rejected': 'Abgelehnt',
         'fulfilled': 'Erfüllt'

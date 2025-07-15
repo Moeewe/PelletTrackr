@@ -491,7 +491,7 @@ function renderEquipmentRequests(statusFilter = 'all') {
  */
 function getRequestStatusText(status) {
     const statusMap = {
-        'pending': 'Ausstehend',
+        'pending': 'Offen',
         'approved': 'Genehmigt',
         'rejected': 'Abgelehnt',
         'active': 'Aktiv',

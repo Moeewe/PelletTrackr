@@ -965,7 +965,7 @@ async function refreshMyEquipmentRequests() {
  */
 function getEquipmentStatusText(status) {
     const statusMap = {
-        'pending': 'AUSSTEHEND',
+        'pending': 'OFFEN',
         'approved': 'GENEHMIGT', 
         'given': 'AUSGEGEBEN',
         'active': 'AKTIV',
@@ -1692,7 +1692,7 @@ async function refreshMyMaterialRequests() {
  */
 function getMaterialRequestStatusText(status) {
     const statusMap = {
-        'pending': 'AUSSTEHEND',
+        'pending': 'OFFEN',
         'approved': 'GENEHMIGT',
         'ordered': 'BESTELLT',
         'delivered': 'GELIEFERT',
