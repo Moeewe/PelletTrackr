@@ -404,10 +404,22 @@ async function submitEquipmentRequest() {
         return;
     }
     
-    // Find equipment by name
-    const selectedEquipment = availableEquipment.find(eq => eq.name === equipmentName);
+    // Debug logging
+    console.log('🔍 Equipment Debug:');
+    console.log('- Equipment Type:', equipmentType);
+    console.log('- Equipment Name:', equipmentName);
+    console.log('- Available Equipment:', availableEquipment.length, 'items');
+    console.log('- Available Equipment List:', availableEquipment);
+    
+    // Find equipment by ID (since dropdown uses item.id as value)
+    const selectedEquipment = availableEquipment.find(eq => eq.id === equipmentName);
+    console.log('- Selected Equipment:', selectedEquipment);
+    
     if (!selectedEquipment) {
-        toast.error('Equipment nicht gefunden');
+        console.error('❌ Equipment nicht gefunden!');
+        console.log('- Suchte nach ID:', equipmentName);
+        console.log('- Verfügbare IDs:', availableEquipment.map(eq => eq.id));
+        toast.error('Equipment nicht gefunden - siehe Console für Details');
         return;
     }
     
@@ -697,6 +709,10 @@ function updateEquipmentOptions() {
     
     const selectedType = typeSelect.value;
     
+    console.log('🔄 Updating Equipment Options:');
+    console.log('- Selected Type:', selectedType);
+    console.log('- Available Equipment Total:', availableEquipment.length);
+    
     // Clear current options
     equipmentSelect.innerHTML = '';
     
@@ -708,6 +724,8 @@ function updateEquipmentOptions() {
     
     // Filter equipment by selected category
     const filteredEquipment = availableEquipment.filter(item => item.category === selectedType);
+    console.log('- Filtered Equipment for category', selectedType + ':', filteredEquipment.length);
+    console.log('- Filtered Equipment Items:', filteredEquipment);
     
     if (filteredEquipment.length === 0) {
         equipmentSelect.innerHTML = '<option value="">Kein Equipment in dieser Kategorie verfügbar</option>';
@@ -898,9 +916,21 @@ async function deleteEquipmentRequest(requestId) {
         // First remove from display immediately with multiple selector strategies
         let requestElement = document.querySelector(`[onclick*="deleteEquipmentRequest('${requestId}')"]`)?.closest('.entry-card');
         
-        // Fallback selector strategy
+        // Fallback selector strategies
         if (!requestElement) {
             requestElement = document.querySelector(`[onclick="deleteEquipmentRequest('${requestId}')"]`)?.closest('.entry-card');
+        }
+        
+        // Additional fallback: find all entry cards and match by data or content
+        if (!requestElement) {
+            const allCards = document.querySelectorAll('.entry-card');
+            for (const card of allCards) {
+                const deleteBtn = card.querySelector(`[onclick*="deleteEquipmentRequest('${requestId}')"]`);
+                if (deleteBtn) {
+                    requestElement = card;
+                    break;
+                }
+            }
         }
         
         // Debug logging
@@ -1281,18 +1311,35 @@ async function deleteProblemReport(reportId) {
         // First remove from display immediately with multiple selector strategies
         let reportElement = document.querySelector(`[onclick*="deleteProblemReport('${reportId}')"]`)?.closest('.entry-card');
         
-        // Fallback selector strategy
+        // Fallback selector strategies
         if (!reportElement) {
             reportElement = document.querySelector(`[onclick="deleteProblemReport('${reportId}')"]`)?.closest('.entry-card');
         }
         
-        // Debug logging
-        console.log(`🗑️ Delete Problem Report: ${reportId}`, reportElement ? 'Element found' : 'Element NOT found');
+        // Additional fallback: find all entry cards and match by data or content
+        if (!reportElement) {
+            const allCards = document.querySelectorAll('.entry-card');
+            for (const card of allCards) {
+                const deleteBtn = card.querySelector(`[onclick*="deleteProblemReport('${reportId}')"]`);
+                if (deleteBtn) {
+                    reportElement = card;
+                    break;
+                }
+            }
+        }
+        
+        // Debug logging - enhanced
+        console.log(`🗑️ Delete Problem Report: ${reportId}`);
+        console.log('- Looking for element with onclick containing:', `deleteProblemReport('${reportId}')`);
+        console.log('- All delete buttons:', document.querySelectorAll('[onclick*="deleteProblemReport"]'));
+        console.log('- Found element:', reportElement ? 'YES' : 'NO');
         
         if (reportElement) {
             reportElement.style.opacity = '0.5';
             reportElement.style.pointerEvents = 'none';
             console.log('✅ Element made transparent');
+        } else {
+            console.warn('❌ Could not find element to make transparent');
         }
         
         await window.db.collection('problemReports').doc(reportId).delete();
@@ -1675,9 +1722,21 @@ async function deleteMaterialRequest(requestId) {
         // First remove from display immediately with multiple selector strategies
         let requestElement = document.querySelector(`[onclick*="deleteMaterialRequest('${requestId}')"]`)?.closest('.entry-card');
         
-        // Fallback selector strategy
+        // Fallback selector strategies
         if (!requestElement) {
             requestElement = document.querySelector(`[onclick="deleteMaterialRequest('${requestId}')"]`)?.closest('.entry-card');
+        }
+        
+        // Additional fallback: find all entry cards and match by data or content
+        if (!requestElement) {
+            const allCards = document.querySelectorAll('.entry-card');
+            for (const card of allCards) {
+                const deleteBtn = card.querySelector(`[onclick*="deleteMaterialRequest('${requestId}')"]`);
+                if (deleteBtn) {
+                    requestElement = card;
+                    break;
+                }
+            }
         }
         
         // Debug logging
