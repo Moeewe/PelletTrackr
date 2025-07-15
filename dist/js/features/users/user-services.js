@@ -228,16 +228,28 @@ function showMaterialRequest() {
                     <input type="text" id="materialType" class="form-input" placeholder="z.B. PLA, PETG, TPU...">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Farbe</label>
-                    <input type="text" id="materialColor" class="form-input" placeholder="z.B. Schwarz, Weiß, Rot...">
+                    <label class="form-label">Name/Bezeichnung</label>
+                    <input type="text" id="materialName" class="form-input" placeholder="z.B. PLA Schwarz, PETG Transparent...">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Hersteller (optional)</label>
-                    <input type="text" id="materialBrand" class="form-input" placeholder="z.B. Prusament, eSUN...">
+                    <label class="form-label">Menge</label>
+                    <input type="text" id="materialQuantity" class="form-input" placeholder="z.B. 1kg, 500g, 2 Spulen...">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Priorität</label>
+                    <select id="materialPriority" class="form-select">
+                        <option value="low">Niedrig</option>
+                        <option value="medium" selected>Mittel</option>
+                        <option value="high">Hoch</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Begründung</label>
                     <textarea id="materialReason" class="form-textarea" placeholder="Warum benötigen Sie dieses Material?" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Lieferant (optional)</label>
+                    <input type="text" id="materialSupplier" class="form-input" placeholder="z.B. Prusament, eSUN...">
                 </div>
             </div>
         </div>
@@ -705,6 +717,803 @@ function updateEquipmentOptions() {
     equipmentSelect.disabled = false;
 }
 
+/**
+ * Show user's equipment requests
+ */
+async function showMyEquipmentRequests() {
+    const modalContent = `
+        <div class="modal-header">
+            <h3>Meine Ausleihen</h3>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="myEquipmentRequestsList">
+                <div class="loading-spinner">Lade Ausleihen...</div>
+            </div>
+        </div>
+    `;
+    
+    showModalWithContent(modalContent);
+    
+    try {
+        const snapshot = await window.db.collection('requests')
+            .where('userKennung', '==', window.currentUser.kennung)
+            .where('type', '==', 'equipment')
+            .orderBy('createdAt', 'desc')
+            .get();
+        
+        const requests = [];
+        snapshot.forEach(doc => {
+            requests.push({
+                id: doc.id,
+                ...doc.data(),
+                createdAt: doc.data().createdAt?.toDate()
+            });
+        });
+        
+        renderMyEquipmentRequests(requests);
+        
+    } catch (error) {
+        console.error('Error loading equipment requests:', error);
+        document.getElementById('myEquipmentRequestsList').innerHTML = `
+            <div class="error-state">
+                <p>Fehler beim Laden der Ausleihen</p>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Render user's equipment requests
+ */
+function renderMyEquipmentRequests(requests) {
+    const container = document.getElementById('myEquipmentRequestsList');
+    
+    if (requests.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <p>Keine Ausleihen gefunden</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '<div class="entry-cards">';
+    
+    requests.forEach(request => {
+        const date = request.createdAt ? request.createdAt.toLocaleDateString('de-DE') : 'Unbekannt';
+        const statusText = getEquipmentStatusText(request.status);
+        const statusClass = getEquipmentStatusClass(request.status);
+        
+        html += `
+            <div class="entry-card">
+                <div class="entry-card-header">
+                    <h3 class="entry-job-title">${request.equipmentName}</h3>
+                    <span class="entry-status-badge ${statusClass}">${statusText}</span>
+                </div>
+                
+                <div class="entry-card-body">
+                    <div class="entry-detail-row">
+                        <span class="entry-detail-label">Datum</span>
+                        <span class="entry-detail-value">${date}</span>
+                    </div>
+                    
+                    <div class="entry-detail-row">
+                        <span class="entry-detail-label">Typ</span>
+                        <span class="entry-detail-value">${request.equipmentType}</span>
+                    </div>
+                    
+                    <div class="entry-detail-row">
+                        <span class="entry-detail-label">Dauer</span>
+                        <span class="entry-detail-value">${getEquipmentDurationText(request.duration)}</span>
+                    </div>
+                    
+                    <div class="entry-detail-row">
+                        <span class="entry-detail-label">Zweck</span>
+                        <span class="entry-detail-value">${request.purpose}</span>
+                    </div>
+                    
+                    ${request.equipmentLocation ? `
+                    <div class="entry-detail-row">
+                        <span class="entry-detail-label">Standort</span>
+                        <span class="entry-detail-value">${request.equipmentLocation}</span>
+                    </div>
+                    ` : ''}
+                </div>
+                
+                <div class="entry-card-footer">
+                    ${request.status === 'given' || request.status === 'active' ? `
+                        <button class="btn btn-primary btn-sm" onclick="requestEquipmentReturn('${request.id}')">
+                            Rückgabe anfragen
+                        </button>
+                    ` : ''}
+                    ${request.status === 'pending' ? `
+                        <button class="btn btn-danger btn-sm" onclick="deleteEquipmentRequest('${request.id}')">
+                            Löschen
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+/**
+ * Request return of equipment
+ */
+async function requestEquipmentReturn(requestId) {
+    if (!confirm('Möchten Sie die Rückgabe dieses Equipments anfragen?')) {
+        return;
+    }
+    
+    try {
+        await window.db.collection('requests').doc(requestId).update({
+            status: 'return_requested',
+            returnRequestedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        toast.success('Rückgabe-Anfrage gesendet');
+        showMyEquipmentRequests(); // Refresh the view
+        
+    } catch (error) {
+        console.error('Error requesting return:', error);
+        toast.error('Fehler beim Senden der Rückgabe-Anfrage');
+    }
+}
+
+/**
+ * Delete equipment request
+ */
+async function deleteEquipmentRequest(requestId) {
+    if (!confirm('Möchten Sie diese Anfrage wirklich löschen?')) {
+        return;
+    }
+    
+    try {
+        await window.db.collection('requests').doc(requestId).delete();
+        toast.success('Anfrage gelöscht');
+        showMyEquipmentRequests(); // Refresh the view
+        
+    } catch (error) {
+        console.error('Error deleting request:', error);
+        toast.error('Fehler beim Löschen der Anfrage');
+    }
+}
+
+/**
+ * Get equipment status text
+ */
+function getEquipmentStatusText(status) {
+    const statusMap = {
+        'pending': 'AUSSTEHEND',
+        'approved': 'GENEHMIGT', 
+        'given': 'AUSGEGEBEN',
+        'active': 'AKTIV',
+        'return_requested': 'RÜCKGABE ANGEFRAGT',
+        'returned': 'ZURÜCKGEGEBEN',
+        'rejected': 'ABGELEHNT'
+    };
+    return statusMap[status] || status.toUpperCase();
+}
+
+/**
+ * Get equipment status CSS class
+ */
+function getEquipmentStatusClass(status) {
+    const classMap = {
+        'pending': 'status-new',
+        'approved': 'status-paid',
+        'given': 'status-paid',
+        'active': 'status-paid',
+        'return_requested': 'status-unpaid',
+        'returned': 'status-paid',
+        'rejected': 'status-unpaid'
+    };
+    return classMap[status] || 'status-new';
+}
+
+/**
+ * Get equipment duration text
+ */
+function getEquipmentDurationText(duration) {
+    const durationMap = {
+        '1_hour': '1 Stunde',
+        '2_hours': '2 Stunden',
+        'half_day': 'Halber Tag',
+        'full_day': 'Ganzer Tag',
+        'week': '1 Woche',
+        'other': 'Andere'
+    };
+    return durationMap[duration] || duration;
+}
+
+/**
+ * Show user's problem reports
+ */
+async function showMyProblemReports() {
+    const modalContent = `
+        <div class="modal-header">
+            <h3>Meine Meldungen</h3>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="myProblemReportsList">
+                <div class="loading-spinner">Lade Meldungen...</div>
+            </div>
+        </div>
+    `;
+    
+    showModalWithContent(modalContent);
+    
+    try {
+        const snapshot = await window.db.collection('problemReports')
+            .where('reportedByKennung', '==', window.currentUser.kennung)
+            .orderBy('createdAt', 'desc')
+            .get();
+        
+        const reports = [];
+        snapshot.forEach(doc => {
+            reports.push({
+                id: doc.id,
+                ...doc.data(),
+                createdAt: doc.data().createdAt?.toDate() || doc.data().reportedAt?.toDate()
+            });
+        });
+        
+        renderMyProblemReports(reports);
+        
+    } catch (error) {
+        console.error('Error loading problem reports:', error);
+        document.getElementById('myProblemReportsList').innerHTML = `
+            <div class="error-state">
+                <p>Fehler beim Laden der Meldungen</p>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Render user's problem reports
+ */
+function renderMyProblemReports(reports) {
+    const container = document.getElementById('myProblemReportsList');
+    
+    if (reports.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <p>Keine Meldungen gefunden</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '<div class="entry-cards">';
+    
+    reports.forEach(report => {
+        const date = report.createdAt ? report.createdAt.toLocaleDateString('de-DE') : 'Unbekannt';
+        const statusText = getProblemStatusText(report.status);
+        const statusClass = getProblemStatusClass(report.status);
+        const priorityText = getProblemPriorityText(report.priority || report.severity);
+        
+        html += `
+            <div class="entry-card">
+                <div class="entry-card-header">
+                    <h3 class="entry-job-title">${report.device || 'Problem-Meldung'}</h3>
+                    <span class="entry-status-badge ${statusClass}">${statusText}</span>
+                </div>
+                
+                <div class="entry-card-body">
+                    <div class="entry-detail-row">
+                        <span class="entry-detail-label">Datum</span>
+                        <span class="entry-detail-value">${date}</span>
+                    </div>
+                    
+                    <div class="entry-detail-row">
+                        <span class="entry-detail-label">Typ</span>
+                        <span class="entry-detail-value">${getProblemTypeText(report.type)}</span>
+                    </div>
+                    
+                    <div class="entry-detail-row">
+                        <span class="entry-detail-label">Priorität</span>
+                        <span class="entry-detail-value">${priorityText}</span>
+                    </div>
+                    
+                    <div class="entry-detail-row">
+                        <span class="entry-detail-label">Beschreibung</span>
+                        <span class="entry-detail-value">${report.description}</span>
+                    </div>
+                    
+                    ${report.steps ? `
+                    <div class="entry-detail-row">
+                        <span class="entry-detail-label">Schritte</span>
+                        <span class="entry-detail-value">${report.steps}</span>
+                    </div>
+                    ` : ''}
+                </div>
+                
+                <div class="entry-card-footer">
+                    ${report.status === 'open' ? `
+                        <button class="btn btn-secondary btn-sm" onclick="editProblemReport('${report.id}')">
+                            Bearbeiten
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteProblemReport('${report.id}')">
+                            Löschen
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+/**
+ * Edit problem report
+ */
+async function editProblemReport(reportId) {
+    try {
+        const doc = await window.db.collection('problemReports').doc(reportId).get();
+        if (!doc.exists) {
+            toast.error('Meldung nicht gefunden');
+            return;
+        }
+        
+        const report = doc.data();
+        
+        const modalContent = `
+            <div class="modal-header">
+                <h3>Meldung bearbeiten</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form">
+                    <div class="form-group">
+                        <label class="form-label">Problem-Typ</label>
+                        <select id="editProblemType" class="form-select">
+                            <option value="printer" ${report.type === 'printer' ? 'selected' : ''}>Drucker-Problem</option>
+                            <option value="equipment" ${report.type === 'equipment' ? 'selected' : ''}>Equipment-Problem</option>
+                            <option value="material" ${report.type === 'material' ? 'selected' : ''}>Material-Problem</option>
+                            <option value="software" ${report.type === 'software' ? 'selected' : ''}>Software-Problem</option>
+                            <option value="other" ${report.type === 'other' ? 'selected' : ''}>Sonstiges</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Betroffenes Gerät/Equipment</label>
+                        <input type="text" id="editProblemDevice" class="form-input" value="${report.device || ''}" placeholder="z.B. Drucker XYZ, Equipment ABC">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Priorität</label>
+                        <select id="editProblemPriority" class="form-select">
+                            <option value="low" ${(report.priority || report.severity) === 'low' ? 'selected' : ''}>Niedrig</option>
+                            <option value="medium" ${(report.priority || report.severity) === 'medium' ? 'selected' : ''}>Mittel</option>
+                            <option value="high" ${(report.priority || report.severity) === 'high' ? 'selected' : ''}>Hoch</option>
+                            <option value="urgent" ${(report.priority || report.severity) === 'urgent' || (report.priority || report.severity) === 'critical' ? 'selected' : ''}>Dringend</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Problembeschreibung</label>
+                        <textarea id="editProblemDescription" class="form-textarea" rows="4">${report.description || ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Schritte zur Reproduktion</label>
+                        <textarea id="editProblemSteps" class="form-textarea" rows="3">${report.steps || ''}</textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+                <button class="btn btn-primary" onclick="saveProblemReportEdit('${reportId}')">Speichern</button>
+            </div>
+        `;
+        
+        showModalWithContent(modalContent);
+        
+    } catch (error) {
+        console.error('Error loading problem report for edit:', error);
+        toast.error('Fehler beim Laden der Meldung');
+    }
+}
+
+/**
+ * Save problem report edit
+ */
+async function saveProblemReportEdit(reportId) {
+    const type = document.getElementById('editProblemType').value;
+    const device = document.getElementById('editProblemDevice').value;
+    const priority = document.getElementById('editProblemPriority').value;
+    const description = document.getElementById('editProblemDescription').value;
+    const steps = document.getElementById('editProblemSteps').value;
+    
+    if (!type || !device || !description) {
+        toast.error('Bitte alle Pflichtfelder ausfüllen');
+        return;
+    }
+    
+    try {
+        await window.db.collection('problemReports').doc(reportId).update({
+            type,
+            device,
+            priority,
+            description,
+            steps,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        toast.success('Meldung erfolgreich aktualisiert');
+        closeModal();
+        showMyProblemReports(); // Refresh the view
+        
+    } catch (error) {
+        console.error('Error updating problem report:', error);
+        toast.error('Fehler beim Aktualisieren der Meldung');
+    }
+}
+
+/**
+ * Delete problem report
+ */
+async function deleteProblemReport(reportId) {
+    if (!confirm('Möchten Sie diese Meldung wirklich löschen?')) {
+        return;
+    }
+    
+    try {
+        await window.db.collection('problemReports').doc(reportId).delete();
+        toast.success('Meldung gelöscht');
+        showMyProblemReports(); // Refresh the view
+        
+    } catch (error) {
+        console.error('Error deleting problem report:', error);
+        toast.error('Fehler beim Löschen der Meldung');
+    }
+}
+
+/**
+ * Get problem status text
+ */
+function getProblemStatusText(status) {
+    const statusMap = {
+        'open': 'OFFEN',
+        'in_progress': 'IN BEARBEITUNG',
+        'resolved': 'GELÖST',
+        'closed': 'GESCHLOSSEN'
+    };
+    return statusMap[status] || status.toUpperCase();
+}
+
+/**
+ * Get problem status CSS class
+ */
+function getProblemStatusClass(status) {
+    const classMap = {
+        'open': 'status-new',
+        'in_progress': 'status-unpaid',
+        'resolved': 'status-paid',
+        'closed': 'status-paid'
+    };
+    return classMap[status] || 'status-new';
+}
+
+/**
+ * Get problem type text
+ */
+function getProblemTypeText(type) {
+    const typeMap = {
+        'printer': 'Drucker-Problem',
+        'equipment': 'Equipment-Problem',
+        'material': 'Material-Problem',
+        'software': 'Software-Problem',
+        'other': 'Sonstiges'
+    };
+    return typeMap[type] || type;
+}
+
+/**
+ * Get problem priority text
+ */
+function getProblemPriorityText(priority) {
+    const priorityMap = {
+        'low': 'Niedrig',
+        'medium': 'Mittel',
+        'high': 'Hoch',
+        'urgent': 'Dringend',
+        'critical': 'Kritisch'
+    };
+    return priorityMap[priority] || priority;
+}
+
+/**
+ * Show user's material requests
+ */
+async function showMyMaterialRequests() {
+    const modalContent = `
+        <div class="modal-header">
+            <h3>Meine Wünsche</h3>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="myMaterialRequestsList">
+                <div class="loading-spinner">Lade Wünsche...</div>
+            </div>
+        </div>
+    `;
+    
+    showModalWithContent(modalContent);
+    
+    try {
+        const snapshot = await window.db.collection('materialRequests')
+            .where('requestedByKennung', '==', window.currentUser.kennung)
+            .orderBy('createdAt', 'desc')
+            .get();
+        
+        const requests = [];
+        snapshot.forEach(doc => {
+            requests.push({
+                id: doc.id,
+                ...doc.data(),
+                createdAt: doc.data().createdAt?.toDate()
+            });
+        });
+        
+        renderMyMaterialRequests(requests);
+        
+    } catch (error) {
+        console.error('Error loading material requests:', error);
+        document.getElementById('myMaterialRequestsList').innerHTML = `
+            <div class="error-state">
+                <p>Fehler beim Laden der Wünsche</p>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Render user's material requests
+ */
+function renderMyMaterialRequests(requests) {
+    const container = document.getElementById('myMaterialRequestsList');
+    
+    if (requests.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <p>Keine Wünsche gefunden</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '<div class="entry-cards">';
+    
+    requests.forEach(request => {
+        const date = request.createdAt ? request.createdAt.toLocaleDateString('de-DE') : 'Unbekannt';
+        const statusText = getMaterialRequestStatusText(request.status);
+        const statusClass = getMaterialRequestStatusClass(request.status);
+        const priorityText = getMaterialPriorityText(request.priority);
+        
+        html += `
+            <div class="entry-card">
+                <div class="entry-card-header">
+                    <h3 class="entry-job-title">${request.name || request.type || 'Material-Wunsch'}</h3>
+                    <span class="entry-status-badge ${statusClass}">${statusText}</span>
+                </div>
+                
+                <div class="entry-card-body">
+                    <div class="entry-detail-row">
+                        <span class="entry-detail-label">Datum</span>
+                        <span class="entry-detail-value">${date}</span>
+                    </div>
+                    
+                    <div class="entry-detail-row">
+                        <span class="entry-detail-label">Material</span>
+                        <span class="entry-detail-value">${request.type || 'Nicht angegeben'}</span>
+                    </div>
+                    
+                    <div class="entry-detail-row">
+                        <span class="entry-detail-label">Menge</span>
+                        <span class="entry-detail-value">${request.quantity || 'Nicht angegeben'}</span>
+                    </div>
+                    
+                    <div class="entry-detail-row">
+                        <span class="entry-detail-label">Priorität</span>
+                        <span class="entry-detail-value">${priorityText}</span>
+                    </div>
+                    
+                    <div class="entry-detail-row">
+                        <span class="entry-detail-label">Begründung</span>
+                        <span class="entry-detail-value">${request.reason}</span>
+                    </div>
+                    
+                    ${request.supplier ? `
+                    <div class="entry-detail-row">
+                        <span class="entry-detail-label">Lieferant</span>
+                        <span class="entry-detail-value">${request.supplier}</span>
+                    </div>
+                    ` : ''}
+                </div>
+                
+                <div class="entry-card-footer">
+                    ${request.status === 'pending' ? `
+                        <button class="btn btn-secondary btn-sm" onclick="editMaterialRequest('${request.id}')">
+                            Bearbeiten
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteMaterialRequest('${request.id}')">
+                            Löschen
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+/**
+ * Edit material request
+ */
+async function editMaterialRequest(requestId) {
+    try {
+        const doc = await window.db.collection('materialRequests').doc(requestId).get();
+        if (!doc.exists) {
+            toast.error('Wunsch nicht gefunden');
+            return;
+        }
+        
+        const request = doc.data();
+        
+        const modalContent = `
+            <div class="modal-header">
+                <h3>Wunsch bearbeiten</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form">
+                    <div class="form-group">
+                        <label class="form-label">Material/Filament</label>
+                        <input type="text" id="editMaterialType" class="form-input" value="${request.type || ''}" placeholder="z.B. PLA, PETG, TPU...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Name/Bezeichnung</label>
+                        <input type="text" id="editMaterialName" class="form-input" value="${request.name || ''}" placeholder="z.B. PLA Schwarz, PETG Transparent...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Menge</label>
+                        <input type="text" id="editMaterialQuantity" class="form-input" value="${request.quantity || ''}" placeholder="z.B. 1kg, 500g, 2 Spulen...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Priorität</label>
+                        <select id="editMaterialPriority" class="form-select">
+                            <option value="low" ${request.priority === 'low' ? 'selected' : ''}>Niedrig</option>
+                            <option value="medium" ${request.priority === 'medium' || !request.priority ? 'selected' : ''}>Mittel</option>
+                            <option value="high" ${request.priority === 'high' ? 'selected' : ''}>Hoch</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Begründung</label>
+                        <textarea id="editMaterialReason" class="form-textarea" rows="3">${request.reason || ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Lieferant (optional)</label>
+                        <input type="text" id="editMaterialSupplier" class="form-input" value="${request.supplier || ''}" placeholder="z.B. Prusament, eSUN...">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+                <button class="btn btn-primary" onclick="saveMaterialRequestEdit('${requestId}')">Speichern</button>
+            </div>
+        `;
+        
+        showModalWithContent(modalContent);
+        
+    } catch (error) {
+        console.error('Error loading material request for edit:', error);
+        toast.error('Fehler beim Laden des Wunsches');
+    }
+}
+
+/**
+ * Save material request edit
+ */
+async function saveMaterialRequestEdit(requestId) {
+    const type = document.getElementById('editMaterialType').value;
+    const name = document.getElementById('editMaterialName').value;
+    const quantity = document.getElementById('editMaterialQuantity').value;
+    const priority = document.getElementById('editMaterialPriority').value;
+    const reason = document.getElementById('editMaterialReason').value;
+    const supplier = document.getElementById('editMaterialSupplier').value;
+    
+    if (!type || !name || !quantity || !reason) {
+        toast.error('Bitte alle Pflichtfelder ausfüllen');
+        return;
+    }
+    
+    try {
+        await window.db.collection('materialRequests').doc(requestId).update({
+            type,
+            name,
+            quantity,
+            priority,
+            reason,
+            supplier,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        toast.success('Wunsch erfolgreich aktualisiert');
+        closeModal();
+        showMyMaterialRequests(); // Refresh the view
+        
+    } catch (error) {
+        console.error('Error updating material request:', error);
+        toast.error('Fehler beim Aktualisieren des Wunsches');
+    }
+}
+
+/**
+ * Delete material request
+ */
+async function deleteMaterialRequest(requestId) {
+    if (!confirm('Möchten Sie diesen Wunsch wirklich löschen?')) {
+        return;
+    }
+    
+    try {
+        await window.db.collection('materialRequests').doc(requestId).delete();
+        toast.success('Wunsch gelöscht');
+        showMyMaterialRequests(); // Refresh the view
+        
+    } catch (error) {
+        console.error('Error deleting material request:', error);
+        toast.error('Fehler beim Löschen des Wunsches');
+    }
+}
+
+/**
+ * Get material request status text
+ */
+function getMaterialRequestStatusText(status) {
+    const statusMap = {
+        'pending': 'AUSSTEHEND',
+        'approved': 'GENEHMIGT',
+        'ordered': 'BESTELLT',
+        'delivered': 'GELIEFERT',
+        'rejected': 'ABGELEHNT'
+    };
+    return statusMap[status] || status.toUpperCase();
+}
+
+/**
+ * Get material request status CSS class
+ */
+function getMaterialRequestStatusClass(status) {
+    const classMap = {
+        'pending': 'status-new',
+        'approved': 'status-unpaid',
+        'ordered': 'status-unpaid',
+        'delivered': 'status-paid',
+        'rejected': 'status-unpaid'
+    };
+    return classMap[status] || 'status-new';
+}
+
+/**
+ * Get material priority text
+ */
+function getMaterialPriorityText(priority) {
+    const priorityMap = {
+        'low': 'Niedrig',
+        'medium': 'Mittel',
+        'high': 'Hoch'
+    };
+    return priorityMap[priority] || 'Mittel';
+}
+
 // Global functions
 window.initializeUserServices = initializeUserServices;
 window.cleanupUserServices = cleanupUserServices;
@@ -718,5 +1527,16 @@ window.submitMaterialRequest = submitMaterialRequest;
 window.showProblemReport = showProblemReport;
 window.reportPrinterProblem = reportPrinterProblem;
 window.submitPrinterProblemReport = submitPrinterProblemReport;
+window.showMyEquipmentRequests = showMyEquipmentRequests;
+window.requestEquipmentReturn = requestEquipmentReturn;
+window.deleteEquipmentRequest = deleteEquipmentRequest;
+window.showMyProblemReports = showMyProblemReports;
+window.editProblemReport = editProblemReport;
+window.saveProblemReportEdit = saveProblemReportEdit;
+window.deleteProblemReport = deleteProblemReport;
+window.showMyMaterialRequests = showMyMaterialRequests;
+window.editMaterialRequest = editMaterialRequest;
+window.saveMaterialRequestEdit = saveMaterialRequestEdit;
+window.deleteMaterialRequest = deleteMaterialRequest;
 
 console.log('👥 User Services Module loaded'); 
