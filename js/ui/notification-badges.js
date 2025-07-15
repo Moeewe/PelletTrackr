@@ -9,6 +9,7 @@ let notificationListeners = [];
 let notificationCounts = {
     paymentRequests: 0,
     materialRequests: 0,
+    materialOrders: 0,
     brokenPrinters: 0,
     problemReports: 0,
     printerStatusChanges: 0,
@@ -21,6 +22,7 @@ let notificationCounts = {
 function initNotificationBadges() {
     try {
         setupMaterialRequestsBadge();
+        setupMaterialOrdersBadge();
         setupBrokenPrintersBadge();
         setupProblemReportsBadge();
         setupEquipmentRequestsBadge();
@@ -28,6 +30,25 @@ function initNotificationBadges() {
     } catch (error) {
         console.error('❌ Error initializing notification badges:', error);
     }
+}
+
+/**
+ * Setup material orders badge
+ */
+function setupMaterialOrdersBadge() {
+    if (!window.db) {
+        setTimeout(setupMaterialOrdersBadge, 500);
+        return;
+    }
+    
+    const listener = window.db.collection('materialOrders')
+        .where('status', '==', 'pending')
+        .onSnapshot((snapshot) => {
+            notificationCounts.materialOrders = snapshot.size;
+            updateBadge('material-orders', notificationCounts.materialOrders);
+        });
+    
+    notificationListeners.push(listener);
 }
 
 /**

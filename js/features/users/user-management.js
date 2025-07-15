@@ -414,9 +414,12 @@ function searchUsers() {
   const searchTerm = document.getElementById('userManagerSearchInput').value.toLowerCase();
 
   const filteredUsers = window.allUsers.filter(user => {
-    const email = user.email || `${user.kennung}@fh-muenster.de`;
-    return user.name.toLowerCase().includes(searchTerm) ||
-           user.kennung.toLowerCase().includes(searchTerm) ||
+    const email = user.email || `${user.kennung || ''}@fh-muenster.de`;
+    const userName = user.name || '';
+    const userKennung = user.kennung || '';
+    
+    return userName.toLowerCase().includes(searchTerm) ||
+           userKennung.toLowerCase().includes(searchTerm) ||
            email.toLowerCase().includes(searchTerm);
   });
 

@@ -174,6 +174,9 @@ function closeMaterialRequestForm() {
  * Submit material request
  */
 async function submitMaterialRequest() {
+    // Wait a moment for DOM elements to be ready
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     // Get DOM elements with null checks
     const materialNameEl = document.getElementById('requestMaterialName');
     const manufacturerEl = document.getElementById('requestManufacturer');
@@ -184,6 +187,13 @@ async function submitMaterialRequest() {
     // Check if elements exist
     if (!materialNameEl || !reasonEl) {
         console.error('Required form elements not found');
+        console.log('Available elements:', {
+            materialName: !!materialNameEl,
+            manufacturer: !!manufacturerEl,
+            reason: !!reasonEl,
+            quantity: !!quantityEl,
+            priority: !!priorityEl
+        });
         toast.error('Formular-Fehler: Erforderliche Felder nicht gefunden');
         return;
     }
@@ -273,6 +283,18 @@ function showMaterialOrders() {
                         <br>
                         <div id="materialWishesContent">
                             <div class="loading">Material-Wünsche werden geladen...</div>
+                        </div>
+                    </div>
+                    
+                    <div id="shopping" class="tab-content">
+                        <div id="shoppingListContent">
+                            <div class="loading">Einkaufsliste wird geladen...</div>
+                        </div>
+                    </div>
+                    
+                    <div id="history" class="tab-content">
+                        <div id="orderHistoryContent">
+                            <div class="loading">Bestellverlauf wird geladen...</div>
                         </div>
                     </div>
                 </div>
