@@ -134,14 +134,71 @@ function setupBrokenPrintersBadge() {
  */
 function updateBadge(badgeId, count) {
     const badge = document.querySelector(`[data-badge="${badgeId}"]`);
+    console.log(`🔄 Badge update: ${badgeId} -> ${count}`, badge ? 'found' : 'NOT FOUND');
+    
     if (badge) {
         if (count > 0) {
             badge.textContent = count > 99 ? '99+' : count.toString();
             badge.style.display = 'inline-block';
+            console.log(`✅ Badge ${badgeId} shown with count: ${count}`);
         } else {
             badge.style.display = 'none';
+            console.log(`🚫 Badge ${badgeId} hidden (count: 0)`);
         }
+    } else {
+        console.warn(`❌ Badge element not found for: ${badgeId}`);
     }
+}
+
+/**
+ * Debug function to manually reset all badges
+ */
+function debugResetAllBadges() {
+    console.log('🧹 Manual badge reset requested...');
+    
+    // Reset all notification counts
+    notificationCounts = {
+        paymentRequests: 0,
+        materialRequests: 0,
+        materialOrders: 0,
+        brokenPrinters: 0,
+        problemReports: 0,
+        printerStatusChanges: 0,
+        printerDefectReports: 0
+    };
+    
+    // Update all badges
+    Object.keys(notificationCounts).forEach(key => {
+        const badgeId = key.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, '');
+        updateBadge(badgeId, 0);
+    });
+    
+    console.log('✅ All badges reset to 0');
+}
+
+/**
+ * Debug function to force problem reports badge check
+ */
+function debugCheckProblemReportsBadge() {
+    console.log('🔍 Debug: Checking problem reports badge...');
+    
+    if (!window.db) {
+        console.log('❌ Database not available');
+        return;
+    }
+    
+    window.db.collection('problemReports')
+        .where('status', '==', 'open')
+        .get()
+        .then((snapshot) => {
+            const count = snapshot.size;
+            console.log(`📊 Manual problem reports count: ${count}`);
+            updateBadge('problem-reports', count);
+            notificationCounts.problemReports = count;
+        })
+        .catch((error) => {
+            console.error('❌ Error checking problem reports:', error);
+        });
 }
 
 /**
@@ -358,5 +415,8 @@ window.showMaterialRequests = showMaterialRequests;
 window.showScheduleRequests = showScheduleRequests;
 window.processMaterialRequest = processMaterialRequest;
 window.processScheduleRequest = processScheduleRequest;
+window.updateBadge = updateBadge; // Expose updateBadge globally
+window.debugResetAllBadges = debugResetAllBadges; // Expose debugResetAllBadges globally
+window.debugCheckProblemReportsBadge = debugCheckProblemReportsBadge; // Expose debugCheckProblemReportsBadge globally
 
 console.log('🔔 Notification Badges Module loaded'); 

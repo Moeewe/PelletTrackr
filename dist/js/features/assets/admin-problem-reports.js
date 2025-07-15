@@ -34,6 +34,17 @@ function setupProblemReportsListener() {
                 });
                 
                 console.log('Live update: Loaded problem reports:', problemReports.length);
+                
+                // Manual badge synchronization - count only open problem reports
+                const openReports = problemReports.filter(report => report.status === 'open');
+                console.log(`🔄 Problem Reports Badge: ${openReports.length} open reports`);
+                
+                // Update badge directly if updateBadge function is available
+                if (window.updateBadge && typeof window.updateBadge === 'function') {
+                    window.updateBadge('problem-reports', openReports.length);
+                    console.log(`✅ Problem Reports Badge manually updated: ${openReports.length}`);
+                }
+                
                 renderProblemReports();
             }, (error) => {
                 console.error('Error in problem reports listener:', error);
