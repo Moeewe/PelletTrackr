@@ -579,6 +579,15 @@ async function updateEquipmentRequestStatus(requestId, newStatus) {
         const requestData = requestDoc.data();
         const equipmentId = requestData.equipmentId;
         
+        // Debug logging to identify collection mismatch
+        console.log('🔍 updateEquipmentRequestStatus Debug:', {
+            requestId,
+            equipmentId,
+            requestData,
+            newStatus,
+            willUpdateEquipment: !!equipmentId
+        });
+        
         // Update request status
         await window.db.collection('requests').doc(requestId).update({
             status: newStatus,
@@ -592,10 +601,27 @@ async function updateEquipmentRequestStatus(requestId, newStatus) {
                 equipmentStatus = 'rented';
             }
             
-            await window.db.collection('equipment').doc(equipmentId).update({
-                status: equipmentStatus,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            // Verify equipment exists before updating
+            const equipmentDoc = await window.db.collection('equipment').doc(equipmentId).get();
+            if (equipmentDoc.exists) {
+                await window.db.collection('equipment').doc(equipmentId).update({
+                    status: equipmentStatus,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                console.log('✅ Equipment status updated successfully');
+            } else {
+                console.error('❌ Equipment not found in equipment collection:', equipmentId);
+                console.log('🔍 Checking if ID exists in printers collection...');
+                const printerDoc = await window.db.collection('printers').doc(equipmentId).get();
+                if (printerDoc.exists) {
+                    console.error('🚨 ISSUE: Equipment ID found in printers collection instead!', {
+                        equipmentId,
+                        printerData: printerDoc.data()
+                    });
+                } else {
+                    console.error('🚨 Equipment ID not found in any collection:', equipmentId);
+                }
+            }
         }
         
         showToast('Status erfolgreich aktualisiert', 'success');
@@ -635,6 +661,14 @@ async function markEquipmentAsGiven(requestId) {
         const requestData = requestDoc.data();
         const equipmentId = requestData.equipmentId;
         
+        // Debug logging to identify collection mismatch
+        console.log('🔍 markEquipmentAsGiven Debug:', {
+            requestId,
+            equipmentId,
+            requestData,
+            willUpdateEquipment: !!equipmentId
+        });
+        
         // Update request status
         await window.db.collection('requests').doc(requestId).update({
             status: 'given',
@@ -644,12 +678,29 @@ async function markEquipmentAsGiven(requestId) {
         
         // Mark equipment as rented
         if (equipmentId) {
-            await window.db.collection('equipment').doc(equipmentId).update({
-                status: 'rented',
-                rentedBy: requestData.userName,
-                rentedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            // Verify equipment exists before updating
+            const equipmentDoc = await window.db.collection('equipment').doc(equipmentId).get();
+            if (equipmentDoc.exists) {
+                await window.db.collection('equipment').doc(equipmentId).update({
+                    status: 'rented',
+                    rentedBy: requestData.userName,
+                    rentedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                console.log('✅ Equipment marked as rented successfully');
+            } else {
+                console.error('❌ Equipment not found in equipment collection:', equipmentId);
+                console.log('🔍 Checking if ID exists in printers collection...');
+                const printerDoc = await window.db.collection('printers').doc(equipmentId).get();
+                if (printerDoc.exists) {
+                    console.error('🚨 ISSUE: Equipment ID found in printers collection instead!', {
+                        equipmentId,
+                        printerData: printerDoc.data()
+                    });
+                } else {
+                    console.error('🚨 Equipment ID not found in any collection:', equipmentId);
+                }
+            }
         }
         
         showToast('Equipment als ausgegeben markiert', 'success');
@@ -744,15 +795,40 @@ async function deleteEquipmentRequest(requestId) {
             const requestData = requestDoc.data();
             const equipmentId = requestData.equipmentId;
             
+            // Debug logging to identify collection mismatch
+            console.log('🔍 deleteEquipmentRequest Debug:', {
+                requestId,
+                equipmentId,
+                requestData,
+                willUpdateEquipment: !!equipmentId
+            });
+            
             // If request was active, mark equipment as available again
             if (requestData.status === 'given' || requestData.status === 'approved') {
                 if (equipmentId) {
-                                await window.db.collection('equipment').doc(equipmentId).update({
-                status: 'available',
-                rentedBy: null,
-                rentedAt: null,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
+                    // Verify equipment exists before updating
+                    const equipmentDoc = await window.db.collection('equipment').doc(equipmentId).get();
+                    if (equipmentDoc.exists) {
+                        await window.db.collection('equipment').doc(equipmentId).update({
+                            status: 'available',
+                            rentedBy: null,
+                            rentedAt: null,
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        console.log('✅ Equipment marked as available successfully');
+                    } else {
+                        console.error('❌ Equipment not found in equipment collection:', equipmentId);
+                        console.log('🔍 Checking if ID exists in printers collection...');
+                        const printerDoc = await window.db.collection('printers').doc(equipmentId).get();
+                        if (printerDoc.exists) {
+                            console.error('🚨 ISSUE: Equipment ID found in printers collection instead!', {
+                                equipmentId,
+                                printerData: printerDoc.data()
+                            });
+                        } else {
+                            console.error('🚨 Equipment ID not found in any collection:', equipmentId);
+                        }
+                    }
                 }
             }
         }
