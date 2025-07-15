@@ -877,11 +877,21 @@ async function requestEquipmentReturn(requestId) {
  */
 async function deleteEquipmentRequest(requestId) {
     try {
-        // First remove from display immediately
-        const requestElement = document.querySelector(`[onclick*="deleteEquipmentRequest('${requestId}')"]`)?.closest('.entry-card');
+        // First remove from display immediately with multiple selector strategies
+        let requestElement = document.querySelector(`[onclick*="deleteEquipmentRequest('${requestId}')"]`)?.closest('.entry-card');
+        
+        // Fallback selector strategy
+        if (!requestElement) {
+            requestElement = document.querySelector(`[onclick="deleteEquipmentRequest('${requestId}')"]`)?.closest('.entry-card');
+        }
+        
+        // Debug logging
+        console.log(`🗑️ Delete Equipment Request: ${requestId}`, requestElement ? 'Element found' : 'Element NOT found');
+        
         if (requestElement) {
             requestElement.style.opacity = '0.5';
             requestElement.style.pointerEvents = 'none';
+            console.log('✅ Element made transparent');
         }
         
         await window.db.collection('requests').doc(requestId).delete();
@@ -1250,11 +1260,21 @@ async function saveProblemReportEdit(reportId) {
  */
 async function deleteProblemReport(reportId) {
     try {
-        // First remove from display immediately
-        const reportElement = document.querySelector(`[onclick*="deleteProblemReport('${reportId}')"]`)?.closest('.entry-card');
+        // First remove from display immediately with multiple selector strategies
+        let reportElement = document.querySelector(`[onclick*="deleteProblemReport('${reportId}')"]`)?.closest('.entry-card');
+        
+        // Fallback selector strategy
+        if (!reportElement) {
+            reportElement = document.querySelector(`[onclick="deleteProblemReport('${reportId}')"]`)?.closest('.entry-card');
+        }
+        
+        // Debug logging
+        console.log(`🗑️ Delete Problem Report: ${reportId}`, reportElement ? 'Element found' : 'Element NOT found');
+        
         if (reportElement) {
             reportElement.style.opacity = '0.5';
             reportElement.style.pointerEvents = 'none';
+            console.log('✅ Element made transparent');
         }
         
         await window.db.collection('problemReports').doc(reportId).delete();
@@ -1634,11 +1654,21 @@ async function saveMaterialRequestEdit(requestId) {
  */
 async function deleteMaterialRequest(requestId) {
     try {
-        // First remove from display immediately
-        const requestElement = document.querySelector(`[onclick*="deleteMaterialRequest('${requestId}')"]`)?.closest('.entry-card');
+        // First remove from display immediately with multiple selector strategies
+        let requestElement = document.querySelector(`[onclick*="deleteMaterialRequest('${requestId}')"]`)?.closest('.entry-card');
+        
+        // Fallback selector strategy
+        if (!requestElement) {
+            requestElement = document.querySelector(`[onclick="deleteMaterialRequest('${requestId}')"]`)?.closest('.entry-card');
+        }
+        
+        // Debug logging
+        console.log(`🗑️ Delete Material Request: ${requestId}`, requestElement ? 'Element found' : 'Element NOT found');
+        
         if (requestElement) {
             requestElement.style.opacity = '0.5';
             requestElement.style.pointerEvents = 'none';
+            console.log('✅ Element made transparent');
         }
         
         await window.db.collection('materialOrders').doc(requestId).delete();
