@@ -436,6 +436,7 @@ function closeEquipmentRequests() {
  */
 async function loadEquipmentRequests() {
     try {
+        // Try with index first
         const querySnapshot = await window.db.collection('requests')
             .where('type', '==', 'equipment')
             .orderBy('createdAt', 'desc')
@@ -458,7 +459,44 @@ async function loadEquipmentRequests() {
         
     } catch (error) {
         console.error('Error loading equipment requests:', error);
-        showToast('Fehler beim Laden der Ausleih-Anfragen', 'error');
+        
+        // If index error, try without orderBy as fallback
+        if (error.code === 'failed-precondition' || error.message.includes('index')) {
+            console.log('🔄 Index not ready for loadEquipmentRequests, using fallback query...');
+            try {
+                const querySnapshot = await window.db.collection('requests')
+                    .where('type', '==', 'equipment')
+                    .get();
+                
+                adminEquipmentRequests = [];
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    adminEquipmentRequests.push({
+                        id: doc.id,
+                        ...data,
+                        requestedAt: data.createdAt?.toDate() || data.requestedAt?.toDate(),
+                        fromDate: data.fromDate?.toDate(),
+                        toDate: data.toDate?.toDate()
+                    });
+                });
+                
+                // Sort locally since we can't use orderBy
+                adminEquipmentRequests.sort((a, b) => {
+                    const aDate = a.requestedAt || new Date(0);
+                    const bDate = b.requestedAt || new Date(0);
+                    return bDate - aDate;
+                });
+                
+                renderEquipmentRequests();
+                console.log('✅ Fallback loaded equipment requests:', adminEquipmentRequests.length);
+                
+            } catch (fallbackError) {
+                console.error('Error in fallback equipment requests loading:', fallbackError);
+                showToast('Fehler beim Laden der Ausleih-Anfragen (Fallback)', 'error');
+            }
+        } else {
+            showToast('Fehler beim Laden der Ausleih-Anfragen', 'error');
+        }
     }
 }
 
