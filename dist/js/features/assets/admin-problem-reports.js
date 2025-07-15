@@ -20,6 +20,8 @@ function setupProblemReportsListener() {
         problemReportsListener = null;
     }
     
+    console.log('🔄 Setting up problem reports listener...');
+    
     try {
         problemReportsListener = window.db.collection('problemReports')
             .orderBy('reportedAt', 'desc')
@@ -34,6 +36,7 @@ function setupProblemReportsListener() {
                 });
                 
                 console.log('Live update: Loaded problem reports:', problemReports.length);
+                console.log('📊 Problem Reports by status:', problemReports.reduce((acc, r) => { acc[r.status] = (acc[r.status] || 0) + 1; return acc; }, {}));
                 
                 // Manual badge synchronization - count only open problem reports
                 const openReports = problemReports.filter(report => report.status === 'open');
@@ -124,7 +127,7 @@ function showProblemReports() {
                         </select>
                     </div>
                     <div id="problemReportsList" class="problem-reports-container">
-                        <!-- Problem reports will be loaded here -->
+                        <div class="loading-state">Laden...</div>
                     </div>
                 </div>
             </div>
@@ -136,6 +139,11 @@ function showProblemReports() {
     
     showModalWithContent(modalContent);
     setupProblemReportsListener();
+    
+    // Force initial render with current data
+    setTimeout(() => {
+        renderProblemReports();
+    }, 100);
 }
 
 /**

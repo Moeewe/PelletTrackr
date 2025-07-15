@@ -21,6 +21,8 @@ async function loadUsersForManagement() {
       return;
     }
     
+    console.log("✅ Firebase verfügbar, starte Benutzerladevorgang...");
+    
     // 1. Benutzerinformationen aus users-Sammlung laden (Primärquelle)
     console.log("🔍 Versuche users-Sammlung zu laden...");
     const usersSnapshot = await window.safeFirebaseOp(
@@ -36,6 +38,8 @@ async function loadUsersForManagement() {
         ...userData
       });
     });
+    
+    console.log(`📊 Users Collection: ${usersData.size} registrierte Benutzer gefunden`);
     
     // 2. Alle Einträge laden, um Statistiken zu berechnen
     console.log("🔍 Versuche entries-Sammlung zu laden...");
@@ -55,6 +59,8 @@ async function loadUsersForManagement() {
         ...entry
       });
     });
+    
+    console.log(`📊 Entries Collection: ${entriesSnapshot.size} Einträge für ${entriesData.size} verschiedene Benutzer gefunden`);
     
     // 3. Benutzer-Daten zusammenführen - NUR registrierte Benutzer
     const userMap = new Map();
@@ -78,7 +84,7 @@ async function loadUsersForManagement() {
           unpaidAmount += entry.totalCost || 0;
         }
         
-        const entryDate = entry.timestamp ? entry.timestamp.toDate() : new Date();
+        const entryDate = entry.timestamp ? (entry.timestamp.toDate ? entry.timestamp.toDate() : new Date(entry.timestamp)) : new Date();
         if (!firstEntry || entryDate < firstEntry) firstEntry = entryDate;
         if (!lastEntry || entryDate > lastEntry) lastEntry = entryDate;
       });
@@ -132,6 +138,7 @@ async function loadUsersForManagement() {
     window.allUsers = users;
     
     console.log(`✅ ${users.length} registrierte Benutzer geladen (${legacyUsers.length} Legacy-Benutzer ignoriert)`);
+    console.log('🔍 User Data Sample:', users.slice(0, 2)); // Debug: Show first 2 users
     renderUsersTable(users);
     
   } catch (error) {

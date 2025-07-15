@@ -1011,3 +1011,297 @@
         font-size: 14px;
     }
 }
+
+/* ==================== MATERIAL ORDERS CARD DESIGN ==================== */
+
+/* Order Cards Container */
+.order-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+/* Individual Order Card */
+.order-card {
+    background: white;
+    border: 2px solid #000000;
+    border-radius: 0;
+    padding: 20px;
+    transition: all 0.2s ease;
+}
+
+
+
+/* Order Card Header */
+.order-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    gap: 15px;
+}
+
+.order-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    flex: 1;
+}
+
+.order-badges {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* Order Badges */
+.order-badge {
+    padding: 4px 12px;
+    border-radius: 0;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+/* Source Badges */
+.badge-user {
+    background-color: #2196F3;
+    color: white;
+}
+
+.badge-admin {
+    background-color: #9C27B0;
+    color: white;
+}
+
+/* Status Badges */
+.badge-pending {
+    background-color: #FF9800;
+    color: white;
+}
+
+.badge-approved {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.badge-rejected {
+    background-color: #F44336;
+    color: white;
+}
+
+.badge-purchased {
+    background-color: #009688;
+    color: white;
+}
+
+.badge-delivered {
+    background-color: #607D8B;
+    color: white;
+}
+
+/* Order Card Body */
+.order-card-body {
+    margin-bottom: 15px;
+}
+
+.order-detail {
+    margin-bottom: 8px;
+    color: #555;
+    line-height: 1.4;
+}
+
+.order-detail strong {
+    color: #333;
+    font-weight: 600;
+}
+
+/* Priority Indicator */
+.priority-indicator {
+    padding: 2px 8px;
+    border-radius: 0;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.priority-indicator.priority-high {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+.priority-indicator.priority-medium {
+    background-color: #fff3e0;
+    color: #ef6c00;
+}
+
+.priority-indicator.priority-low {
+    background-color: #e8f5e8;
+    color: #2e7d32;
+}
+
+/* Order Card Actions */
+.order-card-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.order-card-actions .btn {
+    flex: 1;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 0;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.order-card-actions .btn-success {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.order-card-actions .btn-success:hover {
+    background-color: #45a049;
+}
+
+.order-card-actions .btn-warning {
+    background-color: #FF9800;
+    color: white;
+}
+
+.order-card-actions .btn-warning:hover {
+    background-color: #f57c00;
+}
+
+.order-card-actions .btn-danger {
+    background-color: #F44336;
+    color: white;
+}
+
+.order-card-actions .btn-danger:hover {
+    background-color: #d32f2f;
+}
+
+/* Tab System Improvements */
+.order-tabs {
+    display: flex;
+    border-bottom: 2px solid #000000;
+    margin-bottom: 20px;
+    gap: 5px;
+}
+
+.order-tabs .tab-btn {
+    background: white;
+    border: none;
+    border-bottom: 4px solid transparent;
+    padding: 12px 24px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    color: #000000;
+    transition: all 0.2s ease;
+    text-transform: none;
+    letter-spacing: 0.5px;
+    border-radius: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 120px;
+    justify-content: center;
+}
+
+.order-tabs .tab-btn:hover {
+    background: white;
+    color: #000000;
+}
+
+.order-tabs .tab-btn.active {
+    background: white;
+    color: #000000;
+    border-bottom: 4px solid #000000;
+}
+
+/* Tab Badge Styling */
+.order-tabs .notification-badge {
+    background: #F44336;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 6px;
+    border-radius: 50%;
+    margin-left: 6px;
+    min-width: 16px;
+    height: 16px;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.order-tabs .tab-btn.active .notification-badge {
+    background: #D32F2F;
+    color: white;
+    border: 1px solid #000000;
+}
+
+/* Empty State Styling */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.empty-state p {
+    margin: 8px 0;
+}
+
+.empty-state p:first-child {
+    font-weight: 600;
+    color: #333;
+}
+
+/* Loading State */
+.loading {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+    font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .order-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .order-badges {
+        flex-wrap: wrap;
+    }
+    
+    .order-card-actions {
+        flex-direction: column;
+    }
+    
+    .order-tabs {
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .order-tabs .tab-btn {
+        border-radius: 0;
+        justify-content: center;
+    }
+}
+
+/* ==================== END MATERIAL ORDERS STYLING ==================== */
