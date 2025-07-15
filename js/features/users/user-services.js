@@ -265,7 +265,26 @@ function showMaterialRequest() {
 /**
  * Show equipment request modal
  */
-function showEquipmentRequest() {
+async function showEquipmentRequest() {
+    // Show loading modal first
+    const loadingContent = `
+        <div class="modal-header">
+            <h3>Equipment Anfrage</h3>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div style="text-align: center; padding: 40px;">
+                Lade verfügbares Equipment...
+            </div>
+        </div>
+    `;
+    
+    showModalWithContent(loadingContent);
+    
+    // Load equipment data first
+    await loadEquipmentForRequest();
+    
+    // Now show the actual form
     const modalContent = `
         <div class="modal-header">
             <h3>Equipment Anfrage</h3>
@@ -314,8 +333,7 @@ function showEquipmentRequest() {
     
     showModalWithContent(modalContent);
     
-    // Load equipment data for dynamic selection
-    loadEquipmentForRequest();
+    console.log('✅ Equipment loaded:', availableEquipment.length, 'items');
 }
 
 /**

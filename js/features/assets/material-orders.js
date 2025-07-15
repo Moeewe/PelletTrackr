@@ -294,9 +294,7 @@ async function submitMaterialRequest() {
 function showMaterialOrders() {
     const modalContent = `
         <div class="modal-header">
-            <h3>Bestellungen verwalten
-                <span id="material-orders-badge" class="notification-badge" data-badge="material-orders" style="display: none;">0</span>
-            </h3>
+            <h3>Bestellungen verwalten</h3>
             <button class="close-btn" onclick="closeModal()">&times;</button>
         </div>
         <div class="modal-body">
@@ -506,14 +504,7 @@ function updateTabCounters() {
     const requestsCounter = document.getElementById('requestsCounter');
     const shoppingCounter = document.getElementById('shoppingCounter');
     const historyCounter = document.getElementById('historyCounter');
-    const materialOrdersBadge = document.getElementById('material-orders-badge');
-    
-    // Update Header Badge mit der Gesamtzahl der offenen Anfragen
-    if (materialOrdersBadge) {
-        materialOrdersBadge.textContent = requestsCount;
-        materialOrdersBadge.style.display = requestsCount > 0 ? 'inline-block' : 'none';
-        console.log(`✅ Material Orders Header badge updated: ${requestsCount}`);
-    }
+    // Header badge entfernt - nur Tab-Badges verwenden
     
     if (requestsCounter) {
         requestsCounter.textContent = requestsCount;
