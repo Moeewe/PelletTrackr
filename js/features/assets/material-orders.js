@@ -307,10 +307,7 @@ function showMaterialOrders() {
                             Bestellanfragen
                             <span class="notification-badge" id="requestsCounter" style="display: none;">0</span>
                         </button>
-                        <button class="tab-btn" onclick="showOrderTab('userWishes')">
-                            Nutzerwünsche
-                            <span class="notification-badge" id="userWishesCounter" style="display: none;">0</span>
-                        </button>
+
                         <button class="tab-btn" onclick="showOrderTab('shopping')">
                             Einkaufsliste
                             <span class="notification-badge" id="shoppingCounter" style="display: none;">0</span>
@@ -327,11 +324,7 @@ function showMaterialOrders() {
                         </div>
                     </div>
                     
-                    <div id="userWishes" class="tab-content">
-                        <div id="userWishesContent">
-                            <div class="loading">Nutzerwünsche werden geladen...</div>
-                        </div>
-                    </div>
+
                     
                     <div id="shopping" class="tab-content">
                         <div id="shoppingListContent">
@@ -482,9 +475,7 @@ function renderTabContent(tab) {
         case 'requests':
             renderOrderRequests();
             break;
-        case 'userWishes':
-            renderUserWishes();
-            break;
+
         case 'shopping':
             renderShoppingList();
             break;
@@ -513,29 +504,21 @@ function updateTabCounters() {
     
     // Update counter elements
     const requestsCounter = document.getElementById('requestsCounter');
-    const userWishesCounter = document.getElementById('userWishesCounter');
     const shoppingCounter = document.getElementById('shoppingCounter');
     const historyCounter = document.getElementById('historyCounter');
     const materialOrdersBadge = document.getElementById('material-orders-badge');
     
     // Update Header Badge mit der Gesamtzahl der offenen Anfragen
-    const totalOpenCount = requestsCount + userWishesCount;
     if (materialOrdersBadge) {
-        materialOrdersBadge.textContent = totalOpenCount;
-        materialOrdersBadge.style.display = totalOpenCount > 0 ? 'inline-block' : 'none';
-        console.log(`✅ Material Orders Header badge updated: ${totalOpenCount}`);
+        materialOrdersBadge.textContent = requestsCount;
+        materialOrdersBadge.style.display = requestsCount > 0 ? 'inline-block' : 'none';
+        console.log(`✅ Material Orders Header badge updated: ${requestsCount}`);
     }
     
     if (requestsCounter) {
         requestsCounter.textContent = requestsCount;
         requestsCounter.style.display = requestsCount > 0 ? 'inline-block' : 'none';
         console.log(`✅ Requests badge updated: ${requestsCount}`);
-    }
-    
-    if (userWishesCounter) {
-        userWishesCounter.textContent = userWishesCount;
-        userWishesCounter.style.display = userWishesCount > 0 ? 'inline-block' : 'none';
-        console.log(`✅ User wishes badge updated: ${userWishesCount}`);
     }
     
     if (shoppingCounter) {
@@ -1012,151 +995,6 @@ function getStatusText(status) {
 /**
  * Render user wishes from materialRequests collection
  */
-async function renderUserWishes() {
-    const container = document.getElementById('userWishesContent');
-    if (!container) return;
-    
-    container.innerHTML = '<div class="loading">Nutzerwünsche werden geladen...</div>';
-    
-    try {
-        const snapshot = await window.db.collection('materialRequests')
-            .orderBy('createdAt', 'desc')
-            .get();
-        
-        const userWishes = [];
-        snapshot.forEach(doc => {
-            userWishes.push({
-                id: doc.id,
-                ...doc.data(),
-                createdAt: doc.data().createdAt?.toDate()
-            });
-        });
-        
-        if (userWishes.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <p>Keine Nutzerwünsche vorhanden.</p>
-                </div>
-            `;
-            return;
-        }
-        
-        container.innerHTML = userWishes.map(wish => `
-            <div class="material-order-item status-${wish.status}">
-                <div class="order-header">
-                    <div class="order-info">
-                        <h4>${wish.name}</h4>
-                        <p class="order-meta">
-                            Von: <strong>${wish.requestedBy}</strong> (${wish.requestedByKennung})
-                            <span class="order-date">${wish.createdAt ? wish.createdAt.toLocaleDateString() : 'Unbekanntes Datum'}</span>
-                        </p>
-                    </div>
-                    <div class="order-status">
-                        <span class="status-badge status-${wish.status}">${getWishStatusText(wish.status)}</span>
-                        <span class="priority-badge priority-${wish.priority}">
-                            ${getPriorityIcon(wish.priority)} ${getPriorityText(wish.priority)}
-                        </span>
-                    </div>
-                </div>
-                <div class="order-details">
-                    <div class="detail-row">
-                        <strong>Material:</strong> ${wish.type || 'Nicht angegeben'} - ${wish.name}
-                    </div>
-                    ${wish.quantity ? `
-                    <div class="detail-row">
-                        <strong>Menge:</strong> ${wish.quantity}
-                    </div>
-                    ` : ''}
-                    ${wish.supplier ? `
-                    <div class="detail-row">
-                        <strong>Lieferant:</strong> ${wish.supplier}
-                    </div>
-                    ` : ''}
-                    <div class="detail-row">
-                        <strong>Begründung:</strong> ${wish.reason}
-                    </div>
-                </div>
-                ${wish.status === 'pending' ? `
-                <div class="order-actions">
-                    <button class="btn btn-success" onclick="approveUserWish('${wish.id}')">Genehmigen</button>
-                    <button class="btn btn-danger" onclick="rejectUserWish('${wish.id}')">Ablehnen</button>
-                </div>
-                ` : ''}
-            </div>
-        `).join('');
-        
-        // Update user wishes counter
-        const counter = document.getElementById('userWishesCounter');
-        const pendingCount = userWishes.filter(w => w.status === 'pending').length;
-        if (counter) {
-            counter.textContent = pendingCount;
-            counter.style.display = pendingCount > 0 ? 'inline-block' : 'none';
-        }
-        
-    } catch (error) {
-        console.error('Error loading user wishes:', error);
-        container.innerHTML = `
-            <div class="error-state">
-                <p>Fehler beim Laden der Nutzerwünsche: ${error.message}</p>
-            </div>
-        `;
-    }
-}
-
-/**
- * Get wish status text
- */
-function getWishStatusText(status) {
-    const statusMap = {
-        'pending': 'Offen',
-        'approved': 'Genehmigt', 
-        'rejected': 'Abgelehnt',
-        'fulfilled': 'Erfüllt'
-    };
-    return statusMap[status] || status;
-}
-
-/**
- * Approve user wish
- */
-async function approveUserWish(wishId) {
-    try {
-        await window.db.collection('materialRequests').doc(wishId).update({
-            status: 'approved',
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        toast.success('Nutzerwunsch genehmigt');
-        renderUserWishes(); // Refresh the view
-        
-    } catch (error) {
-        console.error('Error approving user wish:', error);
-        toast.error('Fehler beim Genehmigen des Wunsches');
-    }
-}
-
-/**
- * Reject user wish
- */
-async function rejectUserWish(wishId) {
-    if (!confirm('Möchten Sie diesen Nutzerwunsch wirklich ablehnen?')) {
-        return;
-    }
-    
-    try {
-        await window.db.collection('materialRequests').doc(wishId).update({
-            status: 'rejected',
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        toast.success('Nutzerwunsch abgelehnt');
-        renderUserWishes(); // Refresh the view
-        
-    } catch (error) {
-        console.error('Error rejecting user wish:', error);
-        toast.error('Fehler beim Ablehnen des Wunsches');
-    }
-}
 
 // Export functions to global scope
 window.showMaterialOrders = showMaterialOrders;
@@ -1164,5 +1002,3 @@ window.closeMaterialOrders = closeMaterialOrders;
 window.showMaterialRequestForm = showMaterialRequestForm;
 window.closeMaterialRequestForm = closeMaterialRequestForm;
 window.submitMaterialRequest = submitMaterialRequest;
-window.approveUserWish = approveUserWish;
-window.rejectUserWish = rejectUserWish;
