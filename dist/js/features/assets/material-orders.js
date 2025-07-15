@@ -442,16 +442,9 @@ function renderTabContent(tab) {
  * Update tab counters with current counts
  */
 function updateTabCounters() {
-    console.log('📊 Material Orders Debug:', {
-        total: materialOrders.length,
-        orders: materialOrders.map(o => ({ type: o.type, status: o.status, name: o.materialName }))
-    });
-    
     const requestsCount = materialOrders.filter(order => order.type === 'request' && order.status === 'pending').length;
     const shoppingCount = materialOrders.filter(order => order.status === 'approved').length;
     const historyCount = materialOrders.filter(order => order.status === 'purchased' || order.status === 'delivered' || order.status === 'rejected').length;
-    
-    console.log('📊 Tab Counts:', { requestsCount, shoppingCount, historyCount });
     
     // Update counter elements
     const requestsCounter = document.getElementById('requestsCounter');
