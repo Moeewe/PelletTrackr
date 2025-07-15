@@ -116,19 +116,16 @@ function updateAdminUI() {
 
 function showAdminLogin() {
   const passwordGroup = document.getElementById('passwordGroup');
-  const adminRegistrationGroup = document.getElementById('adminRegistrationGroup');
   const adminBtn = document.querySelector('.btn-secondary');
   
   if (passwordGroup.style.display === 'none' || passwordGroup.style.display === '') {
-    // Passwort-Feld und Admin-Registrierung anzeigen
+    // Passwort-Feld anzeigen
     passwordGroup.style.display = 'block';
-    adminRegistrationGroup.style.display = 'block';
     adminBtn.textContent = 'Admin Login';
     adminBtn.onclick = loginAsAdmin;
   } else {
-    // Passwort-Feld und Admin-Registrierung verstecken
+    // Passwort-Feld verstecken
     passwordGroup.style.display = 'none';
-    adminRegistrationGroup.style.display = 'none';
     adminBtn.textContent = 'Als Admin anmelden';
     adminBtn.onclick = showAdminLogin;
   }
@@ -137,7 +134,6 @@ function showAdminLogin() {
 async function loginAsUser() {
   const name = document.getElementById('loginName').value.trim();
   const kennung = document.getElementById('loginKennung').value.trim();
-  const registerAsAdmin = document.getElementById('registerAsAdmin').checked;
   const loginButton = document.getElementById('loginBtn');
   
   if (!name || !kennung) {
@@ -151,7 +147,7 @@ async function loginAsUser() {
     const loadingId = loading.show('Anmeldung läuft...');
     
     // Verbesserte Benutzerprüfung und -verwaltung
-    const userResult = await findOrCreateUser(kennung.toLowerCase(), name, registerAsAdmin);
+    const userResult = await findOrCreateUser(kennung.toLowerCase(), name, false);
     
     if (userResult.conflict) {
       loading.hide(loadingId);
