@@ -101,6 +101,10 @@ function showEquipmentManager() {
         </div>
         <div class="modal-footer">
             <button class="btn btn-primary" onclick="showAddEquipmentForm()">Equipment hinzufügen</button>
+            <button class="btn btn-warning" onclick="showEquipmentRequests()">
+                Anfragen verwalten
+                <span id="equipment-requests-footer-badge" class="notification-badge" style="display: none;">0</span>
+            </button>
             <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
         </div>
     `;
@@ -790,9 +794,19 @@ async function loadEquipmentRequests() {
  */
 function updateEquipmentRequestsBadge() {
     const badge = document.getElementById('equipment-requests-badge');
+    const footerBadge = document.getElementById('equipment-requests-footer-badge');
+    
+    const count = equipmentRequests.length;
+    const shouldShow = count > 0;
+    
     if (badge) {
-        badge.textContent = equipmentRequests.length;
-        badge.style.display = equipmentRequests.length > 0 ? 'inline-block' : 'none';
+        badge.textContent = count;
+        badge.style.display = shouldShow ? 'inline-block' : 'none';
+    }
+    
+    if (footerBadge) {
+        footerBadge.textContent = count;
+        footerBadge.style.display = shouldShow ? 'inline-block' : 'none';
     }
 }
 
