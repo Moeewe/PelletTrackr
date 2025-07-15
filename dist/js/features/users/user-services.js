@@ -377,26 +377,26 @@ function showProblemReport() {
  */
 async function submitEquipmentRequest() {
     const equipmentType = document.getElementById('equipmentType').value;
-    const equipmentId = document.getElementById('equipmentName').value;
+    const equipmentName = document.getElementById('equipmentName').value;
     const duration = document.getElementById('equipmentDuration').value;
     const purpose = document.getElementById('equipmentPurpose').value;
     
-    if (!equipmentType || !equipmentId || !duration || !purpose) {
+    if (!equipmentType || !equipmentName || !duration || !purpose) {
         toast.error('Bitte alle Felder ausfüllen');
         return;
     }
     
-    // Find the selected equipment details
-    const selectedEquipment = availableEquipment.find(item => item.id === equipmentId);
+    // Find equipment by name
+    const selectedEquipment = availableEquipment.find(eq => eq.name === equipmentName);
     if (!selectedEquipment) {
-        toast.error('Ausgewähltes Equipment nicht gefunden');
+        toast.error('Equipment nicht gefunden');
         return;
     }
     
     const requestData = {
         type: 'equipment',
+        equipmentId: selectedEquipment.id,
         equipmentType: equipmentType,
-        equipmentId: equipmentId,
         equipmentName: selectedEquipment.name,
         equipmentLocation: selectedEquipment.location,
         duration: duration,
@@ -444,6 +444,7 @@ async function submitProblemReport() {
             reportedBy: window.currentUser.name,
             reportedByKennung: window.currentUser.kennung,
             status: 'open',
+            reportedAt: firebase.firestore.FieldValue.serverTimestamp(),
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         
@@ -459,7 +460,7 @@ async function submitProblemReport() {
 }
 
 /**
- * Submit material wish
+ * Submit material wish - FIX: Move to materialOrders collection
  */
 async function submitMaterialWish() {
     const type = document.getElementById('materialType').value;
@@ -476,43 +477,29 @@ async function submitMaterialWish() {
     
     try {
         const requestData = {
-            type,
-            name,
-            quantity,
-            priority,
-            reason,
-            supplier,
-            requestedBy: window.currentUser.name,
-            requestedByKennung: window.currentUser.kennung,
+            type: 'request',
+            source: 'user', // Track this as user-created
+            userName: window.currentUser?.name || 'Unbekannter User',
+            userKennung: window.currentUser?.kennung || '',
+            materialName: name,
+            manufacturer: supplier || '',
+            reason: reason,
+            quantity: quantity,
+            priority: priority,
             status: 'pending',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         
-        await window.db.collection('materialRequests').add(requestData);
+        // Use materialOrders collection like admin orders
+        await window.db.collection('materialOrders').add(requestData);
         
         toast.success('Material-Wunsch erfolgreich eingereicht');
-        
-        // Clear form fields before closing modal
-        const typeEl = document.getElementById('materialType');
-        const nameEl = document.getElementById('materialName');
-        const quantityEl = document.getElementById('materialQuantity');
-        const priorityEl = document.getElementById('materialPriority');
-        const reasonEl = document.getElementById('materialReason');
-        const supplierEl = document.getElementById('materialSupplier');
-        
-        if (typeEl) typeEl.value = '';
-        if (nameEl) nameEl.value = '';
-        if (quantityEl) quantityEl.value = '';
-        if (priorityEl) priorityEl.value = 'medium';
-        if (reasonEl) reasonEl.value = '';
-        if (supplierEl) supplierEl.value = '';
-        
-        // Close modal after clearing fields
         closeModal();
         
     } catch (error) {
-        console.error('Error submitting material request:', error);
-        toast.error('Fehler beim Einreichen des Material-Wunsches');
+        console.error('Error submitting material wish:', error);
+        toast.error('Fehler beim Einreichen des Material-Wunschs');
     }
 }
 
@@ -735,8 +722,11 @@ async function showMyEquipmentRequests() {
         </div>
         <div class="modal-body">
             <div id="myEquipmentRequestsList">
-                <div class="loading-spinner">Lade Ausleihen...</div>
+                Lade Ausleihen...
             </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
         </div>
     `;
     
@@ -744,20 +734,18 @@ async function showMyEquipmentRequests() {
     
     try {
         const snapshot = await window.db.collection('requests')
+            .where('type', '==', 'equipment')
             .where('userKennung', '==', window.currentUser.kennung)
             .get();
         
         const requests = [];
         snapshot.forEach(doc => {
             const data = doc.data();
-            // Filter for equipment requests only
-            if (data.type === 'equipment') {
-                requests.push({
-                    id: doc.id,
-                    ...data,
-                    createdAt: data.createdAt?.toDate()
-                });
-            }
+            requests.push({
+                id: doc.id,
+                ...data,
+                createdAt: data.createdAt?.toDate()
+            });
         });
         
         // Sort locally by creation date (newest first)
@@ -888,49 +876,43 @@ async function requestEquipmentReturn(requestId) {
  * Delete equipment request
  */
 async function deleteEquipmentRequest(requestId) {
-    if (!confirm('Möchten Sie diese Anfrage wirklich löschen?')) {
-        return;
-    }
-    
     try {
         await window.db.collection('requests').doc(requestId).delete();
-        toast.success('Anfrage gelöscht');
-        // Refresh the view if still on the equipment requests modal
-        const equipmentRequestsList = document.getElementById('myEquipmentRequestsList');
-        if (equipmentRequestsList) {
-            refreshMyEquipmentRequests();
-        }
+        
+        toast.success('Equipment-Anfrage gelöscht');
+        
+        // Refresh the view
+        refreshMyEquipmentRequests();
         
     } catch (error) {
-        console.error('Error deleting request:', error);
-        toast.error('Fehler beim Löschen der Anfrage');
+        console.error('Error deleting equipment request:', error);
+        toast.error('Fehler beim Löschen der Equipment-Anfrage');
     }
 }
 
 /**
- * Refresh equipment requests list without reopening modal
+ * Refresh equipment requests without reopening modal
  */
 async function refreshMyEquipmentRequests() {
     const container = document.getElementById('myEquipmentRequestsList');
     if (!container) return;
     
-    container.innerHTML = '<div class="loading-spinner">Lade Ausleihen...</div>';
-    
     try {
+        container.innerHTML = 'Lade Ausleihen...';
+        
         const snapshot = await window.db.collection('requests')
+            .where('type', '==', 'equipment')
             .where('userKennung', '==', window.currentUser.kennung)
             .get();
         
         const requests = [];
         snapshot.forEach(doc => {
             const data = doc.data();
-            if (data.type === 'equipment') {
-                requests.push({
-                    id: doc.id,
-                    ...data,
-                    createdAt: data.createdAt?.toDate()
-                });
-            }
+            requests.push({
+                id: doc.id,
+                ...data,
+                createdAt: data.createdAt?.toDate()
+            });
         });
         
         // Sort locally by creation date (newest first)
@@ -942,11 +924,11 @@ async function refreshMyEquipmentRequests() {
         
         renderMyEquipmentRequests(requests);
         
-        // Auto-close modal if no requests left
+        // Check if modal should auto-close (no requests left)
         if (requests.length === 0) {
             setTimeout(() => {
-                closeModal();
                 toast.info('Alle Ausleihen wurden entfernt');
+                closeModal();
             }, 1000);
         }
         
@@ -954,7 +936,7 @@ async function refreshMyEquipmentRequests() {
         console.error('Error refreshing equipment requests:', error);
         container.innerHTML = `
             <div class="error-state">
-                <p>Fehler beim Laden der Ausleihen</p>
+                <p>Fehler beim Aktualisieren der Ausleihen</p>
             </div>
         `;
     }
@@ -1018,8 +1000,11 @@ async function showMyProblemReports() {
         </div>
         <div class="modal-body">
             <div id="myProblemReportsList">
-                <div class="loading-spinner">Lade Meldungen...</div>
+                Lade Meldungen...
             </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
         </div>
     `;
     
@@ -1248,35 +1233,30 @@ async function saveProblemReportEdit(reportId) {
  * Delete problem report
  */
 async function deleteProblemReport(reportId) {
-    if (!confirm('Möchten Sie diese Meldung wirklich löschen?')) {
-        return;
-    }
-    
     try {
         await window.db.collection('problemReports').doc(reportId).delete();
-        toast.success('Meldung gelöscht');
-        // Refresh the view if still on the problem reports modal
-        const problemReportsList = document.getElementById('myProblemReportsList');
-        if (problemReportsList) {
-            refreshMyProblemReports();
-        }
+        
+        toast.success('Problem-Meldung gelöscht');
+        
+        // Refresh the view
+        refreshMyProblemReports();
         
     } catch (error) {
         console.error('Error deleting problem report:', error);
-        toast.error('Fehler beim Löschen der Meldung');
+        toast.error('Fehler beim Löschen der Problem-Meldung');
     }
 }
 
 /**
- * Refresh problem reports list without reopening modal
+ * Refresh problem reports without reopening modal
  */
 async function refreshMyProblemReports() {
     const container = document.getElementById('myProblemReportsList');
     if (!container) return;
     
-    container.innerHTML = '<div class="loading-spinner">Lade Meldungen...</div>';
-    
     try {
+        container.innerHTML = 'Lade Meldungen...';
+        
         const snapshot = await window.db.collection('problemReports')
             .where('reportedByKennung', '==', window.currentUser.kennung)
             .get();
@@ -1300,11 +1280,11 @@ async function refreshMyProblemReports() {
         
         renderMyProblemReports(reports);
         
-        // Auto-close modal if no reports left
+        // Check if modal should auto-close (no reports left)
         if (reports.length === 0) {
             setTimeout(() => {
-                closeModal();
                 toast.info('Alle Meldungen wurden entfernt');
+                closeModal();
             }, 1000);
         }
         
@@ -1312,7 +1292,7 @@ async function refreshMyProblemReports() {
         console.error('Error refreshing problem reports:', error);
         container.innerHTML = `
             <div class="error-state">
-                <p>Fehler beim Laden der Meldungen</p>
+                <p>Fehler beim Aktualisieren der Meldungen</p>
             </div>
         `;
     }
@@ -1383,16 +1363,20 @@ async function showMyMaterialRequests() {
         </div>
         <div class="modal-body">
             <div id="myMaterialRequestsList">
-                <div class="loading-spinner">Lade Wünsche...</div>
+                Lade Wünsche...
             </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
         </div>
     `;
     
     showModalWithContent(modalContent);
     
     try {
-        const snapshot = await window.db.collection('materialRequests')
-            .where('requestedByKennung', '==', window.currentUser.kennung)
+        const snapshot = await window.db.collection('materialOrders')
+            .where('source', '==', 'user')
+            .where('userKennung', '==', window.currentUser.kennung)
             .get();
         
         const requests = [];
@@ -1450,7 +1434,7 @@ function renderMyMaterialRequests(requests) {
         html += `
             <div class="entry-card">
                 <div class="entry-card-header">
-                    <h3 class="entry-job-title">${request.name || request.type || 'Material-Wunsch'}</h3>
+                    <h3 class="entry-job-title">${request.materialName || request.name || 'Material-Wunsch'}</h3>
                     <span class="entry-status-badge ${statusClass}">${statusText}</span>
                 </div>
                 
@@ -1462,7 +1446,7 @@ function renderMyMaterialRequests(requests) {
                     
                     <div class="entry-detail-row">
                         <span class="entry-detail-label">Material</span>
-                        <span class="entry-detail-value">${request.type || 'Nicht angegeben'}</span>
+                        <span class="entry-detail-value">${request.materialName || 'Nicht angegeben'}</span>
                     </div>
                     
                     <div class="entry-detail-row">
@@ -1480,10 +1464,10 @@ function renderMyMaterialRequests(requests) {
                         <span class="entry-detail-value">${request.reason}</span>
                     </div>
                     
-                    ${request.supplier ? `
+                    ${request.manufacturer ? `
                     <div class="entry-detail-row">
-                        <span class="entry-detail-label">Lieferant</span>
-                        <span class="entry-detail-value">${request.supplier}</span>
+                        <span class="entry-detail-label">Hersteller</span>
+                        <span class="entry-detail-value">${request.manufacturer}</span>
                     </div>
                     ` : ''}
                 </div>
@@ -1617,37 +1601,33 @@ async function saveMaterialRequestEdit(requestId) {
  * Delete material request
  */
 async function deleteMaterialRequest(requestId) {
-    if (!confirm('Möchten Sie diesen Wunsch wirklich löschen?')) {
-        return;
-    }
-    
     try {
-        await window.db.collection('materialRequests').doc(requestId).delete();
-        toast.success('Wunsch gelöscht');
-        // Refresh the view if still on the material requests modal
-        const materialRequestsList = document.getElementById('myMaterialRequestsList');
-        if (materialRequestsList) {
-            refreshMyMaterialRequests();
-        }
+        await window.db.collection('materialOrders').doc(requestId).delete();
+        
+        toast.success('Material-Wunsch gelöscht');
+        
+        // Refresh the view
+        refreshMyMaterialRequests();
         
     } catch (error) {
         console.error('Error deleting material request:', error);
-        toast.error('Fehler beim Löschen des Wunsches');
+        toast.error('Fehler beim Löschen des Material-Wunschs');
     }
 }
 
 /**
- * Refresh material requests list without reopening modal
+ * Refresh material requests without reopening modal
  */
 async function refreshMyMaterialRequests() {
     const container = document.getElementById('myMaterialRequestsList');
     if (!container) return;
     
-    container.innerHTML = '<div class="loading-spinner">Lade Wünsche...</div>';
-    
     try {
-        const snapshot = await window.db.collection('materialRequests')
-            .where('requestedByKennung', '==', window.currentUser.kennung)
+        container.innerHTML = 'Lade Wünsche...';
+        
+        const snapshot = await window.db.collection('materialOrders')
+            .where('source', '==', 'user')
+            .where('userKennung', '==', window.currentUser.kennung)
             .get();
         
         const requests = [];
@@ -1669,11 +1649,11 @@ async function refreshMyMaterialRequests() {
         
         renderMyMaterialRequests(requests);
         
-        // Auto-close modal if no requests left
+        // Check if modal should auto-close (no requests left)
         if (requests.length === 0) {
             setTimeout(() => {
-                closeModal();
                 toast.info('Alle Material-Wünsche wurden entfernt');
+                closeModal();
             }, 1000);
         }
         
@@ -1681,7 +1661,7 @@ async function refreshMyMaterialRequests() {
         console.error('Error refreshing material requests:', error);
         container.innerHTML = `
             <div class="error-state">
-                <p>Fehler beim Laden der Wünsche</p>
+                <p>Fehler beim Aktualisieren der Material-Wünsche</p>
             </div>
         `;
     }
