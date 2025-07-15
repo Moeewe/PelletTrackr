@@ -5,7 +5,7 @@
 
 // Global order state
 let materialOrders = [];
-let currentOrderTab = 'wishes';
+let currentOrderTab = 'requests';
 let materialOrdersListener = null;
 
 /**
@@ -177,24 +177,51 @@ async function submitMaterialRequest() {
     // Wait a moment for DOM elements to be ready
     await new Promise(resolve => setTimeout(resolve, 100));
     
-    // Get DOM elements with null checks
-    const materialNameEl = document.getElementById('requestMaterialName');
-    const manufacturerEl = document.getElementById('requestManufacturer');
-    const reasonEl = document.getElementById('requestReason');
-    const quantityEl = document.getElementById('requestQuantity');
-    const priorityEl = document.getElementById('requestPriority');
+    // Get DOM elements with null checks (with retry logic)
+    let attempts = 0;
+    let materialNameEl, manufacturerEl, reasonEl, quantityEl, priorityEl;
     
-    // Check if elements exist
+    while (attempts < 5) {
+        await new Promise(resolve => setTimeout(resolve, 200 * (attempts + 1))); // Exponential backoff
+        
+        materialNameEl = document.getElementById('requestMaterialName');
+        manufacturerEl = document.getElementById('requestManufacturer');
+        reasonEl = document.getElementById('requestReason');
+        quantityEl = document.getElementById('requestQuantity');
+        priorityEl = document.getElementById('requestPriority');
+        
+        if (materialNameEl && reasonEl) {
+            console.log('✅ Form elements found on attempt:', attempts + 1);
+            break;
+        }
+        
+        attempts++;
+        console.log(`⏳ Attempt ${attempts}: Elements not found yet, retrying...`);
+    }
+    
+    // Check if elements exist after all attempts
     if (!materialNameEl || !reasonEl) {
-        console.error('Required form elements not found');
-        console.log('Available elements:', {
+        console.error('❌ Required form elements not found after 5 attempts');
+        console.log('📋 Available elements:', {
             materialName: !!materialNameEl,
             manufacturer: !!manufacturerEl,
             reason: !!reasonEl,
             quantity: !!quantityEl,
             priority: !!priorityEl
         });
-        toast.error('Formular-Fehler: Erforderliche Felder nicht gefunden');
+        
+        // Show debug info about the current modal state
+        const modal = document.getElementById('modal');
+        console.log('🔍 Modal element:', !!modal);
+        if (modal) {
+            console.log('🔍 Modal content preview:', modal.innerHTML.substring(0, 200) + '...');
+        }
+        
+        if (window.toast && typeof window.toast.error === 'function') {
+            window.toast.error('Formular-Fehler: Erforderliche Felder nicht gefunden. Bitte versuchen Sie es erneut.');
+        } else {
+            alert('Formular-Fehler: Erforderliche Felder nicht gefunden. Bitte versuchen Sie es erneut.');
+        }
         return;
     }
     
@@ -208,7 +235,11 @@ async function submitMaterialRequest() {
     
     // Validation
     if (!formData.materialName || !formData.reason) {
-        toast.error('Bitte füllen Sie mindestens Material und Begründung aus');
+        if (window.toast && typeof window.toast.error === 'function') {
+            window.toast.error('Bitte füllen Sie mindestens Material und Begründung aus');
+        } else {
+            alert('Bitte füllen Sie mindestens Material und Begründung aus');
+        }
         return;
     }
     
@@ -233,7 +264,11 @@ async function submitMaterialRequest() {
         const quantityText = formData.quantity ? `\nMenge: ${formData.quantity}` : '';
         const manufacturerText = formData.manufacturer ? `\nHersteller: ${formData.manufacturer}` : '';
         
-        toast.success(`Material-Anfrage erfolgreich gesendet!\n\nMaterial: ${formData.materialName}${quantityText}${manufacturerText}\nPriorität: ${getPriorityText(formData.priority)}\n\nEin Admin wird deine Anfrage prüfen und das Material bestellen.`);
+        if (window.toast && typeof window.toast.success === 'function') {
+            window.toast.success(`Material-Anfrage erfolgreich gesendet!\n\nMaterial: ${formData.materialName}${quantityText}${manufacturerText}\nPriorität: ${getPriorityText(formData.priority)}\n\nEin Admin wird deine Anfrage prüfen und das Material bestellen.`);
+        } else {
+            alert(`Material-Anfrage erfolgreich gesendet!\n\nMaterial: ${formData.materialName}${quantityText}${manufacturerText}\nPriorität: ${getPriorityText(formData.priority)}\n\nEin Admin wird deine Anfrage prüfen und das Material bestellen.`);
+        }
         
         // Close modal and return to main dashboard
         closeModal();
@@ -245,7 +280,11 @@ async function submitMaterialRequest() {
         
     } catch (error) {
         console.error('Error submitting material request:', error);
-        toast.error('Fehler beim Senden der Anfrage');
+        if (window.toast && typeof window.toast.error === 'function') {
+            window.toast.error('Fehler beim Senden der Anfrage');
+        } else {
+            alert('Fehler beim Senden der Anfrage');
+        }
     }
 }
 
@@ -311,6 +350,11 @@ function showMaterialOrders() {
     
     // Setup real-time listener
     setupMaterialOrdersListener();
+    
+    // Load initial tab content after a short delay to ensure DOM is ready
+    setTimeout(() => {
+        showOrderTab('requests');
+    }, 300);
 }
 
 /**
@@ -350,6 +394,10 @@ function setupMaterialOrdersListener() {
         // Update current tab display if modal is open
         const tabContent = document.querySelector('.tab-content.active');
         if (tabContent) {
+            // Ensure currentOrderTab is set, default to 'requests'
+            if (!currentOrderTab) {
+                currentOrderTab = 'requests';
+            }
             showOrderTab(currentOrderTab);
         }
         

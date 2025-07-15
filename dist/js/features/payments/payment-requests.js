@@ -637,6 +637,65 @@ function renderPaymentRequestsList(requests) {
 }
 
 /**
+ * Approve payment request and mark entry as paid
+ */
+async function approvePaymentRequest(requestId) {
+    try {
+        // Get the payment request
+        const requestDoc = await window.db.collection('paymentRequests').doc(requestId).get();
+        
+        if (!requestDoc.exists) {
+            if (window.toast && typeof window.toast.error === 'function') {
+                window.toast.error('Zahlungsanfrage nicht gefunden');
+            } else {
+                alert('Zahlungsanfrage nicht gefunden');
+            }
+            return;
+        }
+        
+        const request = requestDoc.data();
+        const entryId = request.entryId;
+        
+        if (!entryId) {
+            if (window.toast && typeof window.toast.error === 'function') {
+                window.toast.error('Entry-ID nicht gefunden in der Zahlungsanfrage');
+            } else {
+                alert('Entry-ID nicht gefunden in der Zahlungsanfrage');
+            }
+            return;
+        }
+        
+        // Update the entry to mark it as paid
+        await window.db.collection('entries').doc(entryId).update({
+            paid: true,
+            isPaid: true,
+            paidAt: new Date(),
+            adminApproved: true,
+            adminApprovedAt: new Date()
+        });
+        
+        // Delete the payment request
+        await window.db.collection('paymentRequests').doc(requestId).delete();
+        
+        if (window.toast && typeof window.toast.success === 'function') {
+            window.toast.success('Zahlung genehmigt und Entry als bezahlt markiert');
+        } else {
+            alert('Zahlung genehmigt und Entry als bezahlt markiert');
+        }
+        
+        console.log(`✅ Payment approved for entry: ${entryId}`);
+        
+    } catch (error) {
+        console.error('Error approving payment request:', error);
+        if (window.toast && typeof window.toast.error === 'function') {
+            window.toast.error('Fehler beim Genehmigen der Zahlung: ' + error.message);
+        } else {
+            alert('Fehler beim Genehmigen der Zahlung: ' + error.message);
+        }
+    }
+}
+
+/**
  * Delete payment request
  */
 async function deletePaymentRequest(requestId) {
@@ -852,6 +911,7 @@ function updateUserPaymentButton(entryId, isPaid) {
 window.requestPayment = requestPayment;
 window.cancelPaymentRequest = cancelPaymentRequest;
 window.processPaymentRequest = processPaymentRequest;
+window.approvePaymentRequest = approvePaymentRequest;
 window.deletePaymentRequest = deletePaymentRequest;
 window.showPaymentRequestsModal = showPaymentRequestsModal;
 window.checkPaymentRequestExists = checkPaymentRequestExists;
