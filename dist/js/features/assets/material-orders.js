@@ -294,7 +294,9 @@ async function submitMaterialRequest() {
 function showMaterialOrders() {
     const modalContent = `
         <div class="modal-header">
-            <h3>Bestellungen verwalten</h3>
+            <h3>Bestellungen verwalten
+                <span id="material-orders-badge" class="notification-badge" data-badge="material-orders" style="display: none;">0</span>
+            </h3>
             <button class="close-btn" onclick="closeModal()">&times;</button>
         </div>
         <div class="modal-body">
@@ -511,13 +513,29 @@ function updateTabCounters() {
     
     // Update counter elements
     const requestsCounter = document.getElementById('requestsCounter');
+    const userWishesCounter = document.getElementById('userWishesCounter');
     const shoppingCounter = document.getElementById('shoppingCounter');
     const historyCounter = document.getElementById('historyCounter');
+    const materialOrdersBadge = document.getElementById('material-orders-badge');
+    
+    // Update Header Badge mit der Gesamtzahl der offenen Anfragen
+    const totalOpenCount = requestsCount + userWishesCount;
+    if (materialOrdersBadge) {
+        materialOrdersBadge.textContent = totalOpenCount;
+        materialOrdersBadge.style.display = totalOpenCount > 0 ? 'inline-block' : 'none';
+        console.log(`✅ Material Orders Header badge updated: ${totalOpenCount}`);
+    }
     
     if (requestsCounter) {
         requestsCounter.textContent = requestsCount;
         requestsCounter.style.display = requestsCount > 0 ? 'inline-block' : 'none';
         console.log(`✅ Requests badge updated: ${requestsCount}`);
+    }
+    
+    if (userWishesCounter) {
+        userWishesCounter.textContent = userWishesCount;
+        userWishesCounter.style.display = userWishesCount > 0 ? 'inline-block' : 'none';
+        console.log(`✅ User wishes badge updated: ${userWishesCount}`);
     }
     
     if (shoppingCounter) {
