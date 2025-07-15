@@ -628,7 +628,7 @@ function renderMaterialWishes() {
                         ${wish.manufacturer ? `<p><strong>Hersteller:</strong> ${wish.manufacturer}</p>` : ''}
                         ${wish.quantity ? `<p><strong>Menge:</strong> ${wish.quantity}</p>` : ''}
                         <p><strong>Begründung:</strong> ${wish.reason || 'Keine Begründung'}</p>
-                        <p><strong>Angefragt:</strong> ${wish.createdAt ? wish.createdAt.toLocaleDateString('de-DE') : 'Unbekannt'}</p>
+                        <p><strong>Angefragt:</strong> ${wish.createdAt ? (wish.createdAt.toDate ? new Date(wish.createdAt.toDate()).toLocaleDateString('de-DE') : new Date(wish.createdAt).toLocaleDateString('de-DE')) : 'Unbekannt'}</p>
                         <p><strong>Status:</strong> ${getStatusText(wish.status)}</p>
                     </div>
                     ${window.currentUser?.isAdmin && wish.status === 'approved' ? `
@@ -773,7 +773,9 @@ function renderOrderHistory() {
     ).sort((a, b) => {
         const dateA = a.updatedAt || a.createdAt || new Date(0);
         const dateB = b.updatedAt || b.createdAt || new Date(0);
-        return dateB - dateA; // Newest first
+        const convertedDateA = dateA.toDate ? dateA.toDate() : new Date(dateA);
+        const convertedDateB = dateB.toDate ? dateB.toDate() : new Date(dateB);
+        return convertedDateB - convertedDateA; // Newest first
     });
     
     if (orders.length === 0) {
@@ -793,7 +795,7 @@ function renderOrderHistory() {
                 const sourcePerson = order.userName || order.createdBy || 'Unbekannt';
                 const sourceType = order.source === 'admin' ? 'Admin-Bestellung' : 'Nutzerwunsch';
                 const processDate = order.updatedAt || order.createdAt;
-                const processDateStr = processDate ? processDate.toLocaleDateString('de-DE') : 'Unbekannt';
+                const processDateStr = processDate ? (processDate.toDate ? new Date(processDate.toDate()).toLocaleDateString('de-DE') : new Date(processDate).toLocaleDateString('de-DE')) : 'Unbekannt';
                 
                 return `
                     <div class="history-card ${statusClass}">
