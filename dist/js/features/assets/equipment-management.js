@@ -3,11 +3,13 @@
  * Handles lending system for keys, hardware, and books
  */
 
-// Global equipment state
+// Equipment Management Module - Extended with Requests Support
 let equipment = [];
-let currentEquipmentCategory = 'keys';
-let filteredEquipment = [];
 let equipmentListener = null;
+let equipmentRequests = [];
+let equipmentRequestsListener = null;
+let currentEquipmentCategory = 'Hardware';
+let filteredEquipment = [];
 
 // Fixed categories - no more dynamic categories
 const EQUIPMENT_CATEGORIES = {
@@ -68,7 +70,9 @@ function setupEquipmentListener() {
 function showEquipmentManager() {
     const modalContent = `
         <div class="modal-header">
-            <h3>Equipment verwalten</h3>
+            <h3>Equipment verwalten
+                <span id="equipment-requests-badge" class="notification-badge" style="display: none;">0</span>
+            </h3>
             <button class="close-btn" onclick="closeModal()">&times;</button>
         </div>
         <div class="modal-body">
@@ -103,16 +107,25 @@ function showEquipmentManager() {
     
     showModalWithContent(modalContent);
     setupEquipmentListener();
+    setupEquipmentRequestsListener();
+    loadEquipmentRequests();
+    
+    // Update notification badge immediately
+    updateEquipmentRequestsBadge();
 }
 
 /**
  * Close equipment manager modal
  */
 function closeEquipmentManager() {
-    // Clean up listener
+    // Clean up listeners
     if (equipmentListener) {
         equipmentListener();
         equipmentListener = null;
+    }
+    if (equipmentRequestsListener) {
+        equipmentRequestsListener();
+        equipmentRequestsListener = null;
     }
     closeModal();
 }
@@ -222,8 +235,12 @@ function renderEquipmentList(equipmentList) {
         return;
     }
     
-    container.innerHTML = equipmentList.map(item => `
-        <div class="equipment-item ${item.requiresDeposit ? 'requires-deposit' : ''}">
+    container.innerHTML = equipmentList.map(item => {
+        // Check if there's a pending request for this equipment
+        const pendingRequest = getPendingRequestForEquipment(item.id);
+        
+        return `
+        <div class="equipment-item ${item.requiresDeposit ? 'requires-deposit' : ''} ${pendingRequest ? 'has-pending-request' : ''}">
             <div class="equipment-header">
                 <div class="equipment-name">${item.name}</div>
                 <div class="equipment-status-row">
@@ -236,7 +253,14 @@ function renderEquipmentList(equipmentList) {
                 </div>
             </div>
             <div class="equipment-info">${item.description || 'Keine Beschreibung'}</div>
-            ${item.status === 'borrowed' && item.borrowedBy ? `
+            
+            ${pendingRequest ? `
+                <div class="equipment-request-info">
+                    <strong>Ausleihe angefragt von:</strong> ${pendingRequest.userName} (${pendingRequest.userKennung})
+                    <br><strong>Zeitraum:</strong> ${pendingRequest.fromDate ? new Date(pendingRequest.fromDate.seconds * 1000).toLocaleDateString() : 'Unbekannt'} - ${pendingRequest.toDate ? new Date(pendingRequest.toDate.seconds * 1000).toLocaleDateString() : 'Unbekannt'}
+                    <br><strong>Grund:</strong> ${pendingRequest.reason || 'Kein Grund angegeben'}
+                </div>
+            ` : item.status === 'borrowed' && item.borrowedBy ? `
                 <div class="equipment-current-user">
                     Ausgeliehen an: <strong>${item.borrowedBy}</strong><br>
                     Seit: ${new Date(item.borrowedAt.toDate()).toLocaleDateString()}
@@ -249,19 +273,28 @@ function renderEquipmentList(equipmentList) {
                     ` : ''}
                 </div>
             ` : ''}
+            
             <div class="equipment-actions">
-                ${item.status === 'available' ? `
+                ${pendingRequest ? `
+                    <button class="btn btn-success" onclick="approveEquipmentRequest('${pendingRequest.id}', '${item.id}')">Ausleihe bestätigen</button>
+                    <button class="btn btn-danger" onclick="rejectEquipmentRequest('${pendingRequest.id}')">Ausleihe verweigern</button>
+                    <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
+                ` : item.status === 'available' ? `
                     <button class="btn btn-primary" onclick="borrowEquipment('${item.id}')">Ausleihen</button>
+                    <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
                 ` : item.status === 'borrowed' ? `
                     <button class="btn btn-success" onclick="returnEquipment('${item.id}')">Zurückgeben</button>
                     ${item.requiresDeposit && !item.depositPaid ? `
                         <button class="btn btn-warning" onclick="markDepositAsPaid('${item.id}')">Pfand als bezahlt markieren</button>
                     ` : ''}
-                ` : ''}
-                <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
+                    <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
+                ` : `
+                    <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
+                `}
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 /**
@@ -355,8 +388,8 @@ function toggleDepositAmount() {
  * Close add equipment form
  */
 function closeAddEquipmentForm() {
-    // Close the modal properly
-    closeModal();
+    // Return to equipment overview instead of closing modal
+    showEquipmentManager();
 }
 
 /**
@@ -397,8 +430,8 @@ async function saveEquipment() {
         await window.db.collection('equipment').add(equipmentData);
         safeShowToast('Equipment erfolgreich hinzugefügt', 'success');
         
-        // Close the modal properly
-        closeModal();
+        // Return to equipment overview instead of closing modal
+        showEquipmentManager();
         
     } catch (error) {
         console.error('Error saving equipment:', error);
@@ -487,12 +520,11 @@ function editEquipment(equipmentId) {
 }
 
 /**
- * Close edit equipment form - DEPRECATED
- * Now using standard closeModal() function
+ * Close edit equipment form
  */
 function closeEditEquipmentForm() {
-    // Fallback - use standard modal close
-    closeModal();
+    // Return to equipment overview instead of closing modal
+    showEquipmentManager();
 }
 
 /**
@@ -534,8 +566,8 @@ async function updateEquipment(equipmentId) {
         await window.db.collection('equipment').doc(equipmentId).update(equipmentData);
         
         safeShowToast('Equipment erfolgreich aktualisiert', 'success');
-        closeModal();
-        // Removed manual reload - real-time listener will handle the update
+        // Return to equipment overview instead of closing modal
+        showEquipmentManager();
         
     } catch (error) {
         console.error('Error updating equipment:', error);
@@ -566,7 +598,8 @@ async function deleteEquipment(equipmentId) {
         await window.db.collection('equipment').doc(equipmentId).delete();
         
         safeShowToast('Equipment erfolgreich gelöscht', 'success');
-        closeModal(); // Close the edit modal and return to equipment list
+        // Return to equipment overview instead of closing modal
+        showEquipmentManager();
         
     } catch (error) {
         console.error('Error deleting equipment:', error);
@@ -677,6 +710,93 @@ async function markDepositAsPaid(equipmentId) {
 }
 
 /**
+ * Setup equipment requests listener
+ */
+function setupEquipmentRequestsListener() {
+  if (!window.db) {
+    setTimeout(setupEquipmentRequestsListener, 500);
+    return;
+  }
+  
+  if (equipmentRequestsListener) {
+    equipmentRequestsListener();
+    equipmentRequestsListener = null;
+  }
+  
+  try {
+    equipmentRequestsListener = window.db.collection('equipmentRequests')
+      .where('status', '==', 'pending')
+      .onSnapshot((snapshot) => {
+        equipmentRequests = [];
+        snapshot.forEach(doc => {
+          equipmentRequests.push({
+            id: doc.id,
+            ...doc.data()
+          });
+        });
+        console.log('Live update: Loaded equipment requests:', equipmentRequests.length);
+        
+        // Update notification badge
+        updateEquipmentRequestsBadge();
+        
+        // Re-render equipment with updated request data
+        if (equipment.length > 0) {
+          showEquipmentCategory(currentEquipmentCategory);
+        }
+      }, (error) => {
+        console.error('Error in equipment requests listener:', error);
+      });
+    
+    console.log("✅ Equipment requests listener registered");
+  } catch (error) {
+    console.error("❌ Failed to setup equipment requests listener:", error);
+  }
+}
+
+/**
+ * Get pending equipment request for a specific equipment item
+ */
+function getPendingRequestForEquipment(equipmentId) {
+  return equipmentRequests.find(request => 
+    request.equipmentId === equipmentId && request.status === 'pending'
+  );
+}
+
+/**
+ * Load equipment requests from Firebase
+ */
+async function loadEquipmentRequests() {
+  try {
+    const querySnapshot = await window.db.collection('equipmentRequests')
+      .where('status', '==', 'pending')
+      .get();
+    
+    equipmentRequests = [];
+    querySnapshot.forEach(doc => {
+      equipmentRequests.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+    
+    console.log('Loaded equipment requests:', equipmentRequests.length);
+  } catch (error) {
+    console.error('Error loading equipment requests:', error);
+  }
+}
+
+/**
+ * Update the notification badge for equipment requests
+ */
+function updateEquipmentRequestsBadge() {
+    const badge = document.getElementById('equipment-requests-badge');
+    if (badge) {
+        badge.textContent = equipmentRequests.length;
+        badge.style.display = equipmentRequests.length > 0 ? 'inline-block' : 'none';
+    }
+}
+
+/**
  * Render category tabs dynamically
  */
 // Category tabs are now static in HTML, no dynamic rendering needed
@@ -688,6 +808,105 @@ async function markDepositAsPaid(equipmentId) {
 // More category management functions removed
 
 // All old category management functions removed 
+
+/**
+ * Approve equipment request and mark equipment as borrowed
+ */
+async function approveEquipmentRequest(requestId, equipmentId) {
+  try {
+    if (!confirm('Möchtest du diese Ausleihe-Anfrage genehmigen?')) {
+      return;
+    }
+    
+    const loadingId = window.loading ? window.loading.show('Anfrage wird genehmigt...') : null;
+    
+    // Get the request data first
+    const requestDoc = await window.db.collection('equipmentRequests').doc(requestId).get();
+    if (!requestDoc.exists) {
+      throw new Error('Anfrage nicht gefunden');
+    }
+    
+    const requestData = requestDoc.data();
+    
+    // Start a batch operation
+    const batch = window.db.batch();
+    
+    // Update the equipment status to borrowed
+    const equipmentRef = window.db.collection('equipment').doc(equipmentId);
+    batch.update(equipmentRef, {
+      status: 'borrowed',
+      borrowedBy: requestData.userName,
+      borrowedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+      borrowedByKennung: requestData.userKennung
+    });
+    
+    // Update the request status to approved and active
+    const requestRef = window.db.collection('equipmentRequests').doc(requestId);
+    batch.update(requestRef, {
+      status: 'approved',
+      approvedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+      equipmentId: equipmentId
+    });
+    
+    // Commit the batch
+    await batch.commit();
+    
+    if (loadingId && window.loading) window.loading.hide(loadingId);
+    
+    if (window.toast) {
+      window.toast.success('Ausleihe-Anfrage erfolgreich genehmigt');
+    } else {
+      alert('Ausleihe-Anfrage erfolgreich genehmigt');
+    }
+    
+  } catch (error) {
+    console.error('Error approving equipment request:', error);
+    if (window.loading) window.loading.hideAll();
+    
+    if (window.toast) {
+      window.toast.error('Fehler beim Genehmigen der Anfrage: ' + error.message);
+    } else {
+      alert('Fehler beim Genehmigen der Anfrage: ' + error.message);
+    }
+  }
+}
+
+/**
+ * Reject equipment request
+ */
+async function rejectEquipmentRequest(requestId) {
+  try {
+    if (!confirm('Möchtest du diese Ausleihe-Anfrage ablehnen?')) {
+      return;
+    }
+    
+    const loadingId = window.loading ? window.loading.show('Anfrage wird abgelehnt...') : null;
+    
+    // Update the request status to rejected
+    await window.db.collection('equipmentRequests').doc(requestId).update({
+      status: 'rejected',
+      rejectedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    if (loadingId && window.loading) window.loading.hide(loadingId);
+    
+    if (window.toast) {
+      window.toast.success('Ausleihe-Anfrage erfolgreich abgelehnt');
+    } else {
+      alert('Ausleihe-Anfrage erfolgreich abgelehnt');
+    }
+    
+  } catch (error) {
+    console.error('Error rejecting equipment request:', error);
+    if (window.loading) window.loading.hideAll();
+    
+    if (window.toast) {
+      window.toast.error('Fehler beim Ablehnen der Anfrage: ' + error.message);
+    } else {
+      alert('Fehler beim Ablehnen der Anfrage: ' + error.message);
+    }
+  }
+}
 
 // ==================== GLOBAL EXPORTS ====================
 // Equipment Management-Funktionen global verfügbar machen
@@ -707,5 +926,8 @@ window.updateEquipment = updateEquipment;
 window.borrowEquipment = borrowEquipment;
 window.returnEquipment = returnEquipment;
 window.markDepositAsPaid = markDepositAsPaid;
+window.updateEquipmentRequestsBadge = updateEquipmentRequestsBadge;
+window.approveEquipmentRequest = approveEquipmentRequest;
+window.rejectEquipmentRequest = rejectEquipmentRequest;
 
 console.log("🔧 Equipment Management Module geladen"); 

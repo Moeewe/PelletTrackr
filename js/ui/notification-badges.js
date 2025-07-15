@@ -323,7 +323,7 @@ async function processScheduleRequest(requestId, status) {
 }
 
 // Global functions
-window.initializeNotificationBadges = initializeNotificationBadges;
+window.initializeNotificationBadges = initNotificationBadges;
 window.cleanupNotificationBadges = cleanupNotificationBadges;
 window.showAdminNotificationOverview = showAdminNotificationOverview;
 window.showMaterialRequests = showMaterialRequests;

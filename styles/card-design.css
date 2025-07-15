@@ -76,22 +76,28 @@
   font-size: 12px;
   font-weight: 700;
   padding: 6px 12px;
-  border: 1px solid #000;
+  border: none;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .entry-status-badge.status-paid {
   background: #4CAF50;
   color: white;
-  border-color: #4CAF50;
 }
 
 .entry-status-badge.status-unpaid {
-  background: #FFEB00;
-  color: #000000;
-  border-color: #000000;
+  background: #FFC107;
+  color: white;
+}
+
+.entry-status-badge.status-new {
+  background: #2196F3;
+  color: white;
 }
 
 /* ==================== ENTRY DETAIL ROWS ==================== */
@@ -456,9 +462,9 @@
 }
 
 .status-unpaid {
-  background: #FFEB00;
-  color: #000000;
-  border: 1px solid #000000;
+  background: #FFC107;
+  color: white;
+  border: 1px solid #FFC107;
 }
 
 .status-overdue {
@@ -750,6 +756,7 @@
     border-bottom: 4px solid transparent;
     padding: 12px 24px;
     cursor: pointer;
+    font-size: 16px;
     font-weight: 600;
     color: #000000;
     transition: all 0.2s ease;
@@ -786,7 +793,7 @@
     font-size: 11px;
     font-weight: 700;
     padding: 2px 6px;
-    border-radius: 10px;
+    border-radius: 0;
     margin-left: 8px;
     min-width: 18px;
     text-align: center;
@@ -839,7 +846,7 @@
 
 .equipment-status {
     padding: 4px 12px;
-    border-radius: 12px;
+    border-radius: 0;
     font-size: 12px;
     font-weight: 600;
     text-transform: uppercase;
@@ -933,7 +940,7 @@
 
 .severity-indicator {
     padding: 4px 8px;
-    border-radius: 12px;
+    border-radius: 0;
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
@@ -1096,7 +1103,7 @@
 
 .printer-status {
     padding: 4px 12px;
-    border-radius: 12px;
+    border-radius: 0;
     font-size: 12px;
     font-weight: 600;
     text-transform: uppercase;
@@ -1271,7 +1278,7 @@
 }
 
 .printer-card:hover {
-    transform: translateY(-2px);
+    background: #f8f8f8;
 }
 
 .printer-header {
@@ -1397,7 +1404,7 @@
 }
 
 .equipment-item:hover {
-    transform: translateY(-2px);
+    background: #f8f8f8;
 }
 
 .equipment-header {
@@ -1538,7 +1545,7 @@
 }
 
 .request-item:hover {
-    transform: translateY(-2px);
+    background: #f8f8f8;
 }
 
 .request-header {
@@ -1563,26 +1570,79 @@
     font-size: 12px;
     font-weight: 600;
     text-transform: uppercase;
-    border: 1px solid #000000;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .priority-badge.priority-low {
-    background: #d4edda;
-    color: #155724;
+    background: #4CAF50;
+    color: white;
 }
 
 .priority-badge.priority-medium {
-    background: #fff3cd;
-    color: #856404;
+    background: #FF9800;
+    color: white;
 }
 
 .priority-badge.priority-high {
-    background: #f8d7da;
-    color: #721c24;
+    background: #F44336;
+    color: white;
+}
+
+.wish-priority-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.wish-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
 }
 
 .request-details {
     margin-bottom: 15px;
+}
+
+.request-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.source-badge {
+    padding: 4px 8px;
+    border-radius: 0;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    border: none;
+    margin-bottom: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.source-badge.source-user {
+    background: #2196F3;
+    color: white;
+}
+
+.source-badge.source-admin {
+    background: #9C27B0;
+    color: white;
+}
+
+.request-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 15px;
 }
 
 .request-details p {

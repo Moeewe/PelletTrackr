@@ -543,8 +543,13 @@ async function savePrinter(event) {
 
 /**
  * Change printer status quickly
+ * Requires admin access
  */
 async function changePrinterStatus(printerId) {
+    if (!window.checkAdminAccess()) {
+        return;
+    }
+    
     const printer = printers.find(p => p.id === printerId);
     if (!printer) return;
     

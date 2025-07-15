@@ -190,7 +190,6 @@
 
 .service-card:hover {
     background: #e9ecef;
-    transform: translateY(-2px);
 }
 
 .service-header {
@@ -236,7 +235,7 @@
     flex-direction: column;
     align-items: center;
     padding: 8px;
-    border-radius: 4px;
+    border-radius: 0;
     min-height: 50px;
 }
 
@@ -297,6 +296,14 @@
     margin-top: 12px;
 }
 
+.status-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
 .status-btn {
     display: flex;
     align-items: center;
@@ -304,32 +311,50 @@
     padding: 8px 12px;
     background: #f8f9fa;
     border: none;
-    border-radius: 4px;
+    border-radius: 0;
     cursor: pointer;
     transition: all 0.2s ease;
     opacity: 0.6;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     color: #495057;
-    min-width: 90px;
+    min-width: 100px;
     justify-content: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .status-btn:hover {
     background: #e9ecef;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    opacity: 0.8;
 }
 
-.status-btn.active {
+.status-btn.available.active {
     opacity: 1;
-    background: #000000;
-    color: #ffffff;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    background: #4CAF50;
+    color: white;
+}
+
+.status-btn.printing.active {
+    opacity: 1;
+    background: #2196F3;
+    color: white;
+}
+
+.status-btn.maintenance.active {
+    opacity: 1;
+    background: #FF9800;
+    color: white;
+}
+
+.status-btn.broken.active {
+    opacity: 1;
+    background: #F44336;
+    color: white;
 }
 
 .status-btn.active:hover {
-    background: #333333;
+    opacity: 0.9;
 }
 
 .status-icon {
@@ -354,7 +379,7 @@
     align-items: flex-start;
     padding: 16px;
     border: 1px solid #dee2e6;
-    border-radius: 8px;
+    border-radius: 0;
     margin-bottom: 12px;
     background: #ffffff;
 }
@@ -428,7 +453,7 @@
     font-size: 12px;
     font-weight: 600;
     color: white;
-    border-radius: 4px;
+    border-radius: 0;
     text-transform: uppercase;
 }
 
@@ -466,6 +491,7 @@
     z-index: 10;
 }
 
+/* Ensure buttons containing notification badges have proper positioning */
 .btn {
     position: relative;
 }
@@ -560,7 +586,7 @@
 
 .request-priority {
     padding: 4px 8px;
-    border-radius: 4px;
+    border-radius: 0;
     font-size: 12px;
     font-weight: 600;
     text-transform: uppercase;
@@ -598,4 +624,158 @@
 .request-actions .btn {
     padding: 6px 12px;
     font-size: 12px;
+}
+
+/* Printer Status Modal Redesign */
+.printer-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.printer-item {
+    background: white;
+    border: 2px solid #000000;
+    border-radius: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.printer-info {
+    flex: 1;
+}
+
+.printer-info h4 {
+    margin: 0 0 4px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #000000;
+}
+
+.printer-info p {
+    margin: 0 0 4px 0;
+    font-size: 14px;
+    color: #666666;
+}
+
+.printer-status-controls {
+    flex-shrink: 0;
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    width: 280px;
+}
+
+.status-item {
+    background: #f5f5f5;
+    border: 2px solid #e0e0e0;
+    border-radius: 0;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60px;
+}
+
+.status-item:hover {
+    border-color: #000000;
+}
+
+.status-item.current-status {
+    border-color: #000000;
+    border-width: 3px;
+}
+
+.status-item.status-available {
+    background: #e8f5e8;
+    color: #2e7d32;
+}
+
+.status-item.status-available.current-status {
+    background: #4caf50;
+    color: white;
+}
+
+.status-item.status-busy {
+    background: #fff3e0;
+    color: #f57c00;
+}
+
+.status-item.status-busy.current-status {
+    background: #ff9800;
+    color: white;
+}
+
+.status-item.status-maintenance {
+    background: #fff8e1;
+    color: #f9a825;
+}
+
+.status-item.status-maintenance.current-status {
+    background: #ffc107;
+    color: #000000;
+}
+
+.status-item.status-broken {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.status-item.status-broken.current-status {
+    background: #f44336;
+    color: white;
+}
+
+.status-number {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.status-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Mobile responsiveness for printer status modal */
+@media (max-width: 768px) {
+    .printer-item {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+    
+    .printer-info {
+        text-align: center;
+    }
+    
+    .status-grid {
+        width: 100%;
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .status-item {
+        min-height: 50px;
+        padding: 10px;
+    }
+    
+    .status-number {
+        font-size: 20px;
+    }
+    
+    .status-label {
+        font-size: 11px;
+    }
 }

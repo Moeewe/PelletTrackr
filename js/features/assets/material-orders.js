@@ -9,6 +9,111 @@ let currentOrderTab = 'wishes';
 let materialOrdersListener = null;
 
 /**
+ * Show admin order form for creating admin orders
+ */
+function showAdminOrderForm() {
+    const modalContent = `
+        <div class="modal-header">
+            <h3>Admin-Bestellung anlegen</h3>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="card">
+                <div class="card-body">
+                    <form id="adminOrderForm" class="form">
+                        <div class="form-group">
+                            <label class="form-label">Material/Filament</label>
+                            <input type="text" id="adminMaterialName" class="form-input" placeholder="z.B. PLA Schwarz, PETG Transparent, TPU Flexibel...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Hersteller (optional)</label>
+                            <input type="text" id="adminManufacturer" class="form-input" placeholder="z.B. Prusament, eSUN, Polymaker...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Begründung</label>
+                            <textarea id="adminReason" class="form-textarea" placeholder="Warum wird dieses Material bestellt? Für welchen Zweck?" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Menge</label>
+                            <input type="text" id="adminQuantity" class="form-input" placeholder="z.B. 1kg, 500g, 2 Spulen...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Dringlichkeit</label>
+                            <select id="adminPriority" class="form-select">
+                                <option value="low">Niedrig - kein Zeitdruck</option>
+                                <option value="medium">Mittel - in den nächsten Wochen</option>
+                                <option value="high">Hoch - dringend benötigt</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" onclick="submitAdminOrder()">Bestellung anlegen</button>
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+        </div>
+    `;
+    
+    showModalWithContent(modalContent);
+}
+
+/**
+ * Submit admin order
+ */
+async function submitAdminOrder() {
+    const formData = {
+        materialName: document.getElementById('adminMaterialName').value.trim(),
+        manufacturer: document.getElementById('adminManufacturer').value.trim(),
+        reason: document.getElementById('adminReason').value.trim(),
+        quantity: document.getElementById('adminQuantity').value.trim(),
+        priority: document.getElementById('adminPriority').value
+    };
+    
+    // Validation
+    if (!formData.materialName || !formData.reason) {
+        toast.error('Bitte füllen Sie mindestens Material und Begründung aus');
+        return;
+    }
+    
+    try {
+        await window.db.collection('materialOrders').add({
+            type: 'request',
+            source: 'admin', // Track this as admin-created
+            userName: null, // Not applicable for admin orders
+            userKennung: null,
+            createdBy: window.currentUser?.name || 'Admin',
+            createdByKennung: window.currentUser?.kennung || '',
+            materialName: formData.materialName,
+            manufacturer: formData.manufacturer,
+            reason: formData.reason,
+            quantity: formData.quantity,
+            priority: formData.priority,
+            status: 'pending',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        const quantityText = formData.quantity ? `\nMenge: ${formData.quantity}` : '';
+        const manufacturerText = formData.manufacturer ? `\nHersteller: ${formData.manufacturer}` : '';
+        
+        toast.success(`Admin-Bestellung erfolgreich angelegt!\n\nMaterial: ${formData.materialName}${quantityText}${manufacturerText}\nPriorität: ${getPriorityText(formData.priority)}`);
+        
+        // Return to orders overview instead of closing all modals
+        showOrdersManagement();
+        
+        // Refresh admin view if material orders modal is open
+        if (document.getElementById('materialOrdersModal') && document.getElementById('materialOrdersModal').style.display === 'block') {
+            loadMaterialOrders();
+        }
+        
+    } catch (error) {
+        console.error('Error submitting admin order:', error);
+        toast.error('Fehler beim Anlegen der Bestellung: ' + error.message);
+    }
+}
+
+/**
  * Show material request form for users
  */
 function showMaterialRequestForm() {
@@ -86,8 +191,11 @@ async function submitMaterialRequest() {
     try {
         await window.db.collection('materialOrders').add({
             type: 'request',
+            source: 'user', // Track if this came from user or admin
             userName: window.currentUser?.name || 'Unbekannter User',
             userKennung: window.currentUser?.kennung || '',
+            createdBy: window.currentUser?.name || 'Unbekannter User',
+            createdByKennung: window.currentUser?.kennung || '',
             materialName: formData.materialName,
             manufacturer: formData.manufacturer,
             reason: formData.reason,
@@ -103,8 +211,8 @@ async function submitMaterialRequest() {
         
         toast.success(`Material-Anfrage erfolgreich gesendet!\n\nMaterial: ${formData.materialName}${quantityText}${manufacturerText}\nPriorität: ${getPriorityText(formData.priority)}\n\nEin Admin wird deine Anfrage prüfen und das Material bestellen.`);
         
-        // Close modal
-        closeMaterialRequestForm();
+        // Close modal and return to main dashboard
+        closeModal();
         
         // Refresh admin view if material orders modal is open
         if (document.getElementById('materialOrdersModal') && document.getElementById('materialOrdersModal').style.display === 'block') {
@@ -130,11 +238,7 @@ function showMaterialOrders() {
             <div class="card">
                 <div class="card-body">
                     <div class="order-tabs">
-                        <button class="tab-btn active" onclick="showOrderTab('wishes')">
-                            Material-Wünsche
-                            <span class="badge" id="wishesCounter" style="display: none;">0</span>
-                        </button>
-                        <button class="tab-btn" onclick="showOrderTab('requests')">
+                        <button class="tab-btn active" onclick="showOrderTab('requests')">
                             Bestellanfragen
                             <span class="badge" id="requestsCounter" style="display: none;">0</span>
                         </button>
@@ -148,27 +252,13 @@ function showMaterialOrders() {
                         </button>
                     </div>
                     
-                    <div id="wishes" class="tab-content active">
-                        <div id="materialWishesContent">
-                            <div class="loading">Material-Wünsche werden geladen...</div>
-                        </div>
-                    </div>
-                    
-                    <div id="requests" class="tab-content">
+                    <div id="requests" class="tab-content active">
                         <div id="orderRequestsContent">
                             <div class="loading">Bestellanfragen werden geladen...</div>
                         </div>
-                    </div>
-                    
-                    <div id="shopping" class="tab-content">
-                        <div id="shoppingListContent">
-                            <div class="loading">Einkaufsliste wird geladen...</div>
-                        </div>
-                    </div>
-                    
-                    <div id="history" class="tab-content">
-                        <div id="orderHistoryContent">
-                            <div class="loading">Bestellverlauf wird geladen...</div>
+                        <br>
+                        <div id="materialWishesContent">
+                            <div class="loading">Material-Wünsche werden geladen...</div>
                         </div>
                     </div>
                 </div>
@@ -176,6 +266,7 @@ function showMaterialOrders() {
         </div>
         <div class="modal-footer">
             <button class="btn btn-primary" onclick="showMaterialRequestForm()">Material-Wunsch hinzufügen</button>
+            ${window.currentUser?.isAdmin ? `<button class="btn btn-secondary" onclick="showAdminOrderForm()">Admin-Bestellung anlegen</button>` : ''}
             <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
         </div>
     `;
@@ -296,9 +387,6 @@ function showOrderTab(tab) {
  */
 function renderTabContent(tab) {
     switch (tab) {
-        case 'wishes':
-            renderMaterialWishes();
-            break;
         case 'requests':
             renderOrderRequests();
             break;
@@ -318,21 +406,14 @@ function renderTabContent(tab) {
  * Update tab counters with current counts
  */
 function updateTabCounters() {
-    const wishesCount = materialOrders.filter(order => order.type === 'request').length;
     const requestsCount = materialOrders.filter(order => order.type === 'request' && order.status === 'pending').length;
     const shoppingCount = materialOrders.filter(order => order.status === 'approved').length;
     const historyCount = materialOrders.filter(order => order.status === 'purchased' || order.status === 'delivered' || order.status === 'rejected').length;
     
     // Update counter elements
-    const wishesCounter = document.getElementById('wishesCounter');
     const requestsCounter = document.getElementById('requestsCounter');
     const shoppingCounter = document.getElementById('shoppingCounter');
     const historyCounter = document.getElementById('historyCounter');
-    
-    if (wishesCounter) {
-        wishesCounter.textContent = wishesCount;
-        wishesCounter.style.display = wishesCount > 0 ? 'inline-block' : 'none';
-    }
     
     if (requestsCounter) {
         requestsCounter.textContent = requestsCount;
@@ -351,10 +432,11 @@ function updateTabCounters() {
 }
 
 /**
- * Render order requests tab
+ * Render order requests and material wishes tab
  */
 function renderOrderRequests() {
     const requests = materialOrders.filter(order => order.type === 'request' && order.status === 'pending');
+    const allWishes = materialOrders.filter(order => order.type === 'request');
     const container = document.getElementById('orderRequestsContent');
     
     if (!container) return;
@@ -366,53 +448,73 @@ function renderOrderRequests() {
                 <p>Nutzer können über den "Material anfragen" Button neue Anfragen erstellen.</p>
             </div>
         `;
-        return;
+    } else {
+        container.innerHTML = `
+            <div class="requests-list">
+                ${requests.map(request => {
+                    const isUserRequest = request.source === 'user' || !request.source; // Legacy compatibility
+                    const sourceLabel = isUserRequest ? 'Nutzerwunsch' : 'Admin-Bestellung';
+                    const sourcePerson = isUserRequest ? request.userName || 'Unbekannt' : request.createdBy || 'Admin';
+                    
+                    return `
+                    <div class="request-item">
+                        <div class="request-header">
+                            <h4>${request.materialName}</h4>
+                            <div class="request-meta">
+                                <span class="source-badge ${isUserRequest ? 'source-user' : 'source-admin'}">${sourceLabel}</span>
+                                <span class="priority-badge priority-${request.priority}">${getPriorityText(request.priority)}</span>
+                            </div>
+                        </div>
+                        <div class="request-details">
+                            <p><strong>Von:</strong> ${sourcePerson}</p>
+                            ${request.manufacturer ? `<p><strong>Hersteller:</strong> ${request.manufacturer}</p>` : ''}
+                            ${request.quantity ? `<p><strong>Menge:</strong> ${request.quantity}</p>` : ''}
+                            <p><strong>Begründung:</strong> ${request.reason}</p>
+                            <p><strong>Angefragt:</strong> ${request.createdAt ? request.createdAt.toLocaleString() : 'Unbekannt'}</p>
+                        </div>
+                        <div class="request-actions">
+                            <button class="btn btn-success btn-small" onclick="approveOrderRequest('${request.id}')">
+                                Genehmigen
+                            </button>
+                            <button class="btn btn-warning btn-small" onclick="rejectOrderRequest('${request.id}')">
+                                Ablehnen
+                            </button>
+                            <button class="btn btn-danger btn-small" onclick="deleteOrderRequest('${request.id}')">
+                                Löschen
+                            </button>
+                        </div>
+                    </div>
+                `;
+                }).join('')}
+            </div>
+        `;
     }
     
-    container.innerHTML = `
-        <div class="requests-list">
-            ${requests.map(request => `
-                <div class="request-item">
-                    <div class="request-header">
-                        <h4>${request.materialName}</h4>
-                        <span class="priority-badge priority-${request.priority}">${getPriorityText(request.priority)}</span>
-                    </div>
-                    <div class="request-details">
-                        <p><strong>Nutzer:</strong> ${request.userName} (${request.userKennung})</p>
-                        ${request.manufacturer ? `<p><strong>Hersteller:</strong> ${request.manufacturer}</p>` : ''}
-                        ${request.quantity ? `<p><strong>Menge:</strong> ${request.quantity}</p>` : ''}
-                        <p><strong>Begründung:</strong> ${request.reason}</p>
-                        <p><strong>Angefragt:</strong> ${request.createdAt ? request.createdAt.toLocaleString() : 'Unbekannt'}</p>
-                    </div>
-                    <div class="request-actions">
-                        <button class="btn btn-success btn-small" onclick="approveOrderRequest('${request.id}')">
-                            Genehmigen
-                        </button>
-                        <button class="btn btn-warning btn-small" onclick="rejectOrderRequest('${request.id}')">
-                            Ablehnen
-                        </button>
-                        <button class="btn btn-danger btn-small" onclick="deleteOrderRequest('${request.id}')">
-                            Löschen
-                        </button>
-                    </div>
-                </div>
-            `).join('')}
-        </div>
-    `;
+    // Also render material wishes in the same tab
+    renderMaterialWishes();
 }
 
 /**
  * Render material wishes tab
  */
 function renderMaterialWishes() {
-    const wishes = materialOrders.filter(order => order.type === 'request');
+    // Only show non-pending requests to avoid duplication with renderOrderRequests
+    const wishes = materialOrders.filter(order => 
+        order.type === 'request' && order.status !== 'pending'
+    ).sort((a, b) => {
+        // Sort by priority: high -> medium -> low
+        const priorityOrder = { 'high': 3, 'medium': 2, 'low': 1 };
+        return (priorityOrder[b.priority] || 1) - (priorityOrder[a.priority] || 1);
+    });
     const container = document.getElementById('materialWishesContent');
+    
+    if (!container) return;
     
     if (wishes.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <p>Keine Material-Wünsche vorhanden.</p>
-                <button class="btn btn-primary" onclick="showMaterialRequestForm()">Material-Wunsch hinzufügen</button>
+                <p>Keine verarbeiteten Material-Wünsche vorhanden.</p>
+                <small>Genehmigte, abgelehnte oder gekaufte Material-Wünsche erscheinen hier.</small>
             </div>
         `;
         return;
@@ -420,45 +522,44 @@ function renderMaterialWishes() {
     
     container.innerHTML = `
         <div class="material-wishes-header">
-            <h4>Material-Wünsche (${wishes.length})</h4>
-            <button class="btn btn-primary" onclick="showMaterialRequestForm()">Material-Wunsch hinzufügen</button>
+            <h4>Verarbeitete Material-Wünsche (${wishes.length})</h4>
         </div>
         <div class="material-wishes-list">
-            ${wishes.map(wish => `
-                <div class="material-wish-item ${wish.status === 'pending' ? 'pending' : wish.status === 'approved' ? 'approved' : 'rejected'}">
-                    <div class="wish-header">
-                        <div class="wish-material">
-                            <strong>${wish.materialName || 'Unbekanntes Material'}</strong>
-                            ${wish.manufacturer ? `<span class="manufacturer">${wish.manufacturer}</span>` : ''}
-                        </div>
-                        <div class="wish-status status-${wish.status}">
-                            ${getStatusText(wish.status)}
+            ${wishes.map(wish => {
+                const isUserRequest = wish.source === 'user' || !wish.source; // Legacy compatibility
+                const sourceLabel = isUserRequest ? 'Nutzerwunsch' : 'Admin-Bestellung';
+                const sourcePerson = isUserRequest ? wish.userName || 'Unbekannt' : wish.createdBy || 'Admin';
+                
+                return `
+                <div class="request-item">
+                    <div class="request-header">
+                        <h4>${wish.materialName || 'Unbekanntes Material'}</h4>
+                        <div class="request-meta">
+                            <span class="source-badge ${isUserRequest ? 'source-user' : 'source-admin'}">${sourceLabel}</span>
+                            <span class="status-badge status-${wish.status}">${getStatusText(wish.status)}</span>
                         </div>
                     </div>
-                    <div class="wish-details">
-                        <div class="wish-info">
-                            <span class="wish-user">von ${wish.userName || 'Unbekannt'}</span>
-                            <span class="wish-date">${wish.createdAt ? wish.createdAt.toLocaleDateString('de-DE') : 'Unbekannt'}</span>
-                            <span class="wish-priority priority-${wish.priority}">${getPriorityText(wish.priority)}</span>
-                        </div>
-                        <div class="wish-reason">${wish.reason || 'Keine Begründung'}</div>
-                        ${wish.quantity ? `<div class="wish-quantity">Menge: ${wish.quantity}</div>` : ''}
+                    <div class="request-details">
+                        <p><strong>Von:</strong> ${sourcePerson}</p>
+                        ${wish.manufacturer ? `<p><strong>Hersteller:</strong> ${wish.manufacturer}</p>` : ''}
+                        ${wish.quantity ? `<p><strong>Menge:</strong> ${wish.quantity}</p>` : ''}
+                        <p><strong>Begründung:</strong> ${wish.reason || 'Keine Begründung'}</p>
+                        <p><strong>Angefragt:</strong> ${wish.createdAt ? wish.createdAt.toLocaleDateString('de-DE') : 'Unbekannt'}</p>
+                        <p><strong>Status:</strong> ${getStatusText(wish.status)}</p>
                     </div>
-                    ${window.currentUser?.isAdmin ? `
-                        <div class="wish-actions">
-                            <button class="btn btn-success btn-small" onclick="approveOrderRequest('${wish.id}')">
-                                Genehmigen
+                    ${window.currentUser?.isAdmin && wish.status === 'approved' ? `
+                        <div class="request-actions">
+                            <button class="btn btn-success btn-small" onclick="markAsPurchased('${wish.id}')">
+                                Als gekauft markieren
                             </button>
                             <button class="btn btn-warning btn-small" onclick="rejectOrderRequest('${wish.id}')">
-                                Ablehnen
-                            </button>
-                            <button class="btn btn-danger btn-small" onclick="deleteOrderRequest('${wish.id}')">
-                                Löschen
+                                Doch ablehnen
                             </button>
                         </div>
                     ` : ''}
                 </div>
-            `).join('')}
+                `;
+            }).join('')}
         </div>
     `;
 }
@@ -473,6 +574,18 @@ function getPriorityText(priority) {
         'high': 'Hoch'
     };
     return priorityMap[priority] || priority;
+}
+
+/**
+ * Get priority icon
+ */
+function getPriorityIcon(priority) {
+    const iconMap = {
+        'low': '●',
+        'medium': '▲',
+        'high': '⬆'
+    };
+    return iconMap[priority] || '●';
 }
 
 /**

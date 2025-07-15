@@ -34,6 +34,9 @@ function checkExistingSession() {
           initializeUserDashboard();
         }
         
+        // Update admin UI elements
+        updateAdminUI();
+        
         // Initialize payment requests
         if (typeof initializePaymentRequests === 'function') {
           initializePaymentRequests();
@@ -80,14 +83,35 @@ function toggleAdminView() {
     document.getElementById('adminWelcome').textContent = `Admin Dashboard - ${window.currentUser.name}`;
     showScreen('adminDashboard');
     initializeAdminDashboard();
+    updateAdminUI();
     toast.info('Zur Admin-Ansicht gewechselt');
   } else if (currentScreen === 'adminDashboard') {
     // Switch to user view
     document.getElementById('userWelcome').textContent = `Willkommen, ${window.currentUser.name}!`;
     showScreen('userDashboard');
     initializeUserDashboard();
+    updateAdminUI();
     toast.info('Zur Benutzer-Ansicht gewechselt');
   }
+}
+
+// Show/hide admin UI elements based on user admin status
+function updateAdminUI() {
+  const isAdmin = window.currentUser && window.currentUser.isAdmin;
+  
+  // User Dashboard Admin Elements
+  const userAdminBadge = document.getElementById('userAdminBadge');
+  const adminToggleBtn = document.getElementById('adminToggleBtn');
+  
+  if (userAdminBadge) {
+    userAdminBadge.style.display = isAdmin ? 'inline-block' : 'none';
+  }
+  
+  if (adminToggleBtn) {
+    adminToggleBtn.style.display = isAdmin ? 'inline-block' : 'none';
+  }
+  
+  console.log(`🔧 Admin UI updated: isAdmin=${isAdmin}`);
 }
 
 function showAdminLogin() {
@@ -161,6 +185,8 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
           initializePaymentRequests();
         }
         initializeUserDashboard();
+        // Update admin UI elements
+        updateAdminUI();
         toast.success('Anmeldung erfolgreich');
       } else {
         toast.info('Bitte verwende eine andere FH-Kennung oder wende dich an den Administrator.');
@@ -188,6 +214,8 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
         initializePaymentRequests();
       }
       initializeUserDashboard();
+      // Update admin UI elements
+      updateAdminUI();
       toast.success('Anmeldung erfolgreich');
     }
     
@@ -220,31 +248,70 @@ function loginAsAdmin() {
   // Admin-Login mit Loading-Effekt
   setButtonLoading(adminButton, true);
   
-  // Kurze Verzögerung für UX
-  setTimeout(() => {
-    window.currentUser = {
-      name: name,
-      kennung: kennung.toLowerCase(),
-      isAdmin: true
-    };
-    
-    // Save session
-    saveSession(window.currentUser);
-    
-    // Admin Dashboard anzeigen
-    document.getElementById('adminWelcome').textContent = `Admin Dashboard - ${name}`;
-    showScreen('adminDashboard');
-    
-    // Admin Dashboard initialisieren
-    initializeAdminDashboard();
-    
-    // Initialize payment requests for admin
-    if (typeof initializePaymentRequests === 'function') {
-      initializePaymentRequests();
+  // Load real user data from database
+  setTimeout(async () => {
+    try {
+      const loadingId = loading.show('Admin-Anmeldung läuft...');
+      
+      // Try to find or create user with admin privileges
+      const userResult = await findOrCreateUser(kennung.toLowerCase(), name, true);
+      
+      if (userResult.conflict) {
+        const userChoice = confirm(
+          `Es existiert bereits ein Benutzer mit der FH-Kennung "${kennung}" aber anderem Namen "${userResult.existingName}".\n\n` +
+          'Möchtest du dich als existierender Benutzer anmelden?'
+        );
+        
+        if (userChoice) {
+          // Login as existing user with admin privileges
+          window.currentUser = {
+            name: userResult.existingName,
+            kennung: kennung.toLowerCase(),
+            isAdmin: true
+          };
+        } else {
+          toast.info('Bitte verwende eine andere FH-Kennung oder wende dich an den Administrator.');
+          loading.hide(loadingId);
+          setButtonLoading(adminButton, false);
+          return;
+        }
+      } else {
+        // Successful admin login with real user data
+        window.currentUser = {
+          name: userResult.name,
+          kennung: kennung.toLowerCase(),
+          isAdmin: true
+        };
+      }
+      
+      // Save session
+      saveSession(window.currentUser);
+      
+      // Admin Dashboard anzeigen
+      document.getElementById('adminWelcome').textContent = `Admin Dashboard - ${window.currentUser.name}`;
+      showScreen('adminDashboard');
+      
+      // Admin Dashboard initialisieren
+      initializeAdminDashboard();
+      
+      // Update admin UI elements
+      updateAdminUI();
+      
+      // Initialize payment requests for admin
+      if (typeof initializePaymentRequests === 'function') {
+        initializePaymentRequests();
+      }
+      
+      loading.hide(loadingId);
+      setButtonLoading(adminButton, false);
+      toast.success('Admin-Anmeldung erfolgreich');
+      
+    } catch (error) {
+      console.error('Admin login error:', error);
+      loading.hideAll();
+      toast.error('Fehler bei der Admin-Anmeldung: ' + error.message);
+      setButtonLoading(adminButton, false);
     }
-    
-    setButtonLoading(adminButton, false);
-    toast.success('Admin-Anmeldung erfolgreich');
   }, 800);
 }
 

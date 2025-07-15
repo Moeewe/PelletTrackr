@@ -87,8 +87,13 @@ function setupEquipmentRequestsListener() {
 
 /**
  * Show problem reports modal
+ * Requires admin access
  */
 function showProblemReports() {
+    if (!window.checkAdminAccess()) {
+        return;
+    }
+    
     const modalContent = `
         <div class="modal-header">
             <h3>Problem-Meldungen verwalten</h3>

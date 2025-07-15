@@ -93,6 +93,7 @@ function updatePrinterStatusDisplay() {
             case 'available':
                 counts.available++;
                 break;
+            case 'printing':
             case 'in_use':
                 counts.in_use++;
                 break;
@@ -121,6 +122,14 @@ function updatePrinterStatusDisplay() {
  * Show printer status modal with clickable status cycling
  */
 function showPrinterStatus() {
+    // Calculate current status counts
+    const statusCounts = {
+        available: userPrinters.filter(p => p.status === 'available').length,
+        printing: userPrinters.filter(p => p.status === 'printing').length,
+        maintenance: userPrinters.filter(p => p.status === 'maintenance').length,
+        broken: userPrinters.filter(p => p.status === 'broken').length
+    };
+
     const modalContent = `
         <div class="modal-header">
             <h3>Drucker Status</h3>
@@ -129,34 +138,34 @@ function showPrinterStatus() {
         <div class="modal-body">
             <div class="printer-list">
                 ${userPrinters.map(printer => `
-                    <div class="printer-item status-${printer.status}">
+                    <div class="printer-item">
                         <div class="printer-info">
                             <h4 class="printer-name">${printer.name}</h4>
-                            <p class="printer-location">${printer.location}</p>
-                            <p class="printer-description">${printer.description || 'Keine Beschreibung'}</p>
+                            <p class="printer-location">${printer.location || ''}</p>
+                            ${printer.description && printer.description !== 'undefined' && printer.description !== 'Keine Beschreibung' ? `<p class="printer-description">${printer.description}</p>` : ''}
                         </div>
-                        <div class="printer-status">
-                            <div class="status-buttons">
-                                <button class="status-btn ${printer.status === 'available' ? 'active' : ''}" 
-                                        onclick="cyclePrinterStatus('${printer.id}', 'available')">
-                                    <span class="status-icon">✓</span>
-                                    <span class="status-text">Verfügbar</span>
-                                </button>
-                                <button class="status-btn ${printer.status === 'printing' ? 'active' : ''}" 
-                                        onclick="cyclePrinterStatus('${printer.id}', 'printing')">
-                                    <span class="status-icon">🖨️</span>
-                                    <span class="status-text">In Betrieb</span>
-                                </button>
-                                <button class="status-btn ${printer.status === 'maintenance' ? 'active' : ''}" 
-                                        onclick="cyclePrinterStatus('${printer.id}', 'maintenance')">
-                                    <span class="status-icon">🔧</span>
-                                    <span class="status-text">Wartung</span>
-                                </button>
-                                <button class="status-btn ${printer.status === 'broken' ? 'active' : ''}" 
-                                        onclick="cyclePrinterStatus('${printer.id}', 'broken')">
-                                    <span class="status-icon">⚠️</span>
-                                    <span class="status-text">Defekt</span>
-                                </button>
+                        <div class="printer-status-controls">
+                            <div class="status-grid">
+                                <div class="status-item status-available ${printer.status === 'available' ? 'current-status' : ''}" 
+                                     onclick="cyclePrinterStatus('${printer.id}', 'available')">
+                                    <span class="status-number">${statusCounts.available}</span>
+                                    <span class="status-label">Verfügbar</span>
+                                </div>
+                                <div class="status-item status-busy ${printer.status === 'printing' ? 'current-status' : ''}" 
+                                     onclick="cyclePrinterStatus('${printer.id}', 'printing')">
+                                    <span class="status-number">${statusCounts.printing}</span>
+                                    <span class="status-label">In Betrieb</span>
+                                </div>
+                                <div class="status-item status-maintenance ${printer.status === 'maintenance' ? 'current-status' : ''}" 
+                                     onclick="cyclePrinterStatus('${printer.id}', 'maintenance')">
+                                    <span class="status-number">${statusCounts.maintenance}</span>
+                                    <span class="status-label">Wartung</span>
+                                </div>
+                                <div class="status-item status-broken ${printer.status === 'broken' ? 'current-status' : ''}" 
+                                     onclick="cyclePrinterStatus('${printer.id}', 'broken')">
+                                    <span class="status-number">${statusCounts.broken}</span>
+                                    <span class="status-label">Defekt</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -189,6 +198,9 @@ async function cyclePrinterStatus(printerId, newStatus) {
             userPrinters[printerIndex].status = newStatus;
         }
         
+        // Update the main interface status counts
+        updatePrinterCounts();
+        
         // Show success message
         const statusText = getStatusText(newStatus);
         toast.success(`Drucker-Status auf "${statusText}" gesetzt`);
@@ -198,7 +210,7 @@ async function cyclePrinterStatus(printerId, newStatus) {
         
     } catch (error) {
         console.error('Error updating printer status:', error);
-        toast.error('Fehler beim Aktualisieren des Drucker-Status');
+        toast.error('Fehler beim Ändern des Drucker-Status');
     }
 }
 
@@ -262,7 +274,7 @@ function showEquipmentRequest() {
             <div class="form">
                 <div class="form-group">
                     <label class="form-label">Equipment-Typ</label>
-                    <select id="equipmentType" class="form-select">
+                    <select id="equipmentType" class="form-select" onchange="updateEquipmentOptions()">
                         <option value="">Typ auswählen...</option>
                         <option value="keys">Schlüssel</option>
                         <option value="hardware">Hardware</option>
@@ -271,7 +283,9 @@ function showEquipmentRequest() {
                 </div>
                 <div class="form-group">
                     <label class="form-label">Gewünschtes Equipment</label>
-                    <input type="text" id="equipmentName" class="form-input" placeholder="z.B. Laborschlüssel, Zangensatz, etc.">
+                    <select id="equipmentName" class="form-select" disabled>
+                        <option value="">Zuerst Equipment-Typ auswählen...</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Benötigungsdauer</label>
@@ -298,6 +312,127 @@ function showEquipmentRequest() {
     `;
     
     showModalWithContent(modalContent);
+    
+    // Load equipment data for dynamic selection
+    loadEquipmentForRequest();
+}
+
+/**
+ * Load equipment data for request
+ */
+let availableEquipment = [];
+
+async function loadEquipmentForRequest() {
+    if (!window.db) return;
+    
+    try {
+        const snapshot = await window.db.collection('equipment').get();
+        availableEquipment = [];
+        snapshot.forEach((doc) => {
+            const equipmentData = doc.data();
+            // Only show available equipment
+            if (equipmentData.status === 'available') {
+                availableEquipment.push({
+                    id: doc.id,
+                    name: equipmentData.name,
+                    category: equipmentData.category,
+                    location: equipmentData.location
+                });
+            }
+        });
+    } catch (error) {
+        console.error('Error loading equipment:', error);
+    }
+}
+
+/**
+ * Update equipment options based on selected type
+ */
+function updateEquipmentOptions() {
+    const typeSelect = document.getElementById('equipmentType');
+    const equipmentSelect = document.getElementById('equipmentName');
+    
+    if (!typeSelect || !equipmentSelect) return;
+    
+    const selectedType = typeSelect.value;
+    
+    // Clear current options
+    equipmentSelect.innerHTML = '';
+    
+    if (!selectedType) {
+        equipmentSelect.innerHTML = '<option value="">Zuerst Equipment-Typ auswählen...</option>';
+        equipmentSelect.disabled = true;
+        return;
+    }
+    
+    // Filter equipment by selected category
+    const filteredEquipment = availableEquipment.filter(item => item.category === selectedType);
+    
+    if (filteredEquipment.length === 0) {
+        equipmentSelect.innerHTML = '<option value="">Kein Equipment in dieser Kategorie verfügbar</option>';
+        equipmentSelect.disabled = true;
+        return;
+    }
+    
+    // Add default option
+    equipmentSelect.innerHTML = '<option value="">Equipment auswählen...</option>';
+    
+    // Add equipment options
+    filteredEquipment.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.id;
+        option.textContent = `${item.name} (${item.location})`;
+        equipmentSelect.appendChild(option);
+    });
+    
+    equipmentSelect.disabled = false;
+}
+
+/**
+ * Submit equipment request
+ */
+async function submitEquipmentRequest() {
+    const equipmentType = document.getElementById('equipmentType').value;
+    const equipmentId = document.getElementById('equipmentName').value;
+    const duration = document.getElementById('equipmentDuration').value;
+    const purpose = document.getElementById('equipmentPurpose').value;
+    
+    if (!equipmentType || !equipmentId || !duration || !purpose) {
+        toast.error('Bitte alle Felder ausfüllen');
+        return;
+    }
+    
+    // Find the selected equipment details
+    const selectedEquipment = availableEquipment.find(item => item.id === equipmentId);
+    if (!selectedEquipment) {
+        toast.error('Ausgewähltes Equipment nicht gefunden');
+        return;
+    }
+    
+    const requestData = {
+        type: 'equipment',
+        equipmentType: equipmentType,
+        equipmentId: equipmentId,
+        equipmentName: selectedEquipment.name,
+        equipmentLocation: selectedEquipment.location,
+        duration: duration,
+        purpose: purpose,
+        status: 'pending',
+        userName: window.currentUser?.name || 'Unbekannter User',
+        userKennung: window.currentUser?.kennung || '',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    
+    try {
+        await window.db.collection('requests').add(requestData);
+        
+        toast.success('Equipment-Anfrage erfolgreich gesendet');
+        closeModal();
+        
+    } catch (error) {
+        console.error('Error submitting equipment request:', error);
+        toast.error('Fehler beim Senden der Equipment-Anfrage');
+    }
 }
 
 /**
@@ -451,43 +586,6 @@ async function submitScheduleRequest() {
 }
 
 /**
- * Submit equipment request
- */
-async function submitEquipmentRequest() {
-    const type = document.getElementById('equipmentType').value;
-    const name = document.getElementById('equipmentName').value;
-    const duration = document.getElementById('equipmentDuration').value;
-    const purpose = document.getElementById('equipmentPurpose').value;
-    
-    if (!type || !name || !duration || !purpose) {
-        toast.error('Bitte alle Felder ausfüllen');
-        return;
-    }
-    
-    try {
-        const requestData = {
-            type,
-            name,
-            duration,
-            purpose,
-            requestedBy: window.currentUser.name,
-            requestedByKennung: window.currentUser.kennung,
-            status: 'pending',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
-        await window.db.collection('equipmentRequests').add(requestData);
-        
-        toast.success('Equipment-Anfrage erfolgreich gesendet');
-        closeModal();
-        
-    } catch (error) {
-        console.error('Error submitting equipment request:', error);
-        toast.error('Fehler beim Senden der Equipment-Anfrage');
-    }
-}
-
-/**
  * Submit problem report
  */
 async function submitProblemReport() {
@@ -603,5 +701,7 @@ window.submitScheduleRequest = submitScheduleRequest;
 window.submitEquipmentRequest = submitEquipmentRequest;
 window.submitProblemReport = submitProblemReport;
 window.submitMaterialRequest = submitMaterialRequest;
+window.updateEquipmentOptions = updateEquipmentOptions;
+window.loadEquipmentForRequest = loadEquipmentForRequest;
 
 console.log('👥 User Services Module loaded'); 

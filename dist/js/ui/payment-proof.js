@@ -468,13 +468,13 @@ function emailPaymentProof() {
     
     <!-- Gesamtbetrag -->
     <div style="background: #FFEB00; border: 3px solid #000; padding: 25px; text-align: center; margin-bottom: 30px;">
-        <div style="font-size: 16px; margin-bottom: 10px; color: #000; font-weight: normal;">💰 Gesamtbetrag</div>
+        <div style="font-size: 16px; margin-bottom: 10px; color: #000; font-weight: normal;">Gesamtbetrag</div>
         <div style="font-size: 28px; font-weight: bold; color: #000;">${window.formatCurrency(entry.totalCost)}</div>
     </div>
     
     <!-- Abschluss -->
     <div style="background: #f0f8ff; border-left: 4px solid #2196F3; padding: 20px; margin-bottom: 20px;">
-        <p style="margin: 0; color: #2196F3; font-weight: bold;">ℹ️ Wichtige Information</p>
+        <p style="margin: 0; color: #2196F3; font-weight: bold;">Wichtige Information</p>
         <p style="margin: 10px 0 0 0;">Ihre Zahlung wurde erfolgreich verbucht. Sie können diesen Zahlungsnachweis jederzeit über Ihr PelletTrackr Dashboard abrufen.</p>
     </div>
     
@@ -531,7 +531,7 @@ ZAHLUNGSINFORMATIONEN:
 • Zahlungsdatum: ${paidDate}
 • Status: ✅ BEZAHLT
 
-💰 GESAMTBETRAG: ${window.formatCurrency(entry.totalCost)}
+GESAMTBETRAG: ${window.formatCurrency(entry.totalCost)}
 
 WICHTIGE INFORMATION:
 Ihre Zahlung wurde erfolgreich verbucht. Sie können diesen Zahlungsnachweis jederzeit über Ihr PelletTrackr Dashboard abrufen.

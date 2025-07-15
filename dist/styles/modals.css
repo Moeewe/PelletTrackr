@@ -312,26 +312,25 @@
 }
 
 .status-badge {
-  padding: 10px 20px;
-  border: 2px solid #000000;
-  border-radius: 0;
-  font-weight: 600;
-  font-size: 12px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  white-space: nowrap;
+    padding: 4px 8px;
+    border-radius: 0;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .status-badge.status-paid {
-  background: #28a745;
-  color: white;
-  border-color: #28a745;
+    background: #4CAF50;
+    color: white;
 }
 
 .status-badge.status-unpaid {
-  background: #FFEB00;
-  color: #000000;
-  border-color: #000000;
+    background: #FFC107;
+    color: white;
 }
 
 .notes-section {

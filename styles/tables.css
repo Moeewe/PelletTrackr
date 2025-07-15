@@ -252,13 +252,12 @@
   }
   
   .data-table .status-unpaid {
-    background: #FFEB00;
-    color: #000000;
+    background: #FFC107;
+    color: white;
   }
   
   .data-table .status-paid:hover,
   .data-table .status-unpaid:hover {
-    transform: translateY(-1px);
     box-shadow: 2px 2px 0 #000000;
   }
   
@@ -557,47 +556,63 @@
 }
 
 .status-paid {
-  background: #d4edda;
-  color: #155724;
+  background: #4CAF50;
+  color: white;
   padding: 6px 12px;
-  border-radius: 0; /* Scharfe Kanten */
+  border-radius: 0;
+  border: none;
   font-weight: 500;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .status-open {
-  background: #fff3cd;
-  color: #856404;
+  background: #FFC107;
+  color: white;
   padding: 6px 12px;
-  border-radius: 0; /* Scharfe Kanten */
+  border-radius: 0;
+  border: none;
   font-weight: 500;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .status-overdue {
-  background: #f8d7da;
-  color: #721c24;
+  background: #F44336;
+  color: white;
   padding: 6px 12px;
-  border-radius: 0; /* Scharfe Kanten */
+  border-radius: 0;
+  border: none;
   font-weight: 500;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .status-new {
-  background: #e3f2fd;
-  color: #0d47a1;
+  background: #2196F3;
+  color: white;
   padding: 6px 12px;
-  border-radius: 0; /* Scharfe Kanten */
+  border-radius: 0;
+  border: none;
   font-weight: 500;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Action Columns */
@@ -946,7 +961,7 @@
 .stat-card {
   background: #f8f9fa;
   border: none;
-  border-radius: 8px;
+      border-radius: 0;
   padding: 24px;
   text-align: center;
   transition: background-color 0.2s ease;

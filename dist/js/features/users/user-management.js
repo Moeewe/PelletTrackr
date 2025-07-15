@@ -199,7 +199,6 @@ function renderUsersTable(users) {
       <label class="admin-checkbox">
         <input type="checkbox" ${user.isAdmin ? 'checked' : ''} 
                onchange="toggleAdminStatus('${user.kennung}', this.checked)">
-        <span class="checkbox-label">${user.isAdmin ? 'Admin' : 'User'}</span>
       </label>
     `;
     
@@ -257,7 +256,6 @@ function renderUsersTable(users) {
       <label class="admin-checkbox">
         <input type="checkbox" ${user.isAdmin ? 'checked' : ''} 
                onchange="toggleAdminStatus('${user.kennung}', this.checked)">
-        <span class="checkbox-label">${user.isAdmin ? 'Admin' : 'User'}</span>
       </label>
     `;
     
@@ -554,7 +552,7 @@ function sendPaymentReminder(kennung) {
     return;
   }
   
-  const subject = encodeURIComponent(`🔔 Zahlungserinnerung - FGF 3D-Druck Service | ${user.name}`);
+  const subject = encodeURIComponent(`Zahlungserinnerung - FGF 3D-Druck Service | ${user.name}`);
   const openEntries = user.entries.filter(e => !(e.paid || e.isPaid));
   const currentDate = new Date().toLocaleDateString('de-DE');
   
@@ -562,7 +560,7 @@ function sendPaymentReminder(kennung) {
   const body = encodeURIComponent(`Sehr geehrte/r ${user.name},
 
 ═════════════════════════════════════════════════════════
-               🟨 PelletTrackr - ZAHLUNGSERINNERUNG 🟨
+               ZAHLUNGSERINNERUNG - FGF 3D-DRUCK SERVICE
 ═════════════════════════════════════════════════════════
 
 Datum: ${currentDate}
@@ -570,7 +568,7 @@ FH-Kennung: ${user.kennung}
 E-Mail: ${user.email || `${user.kennung}@fh-muenster.de`}
 
 ─────────────────────────────────────────────────────────
-📋 OFFENE DRUCKAUFTRÄGE
+OFFENE DRUCKAUFTRÄGE
 ─────────────────────────────────────────────────────────
 
 ${openEntries.map((entry, index) => {
@@ -586,32 +584,32 @@ ${openEntries.map((entry, index) => {
 }).join('\n\n')}
 
 ─────────────────────────────────────────────────────────
-💰 ZUSAMMENFASSUNG
+ZUSAMMENFASSUNG
 ─────────────────────────────────────────────────────────
 
 Anzahl offener Drucke: ${openEntries.length}
 Bereits bezahlt: ${window.formatCurrency(user.paidAmount)}
 
-🟨 GESAMTBETRAG OFFEN: ${window.formatCurrency(user.unpaidAmount)} 🟨
+GESAMTBETRAG OFFEN: ${window.formatCurrency(user.unpaidAmount)}
 
 ═════════════════════════════════════════════════════════
-📞 KONTAKT & INFORMATION
+ZAHLUNGSHINWEIS
 ═════════════════════════════════════════════════════════
 
-Bitte überweisen Sie den offenen Betrag zeitnah oder melden 
-Sie sich bei Fragen an das FGF Team.
+Bitte überweisen Sie den offenen Betrag zeitnah. Bei Fragen 
+oder Zahlungsschwierigkeiten wenden Sie sich gerne an das 
+FGF Team.
 
-💡 Zahlungshinweis:
 Nach erfolgter Zahlung erhalten Sie automatisch einen 
 Zahlungsnachweis über das PelletTrackr System.
 
 ─────────────────────────────────────────────────────────
-🏢 Mit freundlichen Grüßen
+Mit freundlichen Grüßen
 FGF 3D-Druck Service Team
 Fachhochschule Münster
 
-🤖 Diese E-Mail wurde automatisch generiert von PelletTrackr
-   Generiert am: ${currentDate}
+Diese E-Mail wurde automatisch generiert von PelletTrackr
+Generiert am: ${currentDate}
 ═════════════════════════════════════════════════════════`);
   
   const email = user.email || `${user.kennung}@fh-muenster.de`;
@@ -639,7 +637,7 @@ function sendUrgentReminder(kennung) {
     return;
   }
   
-  const subject = encodeURIComponent(`🚨 DRINGENDE MAHNUNG - FGF 3D-Druck Service | ${user.name}`);
+  const subject = encodeURIComponent(`DRINGENDE MAHNUNG - FGF 3D-Druck Service | ${user.name}`);
   const openEntries = user.entries.filter(e => !(e.paid || e.isPaid));
   const currentDate = new Date().toLocaleDateString('de-DE');
   const oldestEntry = openEntries.reduce((oldest, entry) => {
@@ -650,28 +648,28 @@ function sendUrgentReminder(kennung) {
   
   const daysSinceOldest = oldestEntry ? Math.floor((new Date() - (oldestEntry.timestamp ? oldestEntry.timestamp.toDate() : new Date())) / (1000 * 60 * 60 * 24)) : 0;
   
-  // Dringende Mahnung mit stärkerem Ton
+  // Dringende Mahnung mit professionellem Ton
   const body = encodeURIComponent(`Sehr geehrte/r ${user.name},
 
-🚨═════════════════════════════════════════════════════════🚨
+═════════════════════════════════════════════════════════
                    DRINGENDE ZAHLUNGSMAHNUNG
                     FGF 3D-Druck Service
-🚨═════════════════════════════════════════════════════════🚨
+═════════════════════════════════════════════════════════
 
-⚠️  WICHTIGER HINWEIS: ZAHLUNGSRÜCKSTAND  ⚠️
+WICHTIGER HINWEIS: ZAHLUNGSRÜCKSTAND
 
 Datum: ${currentDate}
 FH-Kennung: ${user.kennung}
 E-Mail: ${user.email || `${user.kennung}@fh-muenster.de`}
 
 ─────────────────────────────────────────────────────────
-⏰ ZAHLUNGSRÜCKSTAND INFORMATION
+ZAHLUNGSRÜCKSTAND INFORMATION
 ─────────────────────────────────────────────────────────
 
 Ältester offener Eintrag: ${daysSinceOldest} Tage überfällig
-Erste Zahlungserinnerung: Bereits versendet
+Status: Erste Zahlungserinnerung bereits versendet
 
-📋 OFFENE DRUCKAUFTRÄGE (${openEntries.length} Stück):
+OFFENE DRUCKAUFTRÄGE (${openEntries.length} Stück):
 
 ${openEntries.map((entry, index) => {
   const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
@@ -681,49 +679,49 @@ ${openEntries.map((entry, index) => {
   const daysOld = entry.timestamp ? Math.floor((new Date() - entry.timestamp.toDate()) / (1000 * 60 * 60 * 24)) : 0;
   
   return `${index + 1}. ${jobName} (${daysOld} Tage alt)
-   📅 Datum: ${date}
-   🧱 Material: ${material} (${amount})
-   💰 Betrag: ${window.formatCurrency(entry.totalCost)}`;
+   Datum: ${date}
+   Material: ${material} (${amount})
+   Betrag: ${window.formatCurrency(entry.totalCost)}`;
 }).join('\n\n')}
 
 ─────────────────────────────────────────────────────────
-💸 FINANZIELLE ZUSAMMENFASSUNG
+FINANZIELLE ZUSAMMENFASSUNG
 ─────────────────────────────────────────────────────────
 
 Bereits bezahlt: ${window.formatCurrency(user.paidAmount)}
 Anzahl offener Drucke: ${openEntries.length}
 
-🚨 GESAMTBETRAG ÜBERFÄLLIG: ${window.formatCurrency(user.unpaidAmount)} 🚨
+GESAMTBETRAG ÜBERFÄLLIG: ${window.formatCurrency(user.unpaidAmount)}
 
 ═════════════════════════════════════════════════════════
-⚡ SOFORTIGE ZAHLUNG ERFORDERLICH ⚡
+SOFORTIGE ZAHLUNG ERFORDERLICH
 ═════════════════════════════════════════════════════════
 
-Bitte begleichen Sie den überfälligen Betrag UMGEHEND.
+Bitte begleichen Sie den überfälligen Betrag umgehend.
 
-🔴 Bei weiterer Zahlungsverzögerung können folgende 
-   Maßnahmen eingeleitet werden:
-   • Sperrung des 3D-Druck Services
-   • Weiterleitung an die Verwaltung
-   • Zusätzliche Verwaltungsgebühren
+Bei weiterer Zahlungsverzögerung können folgende 
+Maßnahmen eingeleitet werden:
+• Sperrung des 3D-Druck Services
+• Weiterleitung an die Verwaltung
+• Zusätzliche Verwaltungsgebühren
 
-💡 So begleichen Sie Ihre Rechnung:
-   1. Sofortige Überweisung des Gesamtbetrags
-   2. Bei Fragen: Kontakt mit dem FGF Team
-   3. Zahlungsnachweis wird automatisch erstellt
+Zahlungshinweis:
+1. Überweisung des Gesamtbetrags
+2. Bei Fragen: Kontakt mit dem FGF Team
+3. Zahlungsnachweis wird automatisch erstellt
 
 ─────────────────────────────────────────────────────────
-📞 DRINGENDER KONTAKT
+DRINGENDER KONTAKT
 ─────────────────────────────────────────────────────────
 
 Bei Zahlungsschwierigkeiten oder Fragen kontaktieren Sie 
-SOFORT das FGF Team zur Klärung der Situation.
+umgehend das FGF Team zur Klärung der Situation.
 
-🏢 FGF 3D-Druck Service Team
-   Fachhochschule Münster
+FGF 3D-Druck Service Team
+Fachhochschule Münster
 
-🤖 DRINGENDE MAHNUNG - Generiert am: ${currentDate}
-🚨═════════════════════════════════════════════════════════🚨`);
+DRINGENDE MAHNUNG - Generiert am: ${currentDate}
+═════════════════════════════════════════════════════════`);
   
   const email = user.email || `${user.kennung}@fh-muenster.de`;
   const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
