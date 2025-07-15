@@ -73,36 +73,9 @@ function setupEquipmentRequestsListener() {
     }
     
     try {
-        // Try with index first, fallback if index doesn't exist yet
-        adminEquipmentRequestsListener = window.db.collection('requests')
-            .where('type', '==', 'equipment')
-            .orderBy('createdAt', 'desc')
-            .onSnapshot((snapshot) => {
-                adminEquipmentRequests = [];
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    adminEquipmentRequests.push({
-                        id: doc.id,
-                        ...data,
-                        requestedAt: data.createdAt?.toDate() || data.requestedAt?.toDate()
-                    });
-                });
-                
-                console.log('Live update: Loaded equipment requests:', adminEquipmentRequests.length);
-                renderEquipmentRequests();
-            }, (error) => {
-                console.error('Error in equipment requests listener:', error);
-                
-                // If index error, try without orderBy as fallback
-                if (error.code === 'failed-precondition' || error.message.includes('index')) {
-                    console.log('🔄 Index not ready, using fallback query...');
-                    setupEquipmentRequestsListenerFallback();
-                } else {
-                    showToast('Fehler beim Live-Update der Equipment-Anfragen', 'error');
-                }
-            });
-        
-        console.log("✅ Equipment requests listener registered");
+        // Start with fallback listener (no orderBy) to avoid index issues
+        console.log('🔄 Starting with fallback equipment requests listener (no index required)...');
+        setupEquipmentRequestsListenerFallback();
     } catch (error) {
         console.error("❌ Failed to setup equipment requests listener:", error);
         // Fallback to manual loading
@@ -461,8 +434,8 @@ async function loadEquipmentRequests() {
         console.error('Error loading equipment requests:', error);
         
         // If index error, try without orderBy as fallback
-        if (error.code === 'failed-precondition' || error.message.includes('index')) {
-            console.log('🔄 Index not ready for loadEquipmentRequests, using fallback query...');
+        if (error.code === 'failed-precondition' || error.message.includes('index') || error.message.includes('requires an index')) {
+            console.log('🔄 Index not ready for loadEquipmentRequests, using fallback query...', error.code, error.message);
             try {
                 const querySnapshot = await window.db.collection('requests')
                     .where('type', '==', 'equipment')
@@ -619,7 +592,7 @@ async function updateEquipmentRequestStatus(requestId, newStatus) {
                 equipmentStatus = 'rented';
             }
             
-            await window.db.collection('printers').doc(equipmentId).update({
+            await window.db.collection('equipment').doc(equipmentId).update({
                 status: equipmentStatus,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
@@ -671,7 +644,7 @@ async function markEquipmentAsGiven(requestId) {
         
         // Mark equipment as rented
         if (equipmentId) {
-            await window.db.collection('printers').doc(equipmentId).update({
+            await window.db.collection('equipment').doc(equipmentId).update({
                 status: 'rented',
                 rentedBy: requestData.userName,
                 rentedAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -725,7 +698,7 @@ async function markEquipmentAsReturned(requestId) {
         
         // Mark equipment as available again
         if (equipmentId) {
-            await window.db.collection('printers').doc(equipmentId).update({
+            await window.db.collection('equipment').doc(equipmentId).update({
                 status: 'available',
                 rentedBy: null,
                 rentedAt: null,
@@ -774,12 +747,12 @@ async function deleteEquipmentRequest(requestId) {
             // If request was active, mark equipment as available again
             if (requestData.status === 'given' || requestData.status === 'approved') {
                 if (equipmentId) {
-                    await window.db.collection('printers').doc(equipmentId).update({
-                        status: 'available',
-                        rentedBy: null,
-                        rentedAt: null,
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                                await window.db.collection('equipment').doc(equipmentId).update({
+                status: 'available',
+                rentedBy: null,
+                rentedAt: null,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
                 }
             }
         }
