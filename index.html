@@ -179,40 +179,43 @@
 
 
                     <!-- Leihe -->
-                    <div class="service-card" onclick="showEquipmentRequest()">
+                    <div class="service-card">
                         <div class="service-header">
                             <h3 class="service-title">Leihe</h3>
                         </div>
                         <div class="service-content">
                             <div class="service-description">Equipment anfragen</div>
                             <div class="service-action">
-                                <button class="btn btn-secondary btn-sm">Anfrage stellen</button>
+                                <button class="btn btn-primary btn-sm" onclick="showMyEquipmentRequests()">Meine Ausleihen</button>
+                                <button class="btn btn-secondary btn-sm" onclick="showEquipmentRequest()">Anfrage stellen</button>
                             </div>
                         </div>
                     </div>
 
                     <!-- Problem -->
-                    <div class="service-card" onclick="showProblemReport()">
+                    <div class="service-card">
                         <div class="service-header">
                             <h3 class="service-title">Problem</h3>
                         </div>
                         <div class="service-content">
                             <div class="service-description">Defekte melden</div>
                             <div class="service-action">
-                                <button class="btn btn-secondary btn-sm">Problem melden</button>
+                                <button class="btn btn-primary btn-sm" onclick="showMyProblemReports()">Meine Meldungen</button>
+                                <button class="btn btn-secondary btn-sm" onclick="showProblemReport()">Problem melden</button>
                             </div>
                         </div>
                     </div>
 
                     <!-- Bestellungen -->
-                    <div class="service-card" onclick="showMaterialRequest()">
+                    <div class="service-card">
                         <div class="service-header">
                             <h3 class="service-title">Material</h3>
                         </div>
                         <div class="service-content">
                             <div class="service-description">Materialwünsche</div>
                             <div class="service-action">
-                                <button class="btn btn-secondary btn-sm">Wunsch äußern</button>
+                                <button class="btn btn-primary btn-sm" onclick="showMyMaterialRequests()">Meine Wünsche</button>
+                                <button class="btn btn-secondary btn-sm" onclick="showMaterialRequest()">Wunsch äußern</button>
                             </div>
                         </div>
                     </div>
