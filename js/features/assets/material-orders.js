@@ -673,7 +673,7 @@ function createOrderCard(order, context) {
                 Doch ablehnen
             </button>
         `;
-    } else if (context === 'history' && order.status === 'rejected') {
+    } else if (context === 'history') {
         actionButtons = `
             <button class="btn btn-danger btn-small" onclick="deleteOrderRequest('${order.id}')">
                 Löschen
