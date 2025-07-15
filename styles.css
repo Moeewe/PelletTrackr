@@ -1025,15 +1025,13 @@
 /* Individual Order Card */
 .order-card {
     background: white;
-    border: 2px solid #e0e0e0;
+    border: 2px solid #000000;
     border-radius: 0;
     padding: 20px;
     transition: all 0.2s ease;
 }
 
-.order-card:hover {
-    border-color: #2196F3;
-}
+
 
 /* Order Card Header */
 .order-card-header {
@@ -1195,7 +1193,7 @@
 /* Tab System Improvements */
 .order-tabs {
     display: flex;
-    border-bottom: 2px solid #e0e0e0;
+    border-bottom: 2px solid #000000;
     margin-bottom: 20px;
     gap: 5px;
 }
@@ -1233,22 +1231,25 @@
 
 /* Tab Badge Styling */
 .order-tabs .notification-badge {
-    background: #FF5722;
+    background: #F44336;
     color: white;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
-    padding: 2px 6px;
-    border-radius: 0;
-    margin-left: 8px;
-    min-width: 18px;
+    padding: 4px 6px;
+    border-radius: 50%;
+    margin-left: 6px;
+    min-width: 16px;
+    height: 16px;
     text-align: center;
-    display: inline-block;
-    line-height: 1.2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
 }
 
 .order-tabs .tab-btn.active .notification-badge {
-    background: #FFEB00;
-    color: #000000;
+    background: #D32F2F;
+    color: white;
     border: 1px solid #000000;
 }
 
