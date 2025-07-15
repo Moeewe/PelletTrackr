@@ -181,7 +181,6 @@
     border: 2px solid #000000;
     border-radius: 0;
     padding: 20px;
-    cursor: pointer;
     transition: all 0.2s ease;
     min-height: 120px;
     display: flex;
@@ -221,6 +220,19 @@
 
 .service-action {
     margin-top: auto;
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.service-action .btn {
+    width: 100%;
+    margin: 0;
+    position: relative;
+    z-index: 11;
+    pointer-events: auto;
 }
 
 /* Drucker Status Grid */
@@ -234,17 +246,7 @@
     z-index: 0;
 }
 
-/* Service card clickable overlay - allows service card to be clicked while status items are not */
-.service-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1;
-    cursor: pointer;
-}
+/* Service card clickable overlay removed - individual buttons are now clickable */
 
 .status-item {
     display: flex;
