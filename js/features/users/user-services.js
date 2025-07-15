@@ -492,16 +492,23 @@ async function submitMaterialWish() {
         
         toast.success('Material-Wunsch erfolgreich eingereicht');
         
-        // Ensure modal closes properly
-        closeModal();
+        // Clear form fields before closing modal
+        const typeEl = document.getElementById('materialType');
+        const nameEl = document.getElementById('materialName');
+        const quantityEl = document.getElementById('materialQuantity');
+        const priorityEl = document.getElementById('materialPriority');
+        const reasonEl = document.getElementById('materialReason');
+        const supplierEl = document.getElementById('materialSupplier');
         
-        // Clear form fields after successful submission
-        document.getElementById('materialType').value = '';
-        document.getElementById('materialName').value = '';
-        document.getElementById('materialQuantity').value = '';
-        document.getElementById('materialPriority').value = 'medium';
-        document.getElementById('materialReason').value = '';
-        document.getElementById('materialSupplier').value = '';
+        if (typeEl) typeEl.value = '';
+        if (nameEl) nameEl.value = '';
+        if (quantityEl) quantityEl.value = '';
+        if (priorityEl) priorityEl.value = 'medium';
+        if (reasonEl) reasonEl.value = '';
+        if (supplierEl) supplierEl.value = '';
+        
+        // Close modal after clearing fields
+        closeModal();
         
     } catch (error) {
         console.error('Error submitting material request:', error);
@@ -865,7 +872,11 @@ async function requestEquipmentReturn(requestId) {
         });
         
         toast.success('Rückgabe-Anfrage gesendet');
-        showMyEquipmentRequests(); // Refresh the view
+        // Refresh the view if still on the equipment requests modal
+        const equipmentRequestsList = document.getElementById('myEquipmentRequestsList');
+        if (equipmentRequestsList) {
+            refreshMyEquipmentRequests();
+        }
         
     } catch (error) {
         console.error('Error requesting return:', error);
@@ -884,11 +895,60 @@ async function deleteEquipmentRequest(requestId) {
     try {
         await window.db.collection('requests').doc(requestId).delete();
         toast.success('Anfrage gelöscht');
-        showMyEquipmentRequests(); // Refresh the view
+        // Refresh the view if still on the equipment requests modal
+        const equipmentRequestsList = document.getElementById('myEquipmentRequestsList');
+        if (equipmentRequestsList) {
+            refreshMyEquipmentRequests();
+        }
         
     } catch (error) {
         console.error('Error deleting request:', error);
         toast.error('Fehler beim Löschen der Anfrage');
+    }
+}
+
+/**
+ * Refresh equipment requests list without reopening modal
+ */
+async function refreshMyEquipmentRequests() {
+    const container = document.getElementById('myEquipmentRequestsList');
+    if (!container) return;
+    
+    container.innerHTML = '<div class="loading-spinner">Lade Ausleihen...</div>';
+    
+    try {
+        const snapshot = await window.db.collection('requests')
+            .where('userKennung', '==', window.currentUser.kennung)
+            .get();
+        
+        const requests = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.type === 'equipment') {
+                requests.push({
+                    id: doc.id,
+                    ...data,
+                    createdAt: data.createdAt?.toDate()
+                });
+            }
+        });
+        
+        // Sort locally by creation date (newest first)
+        requests.sort((a, b) => {
+            if (!a.createdAt) return 1;
+            if (!b.createdAt) return -1;
+            return b.createdAt - a.createdAt;
+        });
+        
+        renderMyEquipmentRequests(requests);
+        
+    } catch (error) {
+        console.error('Error refreshing equipment requests:', error);
+        container.innerHTML = `
+            <div class="error-state">
+                <p>Fehler beim Laden der Ausleihen</p>
+            </div>
+        `;
     }
 }
 
@@ -1162,7 +1222,13 @@ async function saveProblemReportEdit(reportId) {
         
         toast.success('Meldung erfolgreich aktualisiert');
         closeModal();
-        showMyProblemReports(); // Refresh the view
+        // Refresh the view if still on the problem reports modal
+        setTimeout(() => {
+            const problemReportsList = document.getElementById('myProblemReportsList');
+            if (problemReportsList) {
+                refreshMyProblemReports();
+            }
+        }, 100);
         
     } catch (error) {
         console.error('Error updating problem report:', error);
@@ -1181,11 +1247,58 @@ async function deleteProblemReport(reportId) {
     try {
         await window.db.collection('problemReports').doc(reportId).delete();
         toast.success('Meldung gelöscht');
-        showMyProblemReports(); // Refresh the view
+        // Refresh the view if still on the problem reports modal
+        const problemReportsList = document.getElementById('myProblemReportsList');
+        if (problemReportsList) {
+            refreshMyProblemReports();
+        }
         
     } catch (error) {
         console.error('Error deleting problem report:', error);
         toast.error('Fehler beim Löschen der Meldung');
+    }
+}
+
+/**
+ * Refresh problem reports list without reopening modal
+ */
+async function refreshMyProblemReports() {
+    const container = document.getElementById('myProblemReportsList');
+    if (!container) return;
+    
+    container.innerHTML = '<div class="loading-spinner">Lade Meldungen...</div>';
+    
+    try {
+        const snapshot = await window.db.collection('problemReports')
+            .where('reportedByKennung', '==', window.currentUser.kennung)
+            .get();
+        
+        const reports = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            reports.push({
+                id: doc.id,
+                ...data,
+                createdAt: data.createdAt?.toDate() || data.reportedAt?.toDate()
+            });
+        });
+        
+        // Sort locally by creation date (newest first)
+        reports.sort((a, b) => {
+            if (!a.createdAt) return 1;
+            if (!b.createdAt) return -1;
+            return b.createdAt - a.createdAt;
+        });
+        
+        renderMyProblemReports(reports);
+        
+    } catch (error) {
+        console.error('Error refreshing problem reports:', error);
+        container.innerHTML = `
+            <div class="error-state">
+                <p>Fehler beim Laden der Meldungen</p>
+            </div>
+        `;
     }
 }
 
@@ -1470,7 +1583,13 @@ async function saveMaterialRequestEdit(requestId) {
         
         toast.success('Wunsch erfolgreich aktualisiert');
         closeModal();
-        showMyMaterialRequests(); // Refresh the view
+        // Refresh the view if still on the material requests modal
+        setTimeout(() => {
+            const materialRequestsList = document.getElementById('myMaterialRequestsList');
+            if (materialRequestsList) {
+                refreshMyMaterialRequests();
+            }
+        }, 100);
         
     } catch (error) {
         console.error('Error updating material request:', error);
@@ -1489,11 +1608,58 @@ async function deleteMaterialRequest(requestId) {
     try {
         await window.db.collection('materialRequests').doc(requestId).delete();
         toast.success('Wunsch gelöscht');
-        showMyMaterialRequests(); // Refresh the view
+        // Refresh the view if still on the material requests modal
+        const materialRequestsList = document.getElementById('myMaterialRequestsList');
+        if (materialRequestsList) {
+            refreshMyMaterialRequests();
+        }
         
     } catch (error) {
         console.error('Error deleting material request:', error);
         toast.error('Fehler beim Löschen des Wunsches');
+    }
+}
+
+/**
+ * Refresh material requests list without reopening modal
+ */
+async function refreshMyMaterialRequests() {
+    const container = document.getElementById('myMaterialRequestsList');
+    if (!container) return;
+    
+    container.innerHTML = '<div class="loading-spinner">Lade Wünsche...</div>';
+    
+    try {
+        const snapshot = await window.db.collection('materialRequests')
+            .where('requestedByKennung', '==', window.currentUser.kennung)
+            .get();
+        
+        const requests = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            requests.push({
+                id: doc.id,
+                ...data,
+                createdAt: data.createdAt?.toDate()
+            });
+        });
+        
+        // Sort locally by creation date (newest first)
+        requests.sort((a, b) => {
+            if (!a.createdAt) return 1;
+            if (!b.createdAt) return -1;
+            return b.createdAt - a.createdAt;
+        });
+        
+        renderMyMaterialRequests(requests);
+        
+    } catch (error) {
+        console.error('Error refreshing material requests:', error);
+        container.innerHTML = `
+            <div class="error-state">
+                <p>Fehler beim Laden der Wünsche</p>
+            </div>
+        `;
     }
 }
 
