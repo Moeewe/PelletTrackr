@@ -25,7 +25,7 @@ function initNotificationBadges() {
         setupMaterialOrdersBadge();
         setupProblemReportsBadge();
         // setupPaymentRequestsBadge(); // Will be added when payment system is active
-        console.log('✅ Notification badges initialized');
+        console.log('✅ Notification badges initialized (material-orders, problem-reports)');
     } catch (error) {
         console.error('❌ Error initializing notification badges:', error);
     }
@@ -40,11 +40,16 @@ function setupMaterialOrdersBadge() {
         return;
     }
     
+    console.log('🔄 Setting up material orders badge listener...');
+    
     const listener = window.db.collection('materialOrders')
         .where('status', '==', 'pending')
         .onSnapshot((snapshot) => {
             notificationCounts.materialOrders = snapshot.size;
+            console.log(`🔔 Material Orders Badge: ${snapshot.size} pending orders found`);
             updateBadge('material-orders', notificationCounts.materialOrders);
+        }, (error) => {
+            console.error('❌ Material orders badge listener error:', error);
         });
     
     notificationListeners.push(listener);

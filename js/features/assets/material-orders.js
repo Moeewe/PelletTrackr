@@ -289,7 +289,7 @@ async function submitMaterialRequest() {
 }
 
 /**
- * Show material orders modal
+ * Show material orders modal with redesigned structure
  */
 function showMaterialOrders() {
     const modalContent = `
@@ -303,25 +303,21 @@ function showMaterialOrders() {
                     <div class="order-tabs">
                         <button class="tab-btn active" onclick="showOrderTab('requests')">
                             Bestellanfragen
-                            <span class="badge" id="requestsCounter" style="display: none;">0</span>
+                            <span class="notification-badge" id="requestsCounter" style="display: none;">0</span>
                         </button>
                         <button class="tab-btn" onclick="showOrderTab('shopping')">
                             Einkaufsliste
-                            <span class="badge" id="shoppingCounter" style="display: none;">0</span>
+                            <span class="notification-badge" id="shoppingCounter" style="display: none;">0</span>
                         </button>
                         <button class="tab-btn" onclick="showOrderTab('history')">
                             Verlauf
-                            <span class="badge" id="historyCounter" style="display: none;">0</span>
+                            <span class="notification-badge" id="historyCounter" style="display: none;">0</span>
                         </button>
                     </div>
                     
                     <div id="requests" class="tab-content active">
                         <div id="orderRequestsContent">
                             <div class="loading">Bestellanfragen werden geladen...</div>
-                        </div>
-                        <br>
-                        <div id="materialWishesContent">
-                            <div class="loading">Material-Wünsche werden geladen...</div>
                         </div>
                     </div>
                     
@@ -490,9 +486,15 @@ function renderTabContent(tab) {
  * Update tab counters with current counts
  */
 function updateTabCounters() {
-    const requestsCount = materialOrders.filter(order => order.type === 'request' && order.status === 'pending').length;
+    const requestsCount = materialOrders.filter(order => order.status === 'pending').length;
     const shoppingCount = materialOrders.filter(order => order.status === 'approved').length;
-    const historyCount = materialOrders.filter(order => order.status === 'purchased' || order.status === 'delivered' || order.status === 'rejected').length;
+    const historyCount = materialOrders.filter(order => 
+        order.status === 'purchased' || 
+        order.status === 'delivered' || 
+        order.status === 'rejected'
+    ).length;
+    
+    console.log(`📊 Tab Counters - Requests: ${requestsCount}, Shopping: ${shoppingCount}, History: ${historyCount}`);
     
     // Update counter elements
     const requestsCounter = document.getElementById('requestsCounter');
@@ -502,25 +504,27 @@ function updateTabCounters() {
     if (requestsCounter) {
         requestsCounter.textContent = requestsCount;
         requestsCounter.style.display = requestsCount > 0 ? 'inline-block' : 'none';
+        console.log(`✅ Requests badge updated: ${requestsCount}`);
     }
     
     if (shoppingCounter) {
         shoppingCounter.textContent = shoppingCount;
         shoppingCounter.style.display = shoppingCount > 0 ? 'inline-block' : 'none';
+        console.log(`✅ Shopping badge updated: ${shoppingCount}`);
     }
     
     if (historyCounter) {
         historyCounter.textContent = historyCount;
         historyCounter.style.display = historyCount > 0 ? 'inline-block' : 'none';
+        console.log(`✅ History badge updated: ${historyCount}`);
     }
 }
 
 /**
- * Render order requests and material wishes tab
+ * Render order requests - unified tab for both admin and user requests
  */
 function renderOrderRequests() {
-    const requests = materialOrders.filter(order => order.type === 'request' && order.status === 'pending');
-    const allWishes = materialOrders.filter(order => order.type === 'request');
+    const requests = materialOrders.filter(order => order.status === 'pending');
     const container = document.getElementById('orderRequestsContent');
     
     if (!container) return;
@@ -528,166 +532,33 @@ function renderOrderRequests() {
     if (requests.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <p>Keine offenen Materialanfragen vorhanden.</p>
-                <p>Nutzer können über den "Material anfragen" Button neue Anfragen erstellen.</p>
-            </div>
-        `;
-    } else {
-        container.innerHTML = `
-            <div class="requests-list">
-                ${requests.map(request => {
-                    const isUserRequest = request.source === 'user' || !request.source; // Legacy compatibility
-                    const sourceLabel = isUserRequest ? 'Nutzerwunsch' : 'Admin-Bestellung';
-                    const sourcePerson = isUserRequest ? request.userName || 'Unbekannt' : request.createdBy || 'Admin';
-                    
-                    return `
-                    <div class="request-item">
-                        <div class="request-header">
-                            <h4>${request.materialName}</h4>
-                            <div class="request-meta">
-                                <span class="source-badge ${isUserRequest ? 'source-user' : 'source-admin'}">${sourceLabel}</span>
-                                <span class="priority-badge priority-${request.priority}">${getPriorityText(request.priority)}</span>
-                            </div>
-                        </div>
-                        <div class="request-details">
-                            <p><strong>Von:</strong> ${sourcePerson}</p>
-                            ${request.manufacturer ? `<p><strong>Hersteller:</strong> ${request.manufacturer}</p>` : ''}
-                            ${request.quantity ? `<p><strong>Menge:</strong> ${request.quantity}</p>` : ''}
-                            <p><strong>Begründung:</strong> ${request.reason}</p>
-                            <p><strong>Angefragt:</strong> ${request.createdAt ? request.createdAt.toLocaleString() : 'Unbekannt'}</p>
-                        </div>
-                        <div class="request-actions">
-                            <button class="btn btn-success btn-small" onclick="approveOrderRequest('${request.id}')">
-                                Genehmigen
-                            </button>
-                            <button class="btn btn-warning btn-small" onclick="rejectOrderRequest('${request.id}')">
-                                Ablehnen
-                            </button>
-                            <button class="btn btn-danger btn-small" onclick="deleteOrderRequest('${request.id}')">
-                                Löschen
-                            </button>
-                        </div>
-                    </div>
-                `;
-                }).join('')}
-            </div>
-        `;
-    }
-    
-    // Also render material wishes in the same tab
-    renderMaterialWishes();
-}
-
-/**
- * Render material wishes tab
- */
-function renderMaterialWishes() {
-    // Only show non-pending requests to avoid duplication with renderOrderRequests
-    const wishes = materialOrders.filter(order => 
-        order.type === 'request' && order.status !== 'pending'
-    ).sort((a, b) => {
-        // Sort by priority: high -> medium -> low
-        const priorityOrder = { 'high': 3, 'medium': 2, 'low': 1 };
-        return (priorityOrder[b.priority] || 1) - (priorityOrder[a.priority] || 1);
-    });
-    const container = document.getElementById('materialWishesContent');
-    
-    if (!container) return;
-    
-    if (wishes.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <p>Keine verarbeiteten Material-Wünsche vorhanden.</p>
-                <small>Genehmigte, abgelehnte oder gekaufte Material-Wünsche erscheinen hier.</small>
+                <p>Keine offenen Bestellanfragen vorhanden.</p>
+                <p>Nutzer können über den "Material-Wunsch hinzufügen" Button neue Anfragen erstellen.</p>
             </div>
         `;
         return;
     }
     
+    // Sort by priority and date
+    requests.sort((a, b) => {
+        const priorityOrder = { 'high': 3, 'medium': 2, 'low': 1 };
+        const priorityDiff = (priorityOrder[b.priority] || 1) - (priorityOrder[a.priority] || 1);
+        if (priorityDiff !== 0) return priorityDiff;
+        
+        const dateA = a.createdAt || new Date(0);
+        const dateB = b.createdAt || new Date(0);
+        return dateB - dateA; // Newest first
+    });
+    
     container.innerHTML = `
-        <div class="material-wishes-header">
-            <h4>Verarbeitete Material-Wünsche (${wishes.length})</h4>
-        </div>
-        <div class="material-wishes-list">
-            ${wishes.map(wish => {
-                const isUserRequest = wish.source === 'user' || !wish.source; // Legacy compatibility
-                const sourceLabel = isUserRequest ? 'Nutzerwunsch' : 'Admin-Bestellung';
-                const sourcePerson = isUserRequest ? wish.userName || 'Unbekannt' : wish.createdBy || 'Admin';
-                
-                return `
-                <div class="request-item">
-                    <div class="request-header">
-                        <h4>${wish.materialName || 'Unbekanntes Material'}</h4>
-                        <div class="request-meta">
-                            <span class="source-badge ${isUserRequest ? 'source-user' : 'source-admin'}">${sourceLabel}</span>
-                            <span class="status-badge status-${wish.status}">${getStatusText(wish.status)}</span>
-                        </div>
-                    </div>
-                    <div class="request-details">
-                        <p><strong>Von:</strong> ${sourcePerson}</p>
-                        ${wish.manufacturer ? `<p><strong>Hersteller:</strong> ${wish.manufacturer}</p>` : ''}
-                        ${wish.quantity ? `<p><strong>Menge:</strong> ${wish.quantity}</p>` : ''}
-                        <p><strong>Begründung:</strong> ${wish.reason || 'Keine Begründung'}</p>
-                        <p><strong>Angefragt:</strong> ${wish.createdAt ? (wish.createdAt.toDate ? new Date(wish.createdAt.toDate()).toLocaleDateString('de-DE') : new Date(wish.createdAt).toLocaleDateString('de-DE')) : 'Unbekannt'}</p>
-                        <p><strong>Status:</strong> ${getStatusText(wish.status)}</p>
-                    </div>
-                    ${window.currentUser?.isAdmin && wish.status === 'approved' ? `
-                        <div class="request-actions">
-                            <button class="btn btn-success btn-small" onclick="markAsPurchased('${wish.id}')">
-                                Als gekauft markieren
-                            </button>
-                            <button class="btn btn-warning btn-small" onclick="rejectOrderRequest('${wish.id}')">
-                                Doch ablehnen
-                            </button>
-                        </div>
-                    ` : ''}
-                </div>
-                `;
-            }).join('')}
+        <div class="order-cards">
+            ${requests.map(request => createOrderCard(request, 'request')).join('')}
         </div>
     `;
 }
 
 /**
- * Get localized priority text
- */
-function getPriorityText(priority) {
-    const priorityMap = {
-        'low': 'Niedrig',
-        'medium': 'Mittel',
-        'high': 'Hoch'
-    };
-    return priorityMap[priority] || priority;
-}
-
-/**
- * Get priority icon
- */
-function getPriorityIcon(priority) {
-    const iconMap = {
-        'low': '●',
-        'medium': '▲',
-        'high': '⬆'
-    };
-    return iconMap[priority] || '●';
-}
-
-/**
- * Get localized status text
- */
-function getStatusText(status) {
-    const statusMap = {
-        'pending': 'Ausstehend',
-        'approved': 'Genehmigt',
-        'rejected': 'Abgelehnt',
-        'ordered': 'Bestellt',
-        'delivered': 'Geliefert'
-    };
-    return statusMap[status] || status;
-}
-
-/**
- * Render shopping list (approved items to purchase)
+ * Render shopping list with card design
  */
 function renderShoppingList() {
     const container = document.getElementById('shoppingListContent');
@@ -703,6 +574,7 @@ function renderShoppingList() {
         container.innerHTML = `
             <div class="empty-state">
                 <p>Keine Artikel zum Einkaufen vorhanden.</p>
+                <p>Genehmigte Bestellanfragen erscheinen hier zum Einkauf.</p>
             </div>
         `;
         return;
@@ -714,49 +586,15 @@ function renderShoppingList() {
         return (priorityOrder[b.priority] || 1) - (priorityOrder[a.priority] || 1);
     });
     
-    container.innerHTML = shoppingItems.map(item => `
-        <div class="shopping-list-item">
-            <div class="shopping-priority priority-${item.priority}">
-                ${getPriorityText(item.priority)}
-            </div>
-            <div class="shopping-item-content">
-                <div class="shopping-item-header">
-                    <h4 class="shopping-item-name">${item.materialName || 'Unbekanntes Material'}</h4>
-                    <div class="shopping-item-source">${item.source === 'admin' ? 'Admin-Bestellung' : 'Nutzerwunsch'}</div>
-                </div>
-                <div class="shopping-item-details">
-                    <div class="detail-row">
-                        <span class="detail-label">Von:</span>
-                        <span class="detail-value">${item.userName || item.createdBy || 'Unbekannt'}</span>
-                    </div>
-                    ${item.manufacturer ? `
-                        <div class="detail-row">
-                            <span class="detail-label">Hersteller:</span>
-                            <span class="detail-value">${item.manufacturer}</span>
-                        </div>
-                    ` : ''}
-                    ${item.quantity ? `
-                        <div class="detail-row">
-                            <span class="detail-label">Menge:</span>
-                            <span class="detail-value">${item.quantity}</span>
-                        </div>
-                    ` : ''}
-                    <div class="detail-row">
-                        <span class="detail-label">Begründung:</span>
-                        <span class="detail-value">${item.reason || 'Keine Begründung'}</span>
-                    </div>
-                </div>
-            </div>
-            <div class="shopping-item-actions">
-                <button class="btn btn-success" onclick="markAsPurchased('${item.id}')">Eingekauft</button>
-                <button class="btn btn-danger" onclick="cancelOrder('${item.id}')">Stornieren</button>
-            </div>
+    container.innerHTML = `
+        <div class="order-cards">
+            ${shoppingItems.map(item => createOrderCard(item, 'shopping')).join('')}
         </div>
-    `).join('');
+    `;
 }
 
 /**
- * Render order history with card layout and delete functionality for rejected items
+ * Render order history with card design
  */
 function renderOrderHistory() {
     const container = document.getElementById('orderHistoryContent');
@@ -782,86 +620,111 @@ function renderOrderHistory() {
         container.innerHTML = `
             <div class="empty-state">
                 <p>Keine Bestellungen im Verlauf vorhanden.</p>
+                <p>Abgeschlossene und abgelehnte Bestellungen erscheinen hier.</p>
             </div>
         `;
         return;
     }
     
     container.innerHTML = `
-        <div class="history-cards">
-            ${orders.map(order => {
-                const statusClass = `status-${order.status}`;
-                const statusText = getStatusText(order.status);
-                const sourcePerson = order.userName || order.createdBy || 'Unbekannt';
-                const sourceType = order.source === 'admin' ? 'Admin-Bestellung' : 'Nutzerwunsch';
-                const processDate = order.updatedAt || order.createdAt;
-                const processDateStr = processDate ? (processDate.toDate ? new Date(processDate.toDate()).toLocaleDateString('de-DE') : new Date(processDate).toLocaleDateString('de-DE')) : 'Unbekannt';
-                
-                return `
-                    <div class="history-card ${statusClass}">
-                        <div class="history-card-header">
-                            <div class="history-card-title">
-                                <h4 class="material-name">${order.materialName || 'Unbekanntes Material'}</h4>
-                                <div class="source-type">${sourceType}</div>
-                            </div>
-                            <div class="history-card-status">
-                                <span class="status-badge ${statusClass}">${statusText}</span>
-                            </div>
-                        </div>
-                        
-                        <div class="history-card-body">
-                            <div class="detail-row">
-                                <span class="detail-label">Von:</span>
-                                <span class="detail-value">${sourcePerson}</span>
-                            </div>
-                            ${order.manufacturer ? `
-                                <div class="detail-row">
-                                    <span class="detail-label">Hersteller:</span>
-                                    <span class="detail-value">${order.manufacturer}</span>
-                                </div>
-                            ` : ''}
-                            ${order.quantity ? `
-                                <div class="detail-row">
-                                    <span class="detail-label">Menge:</span>
-                                    <span class="detail-value">${order.quantity}</span>
-                                </div>
-                            ` : ''}
-                            <div class="detail-row">
-                                <span class="detail-label">Dringlichkeit:</span>
-                                <span class="detail-value">${getPriorityText(order.priority)}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Datum:</span>
-                                <span class="detail-value">${processDateStr}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Begründung:</span>
-                                <span class="detail-value">${order.reason || 'Keine Begründung'}</span>
-                            </div>
-                            ${order.rejectedBy ? `
-                                <div class="detail-row">
-                                    <span class="detail-label">Abgelehnt von:</span>
-                                    <span class="detail-value">${order.rejectedBy}</span>
-                                </div>
-                            ` : ''}
-                            ${order.approvedBy ? `
-                                <div class="detail-row">
-                                    <span class="detail-label">Genehmigt von:</span>
-                                    <span class="detail-value">${order.approvedBy}</span>
-                                </div>
-                            ` : ''}
-                        </div>
-                        
-                        ${order.status === 'rejected' ? `
-                            <div class="history-card-actions">
-                                <button class="btn btn-danger btn-small" onclick="deleteOrderRequest('${order.id}')">
-                                    Löschen
-                                </button>
-                            </div>
-                        ` : ''}
+        <div class="order-cards">
+            ${orders.map(order => createOrderCard(order, 'history')).join('')}
+        </div>
+    `;
+}
+
+/**
+ * Create unified order card based on screenshot design
+ */
+function createOrderCard(order, context) {
+    const isUserRequest = order.source === 'user' || !order.source;
+    const sourceLabel = isUserRequest ? 'NUTZERWUNSCH' : 'ADMIN-BESTELLUNG';
+    const sourceBadgeClass = isUserRequest ? 'badge-user' : 'badge-admin';
+    const sourcePerson = order.userName || order.createdBy || 'Unbekannt';
+    const statusText = getStatusText(order.status).toUpperCase();
+    const statusClass = `badge-${order.status}`;
+    
+    const createdDate = order.createdAt ? 
+        (order.createdAt.toLocaleDateString ? order.createdAt.toLocaleDateString('de-DE') : 
+         new Date(order.createdAt).toLocaleDateString('de-DE')) : 'Unbekannt';
+    
+    const processDate = order.updatedAt || order.createdAt;
+    const processDateStr = processDate ? 
+        (processDate.toDate ? new Date(processDate.toDate()).toLocaleDateString('de-DE') : 
+         new Date(processDate).toLocaleDateString('de-DE')) : 'Unbekannt';
+    
+    let actionButtons = '';
+    
+    if (context === 'request') {
+        actionButtons = `
+            <button class="btn btn-success" onclick="approveOrderRequest('${order.id}')">
+                Genehmigen
+            </button>
+            <button class="btn btn-warning" onclick="rejectOrderRequest('${order.id}')">
+                Ablehnen
+            </button>
+        `;
+    } else if (context === 'shopping') {
+        actionButtons = `
+            <button class="btn btn-success" onclick="markAsPurchased('${order.id}')">
+                Als gekauft markieren
+            </button>
+            <button class="btn btn-warning" onclick="rejectOrderRequest('${order.id}')">
+                Doch ablehnen
+            </button>
+        `;
+    } else if (context === 'history' && order.status === 'rejected') {
+        actionButtons = `
+            <button class="btn btn-danger btn-small" onclick="deleteOrderRequest('${order.id}')">
+                Löschen
+            </button>
+        `;
+    }
+    
+    return `
+        <div class="order-card">
+            <div class="order-card-header">
+                <h4 class="order-title">${order.materialName || 'Unbekanntes Material'}</h4>
+                <div class="order-badges">
+                    <span class="order-badge ${sourceBadgeClass}">${sourceLabel}</span>
+                    <span class="order-badge ${statusClass}">${statusText}</span>
+                </div>
+            </div>
+            <div class="order-card-body">
+                <div class="order-detail">
+                    <strong>Von:</strong> ${sourcePerson}
+                </div>
+                ${order.manufacturer ? `
+                    <div class="order-detail">
+                        <strong>Hersteller:</strong> ${order.manufacturer}
                     </div>
-                `;
-            }).join('')}
+                ` : ''}
+                ${order.quantity ? `
+                    <div class="order-detail">
+                        <strong>Menge:</strong> ${order.quantity}
+                    </div>
+                ` : ''}
+                <div class="order-detail">
+                    <strong>Begründung:</strong> ${order.reason || 'Keine Begründung'}
+                </div>
+                <div class="order-detail">
+                    <strong>Angefragt:</strong> ${createdDate}
+                </div>
+                <div class="order-detail">
+                    <strong>Status:</strong> ${getStatusText(order.status)}
+                </div>
+                ${order.priority ? `
+                    <div class="order-detail">
+                        <strong>Priorität:</strong> 
+                        <span class="priority-indicator priority-${order.priority}">${getPriorityText(order.priority)}</span>
+                    </div>
+                ` : ''}
+            </div>
+            ${actionButtons ? `
+                <div class="order-card-actions">
+                    ${actionButtons}
+                </div>
+            ` : ''}
         </div>
     `;
 }
@@ -1073,6 +936,46 @@ async function cancelOrder(requestId) {
         console.error('Error cancelling order:', error);
         toast.error('Fehler beim Stornieren');
     }
+}
+
+/**
+ * Get localized priority text
+ */
+function getPriorityText(priority) {
+    const priorityMap = {
+        'low': 'Niedrig',
+        'medium': 'Mittel',
+        'high': 'Hoch'
+    };
+    return priorityMap[priority] || priority;
+}
+
+/**
+ * Get priority icon
+ */
+function getPriorityIcon(priority) {
+    const iconMap = {
+        'low': '●',
+        'medium': '▲',
+        'high': '⬆'
+    };
+    return iconMap[priority] || '●';
+}
+
+/**
+ * Get localized status text
+ */
+function getStatusText(status) {
+    const statusMap = {
+        'pending': 'Ausstehend',
+        'approved': 'Genehmigt',
+        'rejected': 'Abgelehnt',
+        'ordered': 'Bestellt',
+        'delivered': 'Geliefert',
+        'purchased': 'Eingekauft',
+        'cancelled': 'Storniert'
+    };
+    return statusMap[status] || status;
 }
 
 // Export functions to global scope
