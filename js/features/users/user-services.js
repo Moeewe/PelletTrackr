@@ -877,16 +877,32 @@ async function requestEquipmentReturn(requestId) {
  */
 async function deleteEquipmentRequest(requestId) {
     try {
+        // First remove from display immediately
+        const requestElement = document.querySelector(`[onclick*="deleteEquipmentRequest('${requestId}')"]`)?.closest('.entry-card');
+        if (requestElement) {
+            requestElement.style.opacity = '0.5';
+            requestElement.style.pointerEvents = 'none';
+        }
+        
         await window.db.collection('requests').doc(requestId).delete();
         
         toast.success('Equipment-Anfrage gelöscht');
         
-        // Refresh the view
-        refreshMyEquipmentRequests();
+        // Refresh the view to get accurate count and auto-close if needed
+        setTimeout(() => {
+            refreshMyEquipmentRequests();
+        }, 100);
         
     } catch (error) {
         console.error('Error deleting equipment request:', error);
         toast.error('Fehler beim Löschen der Equipment-Anfrage');
+        
+        // Restore element if deletion failed
+        const requestElement = document.querySelector(`[onclick*="deleteEquipmentRequest('${requestId}')"]`)?.closest('.entry-card');
+        if (requestElement) {
+            requestElement.style.opacity = '1';
+            requestElement.style.pointerEvents = 'auto';
+        }
     }
 }
 
@@ -1234,16 +1250,32 @@ async function saveProblemReportEdit(reportId) {
  */
 async function deleteProblemReport(reportId) {
     try {
+        // First remove from display immediately
+        const reportElement = document.querySelector(`[onclick*="deleteProblemReport('${reportId}')"]`)?.closest('.entry-card');
+        if (reportElement) {
+            reportElement.style.opacity = '0.5';
+            reportElement.style.pointerEvents = 'none';
+        }
+        
         await window.db.collection('problemReports').doc(reportId).delete();
         
         toast.success('Problem-Meldung gelöscht');
         
-        // Refresh the view
-        refreshMyProblemReports();
+        // Refresh the view to get accurate count and auto-close if needed
+        setTimeout(() => {
+            refreshMyProblemReports();
+        }, 100);
         
     } catch (error) {
         console.error('Error deleting problem report:', error);
         toast.error('Fehler beim Löschen der Problem-Meldung');
+        
+        // Restore element if deletion failed
+        const reportElement = document.querySelector(`[onclick*="deleteProblemReport('${reportId}')"]`)?.closest('.entry-card');
+        if (reportElement) {
+            reportElement.style.opacity = '1';
+            reportElement.style.pointerEvents = 'auto';
+        }
     }
 }
 
@@ -1602,16 +1634,32 @@ async function saveMaterialRequestEdit(requestId) {
  */
 async function deleteMaterialRequest(requestId) {
     try {
+        // First remove from display immediately
+        const requestElement = document.querySelector(`[onclick*="deleteMaterialRequest('${requestId}')"]`)?.closest('.entry-card');
+        if (requestElement) {
+            requestElement.style.opacity = '0.5';
+            requestElement.style.pointerEvents = 'none';
+        }
+        
         await window.db.collection('materialOrders').doc(requestId).delete();
         
         toast.success('Material-Wunsch gelöscht');
         
-        // Refresh the view
-        refreshMyMaterialRequests();
+        // Refresh the view to get accurate count and auto-close if needed
+        setTimeout(() => {
+            refreshMyMaterialRequests();
+        }, 100);
         
     } catch (error) {
         console.error('Error deleting material request:', error);
         toast.error('Fehler beim Löschen des Material-Wunschs');
+        
+        // Restore element if deletion failed
+        const requestElement = document.querySelector(`[onclick*="deleteMaterialRequest('${requestId}')"]`)?.closest('.entry-card');
+        if (requestElement) {
+            requestElement.style.opacity = '1';
+            requestElement.style.pointerEvents = 'auto';
+        }
     }
 }
 
