@@ -73,6 +73,7 @@ function setupEquipmentRequestsListener() {
     }
     
     try {
+        // Try with index first, fallback if index doesn't exist yet
         adminEquipmentRequestsListener = window.db.collection('requests')
             .where('type', '==', 'equipment')
             .orderBy('createdAt', 'desc')
@@ -91,13 +92,59 @@ function setupEquipmentRequestsListener() {
                 renderEquipmentRequests();
             }, (error) => {
                 console.error('Error in equipment requests listener:', error);
-                showToast('Fehler beim Live-Update der Equipment-Anfragen', 'error');
+                
+                // If index error, try without orderBy as fallback
+                if (error.code === 'failed-precondition' || error.message.includes('index')) {
+                    console.log('🔄 Index not ready, using fallback query...');
+                    setupEquipmentRequestsListenerFallback();
+                } else {
+                    showToast('Fehler beim Live-Update der Equipment-Anfragen', 'error');
+                }
             });
         
         console.log("✅ Equipment requests listener registered");
     } catch (error) {
         console.error("❌ Failed to setup equipment requests listener:", error);
         // Fallback to manual loading
+        loadEquipmentRequests();
+    }
+}
+
+/**
+ * Setup equipment requests listener without orderBy (fallback for missing index)
+ */
+function setupEquipmentRequestsListenerFallback() {
+    try {
+        adminEquipmentRequestsListener = window.db.collection('requests')
+            .where('type', '==', 'equipment')
+            .onSnapshot((snapshot) => {
+                adminEquipmentRequests = [];
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    adminEquipmentRequests.push({
+                        id: doc.id,
+                        ...data,
+                        requestedAt: data.createdAt?.toDate() || data.requestedAt?.toDate()
+                    });
+                });
+                
+                // Sort locally since we can't use orderBy
+                adminEquipmentRequests.sort((a, b) => {
+                    const aDate = a.requestedAt || new Date(0);
+                    const bDate = b.requestedAt || new Date(0);
+                    return bDate - aDate;
+                });
+                
+                console.log('Live update (fallback): Loaded equipment requests:', adminEquipmentRequests.length);
+                renderEquipmentRequests();
+            }, (error) => {
+                console.error('Error in fallback equipment requests listener:', error);
+                showToast('Fehler beim Live-Update der Equipment-Anfragen', 'error');
+            });
+        
+        console.log("✅ Equipment requests fallback listener registered");
+    } catch (error) {
+        console.error("❌ Failed to setup fallback equipment requests listener:", error);
         loadEquipmentRequests();
     }
 }
@@ -501,17 +548,54 @@ function getRequestStatusText(status) {
 }
 
 /**
- * Update equipment request status
+ * Update equipment request status and equipment availability
  */
 async function updateEquipmentRequestStatus(requestId, newStatus) {
     try {
+        // Immediate visual feedback
+        const requestElement = document.querySelector(`[onclick*="updateEquipmentRequestStatus('${requestId}'"]`)?.closest('.request-item');
+        if (requestElement) {
+            requestElement.style.opacity = '0.6';
+            requestElement.style.pointerEvents = 'none';
+        }
+        
+        // Get the request to find the equipment ID
+        const requestDoc = await window.db.collection('requests').doc(requestId).get();
+        if (!requestDoc.exists) {
+            throw new Error('Anfrage nicht gefunden');
+        }
+        
+        const requestData = requestDoc.data();
+        const equipmentId = requestData.equipmentId;
+        
+        // Update request status
         await window.db.collection('requests').doc(requestId).update({
             status: newStatus,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
+        // Update equipment status based on request status
+        if (equipmentId) {
+            let equipmentStatus = 'available';
+            if (newStatus === 'approved' || newStatus === 'given') {
+                equipmentStatus = 'rented';
+            }
+            
+            await window.db.collection('printers').doc(equipmentId).update({
+                status: equipmentStatus,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+        
         showToast('Status erfolgreich aktualisiert', 'success');
-        // Removed manual reload - real-time listener will handle the update
+        
+        // Small delay then refresh to ensure new state is visible
+        setTimeout(() => {
+            if (requestElement) {
+                requestElement.style.opacity = '1';
+                requestElement.style.pointerEvents = 'auto';
+            }
+        }, 500);
         
     } catch (error) {
         console.error('Error updating equipment request status:', error);
@@ -520,18 +604,52 @@ async function updateEquipmentRequestStatus(requestId, newStatus) {
 }
 
 /**
- * Mark equipment as given
+ * Mark equipment as given and update equipment status
  */
 async function markEquipmentAsGiven(requestId) {
     try {
+        // Immediate visual feedback
+        const requestElement = document.querySelector(`[onclick*="markEquipmentAsGiven('${requestId}')"]`)?.closest('.request-item');
+        if (requestElement) {
+            requestElement.style.opacity = '0.6';
+            requestElement.style.pointerEvents = 'none';
+        }
+        
+        // Get the request to find the equipment ID
+        const requestDoc = await window.db.collection('requests').doc(requestId).get();
+        if (!requestDoc.exists) {
+            throw new Error('Anfrage nicht gefunden');
+        }
+        
+        const requestData = requestDoc.data();
+        const equipmentId = requestData.equipmentId;
+        
+        // Update request status
         await window.db.collection('requests').doc(requestId).update({
             status: 'given',
             givenAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
+        // Mark equipment as rented
+        if (equipmentId) {
+            await window.db.collection('printers').doc(equipmentId).update({
+                status: 'rented',
+                rentedBy: requestData.userName,
+                rentedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+        
         showToast('Equipment als ausgegeben markiert', 'success');
-        // Removed manual reload - real-time listener will handle the update
+        
+        // Small delay then refresh to ensure new state is visible
+        setTimeout(() => {
+            if (requestElement) {
+                requestElement.style.opacity = '1';
+                requestElement.style.pointerEvents = 'auto';
+            }
+        }, 500);
         
     } catch (error) {
         console.error('Error marking equipment as given:', error);
@@ -540,18 +658,52 @@ async function markEquipmentAsGiven(requestId) {
 }
 
 /**
- * Mark equipment as returned
+ * Mark equipment as returned and update equipment status
  */
 async function markEquipmentAsReturned(requestId) {
     try {
+        // Immediate visual feedback
+        const requestElement = document.querySelector(`[onclick*="markEquipmentAsReturned('${requestId}')"]`)?.closest('.request-item');
+        if (requestElement) {
+            requestElement.style.opacity = '0.6';
+            requestElement.style.pointerEvents = 'none';
+        }
+        
+        // Get the request to find the equipment ID
+        const requestDoc = await window.db.collection('requests').doc(requestId).get();
+        if (!requestDoc.exists) {
+            throw new Error('Anfrage nicht gefunden');
+        }
+        
+        const requestData = requestDoc.data();
+        const equipmentId = requestData.equipmentId;
+        
+        // Update request status
         await window.db.collection('requests').doc(requestId).update({
             status: 'returned',
             returnedAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
+        // Mark equipment as available again
+        if (equipmentId) {
+            await window.db.collection('printers').doc(equipmentId).update({
+                status: 'available',
+                rentedBy: null,
+                rentedAt: null,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+        
         showToast('Equipment als zurückgegeben markiert', 'success');
-        // Removed manual reload - real-time listener will handle the update
+        
+        // Small delay then refresh to ensure new state is visible
+        setTimeout(() => {
+            if (requestElement) {
+                requestElement.style.opacity = '1';
+                requestElement.style.pointerEvents = 'auto';
+            }
+        }, 500);
         
     } catch (error) {
         console.error('Error marking equipment as returned:', error);
@@ -560,7 +712,7 @@ async function markEquipmentAsReturned(requestId) {
 }
 
 /**
- * Delete equipment request
+ * Delete equipment request and restore equipment availability
  */
 async function deleteEquipmentRequest(requestId) {
     if (!confirm('Möchten Sie diese Equipment-Anfrage wirklich löschen?')) {
@@ -568,9 +720,39 @@ async function deleteEquipmentRequest(requestId) {
     }
     
     try {
+        // Immediate visual feedback
+        const requestElement = document.querySelector(`[onclick*="deleteEquipmentRequest('${requestId}')"]`)?.closest('.request-item');
+        if (requestElement) {
+            requestElement.style.opacity = '0.3';
+            requestElement.style.pointerEvents = 'none';
+        }
+        
+        // Get the request to find the equipment ID
+        const requestDoc = await window.db.collection('requests').doc(requestId).get();
+        if (requestDoc.exists) {
+            const requestData = requestDoc.data();
+            const equipmentId = requestData.equipmentId;
+            
+            // If request was active, mark equipment as available again
+            if (requestData.status === 'given' || requestData.status === 'approved') {
+                if (equipmentId) {
+                    await window.db.collection('printers').doc(equipmentId).update({
+                        status: 'available',
+                        rentedBy: null,
+                        rentedAt: null,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            }
+        }
+        
         await window.db.collection('requests').doc(requestId).delete();
         showToast('Equipment-Anfrage erfolgreich gelöscht', 'success');
-        // Removed manual reload - real-time listener will handle the update
+        
+        // Remove element immediately since it's deleted
+        if (requestElement) {
+            requestElement.remove();
+        }
         
     } catch (error) {
         console.error('Error deleting equipment request:', error);
