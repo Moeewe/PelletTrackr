@@ -942,6 +942,14 @@ async function refreshMyEquipmentRequests() {
         
         renderMyEquipmentRequests(requests);
         
+        // Auto-close modal if no requests left
+        if (requests.length === 0) {
+            setTimeout(() => {
+                closeModal();
+                toast.info('Alle Ausleihen wurden entfernt');
+            }, 1000);
+        }
+        
     } catch (error) {
         console.error('Error refreshing equipment requests:', error);
         container.innerHTML = `
@@ -1291,6 +1299,14 @@ async function refreshMyProblemReports() {
         });
         
         renderMyProblemReports(reports);
+        
+        // Auto-close modal if no reports left
+        if (reports.length === 0) {
+            setTimeout(() => {
+                closeModal();
+                toast.info('Alle Meldungen wurden entfernt');
+            }, 1000);
+        }
         
     } catch (error) {
         console.error('Error refreshing problem reports:', error);
@@ -1652,6 +1668,14 @@ async function refreshMyMaterialRequests() {
         });
         
         renderMyMaterialRequests(requests);
+        
+        // Auto-close modal if no requests left
+        if (requests.length === 0) {
+            setTimeout(() => {
+                closeModal();
+                toast.info('Alle Material-Wünsche wurden entfernt');
+            }, 1000);
+        }
         
     } catch (error) {
         console.error('Error refreshing material requests:', error);
