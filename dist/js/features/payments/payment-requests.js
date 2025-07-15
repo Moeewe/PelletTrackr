@@ -387,7 +387,8 @@ async function loadPendingPaymentRequests() {
                 .orderBy('requestedAt', 'desc')
                 .get();
         } catch (orderByError) {
-            console.log('OrderBy failed, using fallback query for payment requests');
+            console.log('📋 OrderBy failed, using fallback query for payment requests');
+            console.log('💡 To fix this, ensure Firestore index exists for: paymentRequests (status, requestedAt)');
             querySnapshot = await window.db.collection('paymentRequests')
                 .where('status', '==', 'pending')
                 .get();
@@ -620,14 +621,11 @@ function renderPaymentRequestsList(requests) {
                             <p><strong>Angefragt:</strong> ${requestedAtText}</p>
                             <p><strong>Entry-ID:</strong> ${request.entryId || 'Unbekannt'}</p>
                         </div>
-                        <div class="request-actions">
-                            <button class="btn btn-success" onclick="processPaymentRequest('${request.id}', true)">
-                                Zahlung registrieren
+                        <div class="payment-request-actions">
+                            <button class="btn btn-success btn-small" onclick="approvePaymentRequest('${request.id}')">
+                                ✓ Genehmigen
                             </button>
-                            <button class="btn btn-danger" onclick="processPaymentRequest('${request.id}', false)">
-                                Ablehnen
-                            </button>
-                            <button class="btn btn-secondary" onclick="deletePaymentRequest('${request.id}')">
+                            <button class="btn btn-danger btn-small" onclick="deletePaymentRequest('${request.id}')">
                                 Löschen
                             </button>
                         </div>

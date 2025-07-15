@@ -3,11 +3,12 @@
  * Handles admin view of user-submitted problems and equipment requests
  */
 
-// Global state
+// Global problem report state
 let problemReports = [];
-let equipmentRequests = [];
 let problemReportsListener = null;
-let equipmentRequestsListener = null;
+let adminEquipmentRequests = [];
+let currentProblemFilter = 'all';
+let adminEquipmentRequestsListener = null;
 
 /**
  * Setup real-time listener for problem reports
@@ -52,25 +53,25 @@ function setupProblemReportsListener() {
  */
 function setupEquipmentRequestsListener() {
     // Clean up existing listener
-    if (equipmentRequestsListener) {
-        equipmentRequestsListener();
-        equipmentRequestsListener = null;
+    if (adminEquipmentRequestsListener) {
+        adminEquipmentRequestsListener();
+        adminEquipmentRequestsListener = null;
     }
     
     try {
-        equipmentRequestsListener = window.db.collection('equipmentRequests')
+        adminEquipmentRequestsListener = window.db.collection('equipmentRequests')
             .orderBy('requestedAt', 'desc')
             .onSnapshot((snapshot) => {
-                equipmentRequests = [];
+                adminEquipmentRequests = [];
                 snapshot.forEach((doc) => {
-                    equipmentRequests.push({
+                    adminEquipmentRequests.push({
                         id: doc.id,
                         ...doc.data(),
                         requestedAt: doc.data().requestedAt?.toDate()
                     });
                 });
                 
-                console.log('Live update: Loaded equipment requests:', equipmentRequests.length);
+                console.log('Live update: Loaded equipment requests:', adminEquipmentRequests.length);
                 renderEquipmentRequests();
             }, (error) => {
                 console.error('Error in equipment requests listener:', error);
@@ -240,9 +241,11 @@ function getProblemTypeText(type) {
     const typeMap = {
         'mechanical': 'Mechanisches Problem',
         'software': 'Software-Problem',
+        'material': 'Material-Problem',
         'filament': 'Filament-Problem',
         'power': 'Stromversorgung',
         'quality': 'Druckqualität',
+        'maintenance': 'Wartung erforderlich',
         'other': 'Sonstiges'
     };
     return typeMap[type] || type;
@@ -353,9 +356,9 @@ function showEquipmentRequests() {
  */
 function closeEquipmentRequests() {
     // Clean up listeners
-    if (equipmentRequestsListener) {
-        equipmentRequestsListener();
-        equipmentRequestsListener = null;
+    if (adminEquipmentRequestsListener) {
+        adminEquipmentRequestsListener();
+        adminEquipmentRequestsListener = null;
     }
     closeModal();
 }
@@ -369,9 +372,9 @@ async function loadEquipmentRequests() {
             .orderBy('requestedAt', 'desc')
             .get();
         
-        equipmentRequests = [];
+        adminEquipmentRequests = [];
         querySnapshot.forEach((doc) => {
-            equipmentRequests.push({
+            adminEquipmentRequests.push({
                 id: doc.id,
                 ...doc.data(),
                 requestedAt: doc.data().requestedAt?.toDate(),
@@ -381,7 +384,7 @@ async function loadEquipmentRequests() {
         });
         
         renderEquipmentRequests();
-        console.log('Loaded equipment requests:', equipmentRequests.length);
+        console.log('Loaded equipment requests:', adminEquipmentRequests.length);
         
     } catch (error) {
         console.error('Error loading equipment requests:', error);
@@ -404,9 +407,9 @@ function renderEquipmentRequests(statusFilter = 'all') {
     const container = document.getElementById('equipmentRequestsList');
     if (!container) return;
     
-    let filteredRequests = equipmentRequests;
+    let filteredRequests = adminEquipmentRequests;
     if (statusFilter !== 'all') {
-        filteredRequests = equipmentRequests.filter(request => request.status === statusFilter);
+        filteredRequests = adminEquipmentRequests.filter(request => request.status === statusFilter);
     }
     
     if (filteredRequests.length === 0) {
@@ -570,4 +573,4 @@ window.markEquipmentAsGiven = markEquipmentAsGiven;
 window.markEquipmentAsReturned = markEquipmentAsReturned;
 window.deleteEquipmentRequest = deleteEquipmentRequest;
 
-console.log("🚨 Admin Problem Reports Module geladen"); 
+console.log('🚨 Admin Problem Reports Module loaded'); 

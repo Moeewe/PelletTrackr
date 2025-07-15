@@ -101,13 +101,12 @@ async function addEntry() {
 
       clearForm();
       
-      // Dashboard aktualisieren
+      // Real-time listeners will automatically update the display
+      // Just refresh stats since they don't use real-time listeners yet
       if (!window.currentUser.isAdmin) {
         loadUserStats();
-        loadUserEntries();
       } else {
         loadAdminStats();
-        loadAllEntries();
       }
     }, 
     'Druck wird gespeichert...', 

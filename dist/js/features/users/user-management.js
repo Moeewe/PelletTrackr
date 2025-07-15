@@ -256,6 +256,7 @@ function renderUsersTable(users) {
       <label class="admin-checkbox">
         <input type="checkbox" ${user.isAdmin ? 'checked' : ''} 
                onchange="toggleAdminStatus('${user.kennung}', this.checked)">
+
       </label>
     `;
     

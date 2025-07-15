@@ -122,13 +122,6 @@ function updatePrinterStatusDisplay() {
  * Show printer status modal with clickable status cycling
  */
 function showPrinterStatus() {
-    // Calculate current status counts
-    const statusCounts = {
-        available: userPrinters.filter(p => p.status === 'available').length,
-        printing: userPrinters.filter(p => p.status === 'printing').length,
-        maintenance: userPrinters.filter(p => p.status === 'maintenance').length,
-        broken: userPrinters.filter(p => p.status === 'broken').length
-    };
 
     const modalContent = `
         <div class="modal-header">
@@ -146,27 +139,26 @@ function showPrinterStatus() {
                         </div>
                         <div class="printer-status-controls">
                             <div class="status-grid">
-                                <div class="status-item status-available ${printer.status === 'available' ? 'current-status' : ''}" 
-                                     onclick="cyclePrinterStatus('${printer.id}', 'available')">
-                                    <span class="status-number">${statusCounts.available}</span>
+                                <button class="status-btn status-available ${printer.status === 'available' ? 'active' : ''}" 
+                                        onclick="cyclePrinterStatus('${printer.id}', 'available')">
                                     <span class="status-label">Verfügbar</span>
-                                </div>
-                                <div class="status-item status-busy ${printer.status === 'printing' ? 'current-status' : ''}" 
-                                     onclick="cyclePrinterStatus('${printer.id}', 'printing')">
-                                    <span class="status-number">${statusCounts.printing}</span>
+                                </button>
+                                <button class="status-btn status-busy ${printer.status === 'printing' ? 'active' : ''}" 
+                                        onclick="cyclePrinterStatus('${printer.id}', 'printing')">
                                     <span class="status-label">In Betrieb</span>
-                                </div>
-                                <div class="status-item status-maintenance ${printer.status === 'maintenance' ? 'current-status' : ''}" 
-                                     onclick="cyclePrinterStatus('${printer.id}', 'maintenance')">
-                                    <span class="status-number">${statusCounts.maintenance}</span>
+                                </button>
+                                <button class="status-btn status-maintenance ${printer.status === 'maintenance' ? 'active' : ''}" 
+                                        onclick="cyclePrinterStatus('${printer.id}', 'maintenance')">
                                     <span class="status-label">Wartung</span>
-                                </div>
-                                <div class="status-item status-broken ${printer.status === 'broken' ? 'current-status' : ''}" 
-                                     onclick="cyclePrinterStatus('${printer.id}', 'broken')">
-                                    <span class="status-number">${statusCounts.broken}</span>
+                                </button>
+                                <button class="status-btn status-broken ${printer.status === 'broken' ? 'active' : ''}" 
+                                        onclick="cyclePrinterStatus('${printer.id}', 'broken')">
                                     <span class="status-label">Defekt</span>
-                                </div>
+                                </button>
                             </div>
+                            <button class="btn btn-problem-report" onclick="reportPrinterProblem('${printer.id}', '${printer.name}')">
+                                Problem melden
+                            </button>
                         </div>
                     </div>
                 `).join('')}
@@ -182,8 +174,14 @@ function showPrinterStatus() {
 
 /**
  * Cycle printer status when user clicks on status button
+ * Requires admin access for safety
  */
 async function cyclePrinterStatus(printerId, newStatus) {
+    // Check admin access
+    if (!window.checkAdminAccess()) {
+        return;
+    }
+    
     try {
         await window.db.collection('printers').doc(printerId).update({
             status: newStatus,
@@ -199,7 +197,7 @@ async function cyclePrinterStatus(printerId, newStatus) {
         }
         
         // Update the main interface status counts
-        updatePrinterCounts();
+        updatePrinterStatusDisplay();
         
         // Show success message
         const statusText = getStatusText(newStatus);
@@ -215,46 +213,37 @@ async function cyclePrinterStatus(printerId, newStatus) {
 }
 
 /**
- * Show scheduling modal
+ * Show material request modal
  */
-function showScheduling() {
+function showMaterialRequest() {
     const modalContent = `
         <div class="modal-header">
-            <h3>Drucker Terminbuchung</h3>
+            <h3>Material-Wunsch</h3>
             <button class="close-btn" onclick="closeModal()">&times;</button>
         </div>
         <div class="modal-body">
             <div class="form">
                 <div class="form-group">
-                    <label class="form-label">Drucker auswählen</label>
-                    <select id="schedulePrinter" class="form-select">
-                        <option value="">Drucker wählen...</option>
-                        ${userPrinters.filter(p => p.status === 'available').map(printer => `
-                            <option value="${printer.id}">${printer.name} - ${printer.location}</option>
-                        `).join('')}
-                    </select>
+                    <label class="form-label">Material/Filament</label>
+                    <input type="text" id="materialType" class="form-input" placeholder="z.B. PLA, PETG, TPU...">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Datum</label>
-                    <input type="date" id="scheduleDate" class="form-input" min="${new Date().toISOString().split('T')[0]}">
+                    <label class="form-label">Farbe</label>
+                    <input type="text" id="materialColor" class="form-input" placeholder="z.B. Schwarz, Weiß, Rot...">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Uhrzeit (von)</label>
-                    <input type="time" id="scheduleTimeFrom" class="form-input">
+                    <label class="form-label">Hersteller (optional)</label>
+                    <input type="text" id="materialBrand" class="form-input" placeholder="z.B. Prusament, eSUN...">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Uhrzeit (bis)</label>
-                    <input type="time" id="scheduleTimeTo" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Zweck</label>
-                    <textarea id="schedulePurpose" class="form-textarea" placeholder="Wofür benötigen Sie den Drucker?" rows="3"></textarea>
+                    <label class="form-label">Begründung</label>
+                    <textarea id="materialReason" class="form-textarea" placeholder="Warum benötigen Sie dieses Material?" rows="3"></textarea>
                 </div>
             </div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
-            <button class="btn btn-primary" onclick="submitScheduleRequest()">Termin anfragen</button>
+            <button class="btn btn-primary" onclick="submitMaterialRequest()">Wunsch senden</button>
         </div>
     `;
     
@@ -318,124 +307,6 @@ function showEquipmentRequest() {
 }
 
 /**
- * Load equipment data for request
- */
-let availableEquipment = [];
-
-async function loadEquipmentForRequest() {
-    if (!window.db) return;
-    
-    try {
-        const snapshot = await window.db.collection('equipment').get();
-        availableEquipment = [];
-        snapshot.forEach((doc) => {
-            const equipmentData = doc.data();
-            // Only show available equipment
-            if (equipmentData.status === 'available') {
-                availableEquipment.push({
-                    id: doc.id,
-                    name: equipmentData.name,
-                    category: equipmentData.category,
-                    location: equipmentData.location
-                });
-            }
-        });
-    } catch (error) {
-        console.error('Error loading equipment:', error);
-    }
-}
-
-/**
- * Update equipment options based on selected type
- */
-function updateEquipmentOptions() {
-    const typeSelect = document.getElementById('equipmentType');
-    const equipmentSelect = document.getElementById('equipmentName');
-    
-    if (!typeSelect || !equipmentSelect) return;
-    
-    const selectedType = typeSelect.value;
-    
-    // Clear current options
-    equipmentSelect.innerHTML = '';
-    
-    if (!selectedType) {
-        equipmentSelect.innerHTML = '<option value="">Zuerst Equipment-Typ auswählen...</option>';
-        equipmentSelect.disabled = true;
-        return;
-    }
-    
-    // Filter equipment by selected category
-    const filteredEquipment = availableEquipment.filter(item => item.category === selectedType);
-    
-    if (filteredEquipment.length === 0) {
-        equipmentSelect.innerHTML = '<option value="">Kein Equipment in dieser Kategorie verfügbar</option>';
-        equipmentSelect.disabled = true;
-        return;
-    }
-    
-    // Add default option
-    equipmentSelect.innerHTML = '<option value="">Equipment auswählen...</option>';
-    
-    // Add equipment options
-    filteredEquipment.forEach(item => {
-        const option = document.createElement('option');
-        option.value = item.id;
-        option.textContent = `${item.name} (${item.location})`;
-        equipmentSelect.appendChild(option);
-    });
-    
-    equipmentSelect.disabled = false;
-}
-
-/**
- * Submit equipment request
- */
-async function submitEquipmentRequest() {
-    const equipmentType = document.getElementById('equipmentType').value;
-    const equipmentId = document.getElementById('equipmentName').value;
-    const duration = document.getElementById('equipmentDuration').value;
-    const purpose = document.getElementById('equipmentPurpose').value;
-    
-    if (!equipmentType || !equipmentId || !duration || !purpose) {
-        toast.error('Bitte alle Felder ausfüllen');
-        return;
-    }
-    
-    // Find the selected equipment details
-    const selectedEquipment = availableEquipment.find(item => item.id === equipmentId);
-    if (!selectedEquipment) {
-        toast.error('Ausgewähltes Equipment nicht gefunden');
-        return;
-    }
-    
-    const requestData = {
-        type: 'equipment',
-        equipmentType: equipmentType,
-        equipmentId: equipmentId,
-        equipmentName: selectedEquipment.name,
-        equipmentLocation: selectedEquipment.location,
-        duration: duration,
-        purpose: purpose,
-        status: 'pending',
-        userName: window.currentUser?.name || 'Unbekannter User',
-        userKennung: window.currentUser?.kennung || '',
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    };
-    
-    try {
-        await window.db.collection('requests').add(requestData);
-        
-        toast.success('Equipment-Anfrage erfolgreich gesendet');
-        closeModal();
-        
-    } catch (error) {
-        console.error('Error submitting equipment request:', error);
-        toast.error('Fehler beim Senden der Equipment-Anfrage');
-    }
-}
-
-/**
  * Show problem report modal
  */
 function showProblemReport() {
@@ -490,98 +361,49 @@ function showProblemReport() {
 }
 
 /**
- * Show material request modal
+ * Submit equipment request
  */
-function showMaterialRequest() {
-    const modalContent = `
-        <div class="modal-header">
-            <h3>Material-Wunsch</h3>
-            <button class="close-btn" onclick="closeModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div class="form">
-                <div class="form-group">
-                    <label class="form-label">Material-Typ</label>
-                    <select id="materialType" class="form-select">
-                        <option value="">Typ auswählen...</option>
-                        <option value="filament">Filament</option>
-                        <option value="masterbatch">Masterbatch</option>
-                        <option value="tools">Werkzeuge</option>
-                        <option value="parts">Ersatzteile</option>
-                        <option value="other">Sonstiges</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Gewünschtes Material</label>
-                    <input type="text" id="materialName" class="form-input" placeholder="z.B. PLA Schwarz, PETG Transparent">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Geschätzte Menge</label>
-                    <input type="text" id="materialQuantity" class="form-input" placeholder="z.B. 1kg, 5 Stück">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Priorität</label>
-                    <select id="materialPriority" class="form-select">
-                        <option value="low">Niedrig</option>
-                        <option value="medium" selected>Mittel</option>
-                        <option value="high">Hoch</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Begründung</label>
-                    <textarea id="materialReason" class="form-textarea" placeholder="Warum wird dieses Material benötigt?" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Lieferantenvorschlag (optional)</label>
-                    <input type="text" id="materialSupplier" class="form-input" placeholder="z.B. Amazon, Conrad, etc.">
-                </div>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
-            <button class="btn btn-primary" onclick="submitMaterialRequest()">Wunsch einreichen</button>
-        </div>
-    `;
+async function submitEquipmentRequest() {
+    const equipmentType = document.getElementById('equipmentType').value;
+    const equipmentId = document.getElementById('equipmentName').value;
+    const duration = document.getElementById('equipmentDuration').value;
+    const purpose = document.getElementById('equipmentPurpose').value;
     
-    showModalWithContent(modalContent);
-}
-
-/**
- * Submit schedule request
- */
-async function submitScheduleRequest() {
-    const printerId = document.getElementById('schedulePrinter').value;
-    const date = document.getElementById('scheduleDate').value;
-    const timeFrom = document.getElementById('scheduleTimeFrom').value;
-    const timeTo = document.getElementById('scheduleTimeTo').value;
-    const purpose = document.getElementById('schedulePurpose').value;
-    
-    if (!printerId || !date || !timeFrom || !timeTo || !purpose) {
+    if (!equipmentType || !equipmentId || !duration || !purpose) {
         toast.error('Bitte alle Felder ausfüllen');
         return;
     }
     
+    // Find the selected equipment details
+    const selectedEquipment = availableEquipment.find(item => item.id === equipmentId);
+    if (!selectedEquipment) {
+        toast.error('Ausgewähltes Equipment nicht gefunden');
+        return;
+    }
+    
+    const requestData = {
+        type: 'equipment',
+        equipmentType: equipmentType,
+        equipmentId: equipmentId,
+        equipmentName: selectedEquipment.name,
+        equipmentLocation: selectedEquipment.location,
+        duration: duration,
+        purpose: purpose,
+        status: 'pending',
+        userName: window.currentUser?.name || 'Unbekannter User',
+        userKennung: window.currentUser?.kennung || '',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    
     try {
-        const scheduleData = {
-            printerId,
-            date,
-            timeFrom,
-            timeTo,
-            purpose,
-            requestedBy: window.currentUser.name,
-            requestedByKennung: window.currentUser.kennung,
-            status: 'pending',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
+        await window.db.collection('requests').add(requestData);
         
-        await window.db.collection('scheduleRequests').add(scheduleData);
-        
-        toast.success('Terminanfrage erfolgreich gesendet');
+        toast.success('Equipment-Anfrage erfolgreich gesendet');
         closeModal();
         
     } catch (error) {
-        console.error('Error submitting schedule request:', error);
-        toast.error('Fehler beim Senden der Terminanfrage');
+        console.error('Error submitting equipment request:', error);
+        toast.error('Fehler beim Senden der Equipment-Anfrage');
     }
 }
 
@@ -657,11 +479,135 @@ async function submitMaterialRequest() {
         await window.db.collection('materialRequests').add(requestData);
         
         toast.success('Material-Wunsch erfolgreich eingereicht');
+        
+        // Ensure modal closes properly
         closeModal();
+        
+        // Clear form fields after successful submission
+        document.getElementById('materialType').value = '';
+        document.getElementById('materialName').value = '';
+        document.getElementById('materialQuantity').value = '';
+        document.getElementById('materialPriority').value = 'medium';
+        document.getElementById('materialReason').value = '';
+        document.getElementById('materialSupplier').value = '';
         
     } catch (error) {
         console.error('Error submitting material request:', error);
         toast.error('Fehler beim Einreichen des Material-Wunsches');
+    }
+}
+
+/**
+ * Report a problem with a specific printer
+ */
+function reportPrinterProblem(printerId, printerName) {
+    const modalContent = `
+        <div class="modal-header">
+            <h3>Problem melden</h3>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form">
+                <div class="printer-info-section">
+                    <h4>Drucker: ${printerName}</h4>
+                    <p style="color: #666; margin-bottom: 20px;">Melden Sie ein Problem mit diesem Drucker</p>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Problem-Typ</label>
+                    <select id="problemType" class="form-select">
+                        <option value="">Problem-Typ auswählen...</option>
+                        <option value="mechanical">Mechanisches Problem</option>
+                        <option value="software">Software Problem</option>
+                        <option value="material">Material Problem</option>
+                        <option value="quality">Druckqualität</option>
+                        <option value="maintenance">Wartung erforderlich</option>
+                        <option value="other">Sonstiges</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Schweregrad</label>
+                    <select id="problemSeverity" class="form-select">
+                        <option value="low">Niedrig - Drucker funktioniert, aber mit Einschränkungen</option>
+                        <option value="medium" selected>Mittel - Drucker teilweise beeinträchtigt</option>
+                        <option value="high">Hoch - Drucker nicht nutzbar</option>
+                        <option value="critical">Kritisch - Sicherheitsrisiko oder Schäden</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Problem-Beschreibung</label>
+                    <textarea id="problemDescription" class="form-textarea" placeholder="Beschreiben Sie das Problem so detailliert wie möglich..." rows="4"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Schritte zur Reproduktion (optional)</label>
+                    <textarea id="problemSteps" class="form-textarea" placeholder="Wie kann das Problem reproduziert werden?" rows="3"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+            <button class="btn btn-primary" onclick="submitPrinterProblemReport('${printerId}', '${printerName}')">Problem melden</button>
+        </div>
+    `;
+    
+    showModalWithContent(modalContent);
+}
+
+/**
+ * Submit printer problem report
+ */
+async function submitPrinterProblemReport(printerId, printerName) {
+    const problemType = document.getElementById('problemType').value;
+    const problemSeverity = document.getElementById('problemSeverity').value;
+    const problemDescription = document.getElementById('problemDescription').value.trim();
+    const problemSteps = document.getElementById('problemSteps').value.trim();
+    
+    if (!problemType || !problemDescription) {
+        toast.error('Bitte Problem-Typ und Beschreibung ausfüllen');
+        return;
+    }
+    
+    try {
+        const reportData = {
+            printerId: printerId,
+            printerName: printerName,
+            problemType: problemType,
+            severity: problemSeverity,
+            description: problemDescription,
+            reproductionSteps: problemSteps,
+            reportedBy: window.currentUser.name,
+            reportedByKennung: window.currentUser.kennung,
+            status: 'open',
+            reportedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        await window.db.collection('problemReports').add(reportData);
+        
+        toast.success(`Problem für Drucker "${printerName}" erfolgreich gemeldet`);
+        closeModal();
+        
+        // Optional: Set printer status to maintenance if severity is high or critical
+        if (problemSeverity === 'high' || problemSeverity === 'critical') {
+            const confirmMessage = `Das Problem wurde als ${problemSeverity === 'critical' ? 'kritisch' : 'schwerwiegend'} eingestuft. Soll der Drucker automatisch auf "Wartung" gesetzt werden?`;
+            
+            const userChoice = await toast.confirm(
+                confirmMessage,
+                'Status ändern',
+                'Nein, danke'
+            );
+            
+            if (userChoice && window.currentUser.isAdmin) {
+                await cyclePrinterStatus(printerId, 'maintenance');
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error submitting problem report:', error);
+        toast.error('Fehler beim Melden des Problems');
     }
 }
 
@@ -688,20 +634,89 @@ function cleanupUserServices() {
     }
 }
 
+/**
+ * Load equipment data for request
+ */
+let availableEquipment = [];
+
+async function loadEquipmentForRequest() {
+    if (!window.db) return;
+    
+    try {
+        const snapshot = await window.db.collection('equipment').get();
+        availableEquipment = [];
+        snapshot.forEach((doc) => {
+            const equipmentData = doc.data();
+            // Only show available equipment
+            if (equipmentData.status === 'available') {
+                availableEquipment.push({
+                    id: doc.id,
+                    name: equipmentData.name,
+                    category: equipmentData.category,
+                    location: equipmentData.location
+                });
+            }
+        });
+    } catch (error) {
+        console.error('Error loading equipment:', error);
+    }
+}
+
+/**
+ * Update equipment options based on selected type
+ */
+function updateEquipmentOptions() {
+    const typeSelect = document.getElementById('equipmentType');
+    const equipmentSelect = document.getElementById('equipmentName');
+    
+    if (!typeSelect || !equipmentSelect) return;
+    
+    const selectedType = typeSelect.value;
+    
+    // Clear current options
+    equipmentSelect.innerHTML = '';
+    
+    if (!selectedType) {
+        equipmentSelect.innerHTML = '<option value="">Zuerst Equipment-Typ auswählen...</option>';
+        equipmentSelect.disabled = true;
+        return;
+    }
+    
+    // Filter equipment by selected category
+    const filteredEquipment = availableEquipment.filter(item => item.category === selectedType);
+    
+    if (filteredEquipment.length === 0) {
+        equipmentSelect.innerHTML = '<option value="">Kein Equipment in dieser Kategorie verfügbar</option>';
+        equipmentSelect.disabled = true;
+        return;
+    }
+    
+    // Add default option
+    equipmentSelect.innerHTML = '<option value="">Equipment auswählen...</option>';
+    
+    // Add equipment options
+    filteredEquipment.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.id;
+        option.textContent = `${item.name} (${item.location})`;
+        equipmentSelect.appendChild(option);
+    });
+    
+    equipmentSelect.disabled = false;
+}
+
 // Global functions
 window.initializeUserServices = initializeUserServices;
 window.cleanupUserServices = cleanupUserServices;
 window.showPrinterStatus = showPrinterStatus;
 window.cyclePrinterStatus = cyclePrinterStatus;
-window.showScheduling = showScheduling;
 window.showEquipmentRequest = showEquipmentRequest;
-window.showProblemReport = showProblemReport;
-window.showMaterialRequest = showMaterialRequest;
-window.submitScheduleRequest = submitScheduleRequest;
-window.submitEquipmentRequest = submitEquipmentRequest;
-window.submitProblemReport = submitProblemReport;
-window.submitMaterialRequest = submitMaterialRequest;
 window.updateEquipmentOptions = updateEquipmentOptions;
 window.loadEquipmentForRequest = loadEquipmentForRequest;
+window.submitEquipmentRequest = submitEquipmentRequest;
+window.submitMaterialRequest = submitMaterialRequest;
+window.showProblemReport = showProblemReport;
+window.reportPrinterProblem = reportPrinterProblem;
+window.submitPrinterProblemReport = submitPrinterProblemReport;
 
 console.log('👥 User Services Module loaded'); 

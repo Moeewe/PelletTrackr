@@ -317,11 +317,14 @@
                         </button>
                         <button class="btn btn-secondary" onclick="showProblemReports()">
                             Problem-Reports
+                            <span class="notification-badge" data-badge="problem-reports" style="display: none;">0</span>
                         </button>
                         <button class="btn btn-secondary" onclick="showPaymentRequestsModal()">
                             Zahlungsanfragen
                             <span class="notification-badge" data-badge="payment-requests" style="display: none;">0</span>
                         </button>
+
+
                     </div>
                 </div>
             </div>
@@ -578,8 +581,8 @@
     <script src="js/core/globals.js"></script>
     <script src="js/core/utils.js"></script>
     <script src="js/core/app-init.js?v=1.2"></script>
-    <script src="js/core/auth.js?v=1.5"></script>
-    <script src="js/core/navigation.js?v=1.2"></script>
+    <script src="js/core/auth.js?v=1.7"></script>
+          <script src="js/core/navigation.js?v=1.3"></script>
     
     <!-- UI Modules -->
     <script src="js/ui/button-factory.js?v=1.2"></script>
@@ -593,15 +596,16 @@
     <script src="js/features/entries/entry-management.js?v=1.3"></script>
     <script src="js/features/entries/entry-stats.js?v=1.2"></script>
     <script src="js/features/entries/entry-rendering.js?v=1.2"></script>
-          <script src="js/features/users/user-management.js?v=1.3"></script>
+          <script src="js/features/users/user-management.js?v=1.4"></script>
       <script src="js/features/users/user-services.js?v=1.0"></script>
+      <script src="js/ui/notification-badges.js?v=1.0"></script>
     
     <!-- Asset Management Modules -->
-          <script src="js/features/assets/equipment-management.js?v=1.4"></script>
+          <script src="js/features/assets/equipment-management.js?v=1.5"></script>
     <script src="js/features/assets/material-orders.js?v=1.3"></script>
     <script src="js/features/assets/printer-management.js"></script>
           <script src="js/features/assets/admin-problem-reports.js?v=1.1?v=1.1"></script>
-    <script src="js/features/payments/payment-requests.js?v=1.3"></script>
+    <script src="js/features/payments/payment-requests.js?v=1.4"></script>
     
     <!-- Main App (Coordinator) -->
     <script src="web-app-modular.js"></script>

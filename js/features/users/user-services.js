@@ -156,6 +156,9 @@ function showPrinterStatus() {
                                     <span class="status-label">Defekt</span>
                                 </button>
                             </div>
+                            <button class="btn btn-problem-report" onclick="reportPrinterProblem('${printer.id}', '${printer.name}')">
+                                Problem melden
+                            </button>
                         </div>
                     </div>
                 `).join('')}
@@ -194,7 +197,7 @@ async function cyclePrinterStatus(printerId, newStatus) {
         }
         
         // Update the main interface status counts
-        updatePrinterCounts();
+        updatePrinterStatusDisplay();
         
         // Show success message
         const statusText = getStatusText(newStatus);
@@ -476,11 +479,135 @@ async function submitMaterialRequest() {
         await window.db.collection('materialRequests').add(requestData);
         
         toast.success('Material-Wunsch erfolgreich eingereicht');
+        
+        // Ensure modal closes properly
         closeModal();
+        
+        // Clear form fields after successful submission
+        document.getElementById('materialType').value = '';
+        document.getElementById('materialName').value = '';
+        document.getElementById('materialQuantity').value = '';
+        document.getElementById('materialPriority').value = 'medium';
+        document.getElementById('materialReason').value = '';
+        document.getElementById('materialSupplier').value = '';
         
     } catch (error) {
         console.error('Error submitting material request:', error);
         toast.error('Fehler beim Einreichen des Material-Wunsches');
+    }
+}
+
+/**
+ * Report a problem with a specific printer
+ */
+function reportPrinterProblem(printerId, printerName) {
+    const modalContent = `
+        <div class="modal-header">
+            <h3>Problem melden</h3>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form">
+                <div class="printer-info-section">
+                    <h4>Drucker: ${printerName}</h4>
+                    <p style="color: #666; margin-bottom: 20px;">Melden Sie ein Problem mit diesem Drucker</p>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Problem-Typ</label>
+                    <select id="problemType" class="form-select">
+                        <option value="">Problem-Typ auswählen...</option>
+                        <option value="mechanical">Mechanisches Problem</option>
+                        <option value="software">Software Problem</option>
+                        <option value="material">Material Problem</option>
+                        <option value="quality">Druckqualität</option>
+                        <option value="maintenance">Wartung erforderlich</option>
+                        <option value="other">Sonstiges</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Schweregrad</label>
+                    <select id="problemSeverity" class="form-select">
+                        <option value="low">Niedrig - Drucker funktioniert, aber mit Einschränkungen</option>
+                        <option value="medium" selected>Mittel - Drucker teilweise beeinträchtigt</option>
+                        <option value="high">Hoch - Drucker nicht nutzbar</option>
+                        <option value="critical">Kritisch - Sicherheitsrisiko oder Schäden</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Problem-Beschreibung</label>
+                    <textarea id="problemDescription" class="form-textarea" placeholder="Beschreiben Sie das Problem so detailliert wie möglich..." rows="4"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Schritte zur Reproduktion (optional)</label>
+                    <textarea id="problemSteps" class="form-textarea" placeholder="Wie kann das Problem reproduziert werden?" rows="3"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+            <button class="btn btn-primary" onclick="submitPrinterProblemReport('${printerId}', '${printerName}')">Problem melden</button>
+        </div>
+    `;
+    
+    showModalWithContent(modalContent);
+}
+
+/**
+ * Submit printer problem report
+ */
+async function submitPrinterProblemReport(printerId, printerName) {
+    const problemType = document.getElementById('problemType').value;
+    const problemSeverity = document.getElementById('problemSeverity').value;
+    const problemDescription = document.getElementById('problemDescription').value.trim();
+    const problemSteps = document.getElementById('problemSteps').value.trim();
+    
+    if (!problemType || !problemDescription) {
+        toast.error('Bitte Problem-Typ und Beschreibung ausfüllen');
+        return;
+    }
+    
+    try {
+        const reportData = {
+            printerId: printerId,
+            printerName: printerName,
+            problemType: problemType,
+            severity: problemSeverity,
+            description: problemDescription,
+            reproductionSteps: problemSteps,
+            reportedBy: window.currentUser.name,
+            reportedByKennung: window.currentUser.kennung,
+            status: 'open',
+            reportedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        await window.db.collection('problemReports').add(reportData);
+        
+        toast.success(`Problem für Drucker "${printerName}" erfolgreich gemeldet`);
+        closeModal();
+        
+        // Optional: Set printer status to maintenance if severity is high or critical
+        if (problemSeverity === 'high' || problemSeverity === 'critical') {
+            const confirmMessage = `Das Problem wurde als ${problemSeverity === 'critical' ? 'kritisch' : 'schwerwiegend'} eingestuft. Soll der Drucker automatisch auf "Wartung" gesetzt werden?`;
+            
+            const userChoice = await toast.confirm(
+                confirmMessage,
+                'Status ändern',
+                'Nein, danke'
+            );
+            
+            if (userChoice && window.currentUser.isAdmin) {
+                await cyclePrinterStatus(printerId, 'maintenance');
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error submitting problem report:', error);
+        toast.error('Fehler beim Melden des Problems');
     }
 }
 
@@ -589,5 +716,7 @@ window.loadEquipmentForRequest = loadEquipmentForRequest;
 window.submitEquipmentRequest = submitEquipmentRequest;
 window.submitMaterialRequest = submitMaterialRequest;
 window.showProblemReport = showProblemReport;
+window.reportPrinterProblem = reportPrinterProblem;
+window.submitPrinterProblemReport = submitPrinterProblemReport;
 
 console.log('👥 User Services Module loaded'); 

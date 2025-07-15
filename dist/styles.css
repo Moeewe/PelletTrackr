@@ -190,7 +190,6 @@
 
 .service-card:hover {
     background: #e9ecef;
-    transform: translateY(-2px);
 }
 
 .service-header {
@@ -327,7 +326,6 @@
 
 .status-btn:hover {
     background: #e9ecef;
-    transform: translateY(-1px);
     opacity: 0.8;
 }
 
@@ -356,7 +354,6 @@
 }
 
 .status-btn.active:hover {
-    transform: translateY(-1px);
     opacity: 0.9;
 }
 
@@ -439,26 +436,6 @@
     }
 }
 
-.printer-item.status-available {
-    background: #d4edda;
-    border-color: #155724;
-}
-
-.printer-item.status-in_use {
-    background: #fff3cd;
-    border-color: #856404;
-}
-
-.printer-item.status-maintenance {
-    background: #f8d7da;
-    border-color: #721c24;
-}
-
-.printer-item.status-broken {
-    background: #f5c6cb;
-    border-color: #721c24;
-}
-
 .printer-info h4 {
     margin: 0 0 4px 0;
     font-size: 18px;
@@ -514,6 +491,7 @@
     z-index: 10;
 }
 
+/* Ensure buttons containing notification badges have proper positioning */
 .btn {
     position: relative;
 }
@@ -709,14 +687,12 @@
 }
 
 .status-item:hover {
-    transform: translateY(-2px);
     border-color: #000000;
 }
 
 .status-item.current-status {
     border-color: #000000;
     border-width: 3px;
-    transform: translateY(-2px);
 }
 
 .status-item.status-available {

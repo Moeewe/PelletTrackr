@@ -387,7 +387,8 @@ async function loadPendingPaymentRequests() {
                 .orderBy('requestedAt', 'desc')
                 .get();
         } catch (orderByError) {
-            console.log('OrderBy failed, using fallback query for payment requests');
+            console.log('📋 OrderBy failed, using fallback query for payment requests');
+            console.log('💡 To fix this, ensure Firestore index exists for: paymentRequests (status, requestedAt)');
             querySnapshot = await window.db.collection('paymentRequests')
                 .where('status', '==', 'pending')
                 .get();

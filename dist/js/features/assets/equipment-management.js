@@ -809,6 +809,28 @@ function updateEquipmentRequestsBadge() {
 
 // All old category management functions removed 
 
+// ==================== GLOBAL EXPORTS ====================
+// Equipment Management-Funktionen global verfügbar machen
+// Make functions globally available
+window.showEquipmentManager = showEquipmentManager;
+window.closeEquipmentManager = closeEquipmentManager;
+window.showEquipmentCategory = showEquipmentCategory;
+window.searchEquipment = searchEquipment;
+window.clearEquipmentSearch = clearEquipmentSearch;
+window.showAddEquipmentForm = showAddEquipmentForm;
+window.toggleDepositAmount = toggleDepositAmount;
+window.closeAddEquipmentForm = closeAddEquipmentForm;
+window.saveEquipment = saveEquipment;
+window.editEquipment = editEquipment;
+window.closeEditEquipmentForm = closeEditEquipmentForm;
+window.updateEquipment = updateEquipment;
+window.borrowEquipment = borrowEquipment;
+window.returnEquipment = returnEquipment;
+window.markDepositAsPaid = markDepositAsPaid;
+window.updateEquipmentRequestsBadge = updateEquipmentRequestsBadge;
+window.approveEquipmentRequest = approveEquipmentRequest;
+window.rejectEquipmentRequest = rejectEquipmentRequest;
+
 /**
  * Approve equipment request and mark equipment as borrowed
  */
@@ -907,27 +929,5 @@ async function rejectEquipmentRequest(requestId) {
     }
   }
 }
-
-// ==================== GLOBAL EXPORTS ====================
-// Equipment Management-Funktionen global verfügbar machen
-// Make functions globally available
-window.showEquipmentManager = showEquipmentManager;
-window.closeEquipmentManager = closeEquipmentManager;
-window.showEquipmentCategory = showEquipmentCategory;
-window.searchEquipment = searchEquipment;
-window.clearEquipmentSearch = clearEquipmentSearch;
-window.showAddEquipmentForm = showAddEquipmentForm;
-window.toggleDepositAmount = toggleDepositAmount;
-window.closeAddEquipmentForm = closeAddEquipmentForm;
-window.saveEquipment = saveEquipment;
-window.editEquipment = editEquipment;
-window.closeEditEquipmentForm = closeEditEquipmentForm;
-window.updateEquipment = updateEquipment;
-window.borrowEquipment = borrowEquipment;
-window.returnEquipment = returnEquipment;
-window.markDepositAsPaid = markDepositAsPaid;
-window.updateEquipmentRequestsBadge = updateEquipmentRequestsBadge;
-window.approveEquipmentRequest = approveEquipmentRequest;
-window.rejectEquipmentRequest = rejectEquipmentRequest;
 
 console.log("🔧 Equipment Management Module geladen"); 

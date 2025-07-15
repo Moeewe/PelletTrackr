@@ -100,7 +100,7 @@ async function submitAdminOrder() {
         toast.success(`Admin-Bestellung erfolgreich angelegt!\n\nMaterial: ${formData.materialName}${quantityText}${manufacturerText}\nPriorität: ${getPriorityText(formData.priority)}`);
         
         // Return to orders overview instead of closing all modals
-        showOrdersManagement();
+        showMaterialOrders();
         
         // Refresh admin view if material orders modal is open
         if (document.getElementById('materialOrdersModal') && document.getElementById('materialOrdersModal').style.display === 'block') {
@@ -174,12 +174,26 @@ function closeMaterialRequestForm() {
  * Submit material request
  */
 async function submitMaterialRequest() {
+    // Get DOM elements with null checks
+    const materialNameEl = document.getElementById('requestMaterialName');
+    const manufacturerEl = document.getElementById('requestManufacturer');
+    const reasonEl = document.getElementById('requestReason');
+    const quantityEl = document.getElementById('requestQuantity');
+    const priorityEl = document.getElementById('requestPriority');
+    
+    // Check if elements exist
+    if (!materialNameEl || !reasonEl) {
+        console.error('Required form elements not found');
+        toast.error('Formular-Fehler: Erforderliche Felder nicht gefunden');
+        return;
+    }
+    
     const formData = {
-        materialName: document.getElementById('requestMaterialName').value.trim(),
-        manufacturer: document.getElementById('requestManufacturer').value.trim(),
-        reason: document.getElementById('requestReason').value.trim(),
-        quantity: document.getElementById('requestQuantity').value.trim(),
-        priority: document.getElementById('requestPriority').value
+        materialName: materialNameEl.value.trim(),
+        manufacturer: manufacturerEl ? manufacturerEl.value.trim() : '',
+        reason: reasonEl.value.trim(),
+        quantity: quantityEl ? quantityEl.value.trim() : '',
+        priority: priorityEl ? priorityEl.value : 'medium'
     };
     
     // Validation
@@ -607,6 +621,12 @@ function getStatusText(status) {
  */
 function renderShoppingList() {
     const container = document.getElementById('shoppingListContent');
+    
+    if (!container) {
+        console.warn('shoppingListContent element not found');
+        return;
+    }
+    
     const shoppingItems = materialOrders.filter(order => order.status === 'approved');
     
     if (shoppingItems.length === 0) {
@@ -644,6 +664,12 @@ function renderShoppingList() {
  */
 function renderOrderHistory() {
     const container = document.getElementById('orderHistoryContent');
+    
+    if (!container) {
+        console.warn('orderHistoryContent element not found');
+        return;
+    }
+    
     const orders = materialOrders.filter(order => order.status === 'purchased' || order.status === 'delivered' || order.status === 'rejected');
     
     if (orders.length === 0) {

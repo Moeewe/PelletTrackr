@@ -20,12 +20,10 @@ let notificationCounts = {
  */
 function initNotificationBadges() {
     try {
-        setupPaymentRequestsBadge();
         setupMaterialRequestsBadge();
         setupBrokenPrintersBadge();
         setupProblemReportsBadge();
-        setupPrinterStatusChangesBadge();
-        setupPrinterDefectReportsBadge();
+        setupEquipmentRequestsBadge();
         console.log('✅ Notification badges initialized');
     } catch (error) {
         console.error('❌ Error initializing notification badges:', error);
@@ -89,24 +87,7 @@ function setupMaterialRequestsBadge() {
     notificationListeners.push(listener);
 }
 
-/**
- * Setup schedule requests badge
- */
-function setupScheduleRequestsBadge() {
-    if (!window.db) {
-        setTimeout(setupScheduleRequestsBadge, 500);
-        return;
-    }
-    
-    const listener = window.db.collection('scheduleRequests')
-        .where('status', '==', 'pending')
-        .onSnapshot((snapshot) => {
-            notificationCounts.scheduleRequests = snapshot.size;
-            updateBadge('schedule-requests', notificationCounts.scheduleRequests);
-        });
-    
-    notificationListeners.push(listener);
-}
+
 
 /**
  * Setup broken printers badge
@@ -296,64 +277,6 @@ function showMaterialRequests() {
 }
 
 /**
- * Show schedule requests management
- */
-function showScheduleRequests() {
-    if (!window.db) return;
-    
-    window.db.collection('scheduleRequests')
-        .where('status', '==', 'pending')
-        .orderBy('createdAt', 'desc')
-        .get()
-        .then((snapshot) => {
-            const requests = [];
-            snapshot.forEach((doc) => {
-                requests.push({
-                    id: doc.id,
-                    ...doc.data()
-                });
-            });
-            
-            const modalContent = `
-                <div class="modal-header">
-                    <h3>Terminanfragen (${requests.length})</h3>
-                    <button class="close-btn" onclick="closeModal()">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="requests-list">
-                        ${requests.map(request => `
-                            <div class="request-item">
-                                <div class="request-header">
-                                    <h4>Terminanfrage - ${request.date}</h4>
-                                </div>
-                                <div class="request-details">
-                                    <p><strong>Drucker:</strong> ${request.printerId}</p>
-                                    <p><strong>Zeit:</strong> ${request.timeFrom} - ${request.timeTo}</p>
-                                    <p><strong>Angefragt von:</strong> ${request.requestedBy} (${request.requestedByKennung})</p>
-                                    <p><strong>Zweck:</strong> ${request.purpose}</p>
-                                </div>
-                                <div class="request-actions">
-                                    <button class="btn btn-success btn-sm" onclick="processScheduleRequest('${request.id}', 'approved')">
-                                        Genehmigen
-                                    </button>
-                                    <button class="btn btn-danger btn-sm" onclick="processScheduleRequest('${request.id}', 'rejected')">
-                                        Ablehnen
-                                    </button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
-                </div>
-            `;
-            
-            showModalWithContent(modalContent);
-        });
-}
-
-/**
  * Process material request
  */
 async function processMaterialRequest(requestId, status) {
@@ -397,8 +320,17 @@ async function processScheduleRequest(requestId, status) {
     }
 }
 
+/**
+ * Show schedule requests (placeholder function)
+ */
+function showScheduleRequests() {
+    // This is a placeholder function - schedule requests feature not yet implemented
+    console.log('Schedule requests feature not yet implemented');
+    toast.info('Terminanfragen-Feature ist noch nicht implementiert');
+}
+
 // Global functions
-window.initializeNotificationBadges = initializeNotificationBadges;
+window.initializeNotificationBadges = initNotificationBadges;
 window.cleanupNotificationBadges = cleanupNotificationBadges;
 window.showAdminNotificationOverview = showAdminNotificationOverview;
 window.showMaterialRequests = showMaterialRequests;

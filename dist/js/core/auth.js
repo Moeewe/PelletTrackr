@@ -377,25 +377,42 @@ async function findOrCreateUser(kennung, name, isAdmin = false) {
       console.log(`📝 Namen aus entries für ${kennung}:`, Array.from(entriesNames));
     }
     
-    // 3. Prüfe auf Name-Konflikte
+    // 3. Prüfe auf Name-Konflikte (only for significant differences)
     if (existingUserData && existingUserData.name.toLowerCase() !== name.toLowerCase()) {
-      console.log(`⚠️ Name-Konflikt: Existierend=${existingUserData.name}, Eingegeben=${name}`);
-      return {
-        conflict: true,
-        existingName: existingUserData.name
-      };
+      // Allow minor differences (like capitalization or whitespace)
+      const normalizedExisting = existingUserData.name.trim().toLowerCase().replace(/\s+/g, ' ');
+      const normalizedInput = name.trim().toLowerCase().replace(/\s+/g, ' ');
+      
+      if (normalizedExisting !== normalizedInput) {
+        console.log(`⚠️ Name-Konflikt: Existierend=${existingUserData.name}, Eingegeben=${name}`);
+        return {
+          conflict: true,
+          existingName: existingUserData.name,
+          isAdmin: existingUserData.isAdmin || false
+        };
+      } else {
+        // Minor difference - use existing name but continue
+        console.log(`📝 Name normalisiert: ${name} → ${existingUserData.name}`);
+        name = existingUserData.name;  // Use the existing properly formatted name
+      }
     }
     
-    // Prüfe auch entries für Name-Konflikte
-    const conflictingNames = Array.from(entriesNames).filter(entryName => 
-      entryName.toLowerCase() !== name.toLowerCase()
-    );
+    // Prüfe auch entries für Name-Konflikte (only for significant differences)
+    const conflictingNames = Array.from(entriesNames).filter(entryName => {
+      const normalizedEntry = entryName.trim().toLowerCase().replace(/\s+/g, ' ');
+      const normalizedInput = name.trim().toLowerCase().replace(/\s+/g, ' ');
+      return normalizedEntry !== normalizedInput;
+    });
     
     if (conflictingNames.length > 0) {
       console.log(`⚠️ Name-Konflikt in entries: ${conflictingNames.join(', ')}`);
+      
+      const adminStatus = existingUserData ? (existingUserData.isAdmin || false) : false;
+      
       return {
         conflict: true,
-        existingName: conflictingNames[0]
+        existingName: conflictingNames[0],
+        isAdmin: adminStatus
       };
     }
     

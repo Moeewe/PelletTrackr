@@ -391,6 +391,78 @@
   }
 }
 
+/* ==================== PRINTER STATUS MODAL ==================== */
+
+.printer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.printer-item {
+  background: white;
+  border: 2px solid #000000;
+  padding: 20px;
+  border-radius: 0;
+  transition: all 0.2s ease;
+}
+
+.printer-item:hover {
+  background: #f8f8f8;
+}
+
+.printer-info {
+  margin-bottom: 16px;
+}
+
+.printer-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #000000;
+  margin: 0 0 8px 0;
+}
+
+.printer-location {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 4px 0;
+}
+
+.printer-description {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+  font-style: italic;
+}
+
+.printer-status-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.printer-info-section {
+  background: #f8f9fa;
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+  margin-bottom: 20px;
+  border-radius: 0;
+}
+
+.printer-info-section h4 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  color: #000000;
+}
+
+.printer-info-section p {
+  margin: 0;
+  font-size: 14px;
+}
+
 /* ==================== MODAL CLOSE BUTTON ==================== */
 
 .close-btn:hover {

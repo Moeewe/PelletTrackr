@@ -20,12 +20,10 @@ let notificationCounts = {
  */
 function initNotificationBadges() {
     try {
-        setupPaymentRequestsBadge();
         setupMaterialRequestsBadge();
         setupBrokenPrintersBadge();
         setupProblemReportsBadge();
-        setupPrinterStatusChangesBadge();
-        setupPrinterDefectReportsBadge();
+        setupEquipmentRequestsBadge();
         console.log('✅ Notification badges initialized');
     } catch (error) {
         console.error('❌ Error initializing notification badges:', error);
@@ -320,6 +318,15 @@ async function processScheduleRequest(requestId, status) {
         console.error('Error processing schedule request:', error);
         toast.error('Fehler beim Bearbeiten der Terminanfrage');
     }
+}
+
+/**
+ * Show schedule requests (placeholder function)
+ */
+function showScheduleRequests() {
+    // This is a placeholder function - schedule requests feature not yet implemented
+    console.log('Schedule requests feature not yet implemented');
+    toast.info('Terminanfragen-Feature ist noch nicht implementiert');
 }
 
 // Global functions

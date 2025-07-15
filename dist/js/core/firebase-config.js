@@ -37,18 +37,27 @@ function initializeFirebase() {
 
     // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
+    
+    // Initialize Firestore with cache settings (new API)
     const db = firebase.firestore();
-
-    // Enable offline persistence
+    
+    // Use the legacy enablePersistence for compatibility (the new cache API requires different setup)
     try {
-      db.enablePersistence({ synchronizeTabs: true });
-      console.log("📱 Firebase offline persistence enabled");
+      db.enablePersistence({ synchronizeTabs: true })
+        .then(() => {
+          console.log("📱 Firebase offline persistence enabled");
+        })
+        .catch((err) => {
+          if (err.code === 'failed-precondition') {
+            console.warn("⚠️ Multiple tabs open, persistence only enabled in one tab");
+          } else if (err.code === 'unimplemented') {
+            console.warn("⚠️ Browser doesn't support persistence");
+          } else {
+            console.warn("⚠️ Persistence error:", err);
+          }
+        });
     } catch (err) {
-      if (err.code == 'failed-precondition') {
-        console.warn("⚠️ Multiple tabs open, persistence only enabled in one tab");
-      } else if (err.code == 'unimplemented') {
-        console.warn("⚠️ Browser doesn't support persistence");
-      }
+      console.warn("⚠️ Persistence setup failed:", err);
     }
 
     // Global DB-Referenz für alle Module verfügbar machen
@@ -58,10 +67,40 @@ function initializeFirebase() {
     connectionHealthy = true;
 
     console.log("🔥 Firebase erfolgreich initialisiert");
+    
+    // Start connection monitoring
+    setInterval(monitorFirebaseConnection, 30000); // Check every 30 seconds
+    
     return true;
   } else {
     console.error("❌ Firebase SDK nicht gefunden!");
     return false;
+  }
+}
+
+// Connection monitoring
+function monitorFirebaseConnection() {
+  if (window.db) {
+    // Monitor Firestore connection state
+    window.db.enableNetwork().catch(() => {
+      console.warn("🔌 Firebase connection issue detected");
+      connectionHealthy = false;
+    });
+    
+    // Try a simple operation to test connection
+    window.db.collection('_connection_test').limit(1).get()
+      .then(() => {
+        if (!connectionHealthy) {
+          console.log("🔌 Firebase connection restored");
+          connectionHealthy = true;
+        }
+      })
+      .catch((error) => {
+        if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
+          console.warn("🔌 Firebase connection issue:", error.code);
+          connectionHealthy = false;
+        }
+      });
   }
 }
 
@@ -72,6 +111,11 @@ async function retryFirebaseOperation(operation, maxRetries = 3, delay = 1000) {
       return await operation();
     } catch (error) {
       console.warn(`⚠️ Firebase operation failed (attempt ${i + 1}/${maxRetries}):`, error.message);
+      
+      // Monitor connection issues
+      if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
+        connectionHealthy = false;
+      }
       
       if (i === maxRetries - 1) {
         throw error;
@@ -103,8 +147,10 @@ async function retryUserLoad() {
   }
 }
 
-// Make retry function globally available
+// Make functions globally available
 window.retryUserLoad = retryUserLoad;
+window.monitorFirebaseConnection = monitorFirebaseConnection;
+window.getFirebaseConnectionStatus = () => connectionHealthy;
 
 // Firebase sofort initialisieren, wenn das Script geladen wird
 if (document.readyState === 'loading') {

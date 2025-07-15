@@ -9,118 +9,6 @@ let currentOrderTab = 'wishes';
 let materialOrdersListener = null;
 
 /**
- * Show material request form for users
- */
-function showMaterialRequestForm() {
-    const modalContent = `
-        <div class="modal-header">
-            <h3>Material anfragen</h3>
-            <button class="close-btn" onclick="closeMaterialRequestForm()">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div class="card">
-                <div class="card-body">
-                    <form id="materialRequestForm" class="form">
-                        <div class="form-group">
-                            <label class="form-label">Material/Filament</label>
-                            <input type="text" id="requestMaterialName" class="form-input" placeholder="z.B. PLA Schwarz, PETG Transparent, TPU Flexibel...">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Hersteller (optional)</label>
-                            <input type="text" id="requestManufacturer" class="form-input" placeholder="z.B. Prusament, eSUN, Polymaker...">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Begründung</label>
-                            <textarea id="requestReason" class="form-textarea" placeholder="Warum benötigen Sie dieses Material? Für welches Projekt?" rows="3"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Ungefähre Menge</label>
-                            <input type="text" id="requestQuantity" class="form-input" placeholder="z.B. 1kg, 500g, 2 Spulen...">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Dringlichkeit</label>
-                            <select id="requestPriority" class="form-select">
-                                <option value="low">Niedrig - kein Zeitdruck</option>
-                                <option value="medium">Mittel - in den nächsten Wochen</option>
-                                <option value="high">Hoch - dringend benötigt</option>
-                            </select>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-primary" onclick="submitMaterialRequest()">Anfrage senden</button>
-            <button type="button" class="btn btn-secondary" onclick="closeMaterialRequestForm()">Abbrechen</button>
-        </div>
-    `;
-    
-    showModalWithContent(modalContent);
-}
-
-/**
- * Close material request form
- */
-function closeMaterialRequestForm() {
-    closeModal();
-}
-
-/**
- * Submit material request
- */
-async function submitMaterialRequest() {
-    const formData = {
-        materialName: document.getElementById('requestMaterialName').value.trim(),
-        manufacturer: document.getElementById('requestManufacturer').value.trim(),
-        reason: document.getElementById('requestReason').value.trim(),
-        quantity: document.getElementById('requestQuantity').value.trim(),
-        priority: document.getElementById('requestPriority').value
-    };
-    
-    // Validation
-    if (!formData.materialName || !formData.reason) {
-        toast.error('Bitte füllen Sie mindestens Material und Begründung aus');
-        return;
-    }
-    
-    try {
-        await window.db.collection('materialOrders').add({
-            type: 'request',
-            source: 'user', // Track if this came from user or admin
-            userName: window.currentUser?.name || 'Unbekannter User',
-            userKennung: window.currentUser?.kennung || '',
-            createdBy: window.currentUser?.name || 'Unbekannter User',
-            createdByKennung: window.currentUser?.kennung || '',
-            materialName: formData.materialName,
-            manufacturer: formData.manufacturer,
-            reason: formData.reason,
-            quantity: formData.quantity,
-            priority: formData.priority,
-            status: 'pending',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        const quantityText = formData.quantity ? `\nMenge: ${formData.quantity}` : '';
-        const manufacturerText = formData.manufacturer ? `\nHersteller: ${formData.manufacturer}` : '';
-        
-        toast.success(`Material-Anfrage erfolgreich gesendet!\n\nMaterial: ${formData.materialName}${quantityText}${manufacturerText}\nPriorität: ${getPriorityText(formData.priority)}\n\nEin Admin wird deine Anfrage prüfen und das Material bestellen.`);
-        
-        // Return to orders list instead of closing modal
-        showOrdersManagement();
-        
-        // Refresh admin view if material orders modal is open
-        if (document.getElementById('materialOrdersModal') && document.getElementById('materialOrdersModal').style.display === 'block') {
-            loadMaterialOrders();
-        }
-        
-    } catch (error) {
-        console.error('Error submitting material request:', error);
-        toast.error('Fehler beim Senden der Anfrage');
-    }
-}
-
-/**
  * Show admin order form for creating admin orders
  */
 function showAdminOrderForm() {
@@ -211,7 +99,8 @@ async function submitAdminOrder() {
         
         toast.success(`Admin-Bestellung erfolgreich angelegt!\n\nMaterial: ${formData.materialName}${quantityText}${manufacturerText}\nPriorität: ${getPriorityText(formData.priority)}`);
         
-        closeModal();
+        // Return to orders overview instead of closing all modals
+        showMaterialOrders();
         
         // Refresh admin view if material orders modal is open
         if (document.getElementById('materialOrdersModal') && document.getElementById('materialOrdersModal').style.display === 'block') {
@@ -221,6 +110,132 @@ async function submitAdminOrder() {
     } catch (error) {
         console.error('Error submitting admin order:', error);
         toast.error('Fehler beim Anlegen der Bestellung: ' + error.message);
+    }
+}
+
+/**
+ * Show material request form for users
+ */
+function showMaterialRequestForm() {
+    const modalContent = `
+        <div class="modal-header">
+            <h3>Material anfragen</h3>
+            <button class="close-btn" onclick="closeMaterialRequestForm()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="card">
+                <div class="card-body">
+                    <form id="materialRequestForm" class="form">
+                        <div class="form-group">
+                            <label class="form-label">Material/Filament</label>
+                            <input type="text" id="requestMaterialName" class="form-input" placeholder="z.B. PLA Schwarz, PETG Transparent, TPU Flexibel...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Hersteller (optional)</label>
+                            <input type="text" id="requestManufacturer" class="form-input" placeholder="z.B. Prusament, eSUN, Polymaker...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Begründung</label>
+                            <textarea id="requestReason" class="form-textarea" placeholder="Warum benötigen Sie dieses Material? Für welches Projekt?" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Ungefähre Menge</label>
+                            <input type="text" id="requestQuantity" class="form-input" placeholder="z.B. 1kg, 500g, 2 Spulen...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Dringlichkeit</label>
+                            <select id="requestPriority" class="form-select">
+                                <option value="low">Niedrig - kein Zeitdruck</option>
+                                <option value="medium">Mittel - in den nächsten Wochen</option>
+                                <option value="high">Hoch - dringend benötigt</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" onclick="submitMaterialRequest()">Anfrage senden</button>
+            <button type="button" class="btn btn-secondary" onclick="closeMaterialRequestForm()">Abbrechen</button>
+        </div>
+    `;
+    
+    showModalWithContent(modalContent);
+}
+
+/**
+ * Close material request form
+ */
+function closeMaterialRequestForm() {
+    closeModal();
+}
+
+/**
+ * Submit material request
+ */
+async function submitMaterialRequest() {
+    // Get DOM elements with null checks
+    const materialNameEl = document.getElementById('requestMaterialName');
+    const manufacturerEl = document.getElementById('requestManufacturer');
+    const reasonEl = document.getElementById('requestReason');
+    const quantityEl = document.getElementById('requestQuantity');
+    const priorityEl = document.getElementById('requestPriority');
+    
+    // Check if elements exist
+    if (!materialNameEl || !reasonEl) {
+        console.error('Required form elements not found');
+        toast.error('Formular-Fehler: Erforderliche Felder nicht gefunden');
+        return;
+    }
+    
+    const formData = {
+        materialName: materialNameEl.value.trim(),
+        manufacturer: manufacturerEl ? manufacturerEl.value.trim() : '',
+        reason: reasonEl.value.trim(),
+        quantity: quantityEl ? quantityEl.value.trim() : '',
+        priority: priorityEl ? priorityEl.value : 'medium'
+    };
+    
+    // Validation
+    if (!formData.materialName || !formData.reason) {
+        toast.error('Bitte füllen Sie mindestens Material und Begründung aus');
+        return;
+    }
+    
+    try {
+        await window.db.collection('materialOrders').add({
+            type: 'request',
+            source: 'user', // Track if this came from user or admin
+            userName: window.currentUser?.name || 'Unbekannter User',
+            userKennung: window.currentUser?.kennung || '',
+            createdBy: window.currentUser?.name || 'Unbekannter User',
+            createdByKennung: window.currentUser?.kennung || '',
+            materialName: formData.materialName,
+            manufacturer: formData.manufacturer,
+            reason: formData.reason,
+            quantity: formData.quantity,
+            priority: formData.priority,
+            status: 'pending',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        const quantityText = formData.quantity ? `\nMenge: ${formData.quantity}` : '';
+        const manufacturerText = formData.manufacturer ? `\nHersteller: ${formData.manufacturer}` : '';
+        
+        toast.success(`Material-Anfrage erfolgreich gesendet!\n\nMaterial: ${formData.materialName}${quantityText}${manufacturerText}\nPriorität: ${getPriorityText(formData.priority)}\n\nEin Admin wird deine Anfrage prüfen und das Material bestellen.`);
+        
+        // Close modal and return to main dashboard
+        closeModal();
+        
+        // Refresh admin view if material orders modal is open
+        if (document.getElementById('materialOrdersModal') && document.getElementById('materialOrdersModal').style.display === 'block') {
+            loadMaterialOrders();
+        }
+        
+    } catch (error) {
+        console.error('Error submitting material request:', error);
+        toast.error('Fehler beim Senden der Anfrage');
     }
 }
 
@@ -265,6 +280,7 @@ function showMaterialOrders() {
         </div>
         <div class="modal-footer">
             <button class="btn btn-primary" onclick="showMaterialRequestForm()">Material-Wunsch hinzufügen</button>
+            ${window.currentUser?.isAdmin ? `<button class="btn btn-secondary" onclick="showAdminOrderForm()">Admin-Bestellung anlegen</button>` : ''}
             <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
         </div>
     `;
@@ -449,14 +465,22 @@ function renderOrderRequests() {
     } else {
         container.innerHTML = `
             <div class="requests-list">
-                ${requests.map(request => `
+                ${requests.map(request => {
+                    const isUserRequest = request.source === 'user' || !request.source; // Legacy compatibility
+                    const sourceLabel = isUserRequest ? 'Nutzerwunsch' : 'Admin-Bestellung';
+                    const sourcePerson = isUserRequest ? request.userName || 'Unbekannt' : request.createdBy || 'Admin';
+                    
+                    return `
                     <div class="request-item">
                         <div class="request-header">
                             <h4>${request.materialName}</h4>
-                            <span class="priority-badge priority-${request.priority}">${getPriorityText(request.priority)}</span>
+                            <div class="request-meta">
+                                <span class="source-badge ${isUserRequest ? 'source-user' : 'source-admin'}">${sourceLabel}</span>
+                                <span class="priority-badge priority-${request.priority}">${getPriorityText(request.priority)}</span>
+                            </div>
                         </div>
                         <div class="request-details">
-                            <p><strong>Nutzer:</strong> ${request.userName} (${request.userKennung})</p>
+                            <p><strong>Von:</strong> ${sourcePerson}</p>
                             ${request.manufacturer ? `<p><strong>Hersteller:</strong> ${request.manufacturer}</p>` : ''}
                             ${request.quantity ? `<p><strong>Menge:</strong> ${request.quantity}</p>` : ''}
                             <p><strong>Begründung:</strong> ${request.reason}</p>
@@ -474,7 +498,8 @@ function renderOrderRequests() {
                             </button>
                         </div>
                     </div>
-                `).join('')}
+                `;
+                }).join('')}
             </div>
         `;
     }
@@ -487,18 +512,23 @@ function renderOrderRequests() {
  * Render material wishes tab
  */
 function renderMaterialWishes() {
-    const wishes = materialOrders.filter(order => order.type === 'request').sort((a, b) => {
+    // Only show non-pending requests to avoid duplication with renderOrderRequests
+    const wishes = materialOrders.filter(order => 
+        order.type === 'request' && order.status !== 'pending'
+    ).sort((a, b) => {
         // Sort by priority: high -> medium -> low
         const priorityOrder = { 'high': 3, 'medium': 2, 'low': 1 };
         return (priorityOrder[b.priority] || 1) - (priorityOrder[a.priority] || 1);
     });
     const container = document.getElementById('materialWishesContent');
     
+    if (!container) return;
+    
     if (wishes.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <p>Keine Material-Wünsche vorhanden.</p>
-                <button class="btn btn-primary" onclick="showMaterialRequestForm()">Material-Wunsch hinzufügen</button>
+                <p>Keine verarbeiteten Material-Wünsche vorhanden.</p>
+                <small>Genehmigte, abgelehnte oder gekaufte Material-Wünsche erscheinen hier.</small>
             </div>
         `;
         return;
@@ -506,47 +536,44 @@ function renderMaterialWishes() {
     
     container.innerHTML = `
         <div class="material-wishes-header">
-            <h4>Material-Wünsche (${wishes.length})</h4>
-            <button class="btn btn-primary" onclick="showMaterialRequestForm()">Material-Wunsch hinzufügen</button>
+            <h4>Verarbeitete Material-Wünsche (${wishes.length})</h4>
         </div>
         <div class="material-wishes-list">
-            ${wishes.map(wish => `
-                <div class="material-wish-item ${wish.status === 'pending' ? 'pending' : wish.status === 'approved' ? 'approved' : 'rejected'}">
-                    <div class="wish-header">
-                        <div class="wish-material">
-                            <strong>${wish.materialName || 'Unbekanntes Material'}</strong>
-                            ${wish.manufacturer ? `<span class="manufacturer">${wish.manufacturer}</span>` : ''}
-                        </div>
-                        <div class="wish-priority-container">
-                            <span class="priority-badge priority-${wish.priority}">${getPriorityIcon(wish.priority)} ${getPriorityText(wish.priority)}</span>
-                            <div class="wish-status status-${wish.status}">
-                                ${getStatusText(wish.status)}
-                            </div>
+            ${wishes.map(wish => {
+                const isUserRequest = wish.source === 'user' || !wish.source; // Legacy compatibility
+                const sourceLabel = isUserRequest ? 'Nutzerwunsch' : 'Admin-Bestellung';
+                const sourcePerson = isUserRequest ? wish.userName || 'Unbekannt' : wish.createdBy || 'Admin';
+                
+                return `
+                <div class="request-item">
+                    <div class="request-header">
+                        <h4>${wish.materialName || 'Unbekanntes Material'}</h4>
+                        <div class="request-meta">
+                            <span class="source-badge ${isUserRequest ? 'source-user' : 'source-admin'}">${sourceLabel}</span>
+                            <span class="status-badge status-${wish.status}">${getStatusText(wish.status)}</span>
                         </div>
                     </div>
-                    <div class="wish-details">
-                        <div class="wish-info">
-                            <span class="wish-user">von ${wish.userName || 'Unbekannt'}</span>
-                            <span class="wish-date">${wish.createdAt ? wish.createdAt.toLocaleDateString('de-DE') : 'Unbekannt'}</span>
-                        </div>
-                        <div class="wish-reason">${wish.reason || 'Keine Begründung'}</div>
-                        ${wish.quantity ? `<div class="wish-quantity">Menge: ${wish.quantity}</div>` : ''}
+                    <div class="request-details">
+                        <p><strong>Von:</strong> ${sourcePerson}</p>
+                        ${wish.manufacturer ? `<p><strong>Hersteller:</strong> ${wish.manufacturer}</p>` : ''}
+                        ${wish.quantity ? `<p><strong>Menge:</strong> ${wish.quantity}</p>` : ''}
+                        <p><strong>Begründung:</strong> ${wish.reason || 'Keine Begründung'}</p>
+                        <p><strong>Angefragt:</strong> ${wish.createdAt ? wish.createdAt.toLocaleDateString('de-DE') : 'Unbekannt'}</p>
+                        <p><strong>Status:</strong> ${getStatusText(wish.status)}</p>
                     </div>
-                    ${window.currentUser?.isAdmin ? `
-                        <div class="wish-actions">
-                            <button class="btn btn-success btn-small" onclick="approveOrderRequest('${wish.id}')">
-                                Genehmigen
+                    ${window.currentUser?.isAdmin && wish.status === 'approved' ? `
+                        <div class="request-actions">
+                            <button class="btn btn-success btn-small" onclick="markAsPurchased('${wish.id}')">
+                                Als gekauft markieren
                             </button>
                             <button class="btn btn-warning btn-small" onclick="rejectOrderRequest('${wish.id}')">
-                                Ablehnen
-                            </button>
-                            <button class="btn btn-danger btn-small" onclick="deleteOrderRequest('${wish.id}')">
-                                Löschen
+                                Doch ablehnen
                             </button>
                         </div>
                     ` : ''}
                 </div>
-            `).join('')}
+                `;
+            }).join('')}
         </div>
     `;
 }
@@ -564,6 +591,18 @@ function getPriorityText(priority) {
 }
 
 /**
+ * Get priority icon
+ */
+function getPriorityIcon(priority) {
+    const iconMap = {
+        'low': '●',
+        'medium': '▲',
+        'high': '⬆'
+    };
+    return iconMap[priority] || '●';
+}
+
+/**
  * Get localized status text
  */
 function getStatusText(status) {
@@ -578,22 +617,16 @@ function getStatusText(status) {
 }
 
 /**
- * Get priority icon
- */
-function getPriorityIcon(priority) {
-    const iconMap = {
-        'low': '●',
-        'medium': '▲',
-        'high': '⬆'
-    };
-    return iconMap[priority] || '●';
-}
-
-/**
  * Render shopping list (approved items to purchase)
  */
 function renderShoppingList() {
     const container = document.getElementById('shoppingListContent');
+    
+    if (!container) {
+        console.warn('shoppingListContent element not found');
+        return;
+    }
+    
     const shoppingItems = materialOrders.filter(order => order.status === 'approved');
     
     if (shoppingItems.length === 0) {
@@ -631,6 +664,12 @@ function renderShoppingList() {
  */
 function renderOrderHistory() {
     const container = document.getElementById('orderHistoryContent');
+    
+    if (!container) {
+        console.warn('orderHistoryContent element not found');
+        return;
+    }
+    
     const orders = materialOrders.filter(order => order.status === 'purchased' || order.status === 'delivered' || order.status === 'rejected');
     
     if (orders.length === 0) {
@@ -673,9 +712,225 @@ function renderOrderHistory() {
                             ${order.purchasedAt ? `<span class="history-purchased">eingekauft: ${order.purchasedAt.toDate().toLocaleDateString('de-DE')}</span>` : ''}
                             ${order.deliveredAt ? `<span class="history-delivered">geliefert: ${order.deliveredAt.toDate().toLocaleDateString('de-DE')}</span>` : ''}
                         </div>
+                        <div class="history-reason">${order.reason || 'Keine Begründung'}</div>
+                        ${order.quantity ? `<div class="history-quantity">Menge: ${order.quantity}</div>` : ''}
+                        <div class="history-priority">Priorität: ${getPriorityText(order.priority)}</div>
                     </div>
                 </div>
             `).join('')}
         </div>
     `;
 }
+
+/**
+ * Delete single history item
+ */
+async function deleteHistoryItem(orderId) {
+    if (!window.currentUser?.isAdmin) {
+        toast.error('Keine Berechtigung zum Löschen');
+        return;
+    }
+    
+    const confirmed = await toast.confirm(
+        'Möchten Sie diesen Eintrag wirklich aus dem Verlauf löschen?',
+        'Eintrag löschen',
+        'Abbrechen'
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+        await window.db.collection('materialOrders').doc(orderId).delete();
+        toast.success('Eintrag aus dem Verlauf gelöscht');
+        
+    } catch (error) {
+        console.error('Error deleting history item:', error);
+        toast.error('Fehler beim Löschen des Eintrags');
+    }
+}
+
+/**
+ * Clear all history items
+ */
+async function clearAllHistory() {
+    if (!window.currentUser?.isAdmin) {
+        toast.error('Keine Berechtigung zum Löschen');
+        return;
+    }
+    
+    const confirmed = await toast.confirm(
+        'Möchten Sie wirklich den gesamten Bestellverlauf löschen?\n\nDieser Vorgang kann nicht rückgängig gemacht werden.',
+        'Verlauf leeren',
+        'Abbrechen'
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+        const historyItems = materialOrders.filter(order => 
+            order.status === 'purchased' || order.status === 'delivered' || order.status === 'rejected'
+        );
+        
+        if (historyItems.length === 0) {
+            toast.info('Kein Verlauf zum Löschen vorhanden');
+            return;
+        }
+        
+        const batch = window.db.batch();
+        historyItems.forEach(item => {
+            batch.delete(window.db.collection('materialOrders').doc(item.id));
+        });
+        
+        await batch.commit();
+        toast.success(`${historyItems.length} Einträge aus dem Verlauf gelöscht`);
+        
+    } catch (error) {
+        console.error('Error clearing history:', error);
+        toast.error('Fehler beim Leeren des Verlaufs');
+    }
+}
+
+/**
+ * Approve order request and move to shopping list
+ */
+async function approveOrderRequest(requestId) {
+    try {
+        // Show immediate visual feedback
+        const button = event.target;
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Wird genehmigt...';
+        
+        await window.db.collection('materialOrders').doc(requestId).update({
+            status: 'approved',
+            approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            approvedBy: window.currentUser?.name || 'Admin'
+        });
+        
+        toast.success('Anfrage genehmigt und zur Einkaufsliste hinzugefügt');
+        // Real-time listener will handle the update automatically
+        
+    } catch (error) {
+        console.error('Error approving request:', error);
+        toast.error('Fehler beim Genehmigen');
+        
+        // Reset button state on error
+        if (button) {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+    }
+}
+
+/**
+ * Reject order request
+ */
+async function rejectOrderRequest(requestId) {
+    if (!confirm('Möchten Sie diese Anfrage wirklich ablehnen?')) {
+        return;
+    }
+    
+    try {
+        // Show immediate visual feedback
+        const button = event.target;
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Wird abgelehnt...';
+        
+        await window.db.collection('materialOrders').doc(requestId).update({
+            status: 'rejected',
+            rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            rejectedBy: window.currentUser?.name || 'Admin'
+        });
+        
+        toast.success('Anfrage abgelehnt');
+        // Real-time listener will handle the update automatically
+        
+    } catch (error) {
+        console.error('Error rejecting request:', error);
+        toast.error('Fehler beim Ablehnen');
+        
+        // Reset button state on error
+        if (button) {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+    }
+}
+
+/**
+ * Delete order request  
+ */
+async function deleteOrderRequest(requestId) {
+    if (!confirm('Möchten Sie diese Bestellung wirklich löschen?')) {
+        return;
+    }
+    
+    try {
+        // Show immediate visual feedback
+        const button = event.target;
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Wird gelöscht...';
+        
+        await window.db.collection('materialOrders').doc(requestId).delete();
+        toast.success('Bestellung erfolgreich gelöscht');
+        // Real-time listener will handle the update automatically
+        
+    } catch (error) {
+        console.error('Error deleting request:', error);
+        toast.error('Fehler beim Löschen');
+        
+        // Reset button state on error
+        if (button) {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+    }
+}
+
+/**
+ * Mark item as purchased (move from shopping list to order history)
+ */
+async function markAsPurchased(requestId) {
+    try {
+        await window.db.collection('materialOrders').doc(requestId).update({
+            status: 'purchased',
+            purchasedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        toast.success('Artikel als eingekauft markiert');
+        // Real-time listener will automatically update the UI
+        
+    } catch (error) {
+        console.error('Error marking as purchased:', error);
+        toast.error('Fehler beim Markieren');
+    }
+}
+
+/**
+ * Cancel/reject order from shopping list
+ */
+async function cancelOrder(requestId) {
+    const reason = prompt('Grund für Stornierung (optional):');
+    
+    try {
+        await window.db.collection('materialOrders').doc(requestId).update({
+            status: 'cancelled',
+            cancellationReason: reason || '',
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        toast.success('Bestellung storniert');
+        // Real-time listener will automatically update the UI
+        
+    } catch (error) {
+        console.error('Error cancelling order:', error);
+        toast.error('Fehler beim Stornieren');
+    }
+}
+
+// Export functions to global scope
+window.showMaterialOrders = showMaterialOrders;
+window.closeMaterialOrders = closeMaterialOrders;
