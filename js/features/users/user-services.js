@@ -255,7 +255,7 @@ function showMaterialRequest() {
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
-            <button class="btn btn-primary" onclick="submitMaterialRequest()">Wunsch senden</button>
+                                <button class="btn btn-primary" onclick="submitMaterialWish()">Wunsch senden</button>
         </div>
     `;
     
@@ -459,9 +459,9 @@ async function submitProblemReport() {
 }
 
 /**
- * Submit material request
+ * Submit material wish
  */
-async function submitMaterialRequest() {
+async function submitMaterialWish() {
     const type = document.getElementById('materialType').value;
     const name = document.getElementById('materialName').value;
     const quantity = document.getElementById('materialQuantity').value;
@@ -1546,7 +1546,7 @@ window.showEquipmentRequest = showEquipmentRequest;
 window.updateEquipmentOptions = updateEquipmentOptions;
 window.loadEquipmentForRequest = loadEquipmentForRequest;
 window.submitEquipmentRequest = submitEquipmentRequest;
-window.submitMaterialRequest = submitMaterialRequest;
+window.submitMaterialWish = submitMaterialWish;
 window.showProblemReport = showProblemReport;
 window.reportPrinterProblem = reportPrinterProblem;
 window.submitPrinterProblemReport = submitPrinterProblemReport;

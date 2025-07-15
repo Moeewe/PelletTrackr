@@ -981,3 +981,6 @@ function getStatusText(status) {
 // Export functions to global scope
 window.showMaterialOrders = showMaterialOrders;
 window.closeMaterialOrders = closeMaterialOrders;
+window.showMaterialRequestForm = showMaterialRequestForm;
+window.closeMaterialRequestForm = closeMaterialRequestForm;
+window.submitMaterialRequest = submitMaterialRequest;
