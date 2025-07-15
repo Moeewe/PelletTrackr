@@ -738,17 +738,26 @@ async function showMyEquipmentRequests() {
     try {
         const snapshot = await window.db.collection('requests')
             .where('userKennung', '==', window.currentUser.kennung)
-            .where('type', '==', 'equipment')
-            .orderBy('createdAt', 'desc')
             .get();
         
         const requests = [];
         snapshot.forEach(doc => {
-            requests.push({
-                id: doc.id,
-                ...doc.data(),
-                createdAt: doc.data().createdAt?.toDate()
-            });
+            const data = doc.data();
+            // Filter for equipment requests only
+            if (data.type === 'equipment') {
+                requests.push({
+                    id: doc.id,
+                    ...data,
+                    createdAt: data.createdAt?.toDate()
+                });
+            }
+        });
+        
+        // Sort locally by creation date (newest first)
+        requests.sort((a, b) => {
+            if (!a.createdAt) return 1;
+            if (!b.createdAt) return -1;
+            return b.createdAt - a.createdAt;
         });
         
         renderMyEquipmentRequests(requests);
@@ -951,16 +960,23 @@ async function showMyProblemReports() {
     try {
         const snapshot = await window.db.collection('problemReports')
             .where('reportedByKennung', '==', window.currentUser.kennung)
-            .orderBy('createdAt', 'desc')
             .get();
         
         const reports = [];
         snapshot.forEach(doc => {
+            const data = doc.data();
             reports.push({
                 id: doc.id,
-                ...doc.data(),
-                createdAt: doc.data().createdAt?.toDate() || doc.data().reportedAt?.toDate()
+                ...data,
+                createdAt: data.createdAt?.toDate() || data.reportedAt?.toDate()
             });
+        });
+        
+        // Sort locally by creation date (newest first)
+        reports.sort((a, b) => {
+            if (!a.createdAt) return 1;
+            if (!b.createdAt) return -1;
+            return b.createdAt - a.createdAt;
         });
         
         renderMyProblemReports(reports);
@@ -1248,16 +1264,23 @@ async function showMyMaterialRequests() {
     try {
         const snapshot = await window.db.collection('materialRequests')
             .where('requestedByKennung', '==', window.currentUser.kennung)
-            .orderBy('createdAt', 'desc')
             .get();
         
         const requests = [];
         snapshot.forEach(doc => {
+            const data = doc.data();
             requests.push({
                 id: doc.id,
-                ...doc.data(),
-                createdAt: doc.data().createdAt?.toDate()
+                ...data,
+                createdAt: data.createdAt?.toDate()
             });
+        });
+        
+        // Sort locally by creation date (newest first)
+        requests.sort((a, b) => {
+            if (!a.createdAt) return 1;
+            if (!b.createdAt) return -1;
+            return b.createdAt - a.createdAt;
         });
         
         renderMyMaterialRequests(requests);
