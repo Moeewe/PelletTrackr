@@ -68,9 +68,6 @@ function initializeFirebase() {
 
     console.log("🔥 Firebase erfolgreich initialisiert");
     
-    // Start connection monitoring
-    setInterval(monitorFirebaseConnection, 30000); // Check every 30 seconds
-    
     return true;
   } else {
     console.error("❌ Firebase SDK nicht gefunden!");
@@ -78,30 +75,14 @@ function initializeFirebase() {
   }
 }
 
-// Connection monitoring
-function monitorFirebaseConnection() {
-  if (window.db) {
-    // Monitor Firestore connection state
-    window.db.enableNetwork().catch(() => {
-      console.warn("🔌 Firebase connection issue detected");
-      connectionHealthy = false;
-    });
-    
-    // Try a simple operation to test connection
-    window.db.collection('_connection_test').limit(1).get()
-      .then(() => {
-        if (!connectionHealthy) {
-          console.log("🔌 Firebase connection restored");
-          connectionHealthy = true;
-        }
-      })
-      .catch((error) => {
-        if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
-          console.warn("🔌 Firebase connection issue:", error.code);
-          connectionHealthy = false;
-        }
-      });
+// Passive connection monitoring - only check when operations fail
+function checkFirebaseConnection(error) {
+  if (error && (error.code === 'unavailable' || error.code === 'deadline-exceeded')) {
+    console.warn("🔌 Firebase connection issue detected:", error.code);
+    connectionHealthy = false;
+    return false;
   }
+  return true;
 }
 
 // Enhanced retry function for failed operations
@@ -112,10 +93,8 @@ async function retryFirebaseOperation(operation, maxRetries = 3, delay = 1000) {
     } catch (error) {
       console.warn(`⚠️ Firebase operation failed (attempt ${i + 1}/${maxRetries}):`, error.message);
       
-      // Monitor connection issues
-      if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
-        connectionHealthy = false;
-      }
+      // Check connection status
+      checkFirebaseConnection(error);
       
       if (i === maxRetries - 1) {
         throw error;
@@ -149,7 +128,7 @@ async function retryUserLoad() {
 
 // Make functions globally available
 window.retryUserLoad = retryUserLoad;
-window.monitorFirebaseConnection = monitorFirebaseConnection;
+window.checkFirebaseConnection = checkFirebaseConnection;
 window.getFirebaseConnectionStatus = () => connectionHealthy;
 
 // Firebase sofort initialisieren, wenn das Script geladen wird
