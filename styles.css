@@ -698,7 +698,7 @@
 
 .status-item {
     background: #f5f5f5;
-    border: 2px solid #e0e0e0;
+    border: none;
     border-radius: 0;
     padding: 12px;
     text-align: center;
@@ -711,48 +711,55 @@
 }
 
 .status-item.current-status {
-    border-color: #000000;
-    border-width: 3px;
+    border: none;
 }
 
 .status-item.status-available {
-    background: #e8f5e8;
-    color: #2e7d32;
+    background: #4CAF50;
+    color: white;
+    border: none;
 }
 
 .status-item.status-available.current-status {
-    background: #4caf50;
+    background: #4CAF50;
     color: white;
+    border: none;
 }
 
 .status-item.status-busy {
-    background: #fff3e0;
-    color: #f57c00;
+    background: #2196F3;
+    color: white;
+    border: none;
 }
 
 .status-item.status-busy.current-status {
-    background: #ff9800;
+    background: #2196F3;
     color: white;
+    border: none;
 }
 
 .status-item.status-maintenance {
-    background: #fff8e1;
-    color: #f9a825;
+    background: #FF9800;
+    color: white;
+    border: none;
 }
 
 .status-item.status-maintenance.current-status {
-    background: #ffc107;
-    color: #000000;
+    background: #FF9800;
+    color: white;
+    border: none;
 }
 
 .status-item.status-broken {
-    background: #ffebee;
-    color: #c62828;
+    background: #F44336;
+    color: white;
+    border: none;
 }
 
 .status-item.status-broken.current-status {
-    background: #f44336;
+    background: #F44336;
     color: white;
+    border: none;
 }
 
 .status-number {
