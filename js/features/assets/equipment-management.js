@@ -728,7 +728,8 @@ function setupEquipmentRequestsListener() {
   }
   
   try {
-    equipmentRequestsListener = window.db.collection('equipmentRequests')
+    equipmentRequestsListener = window.db.collection('requests')
+      .where('type', '==', 'equipment')
       .where('status', '==', 'pending')
       .onSnapshot((snapshot) => {
         equipmentRequests = [];
@@ -771,7 +772,8 @@ function getPendingRequestForEquipment(equipmentId) {
  */
 async function loadEquipmentRequests() {
   try {
-    const querySnapshot = await window.db.collection('equipmentRequests')
+    const querySnapshot = await window.db.collection('requests')
+      .where('type', '==', 'equipment')
       .where('status', '==', 'pending')
       .get();
     
@@ -919,7 +921,7 @@ async function rejectEquipmentRequest(requestId) {
     const loadingId = window.loading ? window.loading.show('Anfrage wird abgelehnt...') : null;
     
     // Update the request status to rejected
-    await window.db.collection('equipmentRequests').doc(requestId).update({
+    await window.db.collection('requests').doc(requestId).update({
       status: 'rejected',
       rejectedAt: window.firebase.firestore.FieldValue.serverTimestamp()
     });

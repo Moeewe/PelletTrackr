@@ -73,15 +73,17 @@ function setupEquipmentRequestsListener() {
     }
     
     try {
-        adminEquipmentRequestsListener = window.db.collection('equipmentRequests')
-            .orderBy('requestedAt', 'desc')
+        adminEquipmentRequestsListener = window.db.collection('requests')
+            .where('type', '==', 'equipment')
+            .orderBy('createdAt', 'desc')
             .onSnapshot((snapshot) => {
                 adminEquipmentRequests = [];
                 snapshot.forEach((doc) => {
+                    const data = doc.data();
                     adminEquipmentRequests.push({
                         id: doc.id,
-                        ...doc.data(),
-                        requestedAt: doc.data().requestedAt?.toDate()
+                        ...data,
+                        requestedAt: data.createdAt?.toDate() || data.requestedAt?.toDate()
                     });
                 });
                 
@@ -387,18 +389,20 @@ function closeEquipmentRequests() {
  */
 async function loadEquipmentRequests() {
     try {
-        const querySnapshot = await window.db.collection('equipmentRequests')
-            .orderBy('requestedAt', 'desc')
+        const querySnapshot = await window.db.collection('requests')
+            .where('type', '==', 'equipment')
+            .orderBy('createdAt', 'desc')
             .get();
         
         adminEquipmentRequests = [];
         querySnapshot.forEach((doc) => {
+            const data = doc.data();
             adminEquipmentRequests.push({
                 id: doc.id,
-                ...doc.data(),
-                requestedAt: doc.data().requestedAt?.toDate(),
-                fromDate: doc.data().fromDate?.toDate(),
-                toDate: doc.data().toDate?.toDate()
+                ...data,
+                requestedAt: data.createdAt?.toDate() || data.requestedAt?.toDate(),
+                fromDate: data.fromDate?.toDate(),
+                toDate: data.toDate?.toDate()
             });
         });
         
@@ -450,13 +454,10 @@ function renderEquipmentRequests(statusFilter = 'all') {
             </div>
             <div class="request-details">
                 <div class="request-equipment"><strong>Equipment:</strong> ${request.equipmentName}</div>
-                <div class="request-period">
-                    <strong>Zeitraum:</strong> 
-                    ${request.fromDate ? request.fromDate.toLocaleDateString() : 'Unbekannt'} - 
-                    ${request.toDate ? request.toDate.toLocaleDateString() : 'Unbekannt'}
-                </div>
+                <div class="request-location"><strong>Standort:</strong> ${request.equipmentLocation || 'Unbekannt'}</div>
+                <div class="request-duration"><strong>Dauer:</strong> ${getDurationText(request.duration)}</div>
             </div>
-            <div class="request-reason"><strong>Grund:</strong> ${request.reason}</div>
+            <div class="request-reason"><strong>Zweck:</strong> ${request.purpose || request.reason || 'Nicht angegeben'}</div>
             
             ${request.status === 'pending' ? `
                 <div class="request-actions">
@@ -504,7 +505,7 @@ function getRequestStatusText(status) {
  */
 async function updateEquipmentRequestStatus(requestId, newStatus) {
     try {
-        await window.db.collection('equipmentRequests').doc(requestId).update({
+        await window.db.collection('requests').doc(requestId).update({
             status: newStatus,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
@@ -523,7 +524,7 @@ async function updateEquipmentRequestStatus(requestId, newStatus) {
  */
 async function markEquipmentAsGiven(requestId) {
     try {
-        await window.db.collection('equipmentRequests').doc(requestId).update({
+        await window.db.collection('requests').doc(requestId).update({
             status: 'given',
             givenAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -543,7 +544,7 @@ async function markEquipmentAsGiven(requestId) {
  */
 async function markEquipmentAsReturned(requestId) {
     try {
-        await window.db.collection('equipmentRequests').doc(requestId).update({
+        await window.db.collection('requests').doc(requestId).update({
             status: 'returned',
             returnedAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -567,7 +568,7 @@ async function deleteEquipmentRequest(requestId) {
     }
     
     try {
-        await window.db.collection('equipmentRequests').doc(requestId).delete();
+        await window.db.collection('requests').doc(requestId).delete();
         showToast('Equipment-Anfrage erfolgreich gelöscht', 'success');
         // Removed manual reload - real-time listener will handle the update
         
@@ -576,6 +577,20 @@ async function deleteEquipmentRequest(requestId) {
         showToast('Fehler beim Löschen der Equipment-Anfrage', 'error');
     }
 } 
+
+/**
+ * Get duration text
+ */
+function getDurationText(duration) {
+    const durationMap = {
+        '2_hours': '2 Stunden',
+        'half_day': 'Halber Tag',
+        'full_day': 'Ganzer Tag',
+        'week': '1 Woche',
+        'other': 'Andere'
+    };
+    return durationMap[duration] || duration || 'Nicht angegeben';
+}
 
 // ==================== GLOBAL EXPORTS ====================
 // Admin Problem Reports-Funktionen global verfügbar machen
