@@ -127,7 +127,7 @@ const ButtonFactory = {
   // Modal Buttons
   closeModal: () => createButton('CLOSE', 'closeModal()'),
   
-  cancelModal: () => createButton('CANCEL', 'closeModal()'),
+  cancelModal: () => createButton('CANCEL', 'cancelModal()'),
   
   // Spezifische Close-Funktionen für verschiedene Modals
   cancelMaterialModal: () => createButton('CANCEL', 'closeEditMaterialModal()'),

@@ -1,21 +1,38 @@
 // ==================== MODAL MODULE ====================
 // Modal-Verwaltung und UI-Komponenten
 
+// Modal Stack für Navigation zwischen Modals
+let modalStack = [];
+
 // Modal anzeigen mit korrekter Struktur
-function showModal(htmlContent) {
-  // Erst alle anderen Modals schließen
-  closeModal();
+function showModal(htmlContent, options = {}) {
+  const { pushToStack = true, clearStack = false } = options;
+  
+  // Bei clearStack alle vorherigen Modals vergessen
+  if (clearStack) {
+    modalStack = [];
+  }
+  
+  // Aktuelles Modal zum Stack hinzufügen (falls vorhanden)
+  const modal = document.getElementById('modal');
+  if (pushToStack && modal && modal.classList.contains('active') && modal.innerHTML.trim()) {
+    modalStack.push({
+      content: modal.innerHTML,
+      timestamp: Date.now()
+    });
+  }
+  
+  // Erst alle anderen Modals schließen (aber Stack beibehalten)
+  closeModalInternal();
   
   // Close any other open modals that might conflict
   const existingModals = document.querySelectorAll('.modal.active');
-  existingModals.forEach(modal => {
-    if (modal.id !== 'modal') {
-      modal.classList.remove('active');
-      modal.style.display = 'none';
+  existingModals.forEach(modalEl => {
+    if (modalEl.id !== 'modal') {
+      modalEl.classList.remove('active');
+      modalEl.style.display = 'none';
     }
   });
-  
-  const modal = document.getElementById('modal');
   
   // Prüfen ob Content bereits modal-content Wrapper hat
   if (htmlContent.includes('<div class="modal-content">')) {
@@ -25,8 +42,6 @@ function showModal(htmlContent) {
     modal.innerHTML = `<div class="modal-content">${htmlContent}</div>`;
   }
   
-  // Ensure proper z-index and display
-  modal.style.zIndex = '10000';
   modal.style.display = 'flex';
   
   // Kurze Verzögerung für bessere Animation
@@ -36,14 +51,42 @@ function showModal(htmlContent) {
   
   // Prevent body scrolling when modal is open
   document.body.style.overflow = 'hidden';
+  
+  // Debug info
+  console.log(`📋 Modal opened. Stack depth: ${modalStack.length}`);
 }
 
-// Modal mit Content anzeigen
+// Modal mit Content anzeigen (Legacy-Unterstützung)
 function showModalWithContent(htmlContent) {
   showModal(htmlContent);
 }
 
-// Modal schließen
+// Zurück zum vorherigen Modal
+function goBackModal() {
+  if (modalStack.length === 0) {
+    console.log('📋 No previous modal in stack, closing completely');
+    closeModal();
+    return;
+  }
+  
+  const previousModal = modalStack.pop();
+  console.log(`📋 Going back to previous modal. Stack depth: ${modalStack.length}`);
+  
+  // Vorheriges Modal anzeigen ohne es zum Stack hinzuzufügen
+  showModal(previousModal.content, { pushToStack: false });
+}
+
+// Modal schließen (internal - behält Stack bei)
+function closeModalInternal() {
+  const modal = document.getElementById('modal');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+    // HTML wird NICHT geleert für Stack-Funktionalität
+  }
+}
+
+// Modal komplett schließen (öffentliche API)
 function closeModal() {
   const modal = document.getElementById('modal');
   if (modal) {
@@ -53,6 +96,10 @@ function closeModal() {
     // Restore body scrolling
     document.body.style.overflow = '';
   }
+  
+  // Stack leeren
+  modalStack = [];
+  console.log('📋 Modal closed completely, stack cleared');
   
   // Also close any other potentially open modals
   const otherModals = document.querySelectorAll('.modal.active');
@@ -64,31 +111,90 @@ function closeModal() {
   });
 }
 
+// Intelligente Cancel-Funktion
+function cancelModal() {
+  if (modalStack.length > 0) {
+    console.log('📋 Cancel: Going back to previous modal');
+    goBackModal();
+  } else {
+    console.log('📋 Cancel: Closing modal completely');
+    closeModal();
+  }
+}
+
 // ESC-Taste Support für Modals
 document.addEventListener('keydown', function(event) {
   if (event.key === 'Escape') {
-    const activeModal = document.querySelector('.modal.active');
-    if (activeModal) {
-      if (activeModal.id === 'modal') {
-        closeModal();
-      } else if (activeModal.id === 'paymentProofModal') {
-        window.closePaymentProofModal();
-      }
+    const modal = document.getElementById('modal');
+    if (modal && modal.classList.contains('active')) {
+      cancelModal(); // Verwende intelligente Cancel-Funktion
     }
   }
 });
 
-// Click outside modal to close
+// Modal beim Klick außerhalb schließen
 document.addEventListener('click', function(event) {
-  const activeModal = document.querySelector('.modal.active');
-  if (activeModal && event.target === activeModal) {
-    if (activeModal.id === 'modal') {
-      closeModal();
-    } else if (activeModal.id === 'paymentProofModal') {
-      window.closePaymentProofModal();
+  const modal = document.getElementById('modal');
+  if (event.target === modal && modal.classList.contains('active')) {
+    cancelModal(); // Verwende intelligente Cancel-Funktion
+  }
+});
+
+// Hilfsfunktion für Modal-Buttons mit Stack-Bewusstsein
+function createModalButton(text, action, type = 'secondary') {
+  const hasHistory = modalStack.length > 0;
+  const buttonText = hasHistory && text === 'Abbrechen' ? 'Zurück' : text;
+  
+  return `<button class="btn btn-${type}" onclick="${action}">${buttonText}</button>`;
+}
+
+// Intelligente Wrapper-Funktion für bessere UX bei Abbrechen-Buttons
+window.smartCloseModal = function() {
+  // Wenn wir einen Modal-Stack haben, gehe zurück, sonst schließe komplett
+  if (modalStack.length > 0) {
+    console.log('🔄 Smart close: Going back to previous modal');
+    goBackModal();
+  } else {
+    console.log('🚪 Smart close: Closing modal completely');
+    closeModal();
+  }
+};
+
+// Event Delegation für intelligente Abbrechen/Zurück Buttons
+document.addEventListener('click', function(event) {
+  // Abbrechen Buttons automatisch intelligent machen
+  if (event.target.matches('button.btn-secondary') && 
+      (event.target.textContent.includes('Abbrechen') || 
+       event.target.textContent.includes('abbrechen'))) {
+    
+    const onClick = event.target.getAttribute('onclick');
+    if (onClick === 'closeModal()') {
+      event.preventDefault();
+      cancelModal();
+      return false;
+    }
+  }
+  
+  // X-Button (close-btn) intelligent machen
+  if (event.target.matches('button.close-btn') || 
+      event.target.matches('.close-btn')) {
+    
+    const onClick = event.target.getAttribute('onclick');
+    if (onClick === 'closeModal()') {
+      event.preventDefault();
+      cancelModal();
+      return false;
     }
   }
 });
+
+// Export der Funktionen
+window.showModal = showModal;
+window.showModalWithContent = showModalWithContent;
+window.closeModal = closeModal;
+window.cancelModal = cancelModal;
+window.goBackModal = goBackModal;
+window.createModalButton = createModalButton;
 
 // ==================== ENTRY DETAILS & VIEWING ====================
 
