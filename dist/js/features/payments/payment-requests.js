@@ -637,7 +637,8 @@ function renderPaymentRequestsList(requests) {
 }
 
 /**
- * Approve payment request and mark entry as paid
+ * Approve payment request and automatically register payment
+ * Enhanced to use existing markEntryAsPaid function for consistency
  */
 async function approvePaymentRequest(requestId) {
     try {
@@ -665,25 +666,51 @@ async function approvePaymentRequest(requestId) {
             return;
         }
         
-        // Update the entry to mark it as paid
-        await window.db.collection('entries').doc(entryId).update({
-            paid: true,
-            isPaid: true,
-            paidAt: new Date(),
-            adminApproved: true,
-            adminApprovedAt: new Date()
-        });
-        
-        // Delete the payment request
-        await window.db.collection('paymentRequests').doc(requestId).delete();
-        
-        if (window.toast && typeof window.toast.success === 'function') {
-            window.toast.success('Zahlung genehmigt und Entry als bezahlt markiert');
+        // Use the existing markEntryAsPaid function to ensure consistency
+        // This automatically handles entry update, payment request cleanup, and UI updates
+        if (window.markEntryAsPaid && typeof window.markEntryAsPaid === 'function') {
+            await window.markEntryAsPaid(entryId);
+            
+            // Additional metadata for payment requests that were approved vs direct admin marking
+            await window.db.collection('entries').doc(entryId).update({
+                paymentMethod: 'payment_request_approved',
+                approvedRequestId: requestId,
+                approvedAt: new Date()
+            });
+            
+            if (window.toast && typeof window.toast.success === 'function') {
+                window.toast.success('Zahlungsanfrage genehmigt und Zahlung registriert');
+            } else {
+                alert('Zahlungsanfrage genehmigt und Zahlung registriert');
+            }
+            
+            console.log(`✅ Payment request approved and payment registered for entry: ${entryId}`);
         } else {
-            alert('Zahlung genehmigt und Entry als bezahlt markiert');
+            // Fallback if markEntryAsPaid is not available
+            console.error('markEntryAsPaid function not available, using fallback');
+            
+            // Update the entry to mark it as paid
+            await window.db.collection('entries').doc(entryId).update({
+                paid: true,
+                isPaid: true,
+                paidAt: new Date(),
+                paymentMethod: 'payment_request_approved',
+                adminApproved: true,
+                adminApprovedAt: new Date(),
+                approvedRequestId: requestId
+            });
+            
+            // Delete the payment request
+            await window.db.collection('paymentRequests').doc(requestId).delete();
+            
+            if (window.toast && typeof window.toast.success === 'function') {
+                window.toast.success('Zahlung genehmigt und Entry als bezahlt markiert');
+            } else {
+                alert('Zahlung genehmigt und Entry als bezahlt markiert');
+            }
+            
+            console.log(`✅ Payment approved (fallback) for entry: ${entryId}`);
         }
-        
-        console.log(`✅ Payment approved for entry: ${entryId}`);
         
     } catch (error) {
         console.error('Error approving payment request:', error);

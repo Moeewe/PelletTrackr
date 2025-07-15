@@ -21,7 +21,7 @@ const BUTTON_ACTIONS = {
   ADD: { type: BUTTON_TYPES.PRIMARY, text: 'Hinzufügen' },
   CREATE: { type: BUTTON_TYPES.PRIMARY, text: 'Erstellen' },
   UPDATE: { type: BUTTON_TYPES.PRIMARY, text: 'Aktualisieren' },
-  REGISTER_PAYMENT: { type: BUTTON_TYPES.PRIMARY, text: 'Zahlung registrieren' },
+  REGISTER_PAYMENT: { type: BUTTON_TYPES.PRIMARY, text: 'Zahlung genehmigen' },
   PAYMENT_REQUEST: { type: BUTTON_TYPES.PRIMARY, text: 'Zahlung anweisen' },
   
   // Sekundäre Aktionen (weiß mit schwarzer Outline)
