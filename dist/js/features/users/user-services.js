@@ -944,12 +944,30 @@ async function deleteEquipmentRequest(requestId) {
         
         await window.db.collection('requests').doc(requestId).delete();
         
+        // Immediately remove element from DOM after successful deletion
+        if (requestElement) {
+            requestElement.remove();
+            console.log('✅ Element removed from DOM');
+        }
+        
         toast.success('Equipment-Anfrage gelöscht');
         
-        // Refresh the view to get accurate count and auto-close if needed
-        setTimeout(() => {
-            refreshMyEquipmentRequests();
-        }, 100);
+        // Check if container is now empty and handle auto-close
+        const container = document.getElementById('myEquipmentRequestsList');
+        if (container) {
+            const remainingCards = container.querySelectorAll('.entry-card');
+            if (remainingCards.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p>Keine Equipment-Anfragen vorhanden.</p>
+                        <p>Sie können über "Equipment anfragen" neue Anfragen erstellen.</p>
+                    </div>
+                `;
+                setTimeout(() => {
+                    toast.info('Alle Equipment-Anfragen wurden entfernt');
+                }, 500);
+            }
+        }
         
     } catch (error) {
         console.error('Error deleting equipment request:', error);
