@@ -868,7 +868,7 @@ function renderMyEquipmentRequests(requests) {
                         </button>
                     ` : ''}
                     ${request.status === 'pending' ? `
-                        <button class="btn btn-danger btn-sm" onclick="deleteEquipmentRequest('${request.id}')">
+                        <button class="btn btn-danger btn-sm" onclick="deleteUserEquipmentRequest('${request.id}')">
                             Löschen
                         </button>
                     ` : ''}
@@ -909,72 +909,98 @@ async function requestEquipmentReturn(requestId) {
 }
 
 /**
- * Delete equipment request
+ * Delete equipment request (User version)
  */
-async function deleteEquipmentRequest(requestId) {
+async function deleteUserEquipmentRequest(requestId) {
+    if (!confirm('Möchten Sie diese Ausleih-Anfrage wirklich löschen?')) {
+        return;
+    }
+    
     try {
-        // First remove from display immediately with multiple selector strategies
-        let requestElement = document.querySelector(`[onclick*="deleteEquipmentRequest('${requestId}')"]`)?.closest('.entry-card');
+        console.log(`🗑️ User Delete Equipment Request: ${requestId}`);
         
-        // Fallback selector strategies
-        if (!requestElement) {
-            requestElement = document.querySelector(`[onclick="deleteEquipmentRequest('${requestId}')"]`)?.closest('.entry-card');
+        // More robust element selection for user equipment requests
+        let requestElement = null;
+        
+        // Strategy 1: Find by exact onclick match in myEquipmentRequestsList container
+        const container = document.getElementById('myEquipmentRequestsList');
+        if (container) {
+            const deleteButtons = container.querySelectorAll(`[onclick="deleteUserEquipmentRequest('${requestId}')"]`);
+            if (deleteButtons.length > 0) {
+                requestElement = deleteButtons[0].closest('.entry-card');
+                console.log('✅ Found element via exact onclick match');
+            }
         }
         
-        // Additional fallback: find all entry cards and match by data or content
-        if (!requestElement) {
-            const allCards = document.querySelectorAll('.entry-card');
+        // Strategy 2: Find by partial onclick match
+        if (!requestElement && container) {
+            const allCards = container.querySelectorAll('.entry-card');
             for (const card of allCards) {
-                const deleteBtn = card.querySelector(`[onclick*="deleteEquipmentRequest('${requestId}')"]`);
+                const deleteBtn = card.querySelector(`[onclick*="deleteUserEquipmentRequest('${requestId}')"]`);
                 if (deleteBtn) {
                     requestElement = card;
+                    console.log('✅ Found element via partial onclick match');
                     break;
                 }
             }
         }
         
-        // Debug logging
-        console.log(`🗑️ Delete Equipment Request: ${requestId}`, requestElement ? 'Element found' : 'Element NOT found');
-        
-        if (requestElement) {
-            requestElement.style.opacity = '0.5';
-            requestElement.style.pointerEvents = 'none';
-            console.log('✅ Element made transparent');
-        }
-        
-        await window.db.collection('requests').doc(requestId).delete();
-        
-        // Immediately remove element from DOM after successful deletion
-        if (requestElement) {
-            requestElement.remove();
-            console.log('✅ Element removed from DOM');
-        }
-        
-        toast.success('Equipment-Anfrage gelöscht');
-        
-        // Check if container is now empty and handle auto-close
-        const container = document.getElementById('myEquipmentRequestsList');
-        if (container) {
-            const remainingCards = container.querySelectorAll('.entry-card');
-            if (remainingCards.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <p>Keine Equipment-Anfragen vorhanden.</p>
-                        <p>Sie können über "Equipment anfragen" neue Anfragen erstellen.</p>
-                    </div>
-                `;
-                setTimeout(() => {
-                    toast.info('Alle Equipment-Anfragen wurden entfernt');
-                }, 500);
+        // Strategy 3: Find by content match as backup
+        if (!requestElement && container) {
+            const allCards = container.querySelectorAll('.entry-card');
+            for (const card of allCards) {
+                if (card.innerHTML.includes(requestId)) {
+                    requestElement = card;
+                    console.log('✅ Found element via content match');
+                    break;
+                }
             }
         }
         
+        console.log('- Target container:', container ? 'FOUND' : 'NOT FOUND');
+        console.log('- Target element:', requestElement ? 'FOUND' : 'NOT FOUND');
+        
+        // Make element transparent immediately
+        if (requestElement) {
+            requestElement.style.opacity = '0.3';
+            requestElement.style.pointerEvents = 'none';
+            requestElement.style.transition = 'opacity 0.3s ease';
+            console.log('✅ Element made transparent');
+        }
+        
+        // Delete from database
+        await window.db.collection('requests').doc(requestId).delete();
+        console.log('✅ Deleted from database');
+        
+        // Remove element from DOM immediately
+        if (requestElement) {
+            requestElement.style.opacity = '0';
+            setTimeout(() => {
+                requestElement.remove();
+                console.log('✅ Element removed from DOM');
+                
+                // Check if container is now empty
+                if (container) {
+                    const remainingCards = container.querySelectorAll('.entry-card');
+                    if (remainingCards.length === 0) {
+                        container.innerHTML = `
+                            <div class="empty-state">
+                                <p>Keine Equipment-Anfragen vorhanden.</p>
+                                <p>Sie können über "Equipment anfragen" neue Anfragen erstellen.</p>
+                            </div>
+                        `;
+                    }
+                }
+            }, 300);
+        }
+        
+        toast.success('Ausleih-Anfrage gelöscht');
+        
     } catch (error) {
         console.error('Error deleting equipment request:', error);
-        toast.error('Fehler beim Löschen der Equipment-Anfrage');
+        toast.error('Fehler beim Löschen der Ausleih-Anfrage');
         
         // Restore element if deletion failed
-        const requestElement = document.querySelector(`[onclick*="deleteEquipmentRequest('${requestId}')"]`)?.closest('.entry-card');
         if (requestElement) {
             requestElement.style.opacity = '1';
             requestElement.style.pointerEvents = 'auto';
@@ -1976,7 +2002,7 @@ window.reportPrinterProblem = reportPrinterProblem;
 window.submitPrinterProblemReport = submitPrinterProblemReport;
 window.showMyEquipmentRequests = showMyEquipmentRequests;
 window.requestEquipmentReturn = requestEquipmentReturn;
-window.deleteEquipmentRequest = deleteEquipmentRequest;
+window.deleteUserEquipmentRequest = deleteUserEquipmentRequest;
 window.showMyProblemReports = showMyProblemReports;
 window.editProblemReport = editProblemReport;
 window.saveProblemReportEdit = saveProblemReportEdit;
