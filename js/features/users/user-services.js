@@ -1344,12 +1344,30 @@ async function deleteProblemReport(reportId) {
         
         await window.db.collection('problemReports').doc(reportId).delete();
         
+        // Immediately remove element from DOM after successful deletion
+        if (reportElement) {
+            reportElement.remove();
+            console.log('✅ Element removed from DOM');
+        }
+        
         toast.success('Problem-Meldung gelöscht');
         
-        // Refresh the view to get accurate count and auto-close if needed
-        setTimeout(() => {
-            refreshMyProblemReports();
-        }, 100);
+        // Check if container is now empty and handle auto-close
+        const container = document.getElementById('myProblemReportsList');
+        if (container) {
+            const remainingCards = container.querySelectorAll('.entry-card');
+            if (remainingCards.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p>Keine Problem-Meldungen vorhanden.</p>
+                        <p>Sie können über "Problem melden" neue Meldungen erstellen.</p>
+                    </div>
+                `;
+                setTimeout(() => {
+                    toast.info('Alle Meldungen wurden entfernt');
+                }, 500);
+            }
+        }
         
     } catch (error) {
         console.error('Error deleting problem report:', error);
@@ -1750,12 +1768,30 @@ async function deleteMaterialRequest(requestId) {
         
         await window.db.collection('materialOrders').doc(requestId).delete();
         
+        // Immediately remove element from DOM after successful deletion
+        if (requestElement) {
+            requestElement.remove();
+            console.log('✅ Element removed from DOM');
+        }
+        
         toast.success('Material-Wunsch gelöscht');
         
-        // Refresh the view to get accurate count and auto-close if needed
-        setTimeout(() => {
-            refreshMyMaterialRequests();
-        }, 100);
+        // Check if container is now empty and handle auto-close
+        const container = document.getElementById('myMaterialRequestsList');
+        if (container) {
+            const remainingCards = container.querySelectorAll('.entry-card');
+            if (remainingCards.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p>Keine Material-Wünsche vorhanden.</p>
+                        <p>Sie können über "Material-Wunsch hinzufügen" neue Wünsche erstellen.</p>
+                    </div>
+                `;
+                setTimeout(() => {
+                    toast.info('Alle Material-Wünsche wurden entfernt');
+                }, 500);
+            }
+        }
         
     } catch (error) {
         console.error('Error deleting material request:', error);
