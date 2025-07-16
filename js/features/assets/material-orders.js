@@ -51,7 +51,7 @@ function showAdminOrderForm() {
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-primary" onclick="submitAdminOrder()">Bestellung anlegen</button>
-            <button type="button" class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+            <button type="button" class="btn btn-secondary" onclick="closeAdminOrderForm()">Abbrechen</button>
         </div>
     `;
     
@@ -167,7 +167,14 @@ function showMaterialRequestForm() {
  * Close material request form
  */
 function closeMaterialRequestForm() {
-    closeModal();
+    showMaterialOrders();
+}
+
+/**
+ * Close admin order form  
+ */
+function closeAdminOrderForm() {
+    showMaterialOrders();
 }
 
 /**
@@ -967,4 +974,5 @@ window.showMaterialOrders = showMaterialOrders;
 window.closeMaterialOrders = closeMaterialOrders;
 window.showMaterialRequestForm = showMaterialRequestForm;
 window.closeMaterialRequestForm = closeMaterialRequestForm;
+window.closeAdminOrderForm = closeAdminOrderForm;
 window.submitMaterialRequest = submitMaterialRequest;
