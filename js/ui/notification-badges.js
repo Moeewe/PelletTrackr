@@ -10,7 +10,9 @@ let notificationCounts = {
     paymentRequests: 0,
     materialRequests: 0,
     materialOrders: 0,
+    equipmentRequests: 0,
     brokenPrinters: 0,
+    printerIssues: 0,
     problemReports: 0,
     printerStatusChanges: 0,
     printerDefectReports: 0
@@ -21,22 +23,40 @@ let notificationCounts = {
  */
 function initNotificationBadges() {
     try {
-        // Only setup badges that exist in HTML
-        setupMaterialOrdersBadge();
+        // Setup all available badges
         setupProblemReportsBadge();
+        setupEquipmentRequestsBadge();
+        setupMaterialOrdersBadge();
+        setupPrinterIssuesBadge();
         // setupPaymentRequestsBadge(); // Will be added when payment system is active
-        console.log('✅ Notification badges initialized (material-orders, problem-reports)');
+        console.log('✅ Notification badges initialized (problem-reports, equipment-requests, material-orders, printer-issues)');
     } catch (error) {
         console.error('❌ Error initializing notification badges:', error);
     }
 }
 
 /**
- * Setup material orders badge - DISABLED for cleaner UI
+ * Setup material orders badge
  */
 function setupMaterialOrdersBadge() {
-    // Badge removed for cleaner UI
-    console.log('🔄 Material orders badge disabled for cleaner UI');
+    if (!window.db) {
+        setTimeout(setupMaterialOrdersBadge, 500);
+        return;
+    }
+    
+    console.log('🔄 Setting up material orders badge listener...');
+    
+    const listener = window.db.collection('materialOrders')
+        .where('status', '==', 'pending')
+        .onSnapshot((snapshot) => {
+            notificationCounts.materialOrders = snapshot.size;
+            console.log(`🔔 Material Orders Badge: ${snapshot.size} pending requests found`);
+            updateBadge('material-orders', notificationCounts.materialOrders);
+        }, (error) => {
+            console.error('❌ Material orders badge listener error:', error);
+        });
+    
+    notificationListeners.push(listener);
 }
 
 /**
@@ -72,54 +92,55 @@ function setupEquipmentRequestsBadge() {
         return;
     }
     
-    const listener = window.db.collection('equipmentRequests')
+    console.log('🔄 Setting up equipment requests badge listener...');
+    
+    const listener = window.db.collection('requests')
+        .where('type', '==', 'equipment')
         .where('status', '==', 'pending')
         .onSnapshot((snapshot) => {
             notificationCounts.equipmentRequests = snapshot.size;
+            console.log(`🔔 Equipment Requests Badge: ${snapshot.size} pending requests found`);
             updateBadge('equipment-requests', notificationCounts.equipmentRequests);
+        }, (error) => {
+            console.error('❌ Equipment requests badge listener error:', error);
         });
     
     notificationListeners.push(listener);
 }
 
 /**
- * Setup material requests badge - DISABLED (no HTML element)
+ * Setup printer issues badge
  */
-function setupMaterialRequestsBadge() {
-    console.log('⚠️ Material requests badge disabled - no HTML element exists');
-    // Badge element doesn't exist in HTML
-    return;
+function setupPrinterIssuesBadge() {
+    if (!window.db) {
+        setTimeout(setupPrinterIssuesBadge, 500);
+        return;
+    }
+    
+    console.log('🔄 Setting up printer issues badge listener...');
+    
+    const listener = window.db.collection('printers')
+        .where('status', 'in', ['broken', 'maintenance'])
+        .onSnapshot((snapshot) => {
+            notificationCounts.printerIssues = snapshot.size;
+            console.log(`🔔 Printer Issues Badge: ${snapshot.size} printers with issues found`);
+            updateBadge('printer-issues', notificationCounts.printerIssues);
+        }, (error) => {
+            console.error('❌ Printer issues badge listener error:', error);
+        });
+    
+    notificationListeners.push(listener);
 }
 
 /**
- * Setup equipment requests badge - DISABLED (no HTML element)  
- */
-function setupEquipmentRequestsBadge() {
-    console.log('⚠️ Equipment requests badge disabled - no HTML element exists');
-    // Badge element doesn't exist in HTML
-    return;
-}
-
-/**
- * Setup broken printers badge - DISABLED (no HTML element)
- */
-function setupBrokenPrintersBadge() {
-    console.log('⚠️ Broken printers badge disabled - no HTML element exists');
-    // Badge element doesn't exist in HTML  
-    return;
-}
-
-/**
- * Update badge display
+ * Update badge visibility and count
  */
 function updateBadge(badgeId, count) {
     const badge = document.querySelector(`[data-badge="${badgeId}"]`);
-    console.log(`🔄 Badge update: ${badgeId} -> ${count}`, badge ? 'found' : 'NOT FOUND');
-    
     if (badge) {
+        badge.textContent = count;
         if (count > 0) {
-            badge.textContent = count > 99 ? '99+' : count.toString();
-            badge.style.display = 'inline-block';
+            badge.style.display = 'inline';
             console.log(`✅ Badge ${badgeId} shown with count: ${count}`);
         } else {
             badge.style.display = 'none';
@@ -141,17 +162,20 @@ function debugResetAllBadges() {
         paymentRequests: 0,
         materialRequests: 0,
         materialOrders: 0,
+        equipmentRequests: 0,
         brokenPrinters: 0,
+        printerIssues: 0,
         problemReports: 0,
         printerStatusChanges: 0,
         printerDefectReports: 0
     };
     
-    // Update all badges
-    Object.keys(notificationCounts).forEach(key => {
-        const badgeId = key.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, '');
-        updateBadge(badgeId, 0);
-    });
+    // Hide all badges
+    updateBadge('problem-reports', 0);
+    updateBadge('payment-requests', 0);
+    updateBadge('material-orders', 0);
+    updateBadge('equipment-requests', 0);
+    updateBadge('printer-issues', 0);
     
     console.log('✅ All badges reset to 0');
 }
