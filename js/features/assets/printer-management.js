@@ -368,22 +368,22 @@ function showAddPrinterForm() {
                     <form id="printerForm" onsubmit="savePrinter(event)">
                         <div class="form-group">
                             <label for="printerName">Drucker-Name *</label>
-                            <input type="text" id="printerName" class="form-control" required placeholder="z.B. Ginger Additive Beta 1.3">
+                            <input type="text" id="printerName" class="form-input" required placeholder="z.B. Ginger Additive Beta 1.3">
                         </div>
                         
                         <div class="form-group">
                             <label for="printerModel">Modell</label>
-                            <input type="text" id="printerModel" class="form-control" placeholder="z.B. Moritz, Loy, DXR25">
+                            <input type="text" id="printerModel" class="form-input" placeholder="z.B. Moritz, Loy, DXR25">
                         </div>
                         
                         <div class="form-group">
                             <label for="printerBuildVolume">Bauraum</label>
-                            <input type="text" id="printerBuildVolume" class="form-control" placeholder="z.B. 1000x1000x1000">
+                            <input type="text" id="printerBuildVolume" class="form-input" placeholder="z.B. 1000x1000x1000">
                         </div>
                         
                         <div class="form-group">
                             <label for="printerStatus">Status</label>
-                            <select id="printerStatus" class="form-control">
+                            <select id="printerStatus" class="form-select">
                                 <option value="available">Verfügbar</option>
                                 <option value="printing">In Betrieb</option>
                                 <option value="maintenance">Wartung</option>
@@ -393,12 +393,12 @@ function showAddPrinterForm() {
                         
                         <div class="form-group">
                             <label for="printerMaterials">Materialien</label>
-                            <input type="text" id="printerMaterials" class="form-control" placeholder="z.B. PLA, PETg">
+                            <input type="text" id="printerMaterials" class="form-input" placeholder="z.B. PLA, PETg">
                         </div>
                         
                         <div class="form-group">
                             <label for="printerNotes">Notizen</label>
-                            <textarea id="printerNotes" class="form-control" rows="3" placeholder="Zusätzliche Informationen..."></textarea>
+                            <textarea id="printerNotes" class="form-textarea" rows="3" placeholder="Zusätzliche Informationen..."></textarea>
                         </div>
                     </form>
                 </div>
@@ -433,22 +433,22 @@ function editPrinter(printerId) {
                     <form id="printerForm" onsubmit="savePrinter(event)">
                         <div class="form-group">
                             <label for="printerName">Drucker-Name *</label>
-                            <input type="text" id="printerName" class="form-control" required placeholder="z.B. Ginger Additive Beta 1.3" value="${printer.name || ''}">
+                            <input type="text" id="printerName" class="form-input" required placeholder="z.B. Ginger Additive Beta 1.3" value="${printer.name || ''}">
                         </div>
                         
                         <div class="form-group">
                             <label for="printerModel">Modell</label>
-                            <input type="text" id="printerModel" class="form-control" placeholder="z.B. Moritz, Loy, DXR25" value="${printer.model || ''}">
+                            <input type="text" id="printerModel" class="form-input" placeholder="z.B. Moritz, Loy, DXR25" value="${printer.model || ''}">
                         </div>
                         
                         <div class="form-group">
                             <label for="printerBuildVolume">Bauraum</label>
-                            <input type="text" id="printerBuildVolume" class="form-control" placeholder="z.B. 1000x1000x1000" value="${printer.buildVolume || ''}">
+                            <input type="text" id="printerBuildVolume" class="form-input" placeholder="z.B. 1000x1000x1000" value="${printer.buildVolume || ''}">
                         </div>
                         
                         <div class="form-group">
                             <label for="printerStatus">Status</label>
-                            <select id="printerStatus" class="form-control">
+                            <select id="printerStatus" class="form-select">
                                 <option value="available" ${printer.status === 'available' ? 'selected' : ''}>Verfügbar</option>
                                 <option value="printing" ${printer.status === 'printing' ? 'selected' : ''}>In Betrieb</option>
                                 <option value="maintenance" ${printer.status === 'maintenance' ? 'selected' : ''}>Wartung</option>
@@ -458,12 +458,12 @@ function editPrinter(printerId) {
                         
                         <div class="form-group">
                             <label for="printerMaterials">Materialien</label>
-                            <input type="text" id="printerMaterials" class="form-control" placeholder="z.B. PLA, PETg" value="${printer.materials || ''}">
+                            <input type="text" id="printerMaterials" class="form-input" placeholder="z.B. PLA, PETg" value="${printer.materials || ''}">
                         </div>
                         
                         <div class="form-group">
                             <label for="printerNotes">Notizen</label>
-                            <textarea id="printerNotes" class="form-control" rows="3" placeholder="Zusätzliche Informationen...">${printer.notes || ''}</textarea>
+                            <textarea id="printerNotes" class="form-textarea" rows="3" placeholder="Zusätzliche Informationen...">${printer.notes || ''}</textarea>
                         </div>
                     </form>
                 </div>
@@ -492,7 +492,7 @@ function clearPrinterForm() {
  * Close printer form modal
  */
 function closePrinterForm() {
-    closeModal();
+    showPrinterManager();
     currentEditingPrinter = null;
 }
 
