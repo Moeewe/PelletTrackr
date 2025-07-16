@@ -248,7 +248,7 @@ function renderEquipmentList(equipmentList) {
             <div class="equipment-header">
                 <div class="equipment-name">${item.name}</div>
                 <div class="equipment-status-row">
-                    <span class="equipment-status ${item.status}">${getEquipmentStatusText(item.status)}</span>
+                    <span class="equipment-status ${pendingRequest ? 'requested' : item.status}">${pendingRequest ? 'Angefragt' : getEquipmentStatusText(item.status)}</span>
                     ${item.requiresDeposit ? `
                         <span class="equipment-deposit ${item.depositPaid ? 'paid' : 'unpaid'}" title="Pfand ${item.depositPaid ? 'bezahlt' : 'ausstehend'}">
                             ${item.depositAmount}€ ${item.depositPaid ? 'Bezahlt' : 'Ausstehend'}
@@ -280,8 +280,7 @@ function renderEquipmentList(equipmentList) {
             
             <div class="equipment-actions">
                 ${pendingRequest ? `
-                    <button class="btn btn-success" onclick="approveEquipmentRequest('${pendingRequest.id}', '${item.id}')">Ausleihe bestätigen</button>
-                    <button class="btn btn-danger" onclick="rejectEquipmentRequest('${pendingRequest.id}')">Ausleihe verweigern</button>
+                    <button class="btn btn-warning" onclick="showEquipmentRequests()">Anfrage beantworten</button>
                     <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
                 ` : item.status === 'available' ? `
                     <button class="btn btn-primary" onclick="borrowEquipment('${item.id}')">Ausleihen</button>

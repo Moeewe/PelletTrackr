@@ -1295,3 +1295,94 @@
 }
 
 /* ==================== END MATERIAL ORDERS STYLING ==================== */
+
+/* ==================== EQUIPMENT REQUEST STYLES ==================== */
+
+/* Equipment Request Items */
+.equipment-request-item {
+    background: white;
+    border: 2px solid #000000;
+    margin-bottom: 16px;
+    padding: 16px;
+    transition: all 0.2s ease;
+}
+
+.equipment-request-item:hover {
+    background: #f8f8f8;
+}
+
+.equipment-request-item.pending {
+    border-left: 4px solid #FFC107;
+}
+
+.equipment-request-item.approved {
+    border-left: 4px solid #4CAF50;
+}
+
+.equipment-request-item.given {
+    border-left: 4px solid #2196F3;
+}
+
+.equipment-request-item.returned {
+    border-left: 4px solid #9E9E9E;
+}
+
+.equipment-request-item.rejected {
+    border-left: 4px solid #F44336;
+}
+
+.request-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.request-user {
+    font-weight: 600;
+    color: #000000;
+}
+
+.request-date {
+    font-size: 12px;
+    color: #666;
+}
+
+.request-details {
+    margin: 12px 0;
+}
+
+.request-details > div {
+    margin-bottom: 6px;
+    color: #333;
+}
+
+.request-reason {
+    margin: 12px 0;
+    line-height: 1.5;
+    color: #333;
+    font-style: italic;
+}
+
+.request-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.request-actions .btn {
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+.request-status {
+    padding: 8px 16px;
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 0;
+    font-weight: 600;
+    color: #666;
+}
+
+/* ==================== END EQUIPMENT REQUEST STYLES ==================== */

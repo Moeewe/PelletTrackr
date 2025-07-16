@@ -384,7 +384,7 @@ function showEquipmentRequests() {
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
+            <button class="btn btn-secondary" onclick="cancelModal()">Abbrechen</button>
         </div>
     `;
     
@@ -852,10 +852,15 @@ async function deleteEquipmentRequest(requestId) {
  */
 function getDurationText(duration) {
     const durationMap = {
+        '1_hour': '1 Stunde',
         '2_hours': '2 Stunden',
+        '3_hours': '3 Stunden',
+        '4_hours': '4 Stunden',
         'half_day': 'Halber Tag',
         'full_day': 'Ganzer Tag',
         'week': '1 Woche',
+        '2_weeks': '2 Wochen',
+        'month': '1 Monat',
         'other': 'Andere'
     };
     return durationMap[duration] || duration || 'Nicht angegeben';
