@@ -1615,6 +1615,10 @@ function renderMyMaterialRequests(requests) {
                         <button class="btn btn-danger btn-sm" onclick="deleteMaterialRequest('${request.id}')">
                             Löschen
                         </button>
+                    ` : request.status === 'approved' ? `
+                        <button class="btn btn-danger btn-sm" onclick="deleteMaterialRequest('${request.id}')">
+                            Löschen
+                        </button>
                     ` : ''}
                 </div>
             </div>
@@ -1737,6 +1741,25 @@ async function saveMaterialRequestEdit(requestId) {
  */
 async function deleteMaterialRequest(requestId) {
     try {
+        // Get request details for confirmation message
+        const requestDoc = await window.db.collection('materialOrders').doc(requestId).get();
+        if (!requestDoc.exists) {
+            toast.error('Material-Wunsch nicht gefunden');
+            return;
+        }
+        
+        const requestData = requestDoc.data();
+        const isApproved = requestData.status === 'approved';
+        
+        // Show appropriate confirmation message
+        const confirmMessage = isApproved 
+            ? 'Möchten Sie diesen genehmigten Material-Wunsch wirklich löschen?\n\nDies entfernt ihn auch aus der Admin-Einkaufsliste.' 
+            : 'Möchten Sie diesen Material-Wunsch wirklich löschen?';
+            
+        if (!confirm(confirmMessage)) {
+            return;
+        }
+        
         // First remove from display immediately with multiple selector strategies
         let requestElement = document.querySelector(`[onclick*="deleteMaterialRequest('${requestId}')"]`)?.closest('.entry-card');
         
