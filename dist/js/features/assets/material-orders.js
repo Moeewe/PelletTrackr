@@ -303,16 +303,13 @@ function showMaterialOrders() {
                     <div class="order-tabs">
                         <button class="tab-btn active" onclick="showOrderTab('requests')">
                             Bestellanfragen
-                            <span class="notification-badge" id="requestsCounter" style="display: none;">0</span>
                         </button>
 
                         <button class="tab-btn" onclick="showOrderTab('shopping')">
                             Einkaufsliste
-                            <span class="notification-badge" id="shoppingCounter" style="display: none;">0</span>
                         </button>
                         <button class="tab-btn" onclick="showOrderTab('history')">
                             Verlauf
-                            <span class="notification-badge" id="historyCounter" style="display: none;">0</span>
                         </button>
                     </div>
                     
@@ -500,29 +497,7 @@ function updateTabCounters() {
     
     console.log(`📊 Tab Counters - Requests: ${requestsCount}, Shopping: ${shoppingCount}, History: ${historyCount}`);
     
-    // Update counter elements
-    const requestsCounter = document.getElementById('requestsCounter');
-    const shoppingCounter = document.getElementById('shoppingCounter');
-    const historyCounter = document.getElementById('historyCounter');
-    // Header badge entfernt - nur Tab-Badges verwenden
-    
-    if (requestsCounter) {
-        requestsCounter.textContent = requestsCount;
-        requestsCounter.style.display = requestsCount > 0 ? 'inline-block' : 'none';
-        console.log(`✅ Requests badge updated: ${requestsCount}`);
-    }
-    
-    if (shoppingCounter) {
-        shoppingCounter.textContent = shoppingCount;
-        shoppingCounter.style.display = shoppingCount > 0 ? 'inline-block' : 'none';
-        console.log(`✅ Shopping badge updated: ${shoppingCount}`);
-    }
-    
-    if (historyCounter) {
-        historyCounter.textContent = historyCount;
-        historyCounter.style.display = historyCount > 0 ? 'inline-block' : 'none';
-        console.log(`✅ History badge updated: ${historyCount}`);
-    }
+    // Counter badges wurden entfernt für ein sauberes UI
 }
 
 /**

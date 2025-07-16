@@ -32,27 +32,11 @@ function initNotificationBadges() {
 }
 
 /**
- * Setup material orders badge
+ * Setup material orders badge - DISABLED for cleaner UI
  */
 function setupMaterialOrdersBadge() {
-    if (!window.db) {
-        setTimeout(setupMaterialOrdersBadge, 500);
-        return;
-    }
-    
-    console.log('🔄 Setting up material orders badge listener...');
-    
-    const listener = window.db.collection('materialOrders')
-        .where('status', '==', 'pending')
-        .onSnapshot((snapshot) => {
-            notificationCounts.materialOrders = snapshot.size;
-            console.log(`🔔 Material Orders Badge: ${snapshot.size} pending orders found`);
-            updateBadge('material-orders', notificationCounts.materialOrders);
-        }, (error) => {
-            console.error('❌ Material orders badge listener error:', error);
-        });
-    
-    notificationListeners.push(listener);
+    // Badge removed for cleaner UI
+    console.log('🔄 Material orders badge disabled for cleaner UI');
 }
 
 /**

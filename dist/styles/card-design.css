@@ -768,6 +768,12 @@
     gap: 8px;
     min-width: 120px;
     justify-content: center;
+    outline: none;
+}
+
+.tab-btn:focus {
+    outline: none;
+    border-bottom: 4px solid #000000;
 }
 
 .tab-btn.active {
@@ -787,30 +793,7 @@
     border-bottom: 4px solid #000000;
 }
 
-.tab-counter {
-    background: #FF5722;
-    color: white;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 2px 6px;
-    border-radius: 0;
-    margin-left: 8px;
-    min-width: 18px;
-    text-align: center;
-    display: inline-block;
-    line-height: 1.2;
-}
-
-.tab-btn.active .tab-counter {
-    background: #FFEB00;
-    color: #000000;
-    border: 1px solid #000000;
-}
-
-.tab-counter:empty,
-.tab-counter[data-count="0"] {
-    display: none;
-}
+/* Tab counter styles removed for cleaner UI */
 
 /* Equipment Items */
 .equipment-item {
