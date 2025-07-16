@@ -357,7 +357,7 @@ async function deleteProblemReport(reportId) {
 /**
  * Show equipment requests modal
  */
-function showEquipmentRequests() {
+function showEquipmentRequests(equipmentId = null) {
     const modalContent = `
         <div class="modal-header">
             <h3>Equipment-Anfragen verwalten</h3>
@@ -389,6 +389,10 @@ function showEquipmentRequests() {
     `;
     
     showModalWithContent(modalContent);
+    
+    // Store the equipmentId for filtering after data loads
+    window.highlightEquipmentId = equipmentId;
+    
     setupEquipmentRequestsListener();
 }
 
@@ -492,18 +496,27 @@ function renderEquipmentRequests(statusFilter = 'all') {
     if (statusFilter !== 'all') {
         filteredRequests = adminEquipmentRequests.filter(request => request.status === statusFilter);
     }
+
+    // If an equipmentId is provided, filter requests for that specific equipment
+    if (window.highlightEquipmentId) {
+        filteredRequests = filteredRequests.filter(request => request.equipmentId === window.highlightEquipmentId);
+    }
     
     if (filteredRequests.length === 0) {
+        const emptyMessage = window.highlightEquipmentId 
+            ? `<p>Keine Anfragen für dieses Equipment gefunden.</p>`
+            : `<p>Keine Ausleih-Anfragen gefunden.</p>`;
         container.innerHTML = `
             <div class="empty-state">
-                <p>Keine Ausleih-Anfragen gefunden.</p>
+                ${emptyMessage}
+                ${window.highlightEquipmentId ? `<button class="btn btn-secondary" onclick="clearEquipmentFilter()">Alle Anfragen anzeigen</button>` : ''}
             </div>
         `;
         return;
     }
     
     container.innerHTML = filteredRequests.map(request => `
-        <div class="equipment-request-item ${request.status}">
+        <div class="equipment-request-item ${request.status} ${window.highlightEquipmentId && request.equipmentId === window.highlightEquipmentId ? 'highlighted' : ''}" id="request-${request.id}">
             <div class="request-header">
                 <div class="request-user">
                     <strong>${request.userName}</strong> (${request.userKennung})
@@ -542,6 +555,16 @@ function renderEquipmentRequests(statusFilter = 'all') {
             `}
         </div>
     `).join('');
+    
+    // Auto-scroll to highlighted request if exists
+    if (window.highlightEquipmentId && filteredRequests.length > 0) {
+        setTimeout(() => {
+            const firstHighlighted = container.querySelector('.highlighted');
+            if (firstHighlighted) {
+                firstHighlighted.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 100);
+    }
 }
 
 /**
@@ -866,6 +889,14 @@ function getDurationText(duration) {
     return durationMap[duration] || duration || 'Nicht angegeben';
 }
 
+/**
+ * Clear the equipment filter and re-render all equipment requests
+ */
+function clearEquipmentFilter() {
+    window.highlightEquipmentId = null;
+    renderEquipmentRequests();
+}
+
 // ==================== GLOBAL EXPORTS ====================
 // Admin Problem Reports-Funktionen global verfügbar machen
 window.showProblemReports = showProblemReports;
@@ -880,5 +911,6 @@ window.updateEquipmentRequestStatus = updateEquipmentRequestStatus;
 window.markEquipmentAsGiven = markEquipmentAsGiven;
 window.markEquipmentAsReturned = markEquipmentAsReturned;
 window.deleteEquipmentRequest = deleteEquipmentRequest;
+window.clearEquipmentFilter = clearEquipmentFilter;
 
 console.log('🚨 Admin Problem Reports Module loaded'); 

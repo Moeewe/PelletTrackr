@@ -280,7 +280,7 @@ function renderEquipmentList(equipmentList) {
             
             <div class="equipment-actions">
                 ${pendingRequest ? `
-                    <button class="btn btn-warning" onclick="showEquipmentRequests()">Anfrage beantworten</button>
+                    <button class="btn btn-warning" onclick="showEquipmentRequests('${item.id}')">Anfrage beantworten</button>
                     <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
                 ` : item.status === 'available' ? `
                     <button class="btn btn-primary" onclick="borrowEquipment('${item.id}')">Ausleihen</button>
