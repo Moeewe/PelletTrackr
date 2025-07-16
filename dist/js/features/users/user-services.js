@@ -1200,7 +1200,7 @@ function renderMyProblemReports(reports) {
                         <button class="btn btn-secondary btn-sm" onclick="editProblemReport('${report.id}')">
                             Bearbeiten
                         </button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteProblemReport('${report.id}')">
+                        <button class="btn btn-danger btn-sm" onclick="deleteUserProblemReport('${report.id}')">
                             Löschen
                         </button>
                     ` : ''}
@@ -1322,77 +1322,99 @@ async function saveProblemReportEdit(reportId) {
 }
 
 /**
- * Delete problem report
+ * Delete problem report (User version)
  */
-async function deleteProblemReport(reportId) {
+async function deleteUserProblemReport(reportId) {
+    if (!confirm('Möchten Sie diese Problem-Meldung wirklich löschen?')) {
+        return;
+    }
+    
     try {
-        // First remove from display immediately with multiple selector strategies
-        let reportElement = document.querySelector(`[onclick*="deleteProblemReport('${reportId}')"]`)?.closest('.entry-card');
+        console.log(`🗑️ User Delete Problem Report: ${reportId}`);
         
-        // Fallback selector strategies
-        if (!reportElement) {
-            reportElement = document.querySelector(`[onclick="deleteProblemReport('${reportId}')"]`)?.closest('.entry-card');
+        // More robust element selection for user problem reports
+        let reportElement = null;
+        
+        // Strategy 1: Find by exact onclick match in myProblemReportsList container
+        const container = document.getElementById('myProblemReportsList');
+        if (container) {
+            const deleteButtons = container.querySelectorAll(`[onclick="deleteUserProblemReport('${reportId}')"]`);
+            if (deleteButtons.length > 0) {
+                reportElement = deleteButtons[0].closest('.entry-card');
+                console.log('✅ Found element via exact onclick match');
+            }
         }
         
-        // Additional fallback: find all entry cards and match by data or content
-        if (!reportElement) {
-            const allCards = document.querySelectorAll('.entry-card');
+        // Strategy 2: Find by partial onclick match
+        if (!reportElement && container) {
+            const allCards = container.querySelectorAll('.entry-card');
             for (const card of allCards) {
-                const deleteBtn = card.querySelector(`[onclick*="deleteProblemReport('${reportId}')"]`);
+                const deleteBtn = card.querySelector(`[onclick*="deleteUserProblemReport('${reportId}')"]`);
                 if (deleteBtn) {
                     reportElement = card;
+                    console.log('✅ Found element via partial onclick match');
                     break;
                 }
             }
         }
         
-        // Debug logging - enhanced
-        console.log(`🗑️ Delete Problem Report: ${reportId}`);
-        console.log('- Looking for element with onclick containing:', `deleteProblemReport('${reportId}')`);
-        console.log('- All delete buttons:', document.querySelectorAll('[onclick*="deleteProblemReport"]'));
-        console.log('- Found element:', reportElement ? 'YES' : 'NO');
-        
-        if (reportElement) {
-            reportElement.style.opacity = '0.5';
-            reportElement.style.pointerEvents = 'none';
-            console.log('✅ Element made transparent');
-        } else {
-            console.warn('❌ Could not find element to make transparent');
+        // Strategy 3: Find by data attribute (backup method)
+        if (!reportElement && container) {
+            const allCards = container.querySelectorAll('.entry-card');
+            for (const card of allCards) {
+                // Look for any element that contains the reportId
+                if (card.innerHTML.includes(reportId)) {
+                    reportElement = card;
+                    console.log('✅ Found element via content match');
+                    break;
+                }
+            }
         }
         
-        await window.db.collection('problemReports').doc(reportId).delete();
+        console.log('- Target container:', container ? 'FOUND' : 'NOT FOUND');
+        console.log('- Target element:', reportElement ? 'FOUND' : 'NOT FOUND');
         
-        // Immediately remove element from DOM after successful deletion
+        // Make element transparent immediately
         if (reportElement) {
-            reportElement.remove();
-            console.log('✅ Element removed from DOM');
+            reportElement.style.opacity = '0.3';
+            reportElement.style.pointerEvents = 'none';
+            reportElement.style.transition = 'opacity 0.3s ease';
+            console.log('✅ Element made transparent');
+        }
+        
+        // Delete from database
+        await window.db.collection('problemReports').doc(reportId).delete();
+        console.log('✅ Deleted from database');
+        
+        // Remove element from DOM immediately
+        if (reportElement) {
+            reportElement.style.opacity = '0';
+            setTimeout(() => {
+                reportElement.remove();
+                console.log('✅ Element removed from DOM');
+                
+                // Check if container is now empty
+                if (container) {
+                    const remainingCards = container.querySelectorAll('.entry-card');
+                    if (remainingCards.length === 0) {
+                        container.innerHTML = `
+                            <div class="empty-state">
+                                <p>Keine Problem-Meldungen vorhanden.</p>
+                                <p>Sie können über "Problem melden" neue Meldungen erstellen.</p>
+                            </div>
+                        `;
+                    }
+                }
+            }, 300);
         }
         
         toast.success('Problem-Meldung gelöscht');
-        
-        // Check if container is now empty and handle auto-close
-        const container = document.getElementById('myProblemReportsList');
-        if (container) {
-            const remainingCards = container.querySelectorAll('.entry-card');
-            if (remainingCards.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <p>Keine Problem-Meldungen vorhanden.</p>
-                        <p>Sie können über "Problem melden" neue Meldungen erstellen.</p>
-                    </div>
-                `;
-                setTimeout(() => {
-                    toast.info('Alle Meldungen wurden entfernt');
-                }, 500);
-            }
-        }
         
     } catch (error) {
         console.error('Error deleting problem report:', error);
         toast.error('Fehler beim Löschen der Problem-Meldung');
         
         // Restore element if deletion failed
-        const reportElement = document.querySelector(`[onclick*="deleteProblemReport('${reportId}')"]`)?.closest('.entry-card');
         if (reportElement) {
             reportElement.style.opacity = '1';
             reportElement.style.pointerEvents = 'auto';
@@ -1958,7 +1980,7 @@ window.deleteEquipmentRequest = deleteEquipmentRequest;
 window.showMyProblemReports = showMyProblemReports;
 window.editProblemReport = editProblemReport;
 window.saveProblemReportEdit = saveProblemReportEdit;
-window.deleteProblemReport = deleteProblemReport;
+window.deleteUserProblemReport = deleteUserProblemReport;
 window.showMyMaterialRequests = showMyMaterialRequests;
 window.editMaterialRequest = editMaterialRequest;
 window.saveMaterialRequestEdit = saveMaterialRequestEdit;
