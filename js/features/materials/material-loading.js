@@ -913,6 +913,25 @@ window.showEditMasterbatchForm = showEditMasterbatchForm;
 
 // ==================== MATERIAL LOADING MODULE ====================
 
-// Alle Funktionen sind bereits global verfügbar
+// Loading functions global verfügbar machen
+window.loadMaterials = loadMaterials;
+window.loadMasterbatches = loadMasterbatches;
+window.loadMaterialsForManagement = loadMaterialsForManagement;
+window.loadMasterbatchesForManagement = loadMasterbatchesForManagement;
+
+// Management functions global verfügbar machen
+window.showMaterialManager = showMaterialManager;
+window.closeMaterialManager = closeMaterialManager;
+window.showMasterbatchManager = showMasterbatchManager;
+window.closeMasterbatchManager = closeMasterbatchManager;
+
+// Add functions global verfügbar machen
+window.addMaterial = addMaterial;
+window.addMasterbatch = addMasterbatch;
+
+// Delete functions global verfügbar machen
+window.deleteMaterial = deleteMaterial;
+window.deleteMasterbatch = deleteMasterbatch;
+
 console.log("🏭 Material Loading Module geladen");
 

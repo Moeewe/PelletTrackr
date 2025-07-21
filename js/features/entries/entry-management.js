@@ -3,8 +3,9 @@
 
 // Neuen Druck hinzufügen
 async function addEntry() {
-  const name = document.getElementById("name").value;
-  const kennung = document.getElementById("kennung").value;
+  // Get user data from current session
+  const name = window.currentUser?.name;
+  const kennung = window.currentUser?.kennung;
   const material = document.getElementById("material").value;
   const materialMenge = document.getElementById("materialMenge").value;
   const masterbatch = document.getElementById("masterbatch").value;
@@ -13,13 +14,8 @@ async function addEntry() {
   const jobNotes = document.getElementById("jobNotes").value;
 
   // Validation
-  if (!name) {
-    toast.warning("Bitte Namen eingeben!");
-    return;
-  }
-
-  if (!kennung) {
-    toast.warning("Bitte FH-Kennung eingeben!");
+  if (!name || !kennung) {
+    window.toast.error("Benutzerdaten nicht verfügbar. Bitte melden Sie sich erneut an.");
     return;
   }
 
@@ -28,7 +24,7 @@ async function addEntry() {
   const hasMasterbatch = masterbatch && masterbatchMenge;
 
   if (!hasMaterial && !hasMasterbatch) {
-    toast.warning("Bitte mindestens Material oder Masterbatch auswählen!");
+    window.toast.warning("Bitte mindestens Material oder Masterbatch auswählen!");
     return;
   }
 
@@ -37,12 +33,12 @@ async function addEntry() {
   const masterbatchMengeNum = parseFloat(masterbatchMenge) || 0;
 
   if (hasMaterial && (isNaN(materialMengeNum) || materialMengeNum <= 0)) {
-    toast.warning("Bitte eine gültige Material-Menge eingeben!");
+    window.toast.warning("Bitte eine gültige Material-Menge eingeben!");
     return;
   }
 
   if (hasMasterbatch && (isNaN(masterbatchMengeNum) || masterbatchMengeNum <= 0)) {
-    toast.warning("Bitte eine gültige Masterbatch-Menge eingeben!");
+    window.toast.warning("Bitte eine gültige Masterbatch-Menge eingeben!");
     return;
   }
 
@@ -98,15 +94,17 @@ async function addEntry() {
 
     clearForm();
     
-    // Dashboard aktualisieren
+    // Dashboard aktualisieren - sowohl User als auch Admin
+    if (window.loadUserStats) window.loadUserStats();
+    if (window.loadUserEntries) window.loadUserEntries();
     if (window.loadAdminStats) window.loadAdminStats();
     if (window.loadAllEntries) window.loadAllEntries();
     
-    toast.success("Druck erfolgreich gespeichert!");
+    window.toast.success("Druck erfolgreich gespeichert!");
 
   } catch (error) {
     console.error("Error adding entry:", error);
-    toast.error("Fehler beim Speichern: " + error.message);
+    window.toast.error("Fehler beim Speichern: " + error.message);
   }
 }
 
@@ -132,11 +130,11 @@ async function deleteEntry(id) {
     if (window.loadAdminStats) window.loadAdminStats();
     if (window.loadAllEntries) window.loadAllEntries();
     
-    toast.success("Eintrag erfolgreich gelöscht!");
+    window.toast.success("Eintrag erfolgreich gelöscht!");
 
   } catch (error) {
     console.error("Error deleting entry:", error);
-    toast.error("Fehler beim Löschen: " + error.message);
+    window.toast.error("Fehler beim Löschen: " + error.message);
   }
 }
 
@@ -163,11 +161,11 @@ async function markEntryAsPaid(entryId) {
     
     if (window.loadAdminStats) window.loadAdminStats();
     if (window.loadAllEntries) window.loadAllEntries();
-    toast.success("Als bezahlt markiert!");
+    window.toast.success("Als bezahlt markiert!");
 
   } catch (error) {
     console.error('Fehler beim Markieren als bezahlt:', error);
-    toast.error("Fehler beim Markieren als bezahlt: " + error.message);
+    window.toast.error("Fehler beim Markieren als bezahlt: " + error.message);
   }
 }
 
@@ -192,11 +190,11 @@ async function markEntryAsUnpaid(entryId) {
     
     if (window.loadAdminStats) window.loadAdminStats();
     if (window.loadAllEntries) window.loadAllEntries();
-    toast.success("Als unbezahlt markiert!");
+    window.toast.success("Als unbezahlt markiert!");
 
   } catch (error) {
     console.error('Fehler beim Markieren als unbezahlt:', error);
-    toast.error("Fehler beim Markieren als unbezahlt: " + error.message);
+    window.toast.error("Fehler beim Markieren als unbezahlt: " + error.message);
   }
 }
 
@@ -330,3 +328,12 @@ function clearForm() {
   if (jobNotes) jobNotes.value = '';
   if (costPreview) costPreview.textContent = '0,00 €';
 }
+
+// ==================== GLOBAL EXPOSURE ====================
+// Funktionen global verfügbar machen
+
+window.addEntry = addEntry;
+window.deleteEntry = deleteEntry;
+window.markEntryAsPaid = markEntryAsPaid;
+window.markEntryAsUnpaid = markEntryAsUnpaid;
+window.clearForm = clearForm;
