@@ -79,8 +79,9 @@ async function loadMasterbatches() {
 
 // Drucker laden (direkt aus Firestore)
 async function loadPrinters() {
-      console.log("🔄 loadPrinters() gestartet - Version 2.0");
-    
+  console.log("🔄 loadPrinters() gestartet - Version 3.0");
+  
+  try {
     // Warte bis DOM bereit ist
     let select = document.getElementById("printer");
     let attempts = 0;
@@ -94,32 +95,33 @@ async function loadPrinters() {
       select = document.getElementById("printer");
       attempts++;
     }
-  
-  if (!select) {
-    console.error("❌ Printer select element nach", maxAttempts, "Versuchen nicht gefunden");
-    console.log("🔍 Verfügbare Elemente mit 'printer' im Namen:");
-    const allElements = document.querySelectorAll('*');
-    allElements.forEach(el => {
-      if (el.id && el.id.includes('printer')) {
-        console.log("  -", el.id, el.tagName);
-      }
-    });
-    return Promise.resolve();
-  }
-  
-  console.log("✅ Printer select element gefunden:", select);
-  
-  select.innerHTML = '<option value="">Lade Drucker...</option>';
-  
-  console.log("🔄 Lade Drucker...");
-  
-  try {
+    
+    if (!select) {
+      console.error("❌ Printer select element nach", maxAttempts, "Versuchen nicht gefunden");
+      console.log("🔍 Verfügbare Elemente mit 'printer' im Namen:");
+      const allElements = document.querySelectorAll('*');
+      allElements.forEach(el => {
+        if (el.id && el.id.includes('printer')) {
+          console.log("  -", el.id, el.tagName);
+        }
+      });
+      return Promise.resolve();
+    }
+    
+    console.log("✅ Printer select element gefunden:", select);
+    console.log("📋 Aktuelle Optionen vor Laden:", select.options.length);
+    
+    select.innerHTML = '<option value="">Lade Drucker...</option>';
+    
+    console.log("🔄 Lade Drucker aus Firebase...");
+    
     if (!window.db) {
       console.error("❌ Firebase nicht verfügbar");
       select.innerHTML = '<option value="">Firebase nicht verfügbar</option>';
       return Promise.resolve();
     }
     
+    console.log("📡 Firebase-Verbindung verfügbar, hole Drucker-Daten...");
     const snapshot = await window.db.collection("printers").get();
     console.log("📊 Printers-Snapshot:", snapshot.size, "Dokumente");
     
@@ -131,19 +133,24 @@ async function loadPrinters() {
       return Promise.resolve();
     }
     
+    console.log("🔄 Erstelle Drucker-Optionen...");
     let loadedCount = 0;
+    
     snapshot.forEach(doc => {
       const printer = doc.data();
-      console.log("➕ Drucker:", printer.name, "Preis/Stunde:", printer.pricePerHour);
+      console.log("➕ Verarbeite Drucker:", printer.name, "Preis/Stunde:", printer.pricePerHour);
+      
       const option = document.createElement("option");
       option.value = printer.name;
       option.dataset.pricePerHour = printer.pricePerHour || 0;
       option.textContent = `${printer.name}${printer.pricePerHour ? ` (${printer.pricePerHour.toFixed(2)}€/h)` : ''}`;
+      
+      console.log(`📝 Erstelle Option: "${option.textContent}" (value: "${option.value}", pricePerHour: ${option.dataset.pricePerHour})`);
+      
       select.appendChild(option);
       loadedCount++;
       
-      // Debug: Überprüfe, ob pricePerHour korrekt gesetzt wurde
-      console.log(`🔍 Option erstellt: ${printer.name}, dataset.pricePerHour: ${option.dataset.pricePerHour}`);
+      console.log(`✅ Option ${loadedCount} hinzugefügt`);
     });
     
     console.log(`✅ ${loadedCount} Drucker erfolgreich geladen!`);
@@ -160,6 +167,7 @@ async function loadPrinters() {
     
     if (options.length <= 1) {
       console.warn("⚠️ Nur Standard-Option gefunden, Drucker wurden nicht hinzugefügt");
+      console.log("🔍 Debug: Select-InnerHTML:", select.innerHTML);
     } else {
       console.log("✅ Drucker-Optionen erfolgreich hinzugefügt!");
     }
@@ -175,7 +183,13 @@ async function loadPrinters() {
     
   } catch (e) {
     console.error("❌ Fehler beim Laden der Drucker:", e);
-    select.innerHTML = '<option value="">Fehler beim Laden</option>';
+    console.error("❌ Fehler-Details:", e.message, e.stack);
+    
+    const select = document.getElementById("printer");
+    if (select) {
+      select.innerHTML = '<option value="">Fehler beim Laden</option>';
+    }
+    
     return Promise.reject(e);
   }
 }
