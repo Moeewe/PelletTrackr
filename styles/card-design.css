@@ -2043,10 +2043,20 @@
     margin: 0;
     outline: none;
     box-shadow: none;
+    /* Force override any inherited colors */
+    color: #000000 !important;
+    text-decoration: none;
+    font-family: inherit;
+    line-height: 1.2;
+    vertical-align: middle;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
 }
 
 .printer-card .printer-status-grid .status-btn:hover {
     background: #f0f0f0 !important;
+    color: #000000 !important;
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
@@ -2090,5 +2100,21 @@
     .printer-card .printer-status-grid .status-btn {
         padding: 8px 10px;
         font-size: 11px;
+        color: #000000 !important;
     }
+}
+
+/* Additional specificity to override any button styles */
+.printer-card .printer-status-grid .status-btn,
+.printer-card .printer-status-grid .status-btn:focus,
+.printer-card .printer-status-grid .status-btn:active,
+.printer-card .printer-status-grid .status-btn:visited {
+    color: #000000 !important;
+}
+
+.printer-card .printer-status-grid .status-btn.active,
+.printer-card .printer-status-grid .status-btn.active:focus,
+.printer-card .printer-status-grid .status-btn.active:active,
+.printer-card .printer-status-grid .status-btn.active:visited {
+    color: #ffffff !important;
 }
