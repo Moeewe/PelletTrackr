@@ -979,9 +979,19 @@ async function showEditMaterialForm(materialId, material) {
               <label class="form-label">Name</label>
               <input type="text" id="editMaterialName" class="form-input" value="${material.name}" required>
             </div>
-            <div class="form-group">
-              <label class="form-label">Hersteller</label>
-              <input type="text" id="editMaterialManufacturer" class="form-input" value="${material.manufacturer || ''}">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Typ</label>
+                <select id="editMaterialType" class="form-select" required>
+                  <option value="">Typ auswählen...</option>
+                  <option value="pellet" ${material.type === 'pellet' ? 'selected' : ''}>Pellets</option>
+                  <option value="filament" ${material.type === 'filament' ? 'selected' : ''}>Filament</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Hersteller</label>
+                <input type="text" id="editMaterialManufacturer" class="form-input" value="${material.manufacturer || ''}">
+              </div>
             </div>
             <div class="form-row">
               <div class="form-group">
@@ -1060,13 +1070,14 @@ function closeEditMasterbatchModal() {
 
 async function updateMaterial(materialId) {
   const name = document.getElementById('editMaterialName').value.trim();
+  const type = document.getElementById('editMaterialType').value;
   const manufacturer = document.getElementById('editMaterialManufacturer').value.trim();
   const netPrice = parseFloat(document.getElementById('editMaterialNetPrice').value);
   const taxRate = parseFloat(document.getElementById('editMaterialTaxRate').value) || 19;
   const markup = parseFloat(document.getElementById('editMaterialMarkup').value) || 30;
   
-  if (!name || isNaN(netPrice) || netPrice <= 0) {
-    showToast('Bitte gültigen Namen und EK-Netto-Preis eingeben!', 'warning');
+  if (!name || !type || isNaN(netPrice) || netPrice <= 0) {
+    showToast('Bitte gültigen Namen, Typ und EK-Netto-Preis eingeben!', 'warning');
     return;
   }
   
@@ -1076,6 +1087,7 @@ async function updateMaterial(materialId) {
   try {
     await window.db.collection('materials').doc(materialId).update({
       name: name,
+      type: type,
       manufacturer: manufacturer || 'Unbekannt',
       netPrice: netPrice,
       taxRate: taxRate,
