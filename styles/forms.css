@@ -27,13 +27,19 @@
 }
 
 /* Entry Form Container - Sauberes weißes Design */
-.entry-form,
 .form-section {
   background: white;
   border: 2px solid #000000;
   border-radius: 0;
   padding: 32px;
   margin-bottom: 24px;
+}
+
+.entry-form {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin-bottom: 0;
 }
 
 .form-section h2 {
