@@ -1017,7 +1017,7 @@ function updateMachineOverview() {
     if (inUseElement) inUseElement.textContent = inUse;
     if (maintenanceElement) maintenanceElement.textContent = maintenance;
     
-    console.log(`📊 Machine Overview Updated: ${available} available, ${inUse} in use, ${maintenance} maintenance`);
+    console.log(`📊 Printer Overview Updated: ${available} available, ${inUse} in use, ${maintenance} maintenance`);
 }
 
 console.log("🔧 Equipment Management Module geladen"); 

@@ -262,7 +262,6 @@
                     <span class="highlight">Pellet</span>Trackr
                 </h1>
                 <div class="user-info">
-                    <span id="adminWelcome">Admin Dashboard</span>
                     <button class="btn btn-secondary admin-toggle" onclick="toggleAdminView()">
                         Benutzer
                     </button>
@@ -270,25 +269,25 @@
                 </div>
             </div>
 
-            <!-- Live Machine Overview -->
+            <!-- Live Printer Overview -->
             <div class="machine-overview-section">
                 <div class="machine-overview-header">
-                    <span class="machine-overview-title">Maschinen</span>
+                    <span class="machine-overview-title" onclick="showPrinterManager()">Drucker</span>
                 </div>
                 <div class="machine-status-grid">
-                    <div class="machine-status-item" onclick="showEquipmentManager()">
+                    <div class="machine-status-item" onclick="showPrinterManager()">
                         <div class="status-circle status-available">
                             <span class="status-number" id="availableMachines">0</span>
                         </div>
                         <span class="status-label">Verfügbar</span>
                     </div>
-                    <div class="machine-status-item" onclick="showEquipmentManager()">
+                    <div class="machine-status-item" onclick="showPrinterManager()">
                         <div class="status-circle status-in-use">
                             <span class="status-number" id="inUseMachines">0</span>
                         </div>
                         <span class="status-label">In Betrieb</span>
                     </div>
-                    <div class="machine-status-item" onclick="showEquipmentManager()">
+                    <div class="machine-status-item" onclick="showPrinterManager()">
                         <div class="status-circle status-maintenance">
                             <span class="status-number" id="maintenanceMachines">0</span>
                         </div>
