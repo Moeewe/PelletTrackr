@@ -82,17 +82,17 @@
   border-right: none;
 }
 
-/* Flexible Spaltenbreiten */
-.data-table th:nth-child(1), .data-table td:nth-child(1) { width: auto; min-width: 100px; } /* Datum */
-.data-table th:nth-child(2), .data-table td:nth-child(2) { width: auto; min-width: 120px; } /* Job */
-.data-table th:nth-child(3), .data-table td:nth-child(3) { width: auto; min-width: 100px; } /* Material */
-.data-table th:nth-child(4), .data-table td:nth-child(4) { width: auto; min-width: 80px; } /* Menge */
-.data-table th:nth-child(5), .data-table td:nth-child(5) { width: auto; min-width: 100px; } /* Masterbatch */
-.data-table th:nth-child(6), .data-table td:nth-child(6) { width: auto; min-width: 80px; } /* MB Menge */
-.data-table th:nth-child(7), .data-table td:nth-child(7) { width: auto; min-width: 90px; } /* Kosten */
-.data-table th:nth-child(8), .data-table td:nth-child(8) { width: auto; min-width: 80px; } /* Status */
-.data-table th:nth-child(9), .data-table td:nth-child(9) { width: auto; min-width: 150px; } /* Notizen */
-.data-table th:nth-child(10), .data-table td:nth-child(10) { width: auto; min-width: 200px; } /* Aktionen */
+/* Spaltenbreiten an Inhalt orientiert */
+.data-table th:nth-child(1), .data-table td:nth-child(1) { width: auto; min-width: 120px; } /* Datum */
+.data-table th:nth-child(2), .data-table td:nth-child(2) { width: auto; min-width: 150px; } /* Job */
+.data-table th:nth-child(3), .data-table td:nth-child(3) { width: auto; min-width: 200px; } /* Material */
+.data-table th:nth-child(4), .data-table td:nth-child(4) { width: auto; min-width: 100px; } /* Menge */
+.data-table th:nth-child(5), .data-table td:nth-child(5) { width: auto; min-width: 150px; } /* Masterbatch */
+.data-table th:nth-child(6), .data-table td:nth-child(6) { width: auto; min-width: 120px; } /* MB Menge */
+.data-table th:nth-child(7), .data-table td:nth-child(7) { width: auto; min-width: 100px; } /* Kosten */
+.data-table th:nth-child(8), .data-table td:nth-child(8) { width: auto; min-width: 100px; } /* Status */
+.data-table th:nth-child(9), .data-table td:nth-child(9) { width: auto; min-width: 200px; } /* Notizen */
+.data-table th:nth-child(10), .data-table td:nth-child(10) { width: auto; min-width: 250px; } /* Aktionen */
 
 /* Spezielle Behandlung für Notizen-Spalte */
 .data-table td[data-label="Notizen"],
@@ -103,15 +103,11 @@
   overflow-wrap: break-word;
 }
 
-/* Aktionen-Spalte spezielle Behandlung */
+/* Aktionen-Spalte normale Behandlung */
 .data-table td.actions,
 .data-table td:last-child {
   white-space: nowrap !important;
-  position: sticky;
-  right: 0;
   background: white;
-  z-index: 10;
-  box-shadow: -2px 0 4px rgba(0,0,0,0.1);
 }
 
 .data-table .actions {

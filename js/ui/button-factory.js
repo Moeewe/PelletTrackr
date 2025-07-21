@@ -16,7 +16,7 @@ const BUTTON_TYPES = {
 // Button-Aktionen Mapping für konsistente Verwendung
 const BUTTON_ACTIONS = {
   // Primäre Aktionen (schwarz)
-  EDIT: { type: BUTTON_TYPES.PRIMARY, text: 'Bearbeiten' },
+  EDIT: { type: BUTTON_TYPES.SECONDARY, text: 'Bearbeiten' },
   SAVE: { type: BUTTON_TYPES.PRIMARY, text: 'Speichern' },
   ADD: { type: BUTTON_TYPES.PRIMARY, text: 'Hinzufügen' },
   CREATE: { type: BUTTON_TYPES.PRIMARY, text: 'Erstellen' },
