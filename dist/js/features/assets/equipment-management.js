@@ -51,6 +51,9 @@ function setupEquipmentListener() {
             
             console.log('Live update: Loaded equipment:', equipment.length);
             showEquipmentCategory(currentEquipmentCategory);
+            
+            // Update machine overview in admin dashboard
+            updateMachineOverview();
         }, (error) => {
             console.error('Error in equipment listener:', error);
             safeShowToast('Fehler beim Live-Update des Equipments', 'error');
@@ -282,17 +285,21 @@ function renderEquipmentList(equipmentList) {
                 ${pendingRequest ? `
                     <button class="btn btn-warning" onclick="showEquipmentRequests('${item.id}')">Anfrage beantworten</button>
                     <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
+                    <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
                 ` : item.status === 'available' ? `
                     <button class="btn btn-primary" onclick="borrowEquipment('${item.id}')">Ausleihen</button>
                     <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
+                    <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
                 ` : item.status === 'borrowed' ? `
                     <button class="btn btn-success" onclick="returnEquipment('${item.id}')">Zurückgeben</button>
                     ${item.requiresDeposit && !item.depositPaid ? `
                         <button class="btn btn-warning" onclick="markDepositAsPaid('${item.id}')">Pfand als bezahlt markieren</button>
                     ` : ''}
                     <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
+                    <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
                 ` : `
                     <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
+                    <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
                 `}
             </div>
         </div>
@@ -572,6 +579,9 @@ async function updateEquipment(equipmentId) {
         // Return to equipment overview instead of closing modal
         showEquipmentManager();
         
+        // Update machine overview
+        updateMachineOverview();
+        
     } catch (error) {
         console.error('Error updating equipment:', error);
         safeShowToast('Fehler beim Aktualisieren', 'error');
@@ -651,6 +661,9 @@ async function borrowEquipment(equipmentId) {
         safeShowToast(`Equipment erfolgreich an ${userName} ausgeliehen`, 'success');
         // Removed manual reload - real-time listener will handle the update
         
+        // Update machine overview
+        updateMachineOverview();
+        
     } catch (error) {
         console.error('Error borrowing equipment:', error);
         safeShowToast('Fehler beim Ausleihen', 'error');
@@ -683,6 +696,9 @@ async function returnEquipment(equipmentId) {
         
         safeShowToast('Equipment erfolgreich zurückgegeben', 'success');
         // Removed manual reload - real-time listener will handle the update
+        
+        // Update machine overview
+        updateMachineOverview();
         
     } catch (error) {
         console.error('Error returning equipment:', error);
@@ -943,6 +959,65 @@ async function rejectEquipmentRequest(requestId) {
       alert('Fehler beim Ablehnen der Anfrage: ' + error.message);
     }
   }
+}
+
+/**
+ * Duplicate equipment
+ */
+async function duplicateEquipment(equipmentId) {
+    const equipmentItem = equipment.find(item => item.id === equipmentId);
+    if (!equipmentItem) {
+        safeShowToast('Equipment nicht gefunden', 'error');
+        return;
+    }
+    
+    // Create duplicate data
+    const duplicateData = {
+        name: `${equipmentItem.name} (Kopie)`,
+        category: equipmentItem.category,
+        location: equipmentItem.location,
+        description: equipmentItem.description,
+        requiresDeposit: equipmentItem.requiresDeposit,
+        depositAmount: equipmentItem.depositAmount,
+        status: 'available',
+        createdAt: new Date()
+    };
+    
+    try {
+        await window.db.collection('equipment').add(duplicateData);
+        safeShowToast('Equipment erfolgreich dupliziert', 'success');
+        
+        // Return to equipment overview instead of closing modal
+        showEquipmentManager();
+        
+    } catch (error) {
+        console.error('Error duplicating equipment:', error);
+        safeShowToast('Fehler beim Duplizieren', 'error');
+    }
+}
+
+/**
+ * Update machine overview in admin dashboard
+ */
+function updateMachineOverview() {
+    if (!equipment || equipment.length === 0) return;
+    
+    const available = equipment.filter(item => item.status === 'available').length;
+    const inUse = equipment.filter(item => item.status === 'borrowed').length;
+    const maintenance = equipment.filter(item => 
+        item.status === 'maintenance' || item.status === 'broken'
+    ).length;
+    
+    // Update display elements
+    const availableElement = document.getElementById('availableMachines');
+    const inUseElement = document.getElementById('inUseMachines');
+    const maintenanceElement = document.getElementById('maintenanceMachines');
+    
+    if (availableElement) availableElement.textContent = available;
+    if (inUseElement) inUseElement.textContent = inUse;
+    if (maintenanceElement) maintenanceElement.textContent = maintenance;
+    
+    console.log(`📊 Machine Overview Updated: ${available} available, ${inUse} in use, ${maintenance} maintenance`);
 }
 
 console.log("🔧 Equipment Management Module geladen"); 

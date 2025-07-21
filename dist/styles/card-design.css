@@ -12,7 +12,7 @@
 
 .entries-section {
   background: white;
-  border: 2px solid #000000;
+  border: none;
   border-radius: 0;
   padding: 32px;
   margin-bottom: 24px;
@@ -26,8 +26,8 @@
   font-weight: 700;
   color: #000000;
   margin-bottom: 24px;
-  text-align: center;
-  text-transform: uppercase;
+  text-align: left;
+  text-transform: none;
   letter-spacing: 0.5px;
   padding-bottom: 16px;
   border-bottom: 2px solid #000000;
@@ -38,8 +38,8 @@
   font-weight: 700;
   color: #000000;
   margin-bottom: 24px;
-  text-align: center;
-  text-transform: uppercase;
+  text-align: left;
+  text-transform: none;
   letter-spacing: 0.5px;
   padding-bottom: 16px;
   border-bottom: 2px solid #000000;
@@ -233,6 +233,124 @@
   margin: 0;
 }
 
+/* ==================== MACHINE OVERVIEW SECTION ==================== */
+
+.machine-overview-section {
+  background: white;
+  border: 2px solid #000000;
+  border-radius: 0;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.machine-overview-header {
+  margin-bottom: 20px;
+}
+
+.machine-overview-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #666;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.machine-status-grid {
+  display: flex;
+  gap: 20px;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+
+.machine-status-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.machine-status-item:hover {
+  transform: scale(1.05);
+}
+
+.status-circle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 20px;
+  color: white;
+}
+
+.status-available {
+  background: #28a745;
+}
+
+.status-in-use {
+  background: #ffc107;
+}
+
+.status-maintenance {
+  background: #dc3545;
+}
+
+.status-number {
+  font-weight: 700;
+  font-size: 20px;
+}
+
+.status-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #000000;
+  text-align: center;
+}
+
+/* ==================== PAGINIERUNG CONTROLS ==================== */
+
+.pagination-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+  padding: 20px;
+  background: #f8f8f8;
+  border: 2px solid #000000;
+  border-radius: 0;
+}
+
+.pagination-info {
+  font-size: 16px;
+  font-weight: 600;
+  color: #000000;
+  text-align: center;
+}
+
+.pagination-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.pagination-buttons .btn {
+  min-width: 140px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.pagination-buttons .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ==================== RESPONSIVE ADJUSTMENTS ==================== */
 
 @media (max-width: 480px) {
@@ -308,7 +426,7 @@
   color: #000000;
   margin: 0;
   text-align: left;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.5px;
 }
 

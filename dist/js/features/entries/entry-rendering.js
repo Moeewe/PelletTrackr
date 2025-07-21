@@ -1,6 +1,11 @@
 // ==================== ENTRY RENDERING MODULE ====================
 // Basis-Rendering für User/Admin Entry-Tabellen und Cards
 
+// Paginierung für mobile Cards
+let currentUserPage = 1;
+let currentAdminPage = 1;
+const ENTRIES_PER_PAGE = 5;
+
 // User-Drucke rendern (vollständige Version mit Card + Table)
 function renderUserEntries(entries) {
   const tableDiv = document.getElementById("userEntriesTable");
@@ -78,12 +83,18 @@ function renderUserEntries(entries) {
         </table>
       </div>
       
-      <!-- Mobile Cards -->
-      <div class="entry-cards">
+      <!-- Mobile Cards mit Paginierung -->
+      <div class="entry-cards" id="userEntryCards">
   `;
 
-  // Card-Struktur für Mobile
-  entries.forEach(entry => {
+  // Berechne Paginierung
+  const totalPages = Math.ceil(entries.length / ENTRIES_PER_PAGE);
+  const startIndex = (currentUserPage - 1) * ENTRIES_PER_PAGE;
+  const endIndex = startIndex + ENTRIES_PER_PAGE;
+  const currentEntries = entries.slice(startIndex, endIndex);
+
+  // Render nur die aktuellen Einträge
+  currentEntries.forEach(entry => {
     const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
     const isPaid = entry.paid || entry.isPaid;
     const jobName = entry.jobName || "3D-Druck Auftrag";
@@ -156,6 +167,27 @@ function renderUserEntries(entries) {
     `;
   });
 
+  // Paginierung Controls
+  if (totalPages > 1) {
+    containerHtml += `
+      <div class="pagination-controls">
+        <div class="pagination-info">
+          Seite ${currentUserPage} von ${totalPages}
+        </div>
+        <div class="pagination-buttons">
+          ${currentUserPage > 1 ? 
+            `<button class="btn btn-secondary" onclick="changeUserPage(${currentUserPage - 1})">Vorherige Seite</button>` : 
+            '<button class="btn btn-secondary" disabled>Vorherige Seite</button>'
+          }
+          ${currentUserPage < totalPages ? 
+            `<button class="btn btn-primary" onclick="changeUserPage(${currentUserPage + 1})">Nächste Seite</button>` : 
+            '<button class="btn btn-primary" disabled>Nächste Seite</button>'
+          }
+        </div>
+      </div>
+    `;
+  }
+
   containerHtml += `
       </div>
     </div>
@@ -165,6 +197,23 @@ function renderUserEntries(entries) {
   
   // Check for existing payment requests and update button states
   checkAndUpdatePaymentRequestButtons(entries);
+}
+
+// Paginierung Funktionen
+function changeUserPage(newPage) {
+  currentUserPage = newPage;
+  // Re-render mit aktuellen Einträgen
+  if (window.currentUserEntries) {
+    renderUserEntries(window.currentUserEntries);
+  }
+}
+
+function changeAdminPage(newPage) {
+  currentAdminPage = newPage;
+  // Re-render mit aktuellen Einträgen
+  if (window.currentAdminEntries) {
+    renderAdminEntries(window.currentAdminEntries);
+  }
 }
 
 // Admin-Drucke rendern (vollständige Version mit Card + Table für Admin)
@@ -253,12 +302,18 @@ function renderAdminEntries(entries) {
         </table>
       </div>
       
-      <!-- Mobile Cards für Admin -->
-      <div class="entry-cards">
+      <!-- Mobile Cards für Admin mit Paginierung -->
+      <div class="entry-cards" id="adminEntryCards">
   `;
 
+  // Berechne Paginierung für Admin
+  const totalAdminPages = Math.ceil(entries.length / ENTRIES_PER_PAGE);
+  const startAdminIndex = (currentAdminPage - 1) * ENTRIES_PER_PAGE;
+  const endAdminIndex = startAdminIndex + ENTRIES_PER_PAGE;
+  const currentAdminEntries = entries.slice(startAdminIndex, endAdminIndex);
+
   // Card-Struktur für Mobile (Admin mit mehr Feldern)
-  entries.forEach(entry => {
+  currentAdminEntries.forEach(entry => {
     const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
     const isPaid = entry.paid || entry.isPaid;
     const jobName = entry.jobName || "3D-Druck Auftrag";
@@ -343,13 +398,34 @@ function renderAdminEntries(entries) {
           ${cardActions}
         </div>
       </div>
-    `;
+        `;
   });
 
-  containerHtml += `
+  // Paginierung Controls für Admin
+  if (totalAdminPages > 1) {
+    containerHtml += `
+      <div class="pagination-controls">
+        <div class="pagination-info">
+          Seite ${currentAdminPage} von ${totalAdminPages}
+        </div>
+        <div class="pagination-buttons">
+          ${currentAdminPage > 1 ? 
+            `<button class="btn btn-secondary" onclick="changeAdminPage(${currentAdminPage - 1})">Vorherige Seite</button>` : 
+            '<button class="btn btn-secondary" disabled>Vorherige Seite</button>'
+          }
+          ${currentAdminPage < totalAdminPages ? 
+            `<button class="btn btn-primary" onclick="changeAdminPage(${currentAdminPage + 1})">Nächste Seite</button>` : 
+            '<button class="btn btn-primary" disabled>Nächste Seite</button>'
+          }
+        </div>
       </div>
-    </div>
-  `;
+    `;
+  }
+
+  containerHtml += `
+        </div>
+      </div>
+    `;
   
   tableDiv.innerHTML = containerHtml;
 }

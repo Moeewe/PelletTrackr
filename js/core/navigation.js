@@ -35,10 +35,23 @@ function updateAdminUI() {
   }
 }
 
+// Update user prints label with user's first name
+function updateUserPrintsLabel() {
+  const userPrintsLabel = document.getElementById('userPrintsLabel');
+  if (userPrintsLabel && window.currentUser && window.currentUser.name) {
+    // Extract first name (everything before the first space)
+    const firstName = window.currentUser.name.split(' ')[0];
+    userPrintsLabel.textContent = `${firstName}'s Drucke`;
+  }
+}
+
 // Dashboard-Initialisierung
 function initializeUserDashboard() {
   // Show/hide admin elements based on user type
   updateAdminUI();
+  
+  // Update user prints label with user's name
+  updateUserPrintsLabel();
   
   // Warten bis alle Funktionen verfügbar sind
   if (typeof loadMaterials === 'function' && typeof loadMasterbatches === 'function') {

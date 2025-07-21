@@ -59,9 +59,8 @@
                     <span id="userAdminBadge" class="admin-badge" style="display: none;">Admin</span>
                 </h1>
                 <div class="user-info">
-                    <span id="userWelcome">Willkommen!</span>
                     <button id="adminToggleBtn" class="btn btn-secondary admin-toggle" onclick="toggleAdminView()" style="display: none;">
-                        Admin-Ansicht
+                        Admin
                     </button>
                     <button class="btn btn-link" onclick="logout()">Abmelden</button>
                 </div>
@@ -69,11 +68,10 @@
 
             <!-- User Stats -->
             <div class="stats-section">
-                <h2 class="section-title">Deine Statistiken</h2>
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-number" id="userTotalEntries">0</div>
-                        <div class="stat-label">Drucke</div>
+                        <div class="stat-label" id="userPrintsLabel">Drucke</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-number" id="userTotalCost">0,00 €</div>
@@ -254,20 +252,45 @@
             <div class="dashboard-header">
                 <h1 class="logo">
                     <span class="highlight">Pellet</span>Trackr
-                    <span class="admin-badge">Admin</span>
                 </h1>
                 <div class="user-info">
-                    <span id="adminWelcome">Admin Dashboard - Moritz</span>
+                    <span id="adminWelcome">Admin Dashboard</span>
                     <button class="btn btn-secondary admin-toggle" onclick="toggleAdminView()">
-                        Benutzer-Ansicht
+                        Benutzer
                     </button>
                     <button class="btn btn-link" onclick="logout()">Abmelden</button>
                 </div>
             </div>
 
+            <!-- Live Machine Overview -->
+            <div class="machine-overview-section">
+                <div class="machine-overview-header">
+                    <span class="machine-overview-title">Maschinen</span>
+                </div>
+                <div class="machine-status-grid">
+                    <div class="machine-status-item" onclick="showEquipmentManager()">
+                        <div class="status-circle status-available">
+                            <span class="status-number" id="availableMachines">0</span>
+                        </div>
+                        <span class="status-label">Verfügbar</span>
+                    </div>
+                    <div class="machine-status-item" onclick="showEquipmentManager()">
+                        <div class="status-circle status-in-use">
+                            <span class="status-number" id="inUseMachines">0</span>
+                        </div>
+                        <span class="status-label">In Betrieb</span>
+                    </div>
+                    <div class="machine-status-item" onclick="showEquipmentManager()">
+                        <div class="status-circle status-maintenance">
+                            <span class="status-number" id="maintenanceMachines">0</span>
+                        </div>
+                        <span class="status-label">Wartung</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- Admin Stats -->
             <div class="stats-section">
-                <h2 class="section-title">Gesamtstatistiken</h2>
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-number" id="adminTotalEntries">0</div>

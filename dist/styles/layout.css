@@ -118,6 +118,12 @@
   font-weight: 600;
 }
 
+/* Admin mode highlight color */
+#adminDashboard .highlight {
+  background: #F44336;
+  color: white;
+}
+
 .admin-badge {
   background: #F44336;
   color: white;

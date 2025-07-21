@@ -31,8 +31,9 @@ function setupUserEntriesListener() {
           return b.timestamp.toDate() - a.timestamp.toDate();
         });
 
-        // Global speichern für Suche
+        // Global speichern für Suche und Paginierung
         window.allUserEntries = entries;
+        window.currentUserEntries = entries;
         
         renderUserEntries(entries);
         
@@ -72,8 +73,9 @@ function setupAdminEntriesListener() {
           return b.timestamp.toDate() - a.timestamp.toDate();
         });
         
-        // Global speichern für Suche
+        // Global speichern für Suche und Paginierung
         window.allAdminEntries = entries;
+        window.currentAdminEntries = entries;
         
         renderAdminEntries(entries);
         

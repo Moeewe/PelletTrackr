@@ -4,7 +4,7 @@
 /* Table Container */
 .data-table {
   background: white;
-  border: 2px solid #000000;
+  border: none;
   border-radius: 0;
   margin-bottom: 32px;
   overflow-x: auto;
@@ -41,6 +41,11 @@
 
 .data-table th:last-child {
   border-right: none;
+  position: sticky;
+  right: 0;
+  background: #f8f8f8;
+  z-index: 11;
+  box-shadow: -2px 0 4px rgba(0,0,0,0.1);
 }
 
 .data-table tbody tr {
@@ -80,6 +85,11 @@
 .data-table td:last-child {
   white-space: nowrap !important;
   min-width: 200px; /* Genug Platz für Buttons */
+  position: sticky;
+  right: 0;
+  background: white;
+  z-index: 10;
+  box-shadow: -2px 0 4px rgba(0,0,0,0.1);
 }
 
 .data-table .actions {
@@ -512,7 +522,7 @@
   margin-bottom: 24px;
   padding: 16px;
   background: #f8f8f8;
-  border: 2px solid #000000;
+  border: none;
   border-radius: 0;
   gap: 16px;
   flex-wrap: wrap;
@@ -1000,8 +1010,8 @@
   font-weight: 700;
   color: #000000;
   margin-bottom: 24px;
-  text-align: center;
-  text-transform: uppercase;
+  text-align: left;
+  text-transform: none;
   letter-spacing: 0.5px;
   padding-bottom: 16px;
   border-bottom: 2px solid #000000;
