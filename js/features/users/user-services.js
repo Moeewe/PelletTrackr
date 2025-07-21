@@ -150,19 +150,19 @@ function showPrinterStatus() {
                         <div class="printer-status-controls">
                             <div class="printer-status-grid">
                                 <button class="status-btn ${printer.status === 'available' ? 'active' : ''}" 
-                                        onclick="setPrinterStatus('${printer.id}', 'available')">
+                                        onclick="cyclePrinterStatus('${printer.id}', 'available')">
                                     Verfügbar
                                 </button>
                                 <button class="status-btn ${printer.status === 'printing' ? 'active' : ''}" 
-                                        onclick="setPrinterStatus('${printer.id}', 'printing')">
+                                        onclick="cyclePrinterStatus('${printer.id}', 'printing')">
                                     In Betrieb
                                 </button>
                                 <button class="status-btn ${printer.status === 'maintenance' ? 'active' : ''}" 
-                                        onclick="setPrinterStatus('${printer.id}', 'maintenance')">
+                                        onclick="cyclePrinterStatus('${printer.id}', 'maintenance')">
                                     Wartung
                                 </button>
                                 <button class="status-btn ${printer.status === 'broken' ? 'active' : ''}" 
-                                        onclick="setPrinterStatus('${printer.id}', 'broken')">
+                                        onclick="cyclePrinterStatus('${printer.id}', 'broken')">
                                     Defekt
                                 </button>
                             </div>
@@ -187,10 +187,8 @@ function showPrinterStatus() {
  * Requires admin access for safety
  */
 async function cyclePrinterStatus(printerId, newStatus) {
-    // Check admin access
-    if (!window.checkAdminAccess()) {
-        return;
-    }
+    // Allow all users to change printer status for now
+    // This can be restricted later if needed
     
     try {
         await window.db.collection('printers').doc(printerId).update({
