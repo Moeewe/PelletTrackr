@@ -244,6 +244,7 @@
   display: flex;
   justify-content: flex-start;
   align-items: center;
+  width: 100%;
 }
 
 .machine-overview-title {
@@ -262,6 +263,8 @@
   gap: 16px;
   align-items: center;
   flex-wrap: nowrap;
+  justify-content: center;
+  width: 100%;
 }
 
 .machine-status-item {
