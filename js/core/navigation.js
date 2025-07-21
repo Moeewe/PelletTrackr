@@ -54,9 +54,6 @@ function initializeUserDashboard() {
   // Show/hide admin elements based on user type
   updateAdminUI();
   
-  // Update user prints label with user's name
-  updateUserPrintsLabel();
-  
   // Warten bis alle Funktionen verfügbar sind
   if (typeof loadMaterials === 'function' && typeof loadMasterbatches === 'function') {
     loadMaterials().then(() => {
@@ -115,6 +112,9 @@ function initializeAdminDashboard() {
 // Event Listeners einrichten
 function setupEventListeners() {
   console.log("🔧 Event Listeners werden eingerichtet...");
+  
+  // Update user prints label with user's name (after dashboard is loaded)
+  updateUserPrintsLabel();
   
   // Live-Kostenberechnung
   const materialMenge = document.getElementById("materialMenge");
