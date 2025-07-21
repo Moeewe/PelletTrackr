@@ -1000,12 +1000,15 @@ async function duplicateEquipment(equipmentId) {
  * Update machine overview in admin dashboard
  */
 function updateMachineOverview() {
-    // Get printer data from user services instead of equipment
-    if (typeof userPrinters === 'undefined' || !userPrinters || userPrinters.length === 0) return;
+    // Get printer data from printer management system
+    if (typeof printers === 'undefined' || !printers || printers.length === 0) {
+        console.log('📊 No printers data available for overview update');
+        return;
+    }
     
-    const available = userPrinters.filter(printer => printer.status === 'available').length;
-    const inUse = userPrinters.filter(printer => printer.status === 'printing').length;
-    const maintenance = userPrinters.filter(printer => 
+    const available = printers.filter(printer => printer.status === 'available').length;
+    const inUse = printers.filter(printer => printer.status === 'printing').length;
+    const maintenance = printers.filter(printer => 
         printer.status === 'maintenance' || printer.status === 'broken'
     ).length;
     

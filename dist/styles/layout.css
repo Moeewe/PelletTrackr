@@ -147,12 +147,29 @@
 
 /* Mobile header button layout */
 @media (max-width: 768px) {
+  /* Ensure header uses flexbox for proper alignment */
+  .dashboard-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+  }
+  
+  /* Logo alignment - left aligned */
+  .dashboard-header .logo {
+    text-align: left !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+  }
+  
   .dashboard-header .user-info {
     display: flex !important;
     gap: 8px !important;
     align-items: center !important;
     flex-wrap: nowrap !important;
     flex-direction: row !important;
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
   }
   
   .dashboard-header .user-info .btn {

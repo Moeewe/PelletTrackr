@@ -60,6 +60,11 @@ function setupPrintersListener() {
             
             console.log('Live update: Loaded printers:', printers.length);
             renderPrinterGrid();
+            
+            // Update machine overview in admin dashboard
+            if (typeof updateMachineOverview === 'function') {
+                updateMachineOverview();
+            }
         }, (error) => {
             console.error('Error in printers listener:', error);
             showToast('Fehler beim Live-Update der Drucker', 'error');
