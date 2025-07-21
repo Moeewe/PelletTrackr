@@ -243,14 +243,6 @@
   margin-bottom: 24px;
 }
 
-.machine-overview-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 0;
-  flex-wrap: nowrap;
-}
-
 .machine-overview-title {
   font-size: 14px;
   font-weight: 500;
@@ -281,16 +273,17 @@
 }
 
 .status-circle {
-  width: 11px;
-  height: 11px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 9px;
+  font-size: 16px;
   color: white;
-  min-width: 11px;
+  max-width: 20px;
+  min-width: 20px;
   text-align: center;
   line-height: 1;
 }
@@ -321,7 +314,7 @@
 
 .status-number {
   font-weight: 700;
-  font-size: 9px;
+  font-size: 16px;
   color: white;
 }
 

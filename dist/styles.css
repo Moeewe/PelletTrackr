@@ -281,10 +281,7 @@
     color: #856404;
 }
 
-.status-maintenance {
-    background: #f8d7da;
-    color: #721c24;
-}
+/* Removed conflicting status-maintenance rule */
 
 .status-broken {
     background: #f5c6cb;
@@ -493,9 +490,7 @@
     color: #000000;
 }
 
-.status-badge.status-maintenance {
-    background: #dc3545;
-}
+/* Removed conflicting status-badge.status-maintenance rule */
 
 .status-badge.status-broken {
     background: #6c757d;
@@ -740,17 +735,7 @@
     border: none;
 }
 
-.status-item.status-maintenance {
-    background: #FF9800;
-    color: white;
-    border: none;
-}
-
-.status-item.status-maintenance.current-status {
-    background: #FF9800;
-    color: white;
-    border: none;
-}
+/* Removed conflicting status-item.status-maintenance rules */
 
 .status-item.status-broken {
     background: #F44336;
