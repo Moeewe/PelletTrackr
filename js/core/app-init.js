@@ -25,6 +25,10 @@ function initializeApp() {
     if (!hasSession) {
       // No session found, show login screen
       showScreen('loginScreen');
+      // Setup login key handlers
+      if (typeof setupLoginKeyHandlers === 'function') {
+        setupLoginKeyHandlers();
+      }
     }
   } else {
     // Fallback if auth.js not loaded yet
@@ -33,9 +37,17 @@ function initializeApp() {
         const hasSession = checkExistingSession();
         if (!hasSession) {
           showScreen('loginScreen');
+          // Setup login key handlers
+          if (typeof setupLoginKeyHandlers === 'function') {
+            setupLoginKeyHandlers();
+          }
         }
       } else {
         showScreen('loginScreen');
+        // Setup login key handlers
+        if (typeof setupLoginKeyHandlers === 'function') {
+          setupLoginKeyHandlers();
+        }
       }
     }, 100);
   }

@@ -23,6 +23,12 @@ function checkExistingSession() {
         document.getElementById('loginName').value = session.user.name;
         document.getElementById('loginKennung').value = session.user.kennung;
         
+        // Check remember me checkbox
+        const rememberMe = document.getElementById('rememberMe');
+        if (rememberMe) {
+          rememberMe.checked = true;
+        }
+        
         // Show appropriate dashboard
         if (session.user.isAdmin) {
           document.getElementById('adminWelcome').textContent = `Admin Dashboard - ${session.user.name}`;
@@ -116,18 +122,42 @@ function updateAdminUI() {
 
 function showAdminLogin() {
   const passwordGroup = document.getElementById('passwordGroup');
-  const adminBtn = document.querySelector('.btn-secondary');
+  const adminPassword = document.getElementById('adminPassword');
+  const loginForm = document.getElementById('loginForm');
+  const loginBtn = document.getElementById('loginBtn');
+  const adminBtn = document.getElementById('adminBtn');
+  const adminLoginBtn = document.getElementById('adminLoginBtn');
   
   if (passwordGroup.style.display === 'none' || passwordGroup.style.display === '') {
-    // Passwort-Feld anzeigen
+    // Show admin login
     passwordGroup.style.display = 'block';
-    adminBtn.textContent = 'Admin Login';
-    adminBtn.onclick = loginAsAdmin;
+    adminPassword.focus();
+    loginForm.classList.add('admin-mode');
+    
+    // Disable normal login button
+    loginBtn.disabled = true;
+    loginBtn.style.opacity = '0.5';
+    
+    // Show admin login button
+    adminLoginBtn.style.display = 'block';
+    
+    // Change admin button text
+    adminBtn.textContent = 'Zurück zu User Login';
   } else {
-    // Passwort-Feld verstecken
+    // Hide admin login
     passwordGroup.style.display = 'none';
+    adminPassword.value = '';
+    loginForm.classList.remove('admin-mode');
+    
+    // Enable normal login button
+    loginBtn.disabled = false;
+    loginBtn.style.opacity = '1';
+    
+    // Hide admin login button
+    adminLoginBtn.style.display = 'none';
+    
+    // Change admin button text back
     adminBtn.textContent = 'Als Admin anmelden';
-    adminBtn.onclick = showAdminLogin;
   }
 }
 
@@ -171,8 +201,11 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
           isAdmin: userResult.isAdmin || false
         };
         
-        // Save session
+              // Save session if remember me is checked
+      const rememberMe = document.getElementById('rememberMe');
+      if (rememberMe && rememberMe.checked) {
         saveSession(window.currentUser);
+      }
         
         document.getElementById('userWelcome').textContent = `Willkommen zurück, ${userResult.existingName}!`;
         showScreen('userDashboard');
@@ -280,8 +313,11 @@ function loginAsAdmin() {
         };
       }
       
-      // Save session
-      saveSession(window.currentUser);
+      // Save session if remember me is checked
+      const rememberMe = document.getElementById('rememberMe');
+      if (rememberMe && rememberMe.checked) {
+        saveSession(window.currentUser);
+      }
       
       // Admin Dashboard anzeigen
       document.getElementById('adminWelcome').textContent = `Admin Dashboard - ${window.currentUser.name}`;
@@ -311,6 +347,41 @@ function loginAsAdmin() {
   }, 800);
 }
 
+// Add Enter key handlers for login forms
+function setupLoginKeyHandlers() {
+  const loginName = document.getElementById('loginName');
+  const loginKennung = document.getElementById('loginKennung');
+  const adminPassword = document.getElementById('adminPassword');
+  
+  // User login with Enter
+  loginName.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      loginKennung.focus();
+    }
+  });
+  
+  loginKennung.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const passwordGroup = document.getElementById('passwordGroup');
+      if (passwordGroup.style.display === 'none' || passwordGroup.style.display === '') {
+        loginAsUser();
+      } else {
+        adminPassword.focus();
+      }
+    }
+  });
+  
+  // Admin login with Enter
+  adminPassword.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      loginAsAdmin();
+    }
+  });
+}
+
 function logout() {
   // Clean up payment request listeners
   if (typeof userPaymentRequestsListener !== 'undefined' && userPaymentRequestsListener) {
@@ -332,6 +403,12 @@ function logout() {
   document.getElementById('loginName').value = '';
   document.getElementById('loginKennung').value = '';
   document.getElementById('adminPassword').value = '';
+  
+  // Uncheck remember me
+  const rememberMe = document.getElementById('rememberMe');
+  if (rememberMe) {
+    rememberMe.checked = false;
+  }
   
   toast.info('Erfolgreich abgemeldet');
 }

@@ -31,10 +31,15 @@
                     <input type="text" id="loginKennung" class="form-input" placeholder="FH-Kennung" autocomplete="username">
                 </div>
                 
-
-                
                 <div class="form-group" id="passwordGroup" style="display: none;">
                     <input type="password" id="adminPassword" class="form-input" placeholder="Admin Passwort" autocomplete="current-password">
+                </div>
+                
+                <div class="form-group remember-me">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="rememberMe" class="checkbox-input">
+                        <span class="checkbox-text">Daten merken</span>
+                    </label>
                 </div>
                 
                 <div class="button-group">
@@ -43,6 +48,9 @@
                     </button>
                     <button type="button" id="adminBtn" class="btn btn-secondary" onclick="showAdminLogin()">
                         Als Admin anmelden
+                    </button>
+                    <button type="button" id="adminLoginBtn" class="btn btn-primary" onclick="loginAsAdmin()" style="display: none;">
+                        Admin Login
                     </button>
                 </div>
             </form>
