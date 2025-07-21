@@ -1446,6 +1446,17 @@
     font-size: 12px;
 }
 
+/* Ensure Status ändern button has correct styling */
+.printer-actions .btn-secondary {
+    background: white !important;
+    color: #000000 !important;
+    border: 2px solid #000000 !important;
+}
+
+.printer-actions .btn-secondary:hover {
+    background: #f8f8f8 !important;
+}
+
 /* Form Actions */
 .form-actions {
     display: flex;
