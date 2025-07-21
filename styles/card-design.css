@@ -246,22 +246,24 @@
 .machine-overview-header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   margin-bottom: 0;
+  flex-wrap: wrap;
 }
 
 .machine-overview-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #666;
+  font-size: 16px;
+  font-weight: 500;
+  color: #999;
   text-decoration: underline;
   cursor: pointer;
   margin: 0;
+  text-transform: none;
 }
 
 .machine-status-grid {
   display: flex;
-  gap: 16px;
+  gap: 20px;
   align-items: center;
   flex-wrap: wrap;
 }
@@ -279,16 +281,16 @@
 }
 
 .status-circle {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 12px;
+  font-size: 14px;
   color: white;
-  min-width: 20px;
+  min-width: 28px;
   text-align: center;
   line-height: 1;
 }
@@ -319,12 +321,13 @@
 
 .status-number {
   font-weight: 700;
-  font-size: 12px;
+  font-size: 14px;
+  color: white;
 }
 
 .status-label {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 400;
   color: #666;
   text-transform: none;
 }

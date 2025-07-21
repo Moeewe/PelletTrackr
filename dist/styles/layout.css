@@ -153,13 +153,16 @@
     justify-content: space-between !important;
     align-items: center !important;
     width: 100% !important;
+    padding: 0 16px !important;
   }
   
-  /* Logo alignment - left aligned */
+  /* Logo alignment - left aligned and in line with buttons */
   .dashboard-header .logo {
     text-align: left !important;
     margin: 0 !important;
     flex-shrink: 0 !important;
+    font-size: 20px !important;
+    line-height: 1 !important;
   }
   
   .dashboard-header .user-info {
