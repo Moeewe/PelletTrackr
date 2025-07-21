@@ -214,22 +214,10 @@ function renderPrinterGrid() {
                 ` : ''}
             </div>
             
-            <div class="printer-status-grid">
-                <button class="status-btn ${printer.status === 'available' ? 'active' : ''}" onclick="setPrinterStatus('${printer.id}', 'available')">
-                    Verfügbar
-                </button>
-                <button class="status-btn ${printer.status === 'printing' ? 'active' : ''}" onclick="setPrinterStatus('${printer.id}', 'printing')">
-                    In Betrieb
-                </button>
-                <button class="status-btn ${printer.status === 'maintenance' ? 'active' : ''}" onclick="setPrinterStatus('${printer.id}', 'maintenance')">
-                    Wartung
-                </button>
-                <button class="status-btn ${printer.status === 'broken' ? 'active' : ''}" onclick="setPrinterStatus('${printer.id}', 'broken')">
-                    Defekt
-                </button>
-            </div>
-            
             <div class="printer-actions">
+                <button class="btn btn-secondary btn-small" onclick="changePrinterStatus('${printer.id}')">
+                    Status ändern
+                </button>
                 <button class="btn btn-secondary btn-small" onclick="editPrinter('${printer.id}')">
                     Bearbeiten
                 </button>
@@ -330,22 +318,10 @@ function renderFilteredPrinterGrid(filteredPrinters) {
                 ` : ''}
             </div>
             
-            <div class="printer-status-grid">
-                <button class="status-btn ${printer.status === 'available' ? 'active' : ''}" onclick="setPrinterStatus('${printer.id}', 'available')">
-                    Verfügbar
-                </button>
-                <button class="status-btn ${printer.status === 'printing' ? 'active' : ''}" onclick="setPrinterStatus('${printer.id}', 'printing')">
-                    In Betrieb
-                </button>
-                <button class="status-btn ${printer.status === 'maintenance' ? 'active' : ''}" onclick="setPrinterStatus('${printer.id}', 'maintenance')">
-                    Wartung
-                </button>
-                <button class="status-btn ${printer.status === 'broken' ? 'active' : ''}" onclick="setPrinterStatus('${printer.id}', 'broken')">
-                    Defekt
-                </button>
-            </div>
-            
             <div class="printer-actions">
+                <button class="btn btn-secondary btn-small" onclick="changePrinterStatus('${printer.id}')">
+                    Status ändern
+                </button>
                 <button class="btn btn-secondary btn-small" onclick="editPrinter('${printer.id}')">
                     Bearbeiten
                 </button>

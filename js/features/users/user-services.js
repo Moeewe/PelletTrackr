@@ -148,22 +148,22 @@ function showPrinterStatus() {
                             ${printer.description && printer.description !== 'undefined' && printer.description !== 'Keine Beschreibung' ? `<p class="printer-description">${printer.description}</p>` : ''}
                         </div>
                         <div class="printer-status-controls">
-                            <div class="status-grid">
-                                <button class="status-btn status-available ${printer.status === 'available' ? 'active' : ''}" 
-                                        onclick="cyclePrinterStatus('${printer.id}', 'available')">
-                                    <span class="status-label">Verfügbar</span>
+                            <div class="printer-status-grid">
+                                <button class="status-btn ${printer.status === 'available' ? 'active' : ''}" 
+                                        onclick="setPrinterStatus('${printer.id}', 'available')">
+                                    Verfügbar
                                 </button>
-                                <button class="status-btn status-busy ${printer.status === 'printing' ? 'active' : ''}" 
-                                        onclick="cyclePrinterStatus('${printer.id}', 'printing')">
-                                    <span class="status-label">In Betrieb</span>
+                                <button class="status-btn ${printer.status === 'printing' ? 'active' : ''}" 
+                                        onclick="setPrinterStatus('${printer.id}', 'printing')">
+                                    In Betrieb
                                 </button>
-                                <button class="status-btn status-maintenance ${printer.status === 'maintenance' ? 'active' : ''}" 
-                                        onclick="cyclePrinterStatus('${printer.id}', 'maintenance')">
-                                    <span class="status-label">Wartung</span>
+                                <button class="status-btn ${printer.status === 'maintenance' ? 'active' : ''}" 
+                                        onclick="setPrinterStatus('${printer.id}', 'maintenance')">
+                                    Wartung
                                 </button>
-                                <button class="status-btn status-broken ${printer.status === 'broken' ? 'active' : ''}" 
-                                        onclick="cyclePrinterStatus('${printer.id}', 'broken')">
-                                    <span class="status-label">Defekt</span>
+                                <button class="status-btn ${printer.status === 'broken' ? 'active' : ''}" 
+                                        onclick="setPrinterStatus('${printer.id}', 'broken')">
+                                    Defekt
                                 </button>
                             </div>
                             <button class="btn btn-problem-report" onclick="reportPrinterProblem('${printer.id}', '${printer.name}')">
