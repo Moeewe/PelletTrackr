@@ -262,11 +262,27 @@ async function loadAllFormData() {
     
     // Lade Drucker
     console.log("📦 Lade Drucker...");
+    console.log("🔄 Rufe loadPrinters() auf...");
+    
+    // Überprüfe, ob loadPrinters existiert
+    if (typeof loadPrinters !== 'function') {
+      console.error("❌ loadPrinters ist keine Funktion!");
+      console.log("Verfügbare Funktionen:", Object.keys(window).filter(key => key.includes('load')));
+    } else {
+      console.log("✅ loadPrinters Funktion gefunden");
+    }
+    
     try {
-      await loadPrinters();
+      const result = await loadPrinters();
+      console.log("✅ loadPrinters() erfolgreich abgeschlossen:", result);
     } catch (printerError) {
-      console.error("❌ Erster Drucker-Load fehlgeschlagen, versuche Wiederholung...");
-      await window.retryLoadPrinters(2);
+      console.error("❌ Erster Drucker-Load fehlgeschlagen:", printerError);
+      console.log("🔄 Versuche Wiederholung...");
+      try {
+        await window.retryLoadPrinters(2);
+      } catch (retryError) {
+        console.error("❌ Auch Wiederholung fehlgeschlagen:", retryError);
+      }
     }
     
     console.log("✅ Alle Daten geladen, setup Event Listeners...");
