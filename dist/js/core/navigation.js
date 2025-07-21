@@ -69,7 +69,7 @@ function updateWelcomeMessage() {
         welcomeElement = document.createElement('span');
         welcomeElement.className = 'welcome-message';
         
-        // Insert before the user-info div
+        // Insert before the user-info div (works for both user and admin dashboards)
         const userInfo = document.querySelector('.user-info');
         if (userInfo && userInfo.parentNode) {
           userInfo.parentNode.insertBefore(welcomeElement, userInfo);
@@ -146,6 +146,9 @@ function initializeAdminDashboard() {
   if (typeof initializeNotificationBadges === 'function') {
     initializeNotificationBadges();
   }
+  
+  // Update welcome message for admin dashboard
+  updateWelcomeMessage();
   
   // Update machine overview after a delay to ensure printer data is loaded
   setTimeout(() => {
