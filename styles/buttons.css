@@ -199,44 +199,44 @@
 
 /* Active Status (Currently Selected) - Vollflächige Farbe */
 .status-btn.active {
-  color: white;
-  border: none;
+  color: white !important;
+  border: none !important;
 }
 
 /* Available Status */
 .status-btn.status-available {
-  border-color: #4CAF50;
+  border-color: #4CAF50 !important;
 }
 
 .status-btn.status-available.active {
-  background: #4CAF50;
+  background: #4CAF50 !important;
 }
 
 /* Busy/In Use Status */
 .status-btn.status-busy {
-  border-color: #2196F3;
+  border-color: #2196F3 !important;
 }
 
 .status-btn.status-busy.active {
-  background: #2196F3;
+  background: #2196F3 !important;
 }
 
 /* Maintenance Status - Gelblicher Orange */
 .status-btn.status-maintenance {
-  border-color: #FFA726;
+  border-color: #FFA726 !important;
 }
 
 .status-btn.status-maintenance.active {
-  background: #FFA726;
+  background: #FFA726 !important;
 }
 
 /* Broken Status - Rot */
 .status-btn.status-broken {
-  border-color: #F44336;
+  border-color: #F44336 !important;
 }
 
 .status-btn.status-broken.active {
-  background: #F44336;
+  background: #F44336 !important;
 }
 
 /* Status Grid Layout */
