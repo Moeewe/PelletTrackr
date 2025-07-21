@@ -198,6 +198,10 @@ function renderPrinterGrid() {
                     <span class="printer-detail-label">Materialien:</span>
                     <span class="printer-detail-value">${printer.materials || 'Nicht angegeben'}</span>
                 </div>
+                <div class="printer-detail">
+                    <span class="printer-detail-label">Preis pro Stunde:</span>
+                    <span class="printer-detail-value">${printer.pricePerHour ? printer.pricePerHour.toFixed(2) + ' €' : 'Nicht gesetzt'}</span>
+                </div>
                 ${printer.notes ? `
                 <div class="printer-detail">
                     <span class="printer-detail-label">Notizen:</span>
@@ -293,6 +297,10 @@ function renderFilteredPrinterGrid(filteredPrinters) {
                 <div class="printer-detail">
                     <span class="printer-detail-label">Materialien:</span>
                     <span class="printer-detail-value">${printer.materials || 'Nicht angegeben'}</span>
+                </div>
+                <div class="printer-detail">
+                    <span class="printer-detail-label">Preis pro Stunde:</span>
+                    <span class="printer-detail-value">${printer.pricePerHour ? printer.pricePerHour.toFixed(2) + ' €' : 'Nicht gesetzt'}</span>
                 </div>
                 ${printer.notes ? `
                 <div class="printer-detail">
@@ -402,6 +410,11 @@ function showAddPrinterForm() {
                         </div>
                         
                         <div class="form-group">
+                            <label for="printerPricePerHour">Preis pro Stunde (€)</label>
+                            <input type="number" id="printerPricePerHour" class="form-input" placeholder="z.B. 18,00" step="0.01" min="0">
+                        </div>
+                        
+                        <div class="form-group">
                             <label for="printerNotes">Notizen</label>
                             <textarea id="printerNotes" class="form-textarea" rows="3" placeholder="Zusätzliche Informationen..."></textarea>
                         </div>
@@ -467,6 +480,11 @@ function editPrinter(printerId) {
                         </div>
                         
                         <div class="form-group">
+                            <label for="printerPricePerHour">Preis pro Stunde (€)</label>
+                            <input type="number" id="printerPricePerHour" class="form-input" placeholder="z.B. 18,00" step="0.01" min="0" value="${printer.pricePerHour || ''}">
+                        </div>
+                        
+                        <div class="form-group">
                             <label for="printerNotes">Notizen</label>
                             <textarea id="printerNotes" class="form-textarea" rows="3" placeholder="Zusätzliche Informationen...">${printer.notes || ''}</textarea>
                         </div>
@@ -515,6 +533,7 @@ async function savePrinter(event) {
         buildVolume: document.getElementById('printerBuildVolume').value.trim(),
         status: document.getElementById('printerStatus').value,
         materials: document.getElementById('printerMaterials').value.trim(),
+        pricePerHour: parseFloat(document.getElementById('printerPricePerHour').value) || 0,
         notes: document.getElementById('printerNotes').value.trim(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };

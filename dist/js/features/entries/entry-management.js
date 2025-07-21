@@ -6,12 +6,15 @@ async function addEntry() {
   // Get user data from current session
   const name = window.currentUser?.name;
   const kennung = window.currentUser?.kennung;
+  const printer = document.getElementById("printer").value;
+  const printTime = parseInt(document.getElementById("printTime").value) || 0;
   const material = document.getElementById("material").value;
   const materialMenge = document.getElementById("materialMenge").value;
   const masterbatch = document.getElementById("masterbatch").value;
   const masterbatchMenge = document.getElementById("masterbatchMenge").value;
   const jobName = document.getElementById("jobName").value;
   const jobNotes = document.getElementById("jobNotes").value;
+  const ownMaterialUsed = document.getElementById("ownMaterialUsed").checked;
 
   // Validation
   if (!name || !kennung) {
@@ -19,12 +22,18 @@ async function addEntry() {
     return;
   }
 
-  // Check if at least one material is selected
+  // Check if at least one material is selected or if own material is used with printer time
   const hasMaterial = material && materialMenge;
   const hasMasterbatch = masterbatch && masterbatchMenge;
+  const hasPrinterTime = printer && printTime > 0;
 
-  if (!hasMaterial && !hasMasterbatch) {
-    window.toast.warning("Bitte mindestens Material oder Masterbatch auswählen!");
+  if (!hasMaterial && !hasMasterbatch && !hasPrinterTime) {
+    window.toast.warning("Bitte mindestens Material/Masterbatch auswählen oder Drucker mit Zeit angeben!");
+    return;
+  }
+
+  if (ownMaterialUsed && !hasPrinterTime) {
+    window.toast.warning("Bei eigenem Material muss eine Druckerzeit angegeben werden!");
     return;
   }
 
@@ -45,8 +54,20 @@ async function addEntry() {
   try {
     let materialData = null;
     let masterbatchData = null;
+    let printerData = null;
     let materialCost = 0;
     let masterbatchCost = 0;
+    let printerCost = 0;
+
+    // Printer-Daten abrufen (falls ausgewählt)
+    if (hasPrinterTime) {
+      const printerSnapshot = await window.db.collection("printers").where("name", "==", printer).get();
+      if (printerSnapshot.empty) {
+        throw new Error("Drucker nicht gefunden");
+      }
+      printerData = printerSnapshot.docs[0].data();
+      printerCost = (printTime / 60) * (printerData.pricePerHour || 0);
+    }
 
     // Material-Daten abrufen (falls ausgewählt)
     if (hasMaterial) {
@@ -69,12 +90,18 @@ async function addEntry() {
     }
 
     // Gesamtkosten berechnen
-    const totalCost = materialCost + masterbatchCost;
+    // Wenn eigenes Material verwendet wird, nur Druckerkosten
+    // Sonst Materialkosten + optional Druckerkosten
+    const totalCost = ownMaterialUsed ? printerCost : (materialCost + masterbatchCost + printerCost);
 
     // Druck in Firestore speichern
     const entry = {
       name: name,
       kennung: kennung,
+      printer: printer || "",
+      printTime: printTime,
+      printerPricePerHour: printerData ? printerData.pricePerHour : 0,
+      printerCost: printerCost,
       material: material || "",
       materialMenge: materialMengeNum,
       materialPrice: materialData ? materialData.price : 0,
@@ -83,6 +110,7 @@ async function addEntry() {
       masterbatchMenge: masterbatchMengeNum,
       masterbatchPrice: masterbatchData ? masterbatchData.price : 0,
       masterbatchCost: masterbatchCost,
+      ownMaterialUsed: ownMaterialUsed,
       totalCost: totalCost,
       jobName: jobName || "3D-Druck Auftrag", // Default if empty
       jobNotes: jobNotes || "",
@@ -312,21 +340,76 @@ async function cleanupRelatedPaymentRequests(entryId) {
 
 // Formular zurücksetzen
 function clearForm() {
+  const printer = document.getElementById("printer");
+  const printTime = document.getElementById("printTime");
   const material = document.getElementById("material");
   const materialMenge = document.getElementById("materialMenge");
   const masterbatch = document.getElementById("masterbatch");
   const masterbatchMenge = document.getElementById("masterbatchMenge");
   const jobName = document.getElementById("jobName");
   const jobNotes = document.getElementById("jobNotes");
+  const ownMaterialUsed = document.getElementById("ownMaterialUsed");
   const costPreview = document.getElementById("costPreview");
   
+  if (printer) printer.value = '';
+  if (printTime) printTime.value = '';
   if (material) material.value = '';
   if (materialMenge) materialMenge.value = '';
   if (masterbatch) masterbatch.value = '';
   if (masterbatchMenge) masterbatchMenge.value = '';
   if (jobName) jobName.value = '';
   if (jobNotes) jobNotes.value = '';
+  if (ownMaterialUsed) ownMaterialUsed.checked = false;
   if (costPreview) costPreview.textContent = '0,00 €';
+}
+
+
+
+// ==================== COST CALCULATION ====================
+// Update cost preview when form values change
+function updateCostPreview() {
+  const material = document.getElementById("material");
+  const materialMenge = document.getElementById("materialMenge");
+  const masterbatch = document.getElementById("masterbatch");
+  const masterbatchMenge = document.getElementById("masterbatchMenge");
+  const printer = document.getElementById("printer");
+  const printTime = document.getElementById("printTime");
+  const ownMaterialUsed = document.getElementById("ownMaterialUsed");
+  const costPreview = document.getElementById("costPreview");
+  
+  if (!costPreview) return;
+  
+  let totalCost = 0;
+  
+  // Calculate material costs
+  if (material && material.value && materialMenge && materialMenge.value) {
+    const materialPrice = parseFloat(material.dataset.price) || 0;
+    const materialAmount = parseFloat(materialMenge.value) || 0;
+    totalCost += materialPrice * materialAmount;
+  }
+  
+  // Calculate masterbatch costs
+  if (masterbatch && masterbatch.value && masterbatchMenge && masterbatchMenge.value) {
+    const masterbatchPrice = parseFloat(masterbatch.dataset.price) || 0;
+    const masterbatchAmount = parseFloat(masterbatchMenge.value) || 0;
+    totalCost += masterbatchPrice * masterbatchAmount;
+  }
+  
+  // Calculate printer costs
+  if (printer && printer.value && printTime && printTime.value) {
+    const printerPricePerHour = parseFloat(printer.dataset.pricePerHour) || 0;
+    const printTimeMinutes = parseInt(printTime.value) || 0;
+    const printerCost = (printTimeMinutes / 60) * printerPricePerHour;
+    totalCost += printerCost;
+  }
+  
+  // If own material is used, only charge printer costs
+  if (ownMaterialUsed && ownMaterialUsed.checked) {
+    totalCost = (printTime && printTime.value && printer && printer.value) ? 
+      ((parseInt(printTime.value) || 0) / 60) * (parseFloat(printer.dataset.pricePerHour) || 0) : 0;
+  }
+  
+  costPreview.textContent = totalCost.toFixed(2) + ' €';
 }
 
 // ==================== GLOBAL EXPOSURE ====================
@@ -337,3 +420,4 @@ window.deleteEntry = deleteEntry;
 window.markEntryAsPaid = markEntryAsPaid;
 window.markEntryAsUnpaid = markEntryAsUnpaid;
 window.clearForm = clearForm;
+window.updateCostPreview = updateCostPreview;

@@ -98,7 +98,12 @@ function initializeUserDashboard() {
   }, 1000);
   
   // Warten bis alle Funktionen verfügbar sind
-  if (typeof loadMaterials === 'function' && typeof loadMasterbatches === 'function') {
+  if (typeof loadAllFormData === 'function') {
+    loadAllFormData().then(() => {
+      setupEventListeners();
+    });
+  } else if (typeof loadMaterials === 'function' && typeof loadMasterbatches === 'function') {
+    // Fallback für ältere Versionen
     loadMaterials().then(() => {
       loadMasterbatches().then(() => {
         setupEventListeners();

@@ -99,11 +99,24 @@ function initializeUserDashboard() {
   
   // Warten bis alle Funktionen verfügbar sind
   if (typeof loadAllFormData === 'function') {
+    console.log("🔄 Lade alle Formulardaten...");
     loadAllFormData().then(() => {
+      console.log("✅ Alle Formulardaten geladen");
       setupEventListeners();
+    }).catch(error => {
+      console.error("❌ Fehler beim Laden der Formulardaten:", error);
+      // Fallback zu einzelnen Funktionen
+      if (typeof loadMaterials === 'function' && typeof loadMasterbatches === 'function') {
+        loadMaterials().then(() => {
+          loadMasterbatches().then(() => {
+            setupEventListeners();
+          });
+        });
+      }
     });
   } else if (typeof loadMaterials === 'function' && typeof loadMasterbatches === 'function') {
     // Fallback für ältere Versionen
+    console.log("🔄 Fallback: Lade Materialien und Masterbatches...");
     loadMaterials().then(() => {
       loadMasterbatches().then(() => {
         setupEventListeners();

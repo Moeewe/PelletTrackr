@@ -200,11 +200,11 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
           isAdmin: userResult.isAdmin || false
         };
         
-        // Save session if remember me is checked
-        const rememberMe = document.getElementById('rememberMe');
-        if (rememberMe && rememberMe.checked) {
-          saveSession(window.currentUser);
-        }
+              // Save session if remember me is checked
+      const rememberMe = document.getElementById('rememberMe');
+      if (rememberMe && rememberMe.checked) {
+        saveSession(window.currentUser);
+      }
         
         // Update user prints label and welcome message
         updateUserPrintsLabel();
@@ -232,11 +232,8 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
         isAdmin: userResult.isAdmin || false
       };
       
-      // Save session if remember me is checked
-      const rememberMe = document.getElementById('rememberMe');
-      if (rememberMe && rememberMe.checked) {
-        saveSession(window.currentUser);
-      }
+      // Save session
+      saveSession(window.currentUser);
       
       // Update user prints label and welcome message
       updateUserPrintsLabel();

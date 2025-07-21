@@ -80,13 +80,22 @@ async function loadMasterbatches() {
 // Drucker laden (direkt aus Firestore)
 async function loadPrinters() {
   const select = document.getElementById("printer");
-  if (!select) return;
+  if (!select) {
+    console.warn("⚠️ Printer select element nicht gefunden");
+    return;
+  }
   
   select.innerHTML = '<option value="">Lade Drucker...</option>';
   
   console.log("🔄 Lade Drucker...");
   
   try {
+    if (!window.db) {
+      console.error("❌ Firebase nicht verfügbar");
+      select.innerHTML = '<option value="">Firebase nicht verfügbar</option>';
+      return;
+    }
+    
     const snapshot = await window.db.collection("printers").get();
     console.log("📊 Printers-Snapshot:", snapshot.size, "Dokumente");
     
@@ -98,6 +107,7 @@ async function loadPrinters() {
       return;
     }
     
+    let loadedCount = 0;
     snapshot.forEach(doc => {
       const printer = doc.data();
       console.log("➕ Drucker:", printer.name, "Preis/Stunde:", printer.pricePerHour);
@@ -106,9 +116,10 @@ async function loadPrinters() {
       option.dataset.pricePerHour = printer.pricePerHour || 0;
       option.textContent = `${printer.name}${printer.pricePerHour ? ` (${printer.pricePerHour.toFixed(2)}€/h)` : ''}`;
       select.appendChild(option);
+      loadedCount++;
     });
     
-    console.log("✅ Drucker erfolgreich geladen!");
+    console.log(`✅ ${loadedCount} Drucker erfolgreich geladen!`);
     
   } catch (e) {
     console.error("❌ Fehler beim Laden der Drucker:", e);
@@ -225,20 +236,32 @@ function setupFormEventListeners() {
 
 // Alle Formulardaten laden
 async function loadAllFormData() {
-  await Promise.all([
-    loadMaterials(),
-    loadMasterbatches(),
-    loadPrinters()
-  ]);
+  console.log("🔄 Starte loadAllFormData...");
   
-  // Setup event listeners after data is loaded
-  setupFormEventListeners();
-  
-  // Initial cost preview update
-  if (typeof window.updateCostPreview === 'function') {
-    setTimeout(() => {
-      window.updateCostPreview();
-    }, 500);
+  try {
+    await Promise.all([
+      loadMaterials(),
+      loadMasterbatches(),
+      loadPrinters()
+    ]);
+    
+    console.log("✅ Alle Daten geladen, setup Event Listeners...");
+    
+    // Setup event listeners after data is loaded
+    setupFormEventListeners();
+    
+    // Initial cost preview update
+    if (typeof window.updateCostPreview === 'function') {
+      setTimeout(() => {
+        window.updateCostPreview();
+      }, 500);
+    }
+    
+    console.log("✅ loadAllFormData abgeschlossen");
+    
+  } catch (error) {
+    console.error("❌ Fehler in loadAllFormData:", error);
+    throw error;
   }
 }
 
@@ -1102,4 +1125,15 @@ window.deleteMaterial = deleteMaterial;
 window.deleteMasterbatch = deleteMasterbatch;
 
 console.log("🏭 Material Loading Module geladen");
+
+// Test-Funktion für manuelles Laden der Drucker
+window.testLoadPrinters = async function() {
+  console.log("🧪 Teste loadPrinters...");
+  try {
+    await loadPrinters();
+    console.log("✅ loadPrinters Test erfolgreich");
+  } catch (error) {
+    console.error("❌ loadPrinters Test fehlgeschlagen:", error);
+  }
+};
 
