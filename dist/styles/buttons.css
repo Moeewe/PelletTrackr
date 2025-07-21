@@ -205,7 +205,7 @@
 
 /* Available Status */
 .status-btn.status-available {
-  border-color: #4CAF50 !important;
+  border-color: #000000 !important; /* Schwarzer Rand für alle nicht-aktiven */
 }
 
 .status-btn.status-available.active {
@@ -216,7 +216,7 @@
 
 /* Busy/In Use Status */
 .status-btn.status-busy {
-  border-color: #2196F3 !important;
+  border-color: #000000 !important; /* Schwarzer Rand für alle nicht-aktiven */
 }
 
 .status-btn.status-busy.active {
@@ -227,7 +227,7 @@
 
 /* Maintenance Status - Gelblicher Orange */
 .status-btn.status-maintenance {
-  border-color: #FFA726 !important;
+  border-color: #000000 !important; /* Schwarzer Rand für alle nicht-aktiven */
 }
 
 .status-btn.status-maintenance.active {
@@ -238,7 +238,7 @@
 
 /* Broken Status - Rot */
 .status-btn.status-broken {
-  border-color: #F44336 !important;
+  border-color: #000000 !important; /* Schwarzer Rand für alle nicht-aktiven */
 }
 
 .status-btn.status-broken.active {
