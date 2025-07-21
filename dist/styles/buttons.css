@@ -177,9 +177,9 @@
   align-items: center;
   justify-content: center;
   padding: 16px 20px;
-  background: white;
-  color: #000000;
-  border: 2px solid #cccccc;
+  background: white !important;
+  color: #000000 !important;
+  border: 2px solid #000000 !important;
   border-radius: 0;
   cursor: pointer;
   font-size: 14px;
@@ -210,6 +210,8 @@
 
 .status-btn.status-available.active {
   background: #4CAF50 !important;
+  color: white !important;
+  border: none !important;
 }
 
 /* Busy/In Use Status */
@@ -219,6 +221,8 @@
 
 .status-btn.status-busy.active {
   background: #2196F3 !important;
+  color: white !important;
+  border: none !important;
 }
 
 /* Maintenance Status - Gelblicher Orange */
@@ -228,6 +232,8 @@
 
 .status-btn.status-maintenance.active {
   background: #FFA726 !important;
+  color: white !important;
+  border: none !important;
 }
 
 /* Broken Status - Rot */
@@ -237,6 +243,8 @@
 
 .status-btn.status-broken.active {
   background: #F44336 !important;
+  color: white !important;
+  border: none !important;
 }
 
 /* Status Grid Layout */
