@@ -316,8 +316,7 @@
 
 .login-form.admin-mode #loginBtn {
   order: 3;
-  opacity: 0.5;
-  pointer-events: none;
+  display: none;
 }
 
 .login-form.admin-mode #adminBtn {

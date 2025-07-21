@@ -85,7 +85,6 @@ function toggleAdminView() {
   
   if (currentScreen === 'userDashboard') {
     // Switch to admin view
-    document.getElementById('adminWelcome').textContent = `Admin Dashboard - ${window.currentUser.name}`;
     showScreen('adminDashboard');
     initializeAdminDashboard();
     updateAdminUI();
@@ -132,9 +131,8 @@ function showAdminLogin() {
     adminPassword.focus();
     loginForm.classList.add('admin-mode');
     
-    // Disable normal login button
-    loginBtn.disabled = true;
-    loginBtn.style.opacity = '0.5';
+    // Hide normal login button completely
+    loginBtn.style.display = 'none';
     
     // Show admin login button
     adminLoginBtn.style.display = 'block';
@@ -147,9 +145,8 @@ function showAdminLogin() {
     adminPassword.value = '';
     loginForm.classList.remove('admin-mode');
     
-    // Enable normal login button
-    loginBtn.disabled = false;
-    loginBtn.style.opacity = '1';
+    // Show normal login button again
+    loginBtn.style.display = 'block';
     
     // Hide admin login button
     adminLoginBtn.style.display = 'none';
@@ -319,7 +316,6 @@ function loginAsAdmin() {
       }
       
       // Admin Dashboard anzeigen
-      document.getElementById('adminWelcome').textContent = `Admin Dashboard - ${window.currentUser.name}`;
       showScreen('adminDashboard');
       
       // Admin Dashboard initialisieren
