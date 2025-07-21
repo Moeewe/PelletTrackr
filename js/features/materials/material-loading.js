@@ -1269,7 +1269,7 @@ window.showEditMasterbatchForm = showEditMasterbatchForm;
 // Loading functions global verfügbar machen
 window.loadMaterials = loadMaterials;
 window.loadMasterbatches = loadMasterbatches;
-window.loadPrinters = loadPrinters;
+window.loadPrinters = loadFormPrinters; // Alias for backward compatibility
 window.loadAllFormData = loadAllFormData;
 window.setupFormEventListeners = setupFormEventListeners;
 window.loadMaterialsForManagement = loadMaterialsForManagement;
@@ -1295,7 +1295,7 @@ console.log("🏭 Material Loading Module geladen");
 window.testLoadPrinters = async function() {
   console.log("🧪 Teste loadPrinters...");
   try {
-    await loadPrinters();
+    await loadFormPrinters();
     console.log("✅ loadPrinters Test erfolgreich");
   } catch (error) {
     console.error("❌ loadPrinters Test fehlgeschlagen:", error);
@@ -1307,7 +1307,7 @@ window.debugFormLoading = async function() {
   console.log("🔍 Debug: Form Loading Status");
   console.log("Firebase verfügbar:", !!window.db);
   console.log("loadAllFormData verfügbar:", typeof loadAllFormData === 'function');
-  console.log("loadPrinters verfügbar:", typeof loadPrinters === 'function');
+  console.log("loadPrinters verfügbar:", typeof loadFormPrinters === 'function');
   console.log("Printer select element:", document.getElementById("printer"));
   
   if (window.db) {
