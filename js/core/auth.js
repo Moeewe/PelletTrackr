@@ -29,6 +29,11 @@ function checkExistingSession() {
           rememberMe.checked = true;
         }
         
+        // Update welcome message
+        if (typeof updateWelcomeMessage === 'function') {
+          updateWelcomeMessage();
+        }
+        
         // Show appropriate dashboard
         if (session.user.isAdmin) {
           document.getElementById('adminWelcome').textContent = `Admin Dashboard - ${session.user.name}`;
@@ -202,8 +207,11 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
         saveSession(window.currentUser);
       }
         
-        // Update user prints label instead of welcome message
+        // Update user prints label and welcome message
         updateUserPrintsLabel();
+        if (typeof updateWelcomeMessage === 'function') {
+          updateWelcomeMessage();
+        }
         showScreen('userDashboard');
         // Initialize payment requests BEFORE user dashboard to avoid race condition
         if (typeof initializePaymentRequests === 'function') {
@@ -228,8 +236,11 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
       // Save session
       saveSession(window.currentUser);
       
-      // Update user prints label instead of welcome message
+      // Update user prints label and welcome message
       updateUserPrintsLabel();
+      if (typeof updateWelcomeMessage === 'function') {
+        updateWelcomeMessage();
+      }
       showScreen('userDashboard');
       // Initialize payment requests BEFORE user dashboard to avoid race condition
       if (typeof initializePaymentRequests === 'function') {

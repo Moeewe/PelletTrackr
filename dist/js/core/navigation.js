@@ -57,6 +57,37 @@ function updateUserPrintsLabel() {
   }
 }
 
+// Update welcome message in header
+function updateWelcomeMessage() {
+  try {
+    if (window.currentUser && window.currentUser.name) {
+      const isMobile = window.innerWidth <= 768;
+      
+      // Find or create welcome message element
+      let welcomeElement = document.querySelector('.welcome-message');
+      if (!welcomeElement) {
+        welcomeElement = document.createElement('span');
+        welcomeElement.className = 'welcome-message';
+        
+        // Insert before the user-info div
+        const userInfo = document.querySelector('.user-info');
+        if (userInfo && userInfo.parentNode) {
+          userInfo.parentNode.insertBefore(welcomeElement, userInfo);
+        }
+      }
+      
+      if (isMobile) {
+        welcomeElement.style.display = 'none';
+      } else {
+        welcomeElement.style.display = 'inline-block';
+        welcomeElement.textContent = `Willkommen, ${window.currentUser.name}!`;
+      }
+    }
+  } catch (error) {
+    console.warn('Could not update welcome message:', error);
+  }
+}
+
 // Dashboard-Initialisierung
 function initializeUserDashboard() {
   // Show/hide admin elements based on user type
@@ -124,10 +155,14 @@ function setupEventListeners() {
   // Update user prints label with user's name (after dashboard is loaded)
   updateUserPrintsLabel();
   
+  // Update welcome message
+  updateWelcomeMessage();
+  
   // Add resize listener for responsive label updates
   window.addEventListener('resize', function() {
     if (window.currentUser && window.currentUser.name) {
       updateUserPrintsLabel();
+      updateWelcomeMessage();
     }
   });
   
