@@ -397,16 +397,22 @@ function updateCostPreview() {
   
   // Calculate printer costs
   if (printer && printer.value && printTime && printTime.value) {
-    const printerPricePerHour = parseFloat(printer.dataset.pricePerHour) || 0;
+    const selectedOption = printer.options[printer.selectedIndex];
+    const printerPricePerHour = selectedOption ? parseFloat(selectedOption.dataset.pricePerHour) || 0 : 0;
     const printTimeMinutes = parseInt(printTime.value) || 0;
     const printerCost = (printTimeMinutes / 60) * printerPricePerHour;
     totalCost += printerCost;
+    console.log("💰 Drucker-Kosten berechnet:", printerCost, "€ (", printTimeMinutes, "min,", printerPricePerHour, "€/h)");
   }
   
   // If own material is used, only charge printer costs
   if (ownMaterialUsed && ownMaterialUsed.checked) {
+    const selectedOption = printer ? printer.options[printer.selectedIndex] : null;
+    const printerPricePerHour = selectedOption ? parseFloat(selectedOption.dataset.pricePerHour) || 0 : 0;
+    const printTimeMinutes = parseInt(printTime.value) || 0;
     totalCost = (printTime && printTime.value && printer && printer.value) ? 
-      ((parseInt(printTime.value) || 0) / 60) * (parseFloat(printer.dataset.pricePerHour) || 0) : 0;
+      (printTimeMinutes / 60) * printerPricePerHour : 0;
+    console.log("💰 Eigenes Material - nur Drucker-Kosten:", totalCost, "€");
   }
   
   costPreview.textContent = totalCost.toFixed(2) + ' €';

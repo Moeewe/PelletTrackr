@@ -190,17 +190,15 @@ function setupFormEventListeners() {
   const printerSelect = document.getElementById("printer");
   if (printerSelect) {
     printerSelect.addEventListener("change", function() {
-      // Store price in dataset for cost calculation
+      console.log("🖨️ Printer selection changed");
       const selectedOption = this.options[this.selectedIndex];
       if (selectedOption && selectedOption.value) {
         const printerName = selectedOption.value;
-        // Find printer price from printers collection
-        window.db.collection("printers").where("name", "==", printerName).get().then(snapshot => {
-          if (!snapshot.empty) {
-            const printer = snapshot.docs[0].data();
-            this.dataset.pricePerHour = printer.pricePerHour || 0;
-          }
-        });
+        const pricePerHour = selectedOption.dataset.pricePerHour;
+        console.log("💰 Selected printer:", printerName, "Price per hour:", pricePerHour);
+        
+        // Store price in dataset for cost calculation
+        this.dataset.pricePerHour = pricePerHour || 0;
       }
       if (typeof window.updateCostPreview === 'function') {
         window.updateCostPreview();
