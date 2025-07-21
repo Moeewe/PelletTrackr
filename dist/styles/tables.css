@@ -82,17 +82,17 @@
   border-right: none;
 }
 
-/* Spaltenbreiten für bessere Verteilung */
-.data-table th:nth-child(1), .data-table td:nth-child(1) { width: 12%; } /* Datum */
-.data-table th:nth-child(2), .data-table td:nth-child(2) { width: 15%; } /* Job */
-.data-table th:nth-child(3), .data-table td:nth-child(3) { width: 12%; } /* Material */
-.data-table th:nth-child(4), .data-table td:nth-child(4) { width: 8%; } /* Menge */
-.data-table th:nth-child(5), .data-table td:nth-child(5) { width: 12%; } /* Masterbatch */
-.data-table th:nth-child(6), .data-table td:nth-child(6) { width: 8%; } /* MB Menge */
-.data-table th:nth-child(7), .data-table td:nth-child(7) { width: 10%; } /* Kosten */
-.data-table th:nth-child(8), .data-table td:nth-child(8) { width: 8%; } /* Status */
-.data-table th:nth-child(9), .data-table td:nth-child(9) { width: 15%; } /* Notizen */
-.data-table th:nth-child(10), .data-table td:nth-child(10) { width: 20%; } /* Aktionen */
+/* Flexible Spaltenbreiten */
+.data-table th:nth-child(1), .data-table td:nth-child(1) { width: auto; min-width: 100px; } /* Datum */
+.data-table th:nth-child(2), .data-table td:nth-child(2) { width: auto; min-width: 120px; } /* Job */
+.data-table th:nth-child(3), .data-table td:nth-child(3) { width: auto; min-width: 100px; } /* Material */
+.data-table th:nth-child(4), .data-table td:nth-child(4) { width: auto; min-width: 80px; } /* Menge */
+.data-table th:nth-child(5), .data-table td:nth-child(5) { width: auto; min-width: 100px; } /* Masterbatch */
+.data-table th:nth-child(6), .data-table td:nth-child(6) { width: auto; min-width: 80px; } /* MB Menge */
+.data-table th:nth-child(7), .data-table td:nth-child(7) { width: auto; min-width: 90px; } /* Kosten */
+.data-table th:nth-child(8), .data-table td:nth-child(8) { width: auto; min-width: 80px; } /* Status */
+.data-table th:nth-child(9), .data-table td:nth-child(9) { width: auto; min-width: 150px; } /* Notizen */
+.data-table th:nth-child(10), .data-table td:nth-child(10) { width: auto; min-width: 200px; } /* Aktionen */
 
 /* Spezielle Behandlung für Notizen-Spalte */
 .data-table td[data-label="Notizen"],
@@ -171,14 +171,14 @@
 }
 
 .data-table .actions .btn-danger {
-  background: #FF5722;
-  border-color: #FF5722;
+  background: #F44336;
+  border-color: #F44336;
   color: white;
 }
 
 .data-table .actions .btn-danger:hover {
-  background: #e64a19;
-  border-color: #e64a19;
+  background: #d32f2f;
+  border-color: #d32f2f;
 }
 
 .data-table .actions .btn-nachweis {
@@ -491,14 +491,14 @@
   }
 
   .data-table .actions .btn-danger {
-    background: #FF5722; /* Harmonisches Orange-Rot */
-    border-color: #FF5722;
+    background: #F44336;
+    border-color: #F44336;
     color: white;
   }
 
   .data-table .actions .btn-danger:hover {
-    background: #e64a19;
-    border-color: #e64a19;
+    background: #d32f2f;
+    border-color: #d32f2f;
   }
 
   .data-table .actions .btn-undo {

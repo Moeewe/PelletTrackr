@@ -231,23 +231,24 @@
   background: #45a049 !important;
 }
 
-/* Admin-Ansicht: Button rot (wie PelletTracker-Logo) */
+/* Admin-Ansicht: Button gelb (wie PelletTracker-Logo) */
 #adminDashboard .admin-toggle {
-  background: #F44336 !important;
-}
-
-#adminDashboard .admin-toggle:hover {
-  background: #d32f2f !important;
-}
-
-/* User-Ansicht: Button gelb (wie PelletTracker-Logo) */
-#userDashboard .admin-toggle {
   background: #FFEB00 !important;
   color: #000000 !important;
 }
 
-#userDashboard .admin-toggle:hover {
+#adminDashboard .admin-toggle:hover {
   background: #fdd835 !important;
+}
+
+/* User-Ansicht: Button rot (wie PelletTracker-Logo in Admin) */
+#userDashboard .admin-toggle {
+  background: #F44336 !important;
+  color: white !important;
+}
+
+#userDashboard .admin-toggle:hover {
+  background: #d32f2f !important;
 }
 
 .admin-checkbox {
