@@ -35,7 +35,6 @@ function checkExistingSession() {
           showScreen('adminDashboard');
           initializeAdminDashboard();
         } else {
-          document.getElementById('userWelcome').textContent = `Willkommen zurück, ${session.user.name}!`;
           showScreen('userDashboard');
           initializeUserDashboard();
         }
@@ -93,7 +92,6 @@ function toggleAdminView() {
     toast.info('Zur Admin-Ansicht gewechselt');
   } else if (currentScreen === 'adminDashboard') {
     // Switch to user view
-    document.getElementById('userWelcome').textContent = `Willkommen, ${window.currentUser.name}!`;
     showScreen('userDashboard');
     initializeUserDashboard();
     updateAdminUI();
@@ -207,7 +205,8 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
         saveSession(window.currentUser);
       }
         
-        document.getElementById('userWelcome').textContent = `Willkommen zurück, ${userResult.existingName}!`;
+        // Update user prints label instead of welcome message
+        updateUserPrintsLabel();
         showScreen('userDashboard');
         // Initialize payment requests BEFORE user dashboard to avoid race condition
         if (typeof initializePaymentRequests === 'function') {
@@ -232,11 +231,8 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
       // Save session
       saveSession(window.currentUser);
       
-      const welcomeMessage = userResult.isExisting ? 
-        `Willkommen zurück, ${userResult.name}!` : 
-        `Willkommen, ${userResult.name}!`;
-      
-      document.getElementById('userWelcome').textContent = welcomeMessage;
+      // Update user prints label instead of welcome message
+      updateUserPrintsLabel();
       showScreen('userDashboard');
       // Initialize payment requests BEFORE user dashboard to avoid race condition
       if (typeof initializePaymentRequests === 'function') {
