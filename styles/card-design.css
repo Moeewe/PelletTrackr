@@ -873,6 +873,11 @@
     border-collapse: collapse;
   }
   
+  /* Spezielle Mindestbreite für Modal-Tabellen */
+  .modal .data-table table {
+    min-width: 1200px; /* Mindestbreite für Modal-Tabellen */
+  }
+  
   .data-table th,
   .data-table td {
     padding: 12px 8px;
@@ -909,13 +914,13 @@
   .admin-container .data-table th:nth-child(12), .admin-container .data-table td:nth-child(12) { min-width: 200px; } /* Aktionen */
   
   /* Spaltenbreiten für Nutzerverwaltung-Modal */
-  .modal .data-table th:nth-child(1), .modal .data-table td:nth-child(1) { min-width: 150px; } /* Name */
-  .modal .data-table th:nth-child(2), .modal .data-table td:nth-child(2) { min-width: 120px; } /* FH-Kennung */
-  .modal .data-table th:nth-child(3), .modal .data-table td:nth-child(3) { min-width: 200px; } /* E-Mail */
-  .modal .data-table th:nth-child(4), .modal .data-table td:nth-child(4) { min-width: 80px; } /* Admin */
-  .modal .data-table th:nth-child(5), .modal .data-table td:nth-child(5) { min-width: 80px; } /* Drucke */
-  .modal .data-table th:nth-child(6), .modal .data-table td:nth-child(6) { min-width: 100px; } /* Gesamt */
-  .modal .data-table th:nth-child(7), .modal .data-table td:nth-child(7) { min-width: 100px; } /* Aktionen */
+  .modal .data-table th:nth-child(1), .modal .data-table td:nth-child(1) { min-width: 200px; } /* Name */
+  .modal .data-table th:nth-child(2), .modal .data-table td:nth-child(2) { min-width: 150px; } /* FH-Kennung */
+  .modal .data-table th:nth-child(3), .modal .data-table td:nth-child(3) { min-width: 280px; } /* E-Mail */
+  .modal .data-table th:nth-child(4), .modal .data-table td:nth-child(4) { min-width: 100px; } /* Admin */
+  .modal .data-table th:nth-child(5), .modal .data-table td:nth-child(5) { min-width: 100px; } /* Drucke */
+  .modal .data-table th:nth-child(6), .modal .data-table td:nth-child(6) { min-width: 120px; } /* Gesamt */
+  .modal .data-table th:nth-child(7), .modal .data-table td:nth-child(7) { min-width: 150px; } /* Aktionen */
   
   .entries-container .entry-cards {
     display: none;
