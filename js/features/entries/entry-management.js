@@ -91,8 +91,8 @@ async function addEntry() {
 
     // Gesamtkosten berechnen
     // Wenn eigenes Material verwendet wird, nur Druckerkosten
-    // Sonst Materialkosten + optional Druckerkosten
-    const totalCost = ownMaterialUsed ? printerCost : (materialCost + masterbatchCost + printerCost);
+    // Sonst nur Materialkosten (Druckerkosten sind in Material-Preisen enthalten)
+    const totalCost = ownMaterialUsed ? printerCost : (materialCost + masterbatchCost);
 
     // Druck in Firestore speichern
     const entry = {
@@ -395,24 +395,22 @@ function updateCostPreview() {
     totalCost += masterbatchPrice * masterbatchAmount;
   }
   
-  // Calculate printer costs
-  if (printer && printer.value && printTime && printTime.value) {
-    const selectedOption = printer.options[printer.selectedIndex];
-    const printerPricePerHour = selectedOption ? parseFloat(selectedOption.dataset.pricePerHour) || 0 : 0;
-    const printTimeMinutes = parseInt(printTime.value) || 0;
-    const printerCost = (printTimeMinutes / 60) * printerPricePerHour;
-    totalCost += printerCost;
-    console.log("💰 Drucker-Kosten berechnet:", printerCost, "€ (", printTimeMinutes, "min,", printerPricePerHour, "€/h)");
-  }
-  
-  // If own material is used, only charge printer costs
+  // Calculate printer costs ONLY if own material is used
   if (ownMaterialUsed && ownMaterialUsed.checked) {
-    const selectedOption = printer ? printer.options[printer.selectedIndex] : null;
-    const printerPricePerHour = selectedOption ? parseFloat(selectedOption.dataset.pricePerHour) || 0 : 0;
-    const printTimeMinutes = parseInt(printTime.value) || 0;
-    totalCost = (printTime && printTime.value && printer && printer.value) ? 
-      (printTimeMinutes / 60) * printerPricePerHour : 0;
-    console.log("💰 Eigenes Material - nur Drucker-Kosten:", totalCost, "€");
+    if (printer && printer.value && printTime && printTime.value) {
+      const selectedOption = printer.options[printer.selectedIndex];
+      const printerPricePerHour = selectedOption ? parseFloat(selectedOption.dataset.pricePerHour) || 0 : 0;
+      const printTimeMinutes = parseInt(printTime.value) || 0;
+      const printerCost = (printTimeMinutes / 60) * printerPricePerHour;
+      totalCost = printerCost; // Only printer costs, ignore material costs
+      console.log("💰 Eigenes Material - nur Drucker-Kosten:", printerCost, "€ (", printTimeMinutes, "min,", printerPricePerHour, "€/h)");
+    } else {
+      totalCost = 0;
+      console.log("💰 Eigenes Material - aber keine Drucker-Zeit angegeben");
+    }
+  } else {
+    // Normal calculation: only material costs (printer costs are included in material prices)
+    console.log("💰 Fremdes Material - nur Material-Kosten (Drucker-Kosten in Material-Preisen enthalten)");
   }
   
   costPreview.textContent = totalCost.toFixed(2) + ' €';
