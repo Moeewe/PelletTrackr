@@ -119,6 +119,9 @@ async function loadPrinters() {
       option.textContent = `${printer.name}${printer.pricePerHour ? ` (${printer.pricePerHour.toFixed(2)}€/h)` : ''}`;
       select.appendChild(option);
       loadedCount++;
+      
+      // Debug: Überprüfe, ob pricePerHour korrekt gesetzt wurde
+      console.log(`🔍 Option erstellt: ${printer.name}, dataset.pricePerHour: ${option.dataset.pricePerHour}`);
     });
     
     console.log(`✅ ${loadedCount} Drucker erfolgreich geladen!`);
@@ -1213,6 +1216,41 @@ window.forceLoadPrinters = async function() {
     console.log("✅ Drucker manuell geladen");
   } catch (error) {
     console.error("❌ Manuelles Laden fehlgeschlagen:", error);
+  }
+};
+
+// Test-Funktion für Drucker-Daten
+window.testPrinterData = async function() {
+  console.log("🧪 Teste Drucker-Daten...");
+  
+  try {
+    const snapshot = await window.db.collection("printers").get();
+    console.log("📊 Drucker in Datenbank:", snapshot.size);
+    
+    snapshot.forEach(doc => {
+      const printer = doc.data();
+      console.log(`🖨️ ${printer.name}:`, {
+        id: doc.id,
+        name: printer.name,
+        pricePerHour: printer.pricePerHour,
+        status: printer.status
+      });
+    });
+    
+    // Teste Select-Element
+    const select = document.getElementById("printer");
+    if (select) {
+      console.log("📋 Select-Element gefunden:", select.options.length, "Optionen");
+      for (let i = 0; i < select.options.length; i++) {
+        const option = select.options[i];
+        console.log(`Option ${i}: ${option.textContent}, value: ${option.value}, pricePerHour: ${option.dataset.pricePerHour}`);
+      }
+    } else {
+      console.log("❌ Select-Element nicht gefunden");
+    }
+    
+  } catch (error) {
+    console.error("❌ Fehler beim Testen der Drucker-Daten:", error);
   }
 };
 
