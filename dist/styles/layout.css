@@ -157,6 +157,12 @@
   .welcome-message {
     display: none !important;
   }
+  
+  /* Mobile padding for containers */
+  .dashboard-container,
+  .admin-container {
+    padding: 12px;
+  }
 }
 
 .admin-badge {
