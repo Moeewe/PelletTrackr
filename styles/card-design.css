@@ -2018,8 +2018,8 @@
     transform: translateY(-50%) scale(0.95);
 }
 
-/* Printer Status Grid Buttons */
-.printer-status-grid {
+/* Printer Status Grid Buttons - High Specificity */
+.printer-card .printer-status-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
@@ -2027,11 +2027,11 @@
     padding: 0 15px;
 }
 
-.status-btn {
+.printer-card .printer-status-grid .status-btn {
     padding: 10px 12px;
-    border: 2px solid #000000;
-    background: #ffffff;
-    color: #000000;
+    border: 2px solid #000000 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
     font-size: 12px;
     font-weight: 600;
     text-align: center;
@@ -2040,50 +2040,54 @@
     border-radius: 4px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    margin: 0;
+    outline: none;
+    box-shadow: none;
 }
 
-.status-btn:hover {
-    background: #f0f0f0;
+.printer-card .printer-status-grid .status-btn:hover {
+    background: #f0f0f0 !important;
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.status-btn.active {
-    border: none;
-    color: #ffffff;
+.printer-card .printer-status-grid .status-btn.active {
+    border: none !important;
+    color: #ffffff !important;
     font-weight: 700;
+    box-shadow: none;
 }
 
-.status-btn.active:nth-child(1) {
-    background: #4CAF50; /* Grün für Verfügbar */
+.printer-card .printer-status-grid .status-btn:nth-child(1).active {
+    background: #4CAF50 !important; /* Grün für Verfügbar */
 }
 
-.status-btn.active:nth-child(2) {
-    background: #2196F3; /* Blau für In Betrieb */
+.printer-card .printer-status-grid .status-btn:nth-child(2).active {
+    background: #2196F3 !important; /* Blau für In Betrieb */
 }
 
-.status-btn.active:nth-child(3) {
-    background: #FF9800; /* Orange für Wartung */
+.printer-card .printer-status-grid .status-btn:nth-child(3).active {
+    background: #FF9800 !important; /* Orange für Wartung */
 }
 
-.status-btn.active:nth-child(4) {
-    background: #F44336; /* Rot für Defekt */
+.printer-card .printer-status-grid .status-btn:nth-child(4).active {
+    background: #F44336 !important; /* Rot für Defekt */
 }
 
-.status-btn.active:hover {
+.printer-card .printer-status-grid .status-btn.active:hover {
     transform: translateY(-1px);
     box-shadow: 0 3px 6px rgba(0,0,0,0.2);
 }
 
 @media (max-width: 768px) {
-    .printer-status-grid {
+    .printer-card .printer-status-grid {
         grid-template-columns: 1fr 1fr;
         gap: 6px;
         margin: 12px 0;
         padding: 0 10px;
     }
     
-    .status-btn {
+    .printer-card .printer-status-grid .status-btn {
         padding: 8px 10px;
         font-size: 11px;
     }
