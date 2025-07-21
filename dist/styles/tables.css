@@ -1,6 +1,16 @@
 /* ===== TABLE STYLES ===== */
 /* Alle Tabellen-Styles inklusive responsive Design */
 
+/* Spezielle Styles für Material/Masterbatch-Verwaltung */
+.material-table .actions .btn,
+.masterbatch-table .actions .btn {
+  min-width: 70px !important; /* Noch kompaktere Buttons */
+  min-height: 32px !important; /* Kleinere Höhe */
+  padding: 6px 10px !important; /* Weniger Padding */
+  font-size: 11px !important; /* Kleinere Schrift */
+  letter-spacing: 0.2px !important; /* Weniger Letter-Spacing */
+}
+
 /* Table Container */
 .data-table {
   background: white;
@@ -14,12 +24,11 @@
 }
 
 .data-table table {
-  width: auto; /* Automatische Breite basierend auf Inhalt */
-  min-width: 100%; /* Mindestens so breit wie der Container */
+  width: 100%; /* Volle Breite nutzen */
   border-collapse: collapse;
   font-size: 14px;
   border: none;
-  table-layout: auto; /* Automatische Spaltenbreite */
+  table-layout: fixed; /* Feste Spaltenbreiten für bessere Kontrolle */
 }
 
 .data-table thead {
@@ -36,7 +45,8 @@
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  white-space: nowrap; /* Verhindert Zeilenumbrüche in Headers */
+  white-space: normal; /* Erlaubt Zeilenumbrüche in Headers */
+  word-wrap: break-word;
 }
 
 .data-table th:last-child {
@@ -63,19 +73,32 @@
   border-right: 1px solid #f0f0f0;
   color: #000000;
   line-height: 1.4;
-  white-space: nowrap; /* Verhindert Zeilenumbrüche in normalen Zellen */
+  white-space: normal; /* Erlaubt Zeilenumbrüche in normalen Zellen */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .data-table td:last-child {
   border-right: none;
 }
 
+/* Spaltenbreiten für bessere Verteilung */
+.data-table th:nth-child(1), .data-table td:nth-child(1) { width: 12%; } /* Datum */
+.data-table th:nth-child(2), .data-table td:nth-child(2) { width: 15%; } /* Job */
+.data-table th:nth-child(3), .data-table td:nth-child(3) { width: 12%; } /* Material */
+.data-table th:nth-child(4), .data-table td:nth-child(4) { width: 8%; } /* Menge */
+.data-table th:nth-child(5), .data-table td:nth-child(5) { width: 12%; } /* Masterbatch */
+.data-table th:nth-child(6), .data-table td:nth-child(6) { width: 8%; } /* MB Menge */
+.data-table th:nth-child(7), .data-table td:nth-child(7) { width: 10%; } /* Kosten */
+.data-table th:nth-child(8), .data-table td:nth-child(8) { width: 8%; } /* Status */
+.data-table th:nth-child(9), .data-table td:nth-child(9) { width: 15%; } /* Notizen */
+.data-table th:nth-child(10), .data-table td:nth-child(10) { width: 20%; } /* Aktionen */
+
 /* Spezielle Behandlung für Notizen-Spalte */
 .data-table td[data-label="Notizen"],
-.data-table th:has(+ th + th + th + th + th + th + th + th), /* Notizen-Header */
+.data-table th:has(+ th + th + th + th + th + th + th + th + th), /* Notizen-Header */
 .data-table td:nth-child(9) { /* Notizen-Zelle (9. Spalte) */
-  white-space: normal; /* Erlaubt Zeilenumbrüche nur in Notizen */
-  max-width: 200px; /* Begrenzt die Breite der Notizen-Spalte */
+  white-space: normal;
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
@@ -84,7 +107,6 @@
 .data-table td.actions,
 .data-table td:last-child {
   white-space: nowrap !important;
-  min-width: 200px; /* Genug Platz für Buttons */
   position: sticky;
   right: 0;
   background: white;
@@ -103,17 +125,17 @@
 .data-table .actions .btn,
 .data-table .actions .btn-small {
   flex-shrink: 0; /* Buttons behalten ihre Größe */
-  min-width: 110px;
-  min-height: 44px; /* Better touch targets on desktop */
-  padding: 12px 16px;
-  font-size: 14px;
+  min-width: 80px; /* Kompaktere Buttons */
+  min-height: 36px; /* Kleinere Höhe */
+  padding: 8px 12px; /* Weniger Padding */
+  font-size: 12px; /* Kleinere Schrift */
   font-weight: 600;
   border: 2px solid #000000;
   border-radius: 0;
   background: white;
   color: #000000;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px; /* Weniger Letter-Spacing */
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
