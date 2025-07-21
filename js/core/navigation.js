@@ -43,14 +43,8 @@ function updateUserPrintsLabel() {
       // Extract first name (everything before the first space)
       const firstName = window.currentUser.name.split(' ')[0];
       
-      // Check if mobile view (hide welcome message on mobile)
-      const isMobile = window.innerWidth <= 768;
-      
-      if (isMobile) {
-        userPrintsLabel.textContent = 'Drucke';
-      } else {
-        userPrintsLabel.textContent = `${firstName}'s Drucke`;
-      }
+      // Always show personalized label (both mobile and desktop)
+      userPrintsLabel.textContent = `${firstName}'s Drucke`;
     }
   } catch (error) {
     console.warn('Could not update user prints label:', error);
