@@ -1,5 +1,5 @@
 // ==================== MATERIAL LOADING MODULE ====================
-// Laden von Materialien und Masterbatches aus Firestore
+// Laden von Materialien, Masterbatches und Druckern aus Firestore
 
 // Materialien laden (direkt aus Firestore)
 async function loadMaterials() {
@@ -74,6 +74,171 @@ async function loadMasterbatches() {
   } catch (e) {
     console.error("❌ Fehler beim Laden der Masterbatches:", e);
     select.innerHTML = '<option value="">Fehler beim Laden</option>';
+  }
+}
+
+// Drucker laden (direkt aus Firestore)
+async function loadPrinters() {
+  const select = document.getElementById("printer");
+  if (!select) return;
+  
+  select.innerHTML = '<option value="">Lade Drucker...</option>';
+  
+  console.log("🔄 Lade Drucker...");
+  
+  try {
+    const snapshot = await window.db.collection("printers").get();
+    console.log("📊 Printers-Snapshot:", snapshot.size, "Dokumente");
+    
+    select.innerHTML = '<option value="">Drucker auswählen... (optional)</option>';
+    
+    if (snapshot.empty) {
+      console.log("⚠️ Keine Drucker gefunden");
+      select.innerHTML = '<option value="">Keine Drucker verfügbar</option>';
+      return;
+    }
+    
+    snapshot.forEach(doc => {
+      const printer = doc.data();
+      console.log("➕ Drucker:", printer.name, "Preis/Stunde:", printer.pricePerHour);
+      const option = document.createElement("option");
+      option.value = printer.name;
+      option.dataset.pricePerHour = printer.pricePerHour || 0;
+      option.textContent = `${printer.name}${printer.pricePerHour ? ` (${printer.pricePerHour.toFixed(2)}€/h)` : ''}`;
+      select.appendChild(option);
+    });
+    
+    console.log("✅ Drucker erfolgreich geladen!");
+    
+  } catch (e) {
+    console.error("❌ Fehler beim Laden der Drucker:", e);
+    select.innerHTML = '<option value="">Fehler beim Laden</option>';
+  }
+}
+
+// Event Listeners für Formular-Felder
+function setupFormEventListeners() {
+  // Material selection change
+  const materialSelect = document.getElementById("material");
+  if (materialSelect) {
+    materialSelect.addEventListener("change", function() {
+      // Store price in dataset for cost calculation
+      const selectedOption = this.options[this.selectedIndex];
+      if (selectedOption && selectedOption.value) {
+        const materialName = selectedOption.value;
+        // Find material price from materials collection
+        window.db.collection("materials").where("name", "==", materialName).get().then(snapshot => {
+          if (!snapshot.empty) {
+            const material = snapshot.docs[0].data();
+            this.dataset.price = material.price;
+          }
+        });
+      }
+      if (typeof window.updateCostPreview === 'function') {
+        window.updateCostPreview();
+      }
+    });
+  }
+  
+  // Masterbatch selection change
+  const masterbatchSelect = document.getElementById("masterbatch");
+  if (masterbatchSelect) {
+    masterbatchSelect.addEventListener("change", function() {
+      // Store price in dataset for cost calculation
+      const selectedOption = this.options[this.selectedIndex];
+      if (selectedOption && selectedOption.value) {
+        const masterbatchName = selectedOption.value;
+        // Find masterbatch price from masterbatches collection
+        window.db.collection("masterbatches").where("name", "==", masterbatchName).get().then(snapshot => {
+          if (!snapshot.empty) {
+            const masterbatch = snapshot.docs[0].data();
+            this.dataset.price = masterbatch.price;
+          }
+        });
+      }
+      if (typeof window.updateCostPreview === 'function') {
+        window.updateCostPreview();
+      }
+    });
+  }
+  
+  // Printer selection change
+  const printerSelect = document.getElementById("printer");
+  if (printerSelect) {
+    printerSelect.addEventListener("change", function() {
+      // Store price in dataset for cost calculation
+      const selectedOption = this.options[this.selectedIndex];
+      if (selectedOption && selectedOption.value) {
+        const printerName = selectedOption.value;
+        // Find printer price from printers collection
+        window.db.collection("printers").where("name", "==", printerName).get().then(snapshot => {
+          if (!snapshot.empty) {
+            const printer = snapshot.docs[0].data();
+            this.dataset.pricePerHour = printer.pricePerHour || 0;
+          }
+        });
+      }
+      if (typeof window.updateCostPreview === 'function') {
+        window.updateCostPreview();
+      }
+    });
+  }
+  
+  // Quantity inputs
+  const materialMenge = document.getElementById("materialMenge");
+  if (materialMenge) {
+    materialMenge.addEventListener("input", function() {
+      if (typeof window.updateCostPreview === 'function') {
+        window.updateCostPreview();
+      }
+    });
+  }
+  
+  const masterbatchMenge = document.getElementById("masterbatchMenge");
+  if (masterbatchMenge) {
+    masterbatchMenge.addEventListener("input", function() {
+      if (typeof window.updateCostPreview === 'function') {
+        window.updateCostPreview();
+      }
+    });
+  }
+  
+  const printTime = document.getElementById("printTime");
+  if (printTime) {
+    printTime.addEventListener("input", function() {
+      if (typeof window.updateCostPreview === 'function') {
+        window.updateCostPreview();
+      }
+    });
+  }
+  
+  // Own material checkbox
+  const ownMaterialUsed = document.getElementById("ownMaterialUsed");
+  if (ownMaterialUsed) {
+    ownMaterialUsed.addEventListener("change", function() {
+      if (typeof window.updateCostPreview === 'function') {
+        window.updateCostPreview();
+      }
+    });
+  }
+}
+
+// Alle Formulardaten laden
+async function loadAllFormData() {
+  await Promise.all([
+    loadMaterials(),
+    loadMasterbatches(),
+    loadPrinters()
+  ]);
+  
+  // Setup event listeners after data is loaded
+  setupFormEventListeners();
+  
+  // Initial cost preview update
+  if (typeof window.updateCostPreview === 'function') {
+    setTimeout(() => {
+      window.updateCostPreview();
+    }, 500);
   }
 }
 
@@ -916,6 +1081,9 @@ window.showEditMasterbatchForm = showEditMasterbatchForm;
 // Loading functions global verfügbar machen
 window.loadMaterials = loadMaterials;
 window.loadMasterbatches = loadMasterbatches;
+window.loadPrinters = loadPrinters;
+window.loadAllFormData = loadAllFormData;
+window.setupFormEventListeners = setupFormEventListeners;
 window.loadMaterialsForManagement = loadMaterialsForManagement;
 window.loadMasterbatchesForManagement = loadMasterbatchesForManagement;
 

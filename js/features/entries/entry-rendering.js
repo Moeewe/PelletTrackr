@@ -26,6 +26,8 @@ function renderUserEntries(entries) {
             <tr>
               <th onclick="sortUserEntries('date')">Datum</th>
               <th onclick="sortUserEntries('jobName')">Job</th>
+              <th onclick="sortUserEntries('printer')">Drucker</th>
+              <th onclick="sortUserEntries('printTime')">Zeit</th>
               <th onclick="sortUserEntries('material')">Material</th>
               <th onclick="sortUserEntries('materialMenge')">Menge</th>
               <th onclick="sortUserEntries('masterbatch')">Masterbatch</th>
@@ -62,6 +64,8 @@ function renderUserEntries(entries) {
       <tr class="entry-row">
         <td data-label="Datum"><span class="cell-value">${date}</span></td>
         <td data-label="Job"><span class="cell-value">${jobName}</span></td>
+        <td data-label="Drucker"><span class="cell-value">${entry.printer || '-'}</span></td>
+        <td data-label="Zeit"><span class="cell-value">${entry.printTime ? entry.printTime + ' min' : '-'}</span></td>
         <td data-label="Material"><span class="cell-value">${entry.material}</span></td>
         <td data-label="Menge"><span class="cell-value">${entry.materialMenge.toFixed(2)} kg</span></td>
         <td data-label="Masterbatch"><span class="cell-value">${entry.masterbatch}</span></td>
@@ -124,6 +128,16 @@ function renderUserEntries(entries) {
           <div class="entry-detail-row">
             <span class="entry-detail-label">Datum</span>
             <span class="entry-detail-value">${date}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Drucker</span>
+            <span class="entry-detail-value">${entry.printer || 'Nicht angegeben'}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Zeit</span>
+            <span class="entry-detail-value">${entry.printTime ? entry.printTime + ' min' : 'Nicht angegeben'}</span>
           </div>
           
           <div class="entry-detail-row">
@@ -238,6 +252,8 @@ function renderAdminEntries(entries) {
               <th onclick="sortAdminEntriesBy('name')">Name</th>
               <th onclick="sortAdminEntriesBy('kennung')">Kennung</th>
               <th onclick="sortAdminEntriesBy('jobName')">Job</th>
+              <th onclick="sortAdminEntriesBy('printer')">Drucker</th>
+              <th onclick="sortAdminEntriesBy('printTime')">Zeit</th>
               <th onclick="sortAdminEntriesBy('material')">Material</th>
               <th onclick="sortAdminEntriesBy('materialMenge')">Mat. Menge</th>
               <th onclick="sortAdminEntriesBy('masterbatch')">Masterbatch</th>
@@ -281,6 +297,8 @@ function renderAdminEntries(entries) {
         <td data-label="Name"><span class="cell-value">${entry.name}</span></td>
         <td data-label="Kennung"><span class="cell-value">${entry.kennung}</span></td>
         <td data-label="Job"><span class="cell-value">${jobName}</span></td>
+        <td data-label="Drucker"><span class="cell-value">${entry.printer || '-'}</span></td>
+        <td data-label="Zeit"><span class="cell-value">${entry.printTime ? entry.printTime + ' min' : '-'}</span></td>
         <td data-label="Material"><span class="cell-value">${entry.material}</span></td>
         <td data-label="Mat. Menge"><span class="cell-value">${(entry.materialMenge || 0).toFixed(2)} kg</span></td>
         <td data-label="Masterbatch"><span class="cell-value">${entry.masterbatch}</span></td>
@@ -358,6 +376,16 @@ function renderAdminEntries(entries) {
           <div class="entry-detail-row">
             <span class="entry-detail-label">FH-Kennung</span>
             <span class="entry-detail-value">${entry.kennung}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Drucker</span>
+            <span class="entry-detail-value">${entry.printer || 'Nicht angegeben'}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Zeit</span>
+            <span class="entry-detail-value">${entry.printTime ? entry.printTime + ' min' : 'Nicht angegeben'}</span>
           </div>
           
           <div class="entry-detail-row">
