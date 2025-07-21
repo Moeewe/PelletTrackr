@@ -42,7 +42,7 @@
   }
   
   .actions {
-    white-space: nowrap;
+    white-space: normal;
   }
   
   .btn-small {
@@ -425,7 +425,7 @@
     max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
   }
   
   .data-table td[data-label="Datum"],
@@ -454,7 +454,7 @@
   }
   
   .data-table .actions {
-    white-space: nowrap;
+    white-space: normal;
     min-width: 200px;
   }
 }

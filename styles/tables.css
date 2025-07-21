@@ -106,7 +106,7 @@
 /* Aktionen-Spalte normale Behandlung */
 .data-table td.actions,
 .data-table td:last-child {
-  white-space: nowrap !important;
+  white-space: normal;
   background: white;
 }
 
@@ -657,7 +657,7 @@
 
 /* Action Columns - Globale Styles für alle Tabellen */
 .data-table td.actions {
-  white-space: nowrap;
+  white-space: normal;
   padding: 8px 12px;
   vertical-align: middle;
 }
@@ -684,7 +684,7 @@
   letter-spacing: 0.3px;
   cursor: pointer;
   transition: all 0.2s ease;
-  white-space: nowrap;
+  white-space: normal;
   min-width: auto;
   line-height: 1.2;
   flex: none;
@@ -826,7 +826,7 @@
     margin: 0;
     padding: 6px 10px;
     font-size: 11px;
-    white-space: nowrap;
+    white-space: normal;
   }
   
   .data-table td.actions .btn-small {
@@ -852,7 +852,7 @@
 
 /* Legacy Support für alte Strukturen */
 .actions-cell {
-  white-space: nowrap;
+  white-space: normal;
   padding: 8px 12px;
   vertical-align: middle;
 }
@@ -879,7 +879,7 @@
   letter-spacing: 0.3px;
   cursor: pointer;
   transition: all 0.2s ease;
-  white-space: nowrap;
+  white-space: normal;
   min-width: auto;
   line-height: 1.2;
   flex: none;
