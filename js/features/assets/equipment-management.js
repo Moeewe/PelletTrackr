@@ -1005,7 +1005,7 @@ async function duplicateEquipment(equipmentId) {
 }
 
 /**
- * Update machine overview in admin dashboard
+ * Update machine overview in admin dashboard and user dashboard
  */
 function updateMachineOverview() {
     console.log('🔄 updateMachineOverview called');
@@ -1036,20 +1036,24 @@ function updateMachineOverview() {
     
     console.log(`📊 Calculated counts: ${available} available, ${inUse} in use, ${maintenance} maintenance`);
     
-    // Update display elements
+    // Update admin dashboard elements
     const availableElement = document.getElementById('availableMachines');
     const inUseElement = document.getElementById('inUseMachines');
     const maintenanceElement = document.getElementById('maintenanceMachines');
     
+    // Update user dashboard elements
+    const userAvailableElement = document.getElementById('userAvailableMachines');
+    const userInUseElement = document.getElementById('userInUseMachines');
+    const userMaintenanceElement = document.getElementById('userMaintenanceMachines');
+    
     console.log('🔍 Found elements:', {
-        available: !!availableElement,
-        inUse: !!inUseElement,
-        maintenance: !!maintenanceElement
+        admin: { available: !!availableElement, inUse: !!inUseElement, maintenance: !!maintenanceElement },
+        user: { available: !!userAvailableElement, inUse: !!userInUseElement, maintenance: !!userMaintenanceElement }
     });
     
+    // Update admin elements
     if (availableElement) {
         availableElement.textContent = available;
-        // Update CSS class for empty state
         const availableCircle = availableElement.closest('.status-circle');
         if (availableCircle) {
             availableCircle.classList.toggle('empty', available === 0);
@@ -1058,7 +1062,6 @@ function updateMachineOverview() {
     
     if (inUseElement) {
         inUseElement.textContent = inUse;
-        // Update CSS class for empty state
         const inUseCircle = inUseElement.closest('.status-circle');
         if (inUseCircle) {
             inUseCircle.classList.toggle('empty', inUse === 0);
@@ -1067,10 +1070,34 @@ function updateMachineOverview() {
     
     if (maintenanceElement) {
         maintenanceElement.textContent = maintenance;
-        // Update CSS class for empty state
         const maintenanceCircle = maintenanceElement.closest('.status-circle');
         if (maintenanceCircle) {
             maintenanceCircle.classList.toggle('empty', maintenance === 0);
+        }
+    }
+    
+    // Update user elements
+    if (userAvailableElement) {
+        userAvailableElement.textContent = available;
+        const userAvailableCircle = userAvailableElement.closest('.status-circle');
+        if (userAvailableCircle) {
+            userAvailableCircle.classList.toggle('empty', available === 0);
+        }
+    }
+    
+    if (userInUseElement) {
+        userInUseElement.textContent = inUse;
+        const userInUseCircle = userInUseElement.closest('.status-circle');
+        if (userInUseCircle) {
+            userInUseCircle.classList.toggle('empty', inUse === 0);
+        }
+    }
+    
+    if (userMaintenanceElement) {
+        userMaintenanceElement.textContent = maintenance;
+        const userMaintenanceCircle = userMaintenanceElement.closest('.status-circle');
+        if (userMaintenanceCircle) {
+            userMaintenanceCircle.classList.toggle('empty', maintenance === 0);
         }
     }
     

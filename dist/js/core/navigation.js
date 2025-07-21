@@ -87,6 +87,16 @@ function initializeUserDashboard() {
   // Show/hide admin elements based on user type
   updateAdminUI();
   
+  // Update machine overview for user dashboard
+  setTimeout(() => {
+    if (typeof updateMachineOverview === 'function') {
+      console.log('🔄 updateMachineOverview called from initializeUserDashboard');
+      updateMachineOverview();
+    } else {
+      console.warn('⚠️ updateMachineOverview function not available');
+    }
+  }, 1000);
+  
   // Warten bis alle Funktionen verfügbar sind
   if (typeof loadMaterials === 'function' && typeof loadMasterbatches === 'function') {
     loadMaterials().then(() => {

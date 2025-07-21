@@ -96,6 +96,31 @@
                 </div>
             </div>
 
+            <!-- Live Printer Overview for User -->
+            <div class="machine-overview-section">
+                <div class="machine-status-grid">
+                    <span class="machine-overview-title" onclick="showPrinterStatus()">Drucker</span>
+                    <div class="machine-status-item" onclick="showPrinterStatus()">
+                        <div class="status-circle status-available">
+                            <span class="status-number" id="userAvailableMachines">0</span>
+                        </div>
+                        <span class="status-label">Verfügbar</span>
+                    </div>
+                    <div class="machine-status-item" onclick="showPrinterStatus()">
+                        <div class="status-circle status-in-use">
+                            <span class="status-number" id="userInUseMachines">0</span>
+                        </div>
+                        <span class="status-label">In Betrieb</span>
+                    </div>
+                    <div class="machine-status-item" onclick="showPrinterStatus()">
+                        <div class="status-circle status-maintenance">
+                            <span class="status-number" id="userMaintenanceMachines">0</span>
+                        </div>
+                        <span class="status-label">Wartung</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- Entry Form -->
             <div class="form-section">
                 <h2 class="section-title">Neuen Druck hinzufügen</h2>
