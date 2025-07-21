@@ -329,7 +329,7 @@
   font-size: 13px;
   font-weight: 400;
   color: #666;
-  text-transform: none;
+  text-transform: none !important;
 }
 
 /* ==================== PAGINIERUNG CONTROLS ==================== */
