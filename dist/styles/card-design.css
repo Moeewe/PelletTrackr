@@ -872,7 +872,7 @@
   
   .data-table table {
     width: 100%;
-    min-width: 800px; /* Mindestbreite für Material/Masterbatch Tabellen */
+    min-width: 1200px; /* Mindestbreite für Nutzerübersicht-Tabellen */
     border-collapse: collapse;
   }
   
@@ -885,33 +885,17 @@
     vertical-align: middle;
   }
   
-  /* Kompakte Spalten für Material/Masterbatch */
-  .data-table th:nth-child(3),
-  .data-table th:nth-child(4),
-  .data-table th:nth-child(5),
-  .data-table th:nth-child(6),
-  .data-table td:nth-child(3),
-  .data-table td:nth-child(4),
-  .data-table td:nth-child(5),
-  .data-table td:nth-child(6) {
-    min-width: 90px;
-    text-align: right;
-  }
-  
-  /* Aktionen-Spalte kompakter */
-  .data-table th:last-child,
-  .data-table td:last-child {
-    min-width: 400px; /* Mehr Platz für alle Admin-Buttons */
-    text-align: center;
-  }
-  
-  /* Name und Hersteller können breiter sein */
-  .data-table th:nth-child(1),
-  .data-table th:nth-child(2),
-  .data-table td:nth-child(1),
-  .data-table td:nth-child(2) {
-    min-width: 120px;
-  }
+  /* Spaltenbreiten für Nutzerübersicht-Tabelle */
+  .data-table th:nth-child(1), .data-table td:nth-child(1) { min-width: 120px; } /* Datum */
+  .data-table th:nth-child(2), .data-table td:nth-child(2) { min-width: 150px; } /* Job */
+  .data-table th:nth-child(3), .data-table td:nth-child(3) { min-width: 200px; } /* Material */
+  .data-table th:nth-child(4), .data-table td:nth-child(4) { min-width: 100px; } /* Menge */
+  .data-table th:nth-child(5), .data-table td:nth-child(5) { min-width: 150px; } /* Masterbatch */
+  .data-table th:nth-child(6), .data-table td:nth-child(6) { min-width: 120px; } /* MB Menge */
+  .data-table th:nth-child(7), .data-table td:nth-child(7) { min-width: 100px; } /* Kosten */
+  .data-table th:nth-child(8), .data-table td:nth-child(8) { min-width: 100px; } /* Status */
+  .data-table th:nth-child(9), .data-table td:nth-child(9) { min-width: 200px; } /* Notizen */
+  .data-table th:nth-child(10), .data-table td:nth-child(10) { min-width: 250px; } /* Aktionen */
   
   .entries-container .entry-cards {
     display: none;
