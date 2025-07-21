@@ -151,55 +151,8 @@
   text-align: right;
 }
 
-/* Mobile header button layout */
+/* Mobile header button layout - Moved to responsive.css */
 @media (max-width: 768px) {
-  /* Ensure header uses flexbox for proper alignment */
-  .dashboard-header {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    width: 100% !important;
-    padding: 0 16px !important;
-    height: 60px !important;
-  }
-  
-  /* Logo alignment - left aligned and in line with buttons */
-  .dashboard-header .logo {
-    text-align: left !important;
-    margin: 0 !important;
-    flex-shrink: 0 !important;
-    font-size: 16px !important;
-    line-height: 1 !important;
-    display: flex !important;
-    align-items: center !important;
-  }
-  
-  .dashboard-header .user-info {
-    display: flex !important;
-    gap: 6px !important;
-    align-items: center !important;
-    flex-wrap: nowrap !important;
-    flex-direction: row !important;
-    margin-left: auto !important;
-    flex-shrink: 0 !important;
-  }
-  
-  .dashboard-header .user-info .btn {
-    margin: 0 !important;
-    flex-shrink: 0 !important;
-    font-size: 12px !important;
-    padding: 6px 10px !important;
-    display: inline-block !important;
-  }
-  
-  /* Ensure buttons are side by side */
-  .dashboard-header .user-info .admin-toggle,
-  .dashboard-header .user-info .btn-link {
-    display: inline-block !important;
-    width: auto !important;
-    margin: 0 !important;
-  }
-  
   /* Hide welcome message on mobile */
   .welcome-message {
     display: none !important;
