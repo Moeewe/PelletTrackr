@@ -64,35 +64,12 @@
             <div class="dashboard-header">
                 <h1 class="logo">
                     <span class="highlight">Pellet</span>Trackr
-                    <span id="userAdminBadge" class="admin-badge" style="display: none;">Admin</span>
                 </h1>
                 <div class="user-info">
                     <button id="adminToggleBtn" class="btn btn-secondary admin-toggle" onclick="toggleAdminView()" style="display: none;">
                         Admin
                     </button>
                     <button class="btn btn-link" onclick="logout()">Abmelden</button>
-                </div>
-            </div>
-
-            <!-- User Stats -->
-            <div class="stats-section">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-number" id="userTotalEntries">0</div>
-                        <div class="stat-label" id="userPrintsLabel">Drucke</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="userTotalCost">0,00 €</div>
-                        <div class="stat-label">Gesamtkosten</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="userPaidAmount">0,00 €</div>
-                        <div class="stat-label">Bezahlt</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="userUnpaidAmount">0,00 €</div>
-                        <div class="stat-label">Offen</div>
-                    </div>
                 </div>
             </div>
 
@@ -117,6 +94,28 @@
                             <span class="status-number" id="userMaintenanceMachines">0</span>
                         </div>
                         <span class="status-label">Wartung</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Stats -->
+            <div class="stats-section">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="userTotalEntries">0</div>
+                        <div class="stat-label" id="userPrintsLabel">Drucke</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="userTotalCost">0,00 €</div>
+                        <div class="stat-label">Gesamtkosten</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="userPaidAmount">0,00 €</div>
+                        <div class="stat-label">Bezahlt</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="userUnpaidAmount">0,00 €</div>
+                        <div class="stat-label">Offen</div>
                     </div>
                 </div>
             </div>

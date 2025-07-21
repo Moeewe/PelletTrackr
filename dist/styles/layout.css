@@ -231,6 +231,25 @@
   background: #45a049 !important;
 }
 
+/* Admin-Ansicht: Button rot */
+#adminDashboard .admin-toggle {
+  background: #dc3545 !important;
+}
+
+#adminDashboard .admin-toggle:hover {
+  background: #c82333 !important;
+}
+
+/* User-Ansicht: Button gelb */
+#userDashboard .admin-toggle {
+  background: #ffc107 !important;
+  color: #000000 !important;
+}
+
+#userDashboard .admin-toggle:hover {
+  background: #e0a800 !important;
+}
+
 .admin-checkbox {
   display: flex;
   align-items: center;

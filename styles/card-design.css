@@ -280,7 +280,7 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 12px;
+  font-size: 10px;
   color: white;
   max-width: 20px;
   min-width: 20px;
@@ -289,32 +289,32 @@
 }
 
 .status-available {
-  background: rgba(40, 167, 69, 0.8) !important;
+  background: #28a745 !important;
 }
 
 .status-available.empty {
-  background: rgba(40, 167, 69, 0.2) !important;
+  background: rgba(40, 167, 69, 0.3) !important;
 }
 
 .status-in-use {
-  background: rgba(255, 193, 7, 0.8) !important;
+  background: #fd7e14 !important;
 }
 
 .status-in-use.empty {
-  background: rgba(255, 193, 7, 0.2) !important;
+  background: rgba(253, 126, 20, 0.3) !important;
 }
 
 .status-maintenance {
-  background: rgba(220, 53, 69, 0.8) !important;
+  background: #dc3545 !important;
 }
 
 .status-maintenance.empty {
-  background: rgba(220, 53, 69, 0.2) !important;
+  background: rgba(220, 53, 69, 0.3) !important;
 }
 
 .status-number {
   font-weight: 700;
-  font-size: 12px;
+  font-size: 10px;
   color: white;
 }
 
