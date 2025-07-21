@@ -310,9 +310,30 @@ async function loadAllFormData() {
       console.log("✅ loadPrinters Funktion gefunden");
     }
     
+    // Direkte Überprüfung vor dem Aufruf
+    console.log("🔍 Überprüfe DOM vor loadPrinters...");
+    const printerSelect = document.getElementById("printer");
+    console.log("Printer select gefunden:", !!printerSelect);
+    if (printerSelect) {
+      console.log("Printer select options:", printerSelect.options.length);
+    }
+    
     try {
+      console.log("🚀 Starte loadPrinters() Aufruf...");
       const result = await loadPrinters();
       console.log("✅ loadPrinters() erfolgreich abgeschlossen:", result);
+      
+      // Überprüfe nach dem Laden
+      console.log("🔍 Überprüfe DOM nach loadPrinters...");
+      const printerSelectAfter = document.getElementById("printer");
+      if (printerSelectAfter) {
+        console.log("Printer select options nach Laden:", printerSelectAfter.options.length);
+        for (let i = 0; i < printerSelectAfter.options.length; i++) {
+          const option = printerSelectAfter.options[i];
+          console.log(`Option ${i}: "${option.textContent}"`);
+        }
+      }
+      
     } catch (printerError) {
       console.error("❌ Erster Drucker-Load fehlgeschlagen:", printerError);
       console.log("🔄 Versuche Wiederholung...");
@@ -1288,6 +1309,49 @@ window.testPrinterData = async function() {
     
   } catch (error) {
     console.error("❌ Fehler beim Testen der Drucker-Daten:", error);
+  }
+};
+
+// Direkte Test-Funktion für loadPrinters
+window.testLoadPrintersDirect = async function() {
+  console.log("🧪 Direkter Test von loadPrinters...");
+  
+  try {
+    // Teste DOM-Element
+    const select = document.getElementById("printer");
+    console.log("1. DOM-Element:", select ? "✅ Gefunden" : "❌ Nicht gefunden");
+    
+    if (select) {
+      console.log("   - Tag:", select.tagName);
+      console.log("   - ID:", select.id);
+      console.log("   - Aktuelle Optionen:", select.options.length);
+    }
+    
+    // Teste Firebase
+    console.log("2. Firebase:", window.db ? "✅ Verfügbar" : "❌ Nicht verfügbar");
+    
+    // Teste Funktion
+    console.log("3. loadPrinters Funktion:", typeof loadPrinters === 'function' ? "✅ Verfügbar" : "❌ Nicht verfügbar");
+    
+    // Rufe loadPrinters direkt auf
+    if (typeof loadPrinters === 'function') {
+      console.log("4. Rufe loadPrinters() auf...");
+      const result = await loadPrinters();
+      console.log("5. Ergebnis:", result);
+      
+      // Überprüfe Ergebnis
+      const selectAfter = document.getElementById("printer");
+      if (selectAfter) {
+        console.log("6. Optionen nach Aufruf:", selectAfter.options.length);
+        for (let i = 0; i < selectAfter.options.length; i++) {
+          const option = selectAfter.options[i];
+          console.log(`   Option ${i}: "${option.textContent}"`);
+        }
+      }
+    }
+    
+  } catch (error) {
+    console.error("❌ Fehler im direkten Test:", error);
   }
 };
 
