@@ -79,19 +79,21 @@ async function loadMasterbatches() {
 
 // Drucker laden (direkt aus Firestore)
 async function loadPrinters() {
-  console.log("🔄 loadPrinters() gestartet");
-  
-  // Warte bis DOM bereit ist
-  let select = document.getElementById("printer");
-  let attempts = 0;
-  const maxAttempts = 10;
-  
-  while (!select && attempts < maxAttempts) {
-    console.log(`⏳ Warte auf printer select element... (${attempts + 1}/${maxAttempts})`);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    select = document.getElementById("printer");
-    attempts++;
-  }
+      console.log("🔄 loadPrinters() gestartet - Version 2.0");
+    
+    // Warte bis DOM bereit ist
+    let select = document.getElementById("printer");
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    console.log("🔍 Initiale DOM-Prüfung - select element:", select ? "gefunden" : "nicht gefunden");
+    
+    while (!select && attempts < maxAttempts) {
+      console.log(`⏳ Warte auf printer select element... (${attempts + 1}/${maxAttempts})`);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      select = document.getElementById("printer");
+      attempts++;
+    }
   
   if (!select) {
     console.error("❌ Printer select element nach", maxAttempts, "Versuchen nicht gefunden");
@@ -150,8 +152,16 @@ async function loadPrinters() {
     const options = select.querySelectorAll('option');
     console.log(`🔍 Überprüfung: ${options.length} Optionen im Select gefunden`);
     
+    // Detaillierte Überprüfung der Optionen
+    for (let i = 0; i < options.length; i++) {
+      const option = options[i];
+      console.log(`  Option ${i}: "${option.textContent}" (value: "${option.value}", pricePerHour: ${option.dataset.pricePerHour})`);
+    }
+    
     if (options.length <= 1) {
       console.warn("⚠️ Nur Standard-Option gefunden, Drucker wurden nicht hinzugefügt");
+    } else {
+      console.log("✅ Drucker-Optionen erfolgreich hinzugefügt!");
     }
     
     // Trigger change event für Kostenvorschau
@@ -1294,6 +1304,13 @@ window.diagnosePrinterProblem = function() {
     console.log("   - ID:", select.id);
     console.log("   - Sichtbar:", select.offsetParent !== null);
     console.log("   - Optionen:", select.options.length);
+    
+    // Detaillierte Optionen-Überprüfung
+    console.log("   - Optionen-Details:");
+    for (let i = 0; i < select.options.length; i++) {
+      const option = select.options[i];
+      console.log(`     ${i}: "${option.textContent}" (value: "${option.value}", pricePerHour: ${option.dataset.pricePerHour})`);
+    }
   }
   
   // 2. Prüfe Firebase
