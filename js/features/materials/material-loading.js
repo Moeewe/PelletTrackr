@@ -78,7 +78,7 @@ async function loadMasterbatches() {
 }
 
 // Drucker laden (direkt aus Firestore)
-async function loadPrinters() {
+async function loadFormPrinters() {
   console.log("🔄 loadPrinters() gestartet - Version 3.0");
   
   try {
@@ -316,12 +316,12 @@ async function loadAllFormData() {
     console.log("📦 Lade Drucker...");
     console.log("🔄 Rufe loadPrinters() auf...");
     
-    // Überprüfe, ob loadPrinters existiert
-    if (typeof loadPrinters !== 'function') {
-      console.error("❌ loadPrinters ist keine Funktion!");
+    // Überprüfe, ob loadFormPrinters existiert
+    if (typeof loadFormPrinters !== 'function') {
+      console.error("❌ loadFormPrinters ist keine Funktion!");
       console.log("Verfügbare Funktionen:", Object.keys(window).filter(key => key.includes('load')));
     } else {
-      console.log("✅ loadPrinters Funktion gefunden");
+      console.log("✅ loadFormPrinters Funktion gefunden");
     }
     
     // Direkte Überprüfung vor dem Aufruf
@@ -334,8 +334,8 @@ async function loadAllFormData() {
     
     try {
       console.log("🚀 Starte loadPrinters() Aufruf...");
-      const result = await loadPrinters();
-      console.log("✅ loadPrinters() erfolgreich abgeschlossen:", result);
+      const result = await loadFormPrinters();
+      console.log("✅ loadFormPrinters() erfolgreich abgeschlossen:", result);
       
       // Überprüfe nach dem Laden
       console.log("🔍 Überprüfe DOM nach loadPrinters...");
@@ -378,7 +378,7 @@ async function loadAllFormData() {
     // Fallback: Versuche Drucker einzeln zu laden
     console.log("🔄 Fallback: Versuche Drucker einzeln zu laden...");
     try {
-      await loadPrinters();
+      await loadFormPrinters();
     } catch (printerError) {
       console.error("❌ Auch Fallback fehlgeschlagen:", printerError);
     }
@@ -1284,7 +1284,7 @@ window.debugFormLoading = async function() {
 window.forceLoadPrinters = async function() {
   console.log("🚨 Force Load Printers...");
   try {
-    await loadPrinters();
+    await loadFormPrinters();
     console.log("✅ Drucker manuell geladen");
   } catch (error) {
     console.error("❌ Manuelles Laden fehlgeschlagen:", error);
@@ -1326,9 +1326,9 @@ window.testPrinterData = async function() {
   }
 };
 
-// Direkte Test-Funktion für loadPrinters
+// Direkte Test-Funktion für loadFormPrinters
 window.testLoadPrintersDirect = async function() {
-  console.log("🧪 Direkter Test von loadPrinters...");
+  console.log("🧪 Direkter Test von loadFormPrinters...");
   
   try {
     // Teste DOM-Element
@@ -1345,12 +1345,12 @@ window.testLoadPrintersDirect = async function() {
     console.log("2. Firebase:", window.db ? "✅ Verfügbar" : "❌ Nicht verfügbar");
     
     // Teste Funktion
-    console.log("3. loadPrinters Funktion:", typeof loadPrinters === 'function' ? "✅ Verfügbar" : "❌ Nicht verfügbar");
+    console.log("3. loadFormPrinters Funktion:", typeof loadFormPrinters === 'function' ? "✅ Verfügbar" : "❌ Nicht verfügbar");
     
-    // Rufe loadPrinters direkt auf
-    if (typeof loadPrinters === 'function') {
-      console.log("4. Rufe loadPrinters() auf...");
-      const result = await loadPrinters();
+    // Rufe loadFormPrinters direkt auf
+    if (typeof loadFormPrinters === 'function') {
+      console.log("4. Rufe loadFormPrinters() auf...");
+      const result = await loadFormPrinters();
       console.log("5. Ergebnis:", result);
       
       // Überprüfe Ergebnis
@@ -1396,7 +1396,7 @@ window.diagnosePrinterProblem = function() {
   
   // 3. Prüfe Funktionen
   console.log("3. Funktionen:");
-  console.log("   - loadPrinters:", typeof loadPrinters === 'function' ? "✅ Verfügbar" : "❌ Nicht verfügbar");
+      console.log("   - loadFormPrinters:", typeof loadFormPrinters === 'function' ? "✅ Verfügbar" : "❌ Nicht verfügbar");
   console.log("   - updateCostPreview:", typeof window.updateCostPreview === 'function' ? "✅ Verfügbar" : "❌ Nicht verfügbar");
   
   // 4. Prüfe Event Listeners
@@ -1431,7 +1431,7 @@ window.retryLoadPrinters = async function(maxRetries = 3) {
     console.log(`🔄 Versuch ${i + 1}/${maxRetries}...`);
     
     try {
-      await loadPrinters();
+      await loadFormPrinters();
       console.log("✅ Drucker erfolgreich geladen!");
       return true;
     } catch (error) {
