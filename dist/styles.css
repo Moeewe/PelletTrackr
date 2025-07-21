@@ -346,41 +346,7 @@
     opacity: 0.9;
 }
 
-.status-btn.available.active {
-    opacity: 1;
-    background: #4CAF50;
-    color: white;
-    border-color: #2e7d32;
-    border-width: 3px;
-}
-
-.status-btn.printing.active {
-    opacity: 1;
-    background: #2196F3;
-    color: white;
-    border-color: #0D47A1;
-    border-width: 3px;
-}
-
-.status-btn.maintenance.active {
-    opacity: 1;
-    background: #FF9800;
-    color: white;
-    border-color: #E65100;
-    border-width: 3px;
-}
-
-.status-btn.broken.active {
-    opacity: 1;
-    background: #F44336;
-    color: white;
-    border-color: #B71C1C;
-    border-width: 3px;
-}
-
-.status-btn.active:hover {
-    opacity: 0.95;
-}
+/* Status button styles moved to buttons.css */
 
 .status-icon {
     font-size: 16px;
