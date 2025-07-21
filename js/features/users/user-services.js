@@ -159,19 +159,19 @@ function showPrinterStatus() {
                         <div class="printer-status-controls">
                             <div class="printer-status-grid">
                                 <button class="status-btn ${printer.status === 'available' ? 'active' : ''}" 
-                                        onclick="cyclePrinterStatus('${printer.id}', 'available')">
+                                        onclick="handleUserStatusChange('${printer.id}', 'available')">
                                     Verfügbar
                                 </button>
                                 <button class="status-btn ${printer.status === 'printing' ? 'active' : ''}" 
-                                        onclick="cyclePrinterStatus('${printer.id}', 'printing')">
+                                        onclick="handleUserStatusChange('${printer.id}', 'printing')">
                                     In Betrieb
                                 </button>
-                                <button class="status-btn ${printer.status === 'maintenance' ? 'active' : ''}" 
-                                        onclick="cyclePrinterStatus('${printer.id}', 'maintenance')">
+                                <button class="status-btn ${printer.status === 'maintenance' ? 'active' : ''} ${!window.currentUser?.isAdmin ? 'disabled' : ''}" 
+                                        onclick="${window.currentUser?.isAdmin ? `handleUserStatusChange('${printer.id}', 'maintenance')` : ''}">
                                     Wartung
                                 </button>
-                                <button class="status-btn ${printer.status === 'broken' ? 'active' : ''}" 
-                                        onclick="cyclePrinterStatus('${printer.id}', 'broken')">
+                                <button class="status-btn ${printer.status === 'broken' ? 'active' : ''} ${!window.currentUser?.isAdmin ? 'disabled' : ''}" 
+                                        onclick="${window.currentUser?.isAdmin ? `handleUserStatusChange('${printer.id}', 'broken')` : ''}">
                                     Defekt
                                 </button>
                             </div>
@@ -189,6 +189,35 @@ function showPrinterStatus() {
     `;
     
     showModalWithContent(modalContent);
+}
+
+/**
+ * Handle user status change with proper permissions and logic
+ */
+async function handleUserStatusChange(printerId, newStatus) {
+    const isAdmin = window.currentUser?.isAdmin || false;
+    
+    // Check permissions
+    if ((newStatus === 'maintenance' || newStatus === 'broken') && !isAdmin) {
+        toast.error('Nur Administratoren können den Status auf "Wartung" oder "Defekt" setzen');
+        return;
+    }
+    
+    // Special handling for "broken" status
+    if (newStatus === 'broken') {
+        // Close current modal
+        closeModal();
+        
+        // Show problem report dialog immediately
+        setTimeout(() => {
+            reportPrinterProblem(printerId, userPrinters.find(p => p.id === printerId)?.name || 'Unbekannter Drucker');
+        }, 100);
+        
+        return;
+    }
+    
+    // For other statuses, proceed normally
+    await cyclePrinterStatus(printerId, newStatus);
 }
 
 /**
@@ -642,23 +671,31 @@ async function submitPrinterProblemReport(printerId, printerName) {
         
         await window.db.collection('problemReports').add(reportData);
         
-        toast.success(`Problem für Drucker "${printerName}" erfolgreich gemeldet`);
-        closeModal();
-        
-        // Optional: Set printer status to maintenance if severity is high or critical
-        if (problemSeverity === 'high' || problemSeverity === 'critical') {
-            const confirmMessage = `Das Problem wurde als ${problemSeverity === 'critical' ? 'kritisch' : 'schwerwiegend'} eingestuft. Soll der Drucker automatisch auf "Wartung" gesetzt werden?`;
+        // Automatically set printer status to "broken" when problem is reported
+        try {
+            await window.db.collection('printers').doc(printerId).update({
+                status: 'broken',
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastStatusChangeBy: window.currentUser?.name || 'Unbekannt',
+                lastStatusChangeAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
             
-            const userChoice = await toast.confirm(
-                confirmMessage,
-                'Status ändern',
-                'Nein, danke'
-            );
-            
-            if (userChoice && window.currentUser.isAdmin) {
-                await cyclePrinterStatus(printerId, 'maintenance');
+            // Update local data
+            const printerIndex = userPrinters.findIndex(p => p.id === printerId);
+            if (printerIndex !== -1) {
+                userPrinters[printerIndex].status = 'broken';
+                window.userPrinters = userPrinters;
             }
+            
+            // Update the main interface status counts
+            updatePrinterStatusDisplay();
+            
+        } catch (error) {
+            console.error('Error updating printer status to broken:', error);
         }
+        
+                toast.success(`Problem für Drucker "${printerName}" erfolgreich gemeldet und Status auf "Defekt" gesetzt`);
+        closeModal();
         
     } catch (error) {
         console.error('Error submitting problem report:', error);
@@ -2011,6 +2048,7 @@ window.initializeUserServices = initializeUserServices;
 window.cleanupUserServices = cleanupUserServices;
 window.showPrinterStatus = showPrinterStatus;
 window.cyclePrinterStatus = cyclePrinterStatus;
+window.handleUserStatusChange = handleUserStatusChange;
 window.showEquipmentRequest = showEquipmentRequest;
 window.updateEquipmentOptions = updateEquipmentOptions;
 window.loadEquipmentForRequest = loadEquipmentForRequest;
