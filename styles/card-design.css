@@ -314,9 +314,13 @@
 
 .status-number {
   font-weight: 700;
-  font-size: 15px;
+  font-size: 14px;
   color: white;
   text-align: center;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .status-label {

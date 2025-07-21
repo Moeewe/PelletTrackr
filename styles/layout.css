@@ -118,6 +118,12 @@
   font-weight: 600;
 }
 
+/* Logo überall gelb */
+.logo .highlight {
+  background: #FFEB00 !important;
+  color: #000000 !important;
+}
+
 /* Admin mode highlight color */
 #adminDashboard .highlight {
   background: #F44336;
@@ -142,7 +148,7 @@
   font-weight: 500;
   color: #666;
   margin-right: 16px;
-  text-align: center;
+  text-align: right;
 }
 
 /* Mobile header button layout */
@@ -231,24 +237,16 @@
   background: #45a049 !important;
 }
 
-/* Admin-Ansicht: Button gelb (wie PelletTracker-Logo) */
-#adminDashboard .admin-toggle {
-  background: #FFEB00 !important;
-  color: #000000 !important;
-}
-
-#adminDashboard .admin-toggle:hover {
-  background: #fdd835 !important;
-}
-
-/* User-Ansicht: Button rot (wie PelletTracker-Logo in Admin) */
+/* Admin/User Button grün auf beiden UIs */
+#adminDashboard .admin-toggle,
 #userDashboard .admin-toggle {
-  background: #F44336 !important;
+  background: #4CAF50 !important;
   color: white !important;
 }
 
+#adminDashboard .admin-toggle:hover,
 #userDashboard .admin-toggle:hover {
-  background: #d32f2f !important;
+  background: #45a049 !important;
 }
 
 .admin-checkbox {
