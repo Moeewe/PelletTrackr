@@ -280,7 +280,7 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 12px;
   color: white;
   max-width: 20px;
   min-width: 20px;
@@ -289,7 +289,7 @@
 }
 
 .status-available {
-  background: #28a745 !important;
+  background: rgba(40, 167, 69, 0.8) !important;
 }
 
 .status-available.empty {
@@ -297,7 +297,7 @@
 }
 
 .status-in-use {
-  background: #ffc107 !important;
+  background: rgba(255, 193, 7, 0.8) !important;
 }
 
 .status-in-use.empty {
@@ -305,7 +305,7 @@
 }
 
 .status-maintenance {
-  background: #dc3545 !important;
+  background: rgba(220, 53, 69, 0.8) !important;
 }
 
 .status-maintenance.empty {
@@ -314,7 +314,7 @@
 
 .status-number {
   font-weight: 700;
-  font-size: 16px;
+  font-size: 12px;
   color: white;
 }
 
