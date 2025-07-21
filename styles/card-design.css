@@ -2017,3 +2017,74 @@
 .search-clear:active {
     transform: translateY(-50%) scale(0.95);
 }
+
+/* Printer Status Grid Buttons */
+.printer-status-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 15px 0;
+    padding: 0 15px;
+}
+
+.status-btn {
+    padding: 10px 12px;
+    border: 2px solid #000000;
+    background: #ffffff;
+    color: #000000;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-btn:hover {
+    background: #f0f0f0;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.status-btn.active {
+    border: none;
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.status-btn.active:nth-child(1) {
+    background: #4CAF50; /* Grün für Verfügbar */
+}
+
+.status-btn.active:nth-child(2) {
+    background: #2196F3; /* Blau für In Betrieb */
+}
+
+.status-btn.active:nth-child(3) {
+    background: #FF9800; /* Orange für Wartung */
+}
+
+.status-btn.active:nth-child(4) {
+    background: #F44336; /* Rot für Defekt */
+}
+
+.status-btn.active:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+}
+
+@media (max-width: 768px) {
+    .printer-status-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        margin: 12px 0;
+        padding: 0 10px;
+    }
+    
+    .status-btn {
+        padding: 8px 10px;
+        font-size: 11px;
+    }
+}
