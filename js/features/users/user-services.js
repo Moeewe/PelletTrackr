@@ -141,6 +141,7 @@ function updatePrinterStatusDisplay() {
  * Show printer status modal with clickable status cycling
  */
 function showPrinterStatus() {
+    const isAdmin = window.currentUser?.isAdmin || false;
 
     const modalContent = `
         <div class="modal-header">
@@ -149,38 +150,44 @@ function showPrinterStatus() {
         </div>
         <div class="modal-body">
             <div class="printer-list">
-                ${userPrinters.map(printer => `
-                    <div class="printer-item">
-                        <div class="printer-info">
-                            <h4 class="printer-name">${printer.name}</h4>
-                            <p class="printer-location">${printer.location || ''}</p>
-                            ${printer.description && printer.description !== 'undefined' && printer.description !== 'Keine Beschreibung' ? `<p class="printer-description">${printer.description}</p>` : ''}
-                        </div>
-                        <div class="printer-status-controls">
-                            <div class="printer-status-grid">
-                                <button class="status-btn ${printer.status === 'available' ? 'active' : ''}" 
-                                        onclick="handleUserStatusChange('${printer.id}', 'available')">
-                                    Verfügbar
-                                </button>
-                                <button class="status-btn ${printer.status === 'printing' ? 'active' : ''}" 
-                                        onclick="handleUserStatusChange('${printer.id}', 'printing')">
-                                    In Betrieb
-                                </button>
-                                <button class="status-btn ${printer.status === 'maintenance' ? 'active' : ''} ${!window.currentUser?.isAdmin ? 'disabled' : ''}" 
-                                        onclick="${window.currentUser?.isAdmin ? `handleUserStatusChange('${printer.id}', 'maintenance')` : ''}">
-                                    Wartung
-                                </button>
-                                <button class="status-btn ${printer.status === 'broken' ? 'active' : ''} ${!window.currentUser?.isAdmin ? 'disabled' : ''}" 
-                                        onclick="${window.currentUser?.isAdmin ? `handleUserStatusChange('${printer.id}', 'broken')` : ''}">
-                                    Defekt
+                ${userPrinters.map(printer => {
+                    const isBroken = printer.status === 'broken';
+                    const isMaintenance = printer.status === 'maintenance';
+                    const canChangeStatus = !isBroken && !isMaintenance;
+                    
+                    return `
+                        <div class="printer-item">
+                            <div class="printer-info">
+                                <h4 class="printer-name">${printer.name}</h4>
+                                <p class="printer-location">${printer.location || ''}</p>
+                                ${printer.description && printer.description !== 'undefined' && printer.description !== 'Keine Beschreibung' ? `<p class="printer-description">${printer.description}</p>` : ''}
+                            </div>
+                            <div class="printer-status-controls">
+                                <div class="printer-status-grid">
+                                    <button class="status-btn ${printer.status === 'available' ? 'active' : ''} ${!canChangeStatus ? 'disabled' : ''}" 
+                                            onclick="${canChangeStatus ? `handleUserStatusChange('${printer.id}', 'available')` : ''}">
+                                        Verfügbar
+                                    </button>
+                                    <button class="status-btn ${printer.status === 'printing' ? 'active' : ''} ${!canChangeStatus ? 'disabled' : ''}" 
+                                            onclick="${canChangeStatus ? `handleUserStatusChange('${printer.id}', 'printing')` : ''}">
+                                        In Betrieb
+                                    </button>
+                                    <button class="status-btn ${printer.status === 'maintenance' ? 'active' : ''} ${!isAdmin ? 'disabled' : ''}" 
+                                            onclick="${isAdmin ? `handleUserStatusChange('${printer.id}', 'maintenance')` : ''}">
+                                        Wartung
+                                    </button>
+                                    <button class="status-btn ${printer.status === 'broken' ? 'active' : ''} ${!isAdmin ? 'disabled' : ''}" 
+                                            onclick="${isAdmin ? `handleUserStatusChange('${printer.id}', 'broken')` : ''}">
+                                        Defekt
+                                    </button>
+                                </div>
+                                <button class="btn btn-problem-report" onclick="reportPrinterProblem('${printer.id}', '${printer.name}')">
+                                    Problem melden
                                 </button>
                             </div>
-                            <button class="btn btn-problem-report" onclick="reportPrinterProblem('${printer.id}', '${printer.name}')">
-                                Problem melden
-                            </button>
                         </div>
-                    </div>
-                `).join('')}
+                    `;
+                }).join('')}
             </div>
         </div>
         <div class="modal-footer">
@@ -196,8 +203,23 @@ function showPrinterStatus() {
  */
 async function handleUserStatusChange(printerId, newStatus) {
     const isAdmin = window.currentUser?.isAdmin || false;
+    const printer = userPrinters.find(p => p.id === printerId);
     
-    // Check permissions
+    if (!printer) {
+        toast.error('Drucker nicht gefunden');
+        return;
+    }
+    
+    // Check if printer is in maintenance or broken state
+    if (printer.status === 'maintenance' || printer.status === 'broken') {
+        // Only admins can change status from maintenance/broken
+        if (!isAdmin) {
+            toast.error('Nur Administratoren können den Status von "Wartung" oder "Defekt" ändern');
+            return;
+        }
+    }
+    
+    // Check permissions for setting maintenance/broken
     if ((newStatus === 'maintenance' || newStatus === 'broken') && !isAdmin) {
         toast.error('Nur Administratoren können den Status auf "Wartung" oder "Defekt" setzen');
         return;
@@ -210,7 +232,7 @@ async function handleUserStatusChange(printerId, newStatus) {
         
         // Show problem report dialog immediately
         setTimeout(() => {
-            reportPrinterProblem(printerId, userPrinters.find(p => p.id === printerId)?.name || 'Unbekannter Drucker');
+            reportPrinterProblem(printerId, printer.name);
         }, 100);
         
         return;
