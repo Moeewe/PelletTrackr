@@ -1611,13 +1611,13 @@
 }
 
 .printer-status.available {
-    background: #d4edda;
-    color: #155724;
+    background: #4CAF50;
+    color: white;
 }
 
 .printer-status.printing {
-    background: #fff3cd;
-    color: #856404;
+    background: #2196F3;
+    color: white;
 }
 
 .printer-status.maintenance {
@@ -1625,9 +1625,9 @@
     color: white;
 }
 
-.printer-status.offline {
-    background: #e2e3e5;
-    color: #495057;
+.printer-status.broken {
+    background: #F44336;
+    color: white;
 }
 
 .printer-details {
