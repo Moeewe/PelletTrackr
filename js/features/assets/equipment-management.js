@@ -1000,12 +1000,13 @@ async function duplicateEquipment(equipmentId) {
  * Update machine overview in admin dashboard
  */
 function updateMachineOverview() {
-    if (!equipment || equipment.length === 0) return;
+    // Get printer data from user services instead of equipment
+    if (typeof userPrinters === 'undefined' || !userPrinters || userPrinters.length === 0) return;
     
-    const available = equipment.filter(item => item.status === 'available').length;
-    const inUse = equipment.filter(item => item.status === 'borrowed').length;
-    const maintenance = equipment.filter(item => 
-        item.status === 'maintenance' || item.status === 'broken'
+    const available = userPrinters.filter(printer => printer.status === 'available').length;
+    const inUse = userPrinters.filter(printer => printer.status === 'printing').length;
+    const maintenance = userPrinters.filter(printer => 
+        printer.status === 'maintenance' || printer.status === 'broken'
     ).length;
     
     // Update display elements
@@ -1017,7 +1018,7 @@ function updateMachineOverview() {
     if (inUseElement) inUseElement.textContent = inUse;
     if (maintenanceElement) maintenanceElement.textContent = maintenance;
     
-    console.log(`📊 Printer Overview Updated: ${available} available, ${inUse} in use, ${maintenance} maintenance`);
+    console.log(`📊 Printer Overview Updated: ${available} available, ${inUse} in use, ${maintenance} maintenance (Wartung + Defekt)`);
 }
 
 console.log("🔧 Equipment Management Module geladen"); 

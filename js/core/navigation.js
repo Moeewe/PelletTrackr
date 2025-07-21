@@ -42,7 +42,15 @@ function updateUserPrintsLabel() {
     if (userPrintsLabel && window.currentUser && window.currentUser.name) {
       // Extract first name (everything before the first space)
       const firstName = window.currentUser.name.split(' ')[0];
-      userPrintsLabel.textContent = `${firstName}'s Drucke`;
+      
+      // Check if mobile view (hide welcome message on mobile)
+      const isMobile = window.innerWidth <= 768;
+      
+      if (isMobile) {
+        userPrintsLabel.textContent = 'Drucke';
+      } else {
+        userPrintsLabel.textContent = `${firstName}'s Drucke`;
+      }
     }
   } catch (error) {
     console.warn('Could not update user prints label:', error);
@@ -115,6 +123,13 @@ function setupEventListeners() {
   
   // Update user prints label with user's name (after dashboard is loaded)
   updateUserPrintsLabel();
+  
+  // Add resize listener for responsive label updates
+  window.addEventListener('resize', function() {
+    if (window.currentUser && window.currentUser.name) {
+      updateUserPrintsLabel();
+    }
+  });
   
   // Live-Kostenberechnung
   const materialMenge = document.getElementById("materialMenge");

@@ -136,6 +136,23 @@
   flex-shrink: 0;
 }
 
+/* Mobile header button layout */
+@media (max-width: 768px) {
+  .dashboard-header .user-info {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+  
+  .dashboard-header .user-info .btn {
+    margin: 0;
+    flex-shrink: 0;
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+}
+
 .admin-badge {
   background: #F44336;
   color: white;
