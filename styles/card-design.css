@@ -18,6 +18,21 @@
   margin-bottom: 24px;
 }
 
+/* ==================== SECTION TITLE STYLING ==================== */
+/* Einheitlicher Stil für alle Überschriften */
+
+.section-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 24px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #000000;
+}
+
 .entries-section .section-title {
   font-size: 24px;
   font-weight: 700;

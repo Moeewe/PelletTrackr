@@ -992,21 +992,19 @@
   line-height: 1.2;
 }
 
-/* Section Titles - Nur fett */
+/* Section Titles - Einheitlicher Stil mit Unterlinie */
 .section-title,
 .stats-section h2,
 .entries-section h2 {
   font-size: 24px;
-  font-weight: 600;
+  font-weight: 700;
   color: #000000;
   margin-bottom: 24px;
-  text-align: left;
-  position: relative;
-  padding: 0;
-  background: none;
-  border: none;
-  display: block;
-  min-width: auto;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #000000;
 }
 
 /* Control Titles für Admin-Bereiche - auch nur fett */
