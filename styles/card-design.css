@@ -239,7 +239,7 @@
   background: transparent;
   border: none;
   border-radius: 0;
-  padding: 24px;
+  padding: 24px 0 24px 0;
   margin-bottom: 24px;
   display: flex;
   justify-content: flex-start;
