@@ -241,9 +241,6 @@
   border-radius: 0;
   padding: 24px 0 24px 0;
   margin-bottom: 24px;
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
   width: 100%;
 }
 
