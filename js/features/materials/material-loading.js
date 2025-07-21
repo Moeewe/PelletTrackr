@@ -1137,3 +1137,35 @@ window.testLoadPrinters = async function() {
   }
 };
 
+// Debug-Funktion für manuelle Tests
+window.debugFormLoading = async function() {
+  console.log("🔍 Debug: Form Loading Status");
+  console.log("Firebase verfügbar:", !!window.db);
+  console.log("loadAllFormData verfügbar:", typeof loadAllFormData === 'function');
+  console.log("loadPrinters verfügbar:", typeof loadPrinters === 'function');
+  console.log("Printer select element:", document.getElementById("printer"));
+  
+  if (window.db) {
+    try {
+      const snapshot = await window.db.collection("printers").get();
+      console.log("Drucker in DB:", snapshot.size);
+      snapshot.forEach(doc => {
+        console.log("Drucker:", doc.data());
+      });
+    } catch (error) {
+      console.error("Fehler beim DB-Zugriff:", error);
+    }
+  }
+};
+
+// Manuelles Laden der Drucker (für Notfall)
+window.forceLoadPrinters = async function() {
+  console.log("🚨 Force Load Printers...");
+  try {
+    await loadPrinters();
+    console.log("✅ Drucker manuell geladen");
+  } catch (error) {
+    console.error("❌ Manuelles Laden fehlgeschlagen:", error);
+  }
+};
+
