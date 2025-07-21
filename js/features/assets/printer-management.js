@@ -215,7 +215,7 @@ function renderPrinterGrid() {
             </div>
             
             <div class="printer-actions">
-                <button class="btn btn-primary btn-small" onclick="changePrinterStatus('${printer.id}')" style="background: #007bff; color: white; border: none;">
+                <button class="btn btn-secondary btn-small" onclick="changePrinterStatus('${printer.id}')">
                     Status ändern
                 </button>
                 <button class="btn btn-secondary btn-small" onclick="editPrinter('${printer.id}')">
@@ -319,7 +319,7 @@ function renderFilteredPrinterGrid(filteredPrinters) {
             </div>
             
             <div class="printer-actions">
-                <button class="btn btn-primary btn-small" onclick="changePrinterStatus('${printer.id}')" style="background: #007bff; color: white; border: none;">
+                <button class="btn btn-secondary btn-small" onclick="changePrinterStatus('${printer.id}')">
                     Status ändern
                 </button>
                 <button class="btn btn-secondary btn-small" onclick="editPrinter('${printer.id}')">
