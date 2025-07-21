@@ -36,7 +36,6 @@ function checkExistingSession() {
         
         // Show appropriate dashboard
         if (session.user.isAdmin) {
-          document.getElementById('adminWelcome').textContent = `Admin Dashboard - ${session.user.name}`;
           showScreen('adminDashboard');
           initializeAdminDashboard();
         } else {
