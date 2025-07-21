@@ -81,11 +81,31 @@ async function loadMasterbatches() {
 async function loadPrinters() {
   console.log("🔄 loadPrinters() gestartet");
   
-  const select = document.getElementById("printer");
+  // Warte bis DOM bereit ist
+  let select = document.getElementById("printer");
+  let attempts = 0;
+  const maxAttempts = 10;
+  
+  while (!select && attempts < maxAttempts) {
+    console.log(`⏳ Warte auf printer select element... (${attempts + 1}/${maxAttempts})`);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    select = document.getElementById("printer");
+    attempts++;
+  }
+  
   if (!select) {
-    console.warn("⚠️ Printer select element nicht gefunden");
+    console.error("❌ Printer select element nach", maxAttempts, "Versuchen nicht gefunden");
+    console.log("🔍 Verfügbare Elemente mit 'printer' im Namen:");
+    const allElements = document.querySelectorAll('*');
+    allElements.forEach(el => {
+      if (el.id && el.id.includes('printer')) {
+        console.log("  -", el.id, el.tagName);
+      }
+    });
     return Promise.resolve();
   }
+  
+  console.log("✅ Printer select element gefunden:", select);
   
   select.innerHTML = '<option value="">Lade Drucker...</option>';
   
@@ -133,6 +153,13 @@ async function loadPrinters() {
     if (options.length <= 1) {
       console.warn("⚠️ Nur Standard-Option gefunden, Drucker wurden nicht hinzugefügt");
     }
+    
+    // Trigger change event für Kostenvorschau
+    setTimeout(() => {
+      if (typeof window.updateCostPreview === 'function') {
+        window.updateCostPreview();
+      }
+    }, 100);
     
     return Promise.resolve();
     
@@ -1252,6 +1279,53 @@ window.testPrinterData = async function() {
   } catch (error) {
     console.error("❌ Fehler beim Testen der Drucker-Daten:", error);
   }
+};
+
+// Diagnose-Funktion für Drucker-Problem
+window.diagnosePrinterProblem = function() {
+  console.log("🔍 Diagnose: Drucker-Auswahl-Problem");
+  
+  // 1. Prüfe DOM-Element
+  const select = document.getElementById("printer");
+  console.log("1. DOM-Element:", select ? "✅ Gefunden" : "❌ Nicht gefunden");
+  
+  if (select) {
+    console.log("   - Tag:", select.tagName);
+    console.log("   - ID:", select.id);
+    console.log("   - Sichtbar:", select.offsetParent !== null);
+    console.log("   - Optionen:", select.options.length);
+  }
+  
+  // 2. Prüfe Firebase
+  console.log("2. Firebase:", window.db ? "✅ Verfügbar" : "❌ Nicht verfügbar");
+  
+  // 3. Prüfe Funktionen
+  console.log("3. Funktionen:");
+  console.log("   - loadPrinters:", typeof loadPrinters === 'function' ? "✅ Verfügbar" : "❌ Nicht verfügbar");
+  console.log("   - updateCostPreview:", typeof window.updateCostPreview === 'function' ? "✅ Verfügbar" : "❌ Nicht verfügbar");
+  
+  // 4. Prüfe Event Listeners
+  if (select) {
+    const listeners = getEventListeners ? getEventListeners(select) : "Nicht verfügbar";
+    console.log("4. Event Listeners:", listeners);
+  }
+  
+  // 5. Prüfe andere Elemente mit ähnlichen IDs
+  const allElements = document.querySelectorAll('*');
+  const printerElements = [];
+  allElements.forEach(el => {
+    if (el.id && el.id.includes('printer')) {
+      printerElements.push({id: el.id, tag: el.tagName});
+    }
+  });
+  console.log("5. Andere printer-Elemente:", printerElements);
+  
+  return {
+    selectFound: !!select,
+    firebaseAvailable: !!window.db,
+    loadPrintersAvailable: typeof loadPrinters === 'function',
+    updateCostPreviewAvailable: typeof window.updateCostPreview === 'function'
+  };
 };
 
 // Automatische Wiederholung für Drucker-Loading
