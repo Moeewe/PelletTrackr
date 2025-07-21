@@ -48,6 +48,11 @@ function setupUserPrinterListener() {
             });
             
             updatePrinterStatusDisplay();
+            
+            // Update machine overview in admin dashboard
+            if (typeof updateMachineOverview === 'function') {
+                updateMachineOverview();
+            }
         });
         
         console.log('✅ User printer listener registered');
@@ -72,6 +77,11 @@ function loadPrinterStatus() {
         });
         
         updatePrinterStatusDisplay();
+        
+        // Update machine overview in admin dashboard
+        if (typeof updateMachineOverview === 'function') {
+            updateMachineOverview();
+        }
     }).catch((error) => {
         console.error('Error loading printer status:', error);
     });

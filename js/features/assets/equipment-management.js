@@ -1010,27 +1010,27 @@ async function duplicateEquipment(equipmentId) {
 function updateMachineOverview() {
     console.log('🔄 updateMachineOverview called');
     
-    // Get printer data from printer management system
-    if (typeof printers === 'undefined') {
-        console.log('❌ printers variable is undefined');
+    // Get printer data from user services (this is the correct data source)
+    if (typeof userPrinters === 'undefined') {
+        console.log('❌ userPrinters variable is undefined');
         return;
     }
     
-    if (!printers) {
-        console.log('❌ printers variable is null');
+    if (!userPrinters) {
+        console.log('❌ userPrinters variable is null');
         return;
     }
     
-    if (printers.length === 0) {
-        console.log('❌ printers array is empty');
+    if (userPrinters.length === 0) {
+        console.log('❌ userPrinters array is empty');
         return;
     }
     
-    console.log('📊 Current printers data:', printers);
+    console.log('📊 Current userPrinters data:', userPrinters);
     
-    const available = printers.filter(printer => printer.status === 'available').length;
-    const inUse = printers.filter(printer => printer.status === 'printing').length;
-    const maintenance = printers.filter(printer => 
+    const available = userPrinters.filter(printer => printer.status === 'available').length;
+    const inUse = userPrinters.filter(printer => printer.status === 'printing' || printer.status === 'in_use').length;
+    const maintenance = userPrinters.filter(printer => 
         printer.status === 'maintenance' || printer.status === 'broken'
     ).length;
     
