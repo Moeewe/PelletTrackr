@@ -79,10 +79,12 @@ async function loadMasterbatches() {
 
 // Drucker laden (direkt aus Firestore)
 async function loadPrinters() {
+  console.log("🔄 loadPrinters() gestartet");
+  
   const select = document.getElementById("printer");
   if (!select) {
     console.warn("⚠️ Printer select element nicht gefunden");
-    return;
+    return Promise.resolve();
   }
   
   select.innerHTML = '<option value="">Lade Drucker...</option>';
@@ -93,7 +95,7 @@ async function loadPrinters() {
     if (!window.db) {
       console.error("❌ Firebase nicht verfügbar");
       select.innerHTML = '<option value="">Firebase nicht verfügbar</option>';
-      return;
+      return Promise.resolve();
     }
     
     const snapshot = await window.db.collection("printers").get();
@@ -104,7 +106,7 @@ async function loadPrinters() {
     if (snapshot.empty) {
       console.log("⚠️ Keine Drucker gefunden");
       select.innerHTML = '<option value="">Keine Drucker verfügbar</option>';
-      return;
+      return Promise.resolve();
     }
     
     let loadedCount = 0;
@@ -120,10 +122,12 @@ async function loadPrinters() {
     });
     
     console.log(`✅ ${loadedCount} Drucker erfolgreich geladen!`);
+    return Promise.resolve();
     
   } catch (e) {
     console.error("❌ Fehler beim Laden der Drucker:", e);
     select.innerHTML = '<option value="">Fehler beim Laden</option>';
+    return Promise.reject(e);
   }
 }
 
@@ -239,11 +243,17 @@ async function loadAllFormData() {
   console.log("🔄 Starte loadAllFormData...");
   
   try {
-    await Promise.all([
-      loadMaterials(),
-      loadMasterbatches(),
-      loadPrinters()
-    ]);
+    // Lade Materialien
+    console.log("📦 Lade Materialien...");
+    await loadMaterials();
+    
+    // Lade Masterbatches
+    console.log("📦 Lade Masterbatches...");
+    await loadMasterbatches();
+    
+    // Lade Drucker
+    console.log("📦 Lade Drucker...");
+    await loadPrinters();
     
     console.log("✅ Alle Daten geladen, setup Event Listeners...");
     
