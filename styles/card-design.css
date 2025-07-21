@@ -236,7 +236,7 @@
 /* ==================== MACHINE OVERVIEW SECTION ==================== */
 
 .machine-overview-section {
-  background: white;
+  background: transparent;
   border: none;
   border-radius: 0;
   padding: 24px;

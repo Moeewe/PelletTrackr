@@ -146,6 +146,16 @@ function initializeAdminDashboard() {
   if (typeof initializeNotificationBadges === 'function') {
     initializeNotificationBadges();
   }
+  
+  // Update machine overview after a delay to ensure printer data is loaded
+  setTimeout(() => {
+    if (typeof updateMachineOverview === 'function') {
+      console.log('🔄 updateMachineOverview called from initializeAdminDashboard');
+      updateMachineOverview();
+    } else {
+      console.warn('⚠️ updateMachineOverview function not available');
+    }
+  }, 1000);
 }
 
 // Event Listeners einrichten

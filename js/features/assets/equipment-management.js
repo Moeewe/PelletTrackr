@@ -52,8 +52,16 @@ function setupEquipmentListener() {
             console.log('Live update: Loaded equipment:', equipment.length);
             showEquipmentCategory(currentEquipmentCategory);
             
-            // Update machine overview in admin dashboard
-            updateMachineOverview();
+                    // Update machine overview in admin dashboard
+        updateMachineOverview();
+        
+        // Also update when admin dashboard is shown
+        setTimeout(() => {
+            if (typeof updateMachineOverview === 'function') {
+                console.log('🔄 Manual updateMachineOverview call after equipment load');
+                updateMachineOverview();
+            }
+        }, 1000);
         }, (error) => {
             console.error('Error in equipment listener:', error);
             safeShowToast('Fehler beim Live-Update des Equipments', 'error');
@@ -1000,11 +1008,25 @@ async function duplicateEquipment(equipmentId) {
  * Update machine overview in admin dashboard
  */
 function updateMachineOverview() {
+    console.log('🔄 updateMachineOverview called');
+    
     // Get printer data from printer management system
-    if (typeof printers === 'undefined' || !printers || printers.length === 0) {
-        console.log('📊 No printers data available for overview update');
+    if (typeof printers === 'undefined') {
+        console.log('❌ printers variable is undefined');
         return;
     }
+    
+    if (!printers) {
+        console.log('❌ printers variable is null');
+        return;
+    }
+    
+    if (printers.length === 0) {
+        console.log('❌ printers array is empty');
+        return;
+    }
+    
+    console.log('📊 Current printers data:', printers);
     
     const available = printers.filter(printer => printer.status === 'available').length;
     const inUse = printers.filter(printer => printer.status === 'printing').length;
@@ -1012,10 +1034,18 @@ function updateMachineOverview() {
         printer.status === 'maintenance' || printer.status === 'broken'
     ).length;
     
+    console.log(`📊 Calculated counts: ${available} available, ${inUse} in use, ${maintenance} maintenance`);
+    
     // Update display elements
     const availableElement = document.getElementById('availableMachines');
     const inUseElement = document.getElementById('inUseMachines');
     const maintenanceElement = document.getElementById('maintenanceMachines');
+    
+    console.log('🔍 Found elements:', {
+        available: !!availableElement,
+        inUse: !!inUseElement,
+        maintenance: !!maintenanceElement
+    });
     
     if (availableElement) {
         availableElement.textContent = available;
@@ -1044,7 +1074,7 @@ function updateMachineOverview() {
         }
     }
     
-    console.log(`📊 Printer Overview Updated: ${available} available, ${inUse} in use, ${maintenance} maintenance (Wartung + Defekt)`);
+    console.log(`✅ Printer Overview Updated: ${available} available, ${inUse} in use, ${maintenance} maintenance (Wartung + Defekt)`);
 }
 
 console.log("🔧 Equipment Management Module geladen"); 
