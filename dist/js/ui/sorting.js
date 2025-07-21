@@ -58,6 +58,68 @@ function sortUserEntries(column) {
   window.renderUserEntries(window.allUserEntries);
 }
 
+// Neue Funktion für User-Entries Dropdown-Sortierung
+function sortUserEntries() {
+  if (!window.allUserEntries.length) return;
+  
+  const sortSelect = document.getElementById('userSortSelect');
+  if (!sortSelect) return;
+  
+  const sortValue = sortSelect.value;
+  let sortedEntries = [...window.allUserEntries];
+  
+  sortedEntries.sort((a, b) => {
+    let valueA, valueB;
+    
+    switch(sortValue) {
+      case 'date-desc':
+        valueA = a.timestamp ? new Date(a.timestamp.toDate()) : new Date(0);
+        valueB = b.timestamp ? new Date(b.timestamp.toDate()) : new Date(0);
+        return valueB - valueA;
+      case 'date-asc':
+        valueA = a.timestamp ? new Date(a.timestamp.toDate()) : new Date(0);
+        valueB = b.timestamp ? new Date(b.timestamp.toDate()) : new Date(0);
+        return valueA - valueB;
+      case 'jobName-asc':
+        valueA = (a.jobName || '').toLowerCase();
+        valueB = (b.jobName || '').toLowerCase();
+        return valueA.localeCompare(valueB);
+      case 'jobName-desc':
+        valueA = (a.jobName || '').toLowerCase();
+        valueB = (b.jobName || '').toLowerCase();
+        return valueB.localeCompare(valueA);
+      case 'material-asc':
+        valueA = (a.material || '').toLowerCase();
+        valueB = (b.material || '').toLowerCase();
+        return valueA.localeCompare(valueB);
+      case 'material-desc':
+        valueA = (a.material || '').toLowerCase();
+        valueB = (b.material || '').toLowerCase();
+        return valueB.localeCompare(valueA);
+      case 'cost-desc':
+        valueA = parseFloat(a.totalCost) || 0;
+        valueB = parseFloat(b.totalCost) || 0;
+        return valueB - valueA;
+      case 'cost-asc':
+        valueA = parseFloat(a.totalCost) || 0;
+        valueB = parseFloat(b.totalCost) || 0;
+        return valueA - valueB;
+      case 'status-paid':
+        const paidA = a.paid || a.isPaid;
+        const paidB = b.paid || b.isPaid;
+        return paidB - paidA; // Bezahlt zuerst
+      case 'status-unpaid':
+        const unpaidA = a.paid || a.isPaid;
+        const unpaidB = b.paid || b.isPaid;
+        return unpaidA - unpaidB; // Unbezahlt zuerst
+      default:
+        return 0;
+    }
+  });
+  
+  window.renderUserEntries(sortedEntries);
+}
+
 function sortAdminEntriesBy(column) {
   if (!window.allAdminEntries.length) return;
   
@@ -239,3 +301,13 @@ function sortAdminEntries() {
 
 // ==================== VISUAL SORT INDICATORS ====================
 // Removed - using only gray arrows in CSS
+
+// ==================== GLOBAL EXPOSURE ====================
+// Sorting functions global verfügbar machen
+
+window.sortUserEntries = sortUserEntries;
+window.sortAdminEntriesBy = sortAdminEntriesBy;
+window.sortAdminEntries = sortAdminEntries;
+window.searchUserEntries = searchUserEntries;
+window.searchAdminEntries = searchAdminEntries;
+window.searchAdmins = searchAdmins;

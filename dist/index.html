@@ -227,6 +227,18 @@
                 <h2 class="section-title">Deine Drucke</h2>
                 <div class="table-controls">
                     <input type="text" id="userSearchInput" placeholder="Suchen nach Material, FH-Kennung, Status..." class="search-input" onkeyup="searchUserEntries()">
+                    <select id="userSortSelect" class="sort-select" onchange="sortUserEntries()">
+                        <option value="date-desc">Datum (neueste zuerst)</option>
+                        <option value="date-asc">Datum (älteste zuerst)</option>
+                        <option value="jobName-asc">Job (A-Z)</option>
+                        <option value="jobName-desc">Job (Z-A)</option>
+                        <option value="material-asc">Material (A-Z)</option>
+                        <option value="material-desc">Material (Z-A)</option>
+                        <option value="cost-desc">Kosten (höchste zuerst)</option>
+                        <option value="cost-asc">Kosten (niedrigste zuerst)</option>
+                        <option value="status-paid">Nur bezahlt</option>
+                        <option value="status-unpaid">Nur unbezahlt</option>
+                    </select>
                 </div>
                 <div class="user-entries-container">
                     <div id="userEntriesTable" class="data-table data-table-responsive"></div>

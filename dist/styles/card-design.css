@@ -8,6 +8,50 @@
   width: 100%;
 }
 
+/* ==================== ENTRIES SECTION STYLING ==================== */
+
+.entries-section {
+  background: white;
+  border: 2px solid #000000;
+  border-radius: 0;
+  padding: 32px;
+  margin-bottom: 24px;
+}
+
+.entries-section .section-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 24px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #000000;
+}
+
+/* Table controls ohne separaten Border */
+.entries-section .table-controls {
+  margin-bottom: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+/* User entries container ohne separaten Border */
+.user-entries-container {
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+/* Admin entries container ohne separaten Border */
+.admin-entries-container {
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
 /* Desktop: Zeige Tabelle */
 @media (min-width: 769px) {
   .entries-container .data-table {
