@@ -28,7 +28,7 @@
   border-collapse: collapse;
   font-size: 14px;
   border: none;
-  table-layout: fixed; /* Feste Spaltenbreiten für bessere Kontrolle */
+  table-layout: auto; /* Automatische Spaltenbreiten basierend auf Inhalt */
 }
 
 .data-table thead {
@@ -82,17 +82,17 @@
   border-right: none;
 }
 
-/* Spaltenbreiten an Inhalt orientiert */
-.data-table th:nth-child(1), .data-table td:nth-child(1) { width: auto; min-width: 120px; } /* Datum */
-.data-table th:nth-child(2), .data-table td:nth-child(2) { width: auto; min-width: 150px; } /* Job */
-.data-table th:nth-child(3), .data-table td:nth-child(3) { width: auto; min-width: 200px; } /* Material */
-.data-table th:nth-child(4), .data-table td:nth-child(4) { width: auto; min-width: 100px; } /* Menge */
-.data-table th:nth-child(5), .data-table td:nth-child(5) { width: auto; min-width: 150px; } /* Masterbatch */
-.data-table th:nth-child(6), .data-table td:nth-child(6) { width: auto; min-width: 120px; } /* MB Menge */
-.data-table th:nth-child(7), .data-table td:nth-child(7) { width: auto; min-width: 100px; } /* Kosten */
-.data-table th:nth-child(8), .data-table td:nth-child(8) { width: auto; min-width: 100px; } /* Status */
-.data-table th:nth-child(9), .data-table td:nth-child(9) { width: auto; min-width: 200px; } /* Notizen */
-.data-table th:nth-child(10), .data-table td:nth-child(10) { width: auto; min-width: 250px; } /* Aktionen */
+/* Flexible Spaltenbreiten basierend auf Inhalt */
+.data-table th:nth-child(1), .data-table td:nth-child(1) { min-width: 120px; } /* Datum */
+.data-table th:nth-child(2), .data-table td:nth-child(2) { min-width: 150px; } /* Job */
+.data-table th:nth-child(3), .data-table td:nth-child(3) { min-width: 200px; } /* Material */
+.data-table th:nth-child(4), .data-table td:nth-child(4) { min-width: 100px; } /* Menge */
+.data-table th:nth-child(5), .data-table td:nth-child(5) { min-width: 150px; } /* Masterbatch */
+.data-table th:nth-child(6), .data-table td:nth-child(6) { min-width: 120px; } /* MB Menge */
+.data-table th:nth-child(7), .data-table td:nth-child(7) { min-width: 100px; } /* Kosten */
+.data-table th:nth-child(8), .data-table td:nth-child(8) { min-width: 100px; } /* Status */
+.data-table th:nth-child(9), .data-table td:nth-child(9) { min-width: 200px; } /* Notizen */
+.data-table th:nth-child(10), .data-table td:nth-child(10) { min-width: 250px; } /* Aktionen */
 
 /* Spezielle Behandlung für Notizen-Spalte */
 .data-table td[data-label="Notizen"],
@@ -1090,68 +1090,68 @@
   color: #999;
 }
 
-/* Spezielle Zellen-Behandlung für alle Tabellen */
+/* Flexible Zellen-Behandlung für alle Tabellen */
 .data-table td[data-label="Datum"] {
   min-width: 100px;
-  white-space: nowrap !important;
+  white-space: normal;
 }
 
 .data-table td[data-label="Job"] {
   min-width: 120px;
-  white-space: nowrap !important;
+  white-space: normal;
 }
 
 .data-table td[data-label="Material"] {
   min-width: 120px;
-  white-space: nowrap !important;
+  white-space: normal;
 }
 
 .data-table td[data-label="Menge"],
 .data-table td[data-label="Mat. Menge"],
 .data-table td[data-label="MB Menge"] {
   min-width: 80px;
-  white-space: nowrap !important;
+  white-space: normal;
   text-align: right;
 }
 
 .data-table td[data-label="Masterbatch"] {
   min-width: 120px;
-  white-space: nowrap !important;
+  white-space: normal;
 }
 
 .data-table td[data-label="Kosten"] {
   min-width: 90px;
-  white-space: nowrap !important;
+  white-space: normal;
   text-align: right;
   font-weight: 600;
 }
 
 .data-table td[data-label="Status"] {
   min-width: 80px;
-  white-space: nowrap !important;
+  white-space: normal;
   text-align: center;
 }
 
 /* Nutzer-Tabelle spezifische Zellen */
 .data-table td[data-label="Name"] {
   min-width: 120px;
-  white-space: nowrap !important;
+  white-space: normal;
 }
 
 .data-table td[data-label="Kennung"],
 .data-table td[data-label="FH-Kennung"] {
   min-width: 100px;
-  white-space: nowrap !important;
+  white-space: normal;
 }
 
 .data-table td[data-label="E-Mail"] {
   min-width: 150px;
-  white-space: nowrap !important;
+  white-space: normal;
 }
 
 .data-table td[data-label="Drucke"] {
   min-width: 60px;
-  white-space: nowrap !important;
+  white-space: normal;
   text-align: center;
 }
 
@@ -1159,33 +1159,33 @@
 .data-table td[data-label="Bezahlt"],
 .data-table td[data-label="Offen"] {
   min-width: 90px;
-  white-space: nowrap !important;
+  white-space: normal;
   text-align: right;
   font-weight: 600;
 }
 
 .data-table td[data-label="Letzter Druck"] {
   min-width: 100px;
-  white-space: nowrap !important;
+  white-space: normal;
 }
 
 /* Material-/Masterbatch-Tabelle spezifische Zellen */
 .data-table td[data-label="Hersteller"] {
   min-width: 120px;
-  white-space: nowrap !important;
+  white-space: normal;
 }
 
 .data-table td[data-label="EK Netto €/kg"],
 .data-table td[data-label="EK Brutto €/kg"],
 .data-table td[data-label="VK €/kg"] {
   min-width: 90px;
-  white-space: nowrap !important;
+  white-space: normal;
   text-align: right;
   font-weight: 600;
 }
 
 .data-table td[data-label="Gemeinkosten %"] {
   min-width: 80px;
-  white-space: nowrap !important;
+  white-space: normal;
   text-align: center;
 }

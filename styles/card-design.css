@@ -899,7 +899,7 @@
   .data-table th:nth-child(9), .data-table td:nth-child(9) { min-width: 200px; } /* Notizen */
   .data-table th:nth-child(10), .data-table td:nth-child(10) { min-width: 250px; } /* Aktionen */
   
-  /* Spaltenbreiten für Admin-Tabellen (Alle Drucke, Nutzerverwaltung) */
+  /* Flexible Spaltenbreiten für Admin-Tabellen (Alle Drucke, Nutzerverwaltung) */
   .admin-container .data-table th:nth-child(1), .admin-container .data-table td:nth-child(1) { min-width: 100px; } /* Datum */
   .admin-container .data-table th:nth-child(2), .admin-container .data-table td:nth-child(2) { min-width: 180px; } /* Name */
   .admin-container .data-table th:nth-child(3), .admin-container .data-table td:nth-child(3) { min-width: 120px; } /* Kennung */
@@ -913,7 +913,7 @@
   .admin-container .data-table th:nth-child(11), .admin-container .data-table td:nth-child(11) { min-width: 150px; } /* Notizen */
   .admin-container .data-table th:nth-child(12), .admin-container .data-table td:nth-child(12) { min-width: 200px; } /* Aktionen */
   
-  /* Spaltenbreiten für Nutzerverwaltung-Modal */
+  /* Flexible Spaltenbreiten für Nutzerverwaltung-Modal */
   .modal .data-table th:nth-child(1), .modal .data-table td:nth-child(1) { min-width: 200px; } /* Name */
   .modal .data-table th:nth-child(2), .modal .data-table td:nth-child(2) { min-width: 150px; } /* FH-Kennung */
   .modal .data-table th:nth-child(3), .modal .data-table td:nth-child(3) { min-width: 280px; } /* E-Mail */
