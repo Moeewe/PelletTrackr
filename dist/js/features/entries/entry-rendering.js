@@ -54,7 +54,7 @@ function renderUserEntries(entries) {
     const actions = `
       <div class="actions">
         ${ButtonFactory.showNachweis(entry.id, isPaid)}
-        ${ButtonFactory.editEntry(entry.id, true)}
+        ${ButtonFactory.editEntry(entry.id, true, isPaid)}
       </div>`;
     
     // Tabellen-Zeile für Desktop
@@ -107,7 +107,7 @@ function renderUserEntries(entries) {
     // Aktionen für Cards
     const cardActions = `
       ${ButtonFactory.showNachweis(entry.id, isPaid)}
-      ${ButtonFactory.editEntry(entry.id, true)}
+      ${ButtonFactory.editEntry(entry.id, true, isPaid)}
     `;
     
     // Card HTML

@@ -869,7 +869,7 @@
   
   .data-table table {
     width: 100%;
-    min-width: 1200px; /* Mindestbreite für Nutzerübersicht-Tabellen */
+    min-width: 1400px; /* Erhöhte Mindestbreite für alle Tabellen */
     border-collapse: collapse;
   }
   
@@ -893,6 +893,29 @@
   .data-table th:nth-child(8), .data-table td:nth-child(8) { min-width: 100px; } /* Status */
   .data-table th:nth-child(9), .data-table td:nth-child(9) { min-width: 200px; } /* Notizen */
   .data-table th:nth-child(10), .data-table td:nth-child(10) { min-width: 250px; } /* Aktionen */
+  
+  /* Spaltenbreiten für Admin-Tabellen (Alle Drucke, Nutzerverwaltung) */
+  .admin-container .data-table th:nth-child(1), .admin-container .data-table td:nth-child(1) { min-width: 100px; } /* Datum */
+  .admin-container .data-table th:nth-child(2), .admin-container .data-table td:nth-child(2) { min-width: 180px; } /* Name */
+  .admin-container .data-table th:nth-child(3), .admin-container .data-table td:nth-child(3) { min-width: 120px; } /* Kennung */
+  .admin-container .data-table th:nth-child(4), .admin-container .data-table td:nth-child(4) { min-width: 150px; } /* Job */
+  .admin-container .data-table th:nth-child(5), .admin-container .data-table td:nth-child(5) { min-width: 150px; } /* Material */
+  .admin-container .data-table th:nth-child(6), .admin-container .data-table td:nth-child(6) { min-width: 100px; } /* Mat. Menge */
+  .admin-container .data-table th:nth-child(7), .admin-container .data-table td:nth-child(7) { min-width: 120px; } /* Masterbatch */
+  .admin-container .data-table th:nth-child(8), .admin-container .data-table td:nth-child(8) { min-width: 100px; } /* MB Menge */
+  .admin-container .data-table th:nth-child(9), .admin-container .data-table td:nth-child(9) { min-width: 100px; } /* Kosten */
+  .admin-container .data-table th:nth-child(10), .admin-container .data-table td:nth-child(10) { min-width: 100px; } /* Status */
+  .admin-container .data-table th:nth-child(11), .admin-container .data-table td:nth-child(11) { min-width: 150px; } /* Notizen */
+  .admin-container .data-table th:nth-child(12), .admin-container .data-table td:nth-child(12) { min-width: 200px; } /* Aktionen */
+  
+  /* Spaltenbreiten für Nutzerverwaltung-Modal */
+  .modal .data-table th:nth-child(1), .modal .data-table td:nth-child(1) { min-width: 150px; } /* Name */
+  .modal .data-table th:nth-child(2), .modal .data-table td:nth-child(2) { min-width: 120px; } /* FH-Kennung */
+  .modal .data-table th:nth-child(3), .modal .data-table td:nth-child(3) { min-width: 200px; } /* E-Mail */
+  .modal .data-table th:nth-child(4), .modal .data-table td:nth-child(4) { min-width: 80px; } /* Admin */
+  .modal .data-table th:nth-child(5), .modal .data-table td:nth-child(5) { min-width: 80px; } /* Drucke */
+  .modal .data-table th:nth-child(6), .modal .data-table td:nth-child(6) { min-width: 100px; } /* Gesamt */
+  .modal .data-table th:nth-child(7), .modal .data-table td:nth-child(7) { min-width: 100px; } /* Aktionen */
   
   .entries-container .entry-cards {
     display: none;

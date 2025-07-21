@@ -74,7 +74,11 @@ function createButton(action, onclick, options = {}) {
 // Spezielle Button Creators für häufige Anwendungsfälle
 const ButtonFactory = {
   // Entry/Druck Buttons
-  editEntry: (entryId, isUser = false) => {
+  editEntry: (entryId, isUser = false, isPaid = false) => {
+    // Bei bezahlten Drucken in der User-Ansicht keinen Bearbeiten-Button anzeigen
+    if (isUser && isPaid) {
+      return '';
+    }
     const action = isUser ? `editUserEntry('${entryId}')` : `editEntry('${entryId}')`;
     return createButton('EDIT', action);
   },
