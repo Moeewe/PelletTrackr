@@ -122,6 +122,15 @@ async function loadPrinters() {
     });
     
     console.log(`✅ ${loadedCount} Drucker erfolgreich geladen!`);
+    
+    // Überprüfe, ob die Optionen tatsächlich hinzugefügt wurden
+    const options = select.querySelectorAll('option');
+    console.log(`🔍 Überprüfung: ${options.length} Optionen im Select gefunden`);
+    
+    if (options.length <= 1) {
+      console.warn("⚠️ Nur Standard-Option gefunden, Drucker wurden nicht hinzugefügt");
+    }
+    
     return Promise.resolve();
     
   } catch (e) {
@@ -253,7 +262,12 @@ async function loadAllFormData() {
     
     // Lade Drucker
     console.log("📦 Lade Drucker...");
-    await loadPrinters();
+    try {
+      await loadPrinters();
+    } catch (printerError) {
+      console.error("❌ Erster Drucker-Load fehlgeschlagen, versuche Wiederholung...");
+      await window.retryLoadPrinters(2);
+    }
     
     console.log("✅ Alle Daten geladen, setup Event Listeners...");
     
@@ -271,6 +285,15 @@ async function loadAllFormData() {
     
   } catch (error) {
     console.error("❌ Fehler in loadAllFormData:", error);
+    
+    // Fallback: Versuche Drucker einzeln zu laden
+    console.log("🔄 Fallback: Versuche Drucker einzeln zu laden...");
+    try {
+      await loadPrinters();
+    } catch (printerError) {
+      console.error("❌ Auch Fallback fehlgeschlagen:", printerError);
+    }
+    
     throw error;
   }
 }
@@ -1177,5 +1200,30 @@ window.forceLoadPrinters = async function() {
   } catch (error) {
     console.error("❌ Manuelles Laden fehlgeschlagen:", error);
   }
+};
+
+// Automatische Wiederholung für Drucker-Loading
+window.retryLoadPrinters = async function(maxRetries = 3) {
+  console.log("🔄 Retry Load Printers...");
+  
+  for (let i = 0; i < maxRetries; i++) {
+    console.log(`🔄 Versuch ${i + 1}/${maxRetries}...`);
+    
+    try {
+      await loadPrinters();
+      console.log("✅ Drucker erfolgreich geladen!");
+      return true;
+    } catch (error) {
+      console.error(`❌ Versuch ${i + 1} fehlgeschlagen:`, error);
+      
+      if (i < maxRetries - 1) {
+        console.log("⏳ Warte 1 Sekunde vor nächstem Versuch...");
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+  }
+  
+  console.error("❌ Alle Versuche fehlgeschlagen");
+  return false;
 };
 
