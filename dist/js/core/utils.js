@@ -30,3 +30,11 @@ function escapeQuotes(str) {
   if (typeof str !== 'string') return '';
   return str.replace(/'/g, '&#39;').replace(/"/g, '&quot;');
 }
+
+// ==================== GLOBAL EXPOSURE ====================
+// Utility-Funktionen global verfügbar machen
+
+window.formatCurrency = formatCurrency;
+window.checkAdminAccess = checkAdminAccess;
+window.parseGermanNumber = parseGermanNumber;
+window.escapeQuotes = escapeQuotes;

@@ -97,3 +97,9 @@ function throttledCalculateCost() {
   clearTimeout(costCalculationTimeout);
   costCalculationTimeout = setTimeout(calculateCostPreview, 500);
 }
+
+// ==================== GLOBAL EXPOSURE ====================
+// Cost calculator functions global verfügbar machen
+
+window.calculateCostPreview = calculateCostPreview;
+window.throttledCalculateCost = throttledCalculateCost;
