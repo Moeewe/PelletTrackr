@@ -1621,8 +1621,8 @@
 }
 
 .printer-status.maintenance {
-    background: #f8d7da;
-    color: #721c24;
+    background: #FF9800;
+    color: white;
 }
 
 .printer-status.offline {
