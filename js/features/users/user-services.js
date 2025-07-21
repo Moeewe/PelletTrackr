@@ -7,6 +7,9 @@
 let userPrinters = [];
 let userPrinterListener = null;
 
+// Make userPrinters globally accessible
+window.userPrinters = userPrinters;
+
 /**
  * Initialize user services
  */
@@ -47,6 +50,9 @@ function setupUserPrinterListener() {
                 });
             });
             
+            // Update global reference
+            window.userPrinters = userPrinters;
+            
             updatePrinterStatusDisplay();
             
             // Update machine overview in admin dashboard
@@ -75,6 +81,9 @@ function loadPrinterStatus() {
                 ...doc.data()
             });
         });
+        
+        // Update global reference
+        window.userPrinters = userPrinters;
         
         updatePrinterStatusDisplay();
         
@@ -202,6 +211,8 @@ async function cyclePrinterStatus(printerId, newStatus) {
         const printerIndex = userPrinters.findIndex(p => p.id === printerId);
         if (printerIndex !== -1) {
             userPrinters[printerIndex].status = newStatus;
+            // Update global reference
+            window.userPrinters = userPrinters;
         }
         
         // Update the main interface status counts

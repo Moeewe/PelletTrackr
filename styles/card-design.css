@@ -252,7 +252,7 @@
   cursor: pointer;
   margin: 0;
   text-transform: none;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .machine-status-grid {
@@ -863,7 +863,7 @@
   .entries-container .data-table {
     display: block;
     overflow-x: auto;
-    white-space: nowrap;
+    white-space: normal;
     -webkit-overflow-scrolling: touch;
   }
   
@@ -883,7 +883,7 @@
     padding: 12px 8px;
     text-align: left;
     border-bottom: 1px solid #e0e0e0;
-    white-space: nowrap;
+    white-space: normal;
     vertical-align: middle;
   }
   

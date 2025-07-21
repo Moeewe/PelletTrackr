@@ -339,7 +339,7 @@
 .status-text {
     font-size: 13px;
     font-weight: 500;
-    white-space: nowrap;
+    white-space: normal;
 }
 
 /* Printer Status Layout */
@@ -994,7 +994,7 @@
     font-weight: 600;
     letter-spacing: 0.5px;
     text-transform: uppercase;
-    white-space: nowrap;
+    white-space: normal;
 }
 
 /* Source Badges */
