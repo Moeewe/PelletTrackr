@@ -151,6 +151,8 @@
   text-align: right;
   margin-left: auto;
   display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 /* Mobile header button layout - Moved to responsive.css */
