@@ -191,6 +191,10 @@ function renderPrinterGrid() {
             
             <div class="printer-details">
                 <div class="printer-detail">
+                    <span class="printer-detail-label">Typ:</span>
+                    <span class="printer-detail-value">${printer.type === 'pellet' ? 'Pellet Drucker' : printer.type === 'filament' ? 'Filament Drucker' : 'Nicht angegeben'}</span>
+                </div>
+                <div class="printer-detail">
                     <span class="printer-detail-label">Bauraum:</span>
                     <span class="printer-detail-value">${printer.buildVolume || 'Nicht angegeben'}</span>
                 </div>
@@ -405,6 +409,15 @@ function showAddPrinterForm() {
                         </div>
                         
                         <div class="form-group">
+                            <label for="printerType">Drucker-Typ *</label>
+                            <select id="printerType" class="form-select" required>
+                                <option value="">Typ auswählen...</option>
+                                <option value="pellet">Pellet Drucker</option>
+                                <option value="filament">Filament Drucker</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
                             <label for="printerMaterials">Materialien</label>
                             <input type="text" id="printerMaterials" class="form-input" placeholder="z.B. PLA, PETg">
                         </div>
@@ -475,6 +488,15 @@ function editPrinter(printerId) {
                         </div>
                         
                         <div class="form-group">
+                            <label for="printerType">Drucker-Typ *</label>
+                            <select id="printerType" class="form-select" required>
+                                <option value="">Typ auswählen...</option>
+                                <option value="pellet" ${printer.type === 'pellet' ? 'selected' : ''}>Pellet Drucker</option>
+                                <option value="filament" ${printer.type === 'filament' ? 'selected' : ''}>Filament Drucker</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
                             <label for="printerMaterials">Materialien</label>
                             <input type="text" id="printerMaterials" class="form-input" placeholder="z.B. PLA, PETg" value="${printer.materials || ''}">
                         </div>
@@ -532,6 +554,7 @@ async function savePrinter(event) {
         model: document.getElementById('printerModel').value.trim(),
         buildVolume: document.getElementById('printerBuildVolume').value.trim(),
         status: document.getElementById('printerStatus').value,
+        type: document.getElementById('printerType').value,
         materials: document.getElementById('printerMaterials').value.trim(),
         pricePerHour: parseFloat(document.getElementById('printerPricePerHour').value) || 0,
         notes: document.getElementById('printerNotes').value.trim(),

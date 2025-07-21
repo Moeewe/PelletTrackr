@@ -420,10 +420,17 @@
                     <label class="form-label">Neues Material hinzufügen</label>
                     <div class="form-row">
                         <input type="text" id="newMaterialName" class="form-input" placeholder="Material Name">
-                        <input type="text" id="newMaterialManufacturer" class="form-input" placeholder="Hersteller">
+                        <select id="newMaterialType" class="form-select">
+                            <option value="">Material-Typ auswählen...</option>
+                            <option value="pellet">Pellets</option>
+                            <option value="filament">Filament</option>
+                        </select>
                     </div>
                     <div class="form-row">
+                        <input type="text" id="newMaterialManufacturer" class="form-input" placeholder="Hersteller">
                         <input type="number" id="newMaterialNetPrice" class="form-input" placeholder="EK Netto €/kg" step="0.01">
+                    </div>
+                    <div class="form-row">
                         <input type="number" id="newMaterialTaxRate" class="form-input" placeholder="Mehrwertsteuer %" value="19" step="0.01">
                         <input type="number" id="newMaterialMarkup" class="form-input" placeholder="Gemeinkosten % (Strom, Versand, etc.)" value="30" step="0.01">
                     </div>

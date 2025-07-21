@@ -2,29 +2,39 @@
 // Laden von Materialien, Masterbatches und Druckern aus Firestore
 
 // Materialien laden (direkt aus Firestore)
-async function loadMaterials() {
+async function loadMaterials(printerType = null) {
   const select = document.getElementById("material");
   if (!select) return;
   
   select.innerHTML = '<option value="">Lade Materialien...</option>';
   
-  console.log("🔄 Lade Materialien...");
+  console.log("🔄 Lade Materialien...", printerType ? `(Filter: ${printerType})` : "(alle)");
   
   try {
-    const snapshot = await window.db.collection("materials").get();
+    let query = window.db.collection("materials");
+    
+    // Filtere nach Material-Typ wenn Drucker ausgewählt ist
+    if (printerType) {
+      query = query.where("type", "==", printerType);
+      console.log(`🔍 Filtere Materialien für ${printerType === 'pellet' ? 'Pellet' : 'Filament'}-Drucker`);
+    }
+    
+    const snapshot = await query.get();
     console.log("📊 Materials-Snapshot:", snapshot.size, "Dokumente");
     
     select.innerHTML = '<option value="">Material auswählen... (optional)</option>';
     
     if (snapshot.empty) {
-      console.log("⚠️ Keine Materialien gefunden");
-      select.innerHTML = '<option value="">Keine Materialien verfügbar</option>';
+      console.log("⚠️ Keine passenden Materialien gefunden");
+      select.innerHTML = printerType ? 
+        `<option value="">Keine ${printerType === 'pellet' ? 'Pellet' : 'Filament'}-Materialien verfügbar</option>` :
+        '<option value="">Keine Materialien verfügbar</option>';
       return;
     }
     
     snapshot.forEach(doc => {
       const material = doc.data();
-      console.log("➕ Material:", material.name, "Preis:", material.price);
+      console.log("➕ Material:", material.name, "Typ:", material.type, "Preis:", material.price);
       const option = document.createElement("option");
       option.value = material.name;
       option.textContent = `${material.name} (${material.price.toFixed(2)} ${(material.currency || '€')}/kg)`;
@@ -138,11 +148,12 @@ async function loadFormPrinters() {
     
     snapshot.forEach(doc => {
       const printer = doc.data();
-      console.log("➕ Verarbeite Drucker:", printer.name, "Preis/Stunde:", printer.pricePerHour);
+      console.log("➕ Verarbeite Drucker:", printer.name, "Preis/Stunde:", printer.pricePerHour, "Typ:", printer.type);
       
       const option = document.createElement("option");
       option.value = printer.name;
       option.dataset.pricePerHour = printer.pricePerHour || 0;
+      option.dataset.type = printer.type || '';
       option.textContent = `${printer.name}${printer.pricePerHour ? ` (${printer.pricePerHour.toFixed(2)}€/h)` : ''}`;
       
       console.log(`📝 Erstelle Option: "${option.textContent}" (value: "${option.value}", pricePerHour: ${option.dataset.pricePerHour})`);
@@ -249,10 +260,25 @@ function setupFormEventListeners() {
       if (selectedOption && selectedOption.value) {
         const printerName = selectedOption.value;
         const pricePerHour = selectedOption.dataset.pricePerHour;
-        console.log("💰 Selected printer:", printerName, "Price per hour:", pricePerHour);
+        const printerType = selectedOption.dataset.type;
+        console.log("💰 Selected printer:", printerName, "Price per hour:", pricePerHour, "Type:", printerType);
         
         // Store price in dataset for cost calculation
         this.dataset.pricePerHour = pricePerHour || 0;
+        this.dataset.type = printerType || '';
+        
+        // Filter materials based on printer type
+        if (printerType) {
+          console.log(`🔄 Filtere Materialien für ${printerType === 'pellet' ? 'Pellet' : 'Filament'}-Drucker`);
+          loadMaterials(printerType);
+        } else {
+          console.log("🔄 Lade alle Materialien (kein Drucker-Typ)");
+          loadMaterials();
+        }
+      } else {
+        // No printer selected, load all materials
+        console.log("🔄 Lade alle Materialien (kein Drucker ausgewählt)");
+        loadMaterials();
       }
       if (typeof window.updateCostPreview === 'function') {
         window.updateCostPreview();
@@ -303,10 +329,10 @@ function setupFormEventListeners() {
 async function loadAllFormData() {
   console.log("🔄 Starte loadAllFormData...");
   
-  try {
-    // Lade Materialien
-    console.log("📦 Lade Materialien...");
-    await loadMaterials();
+                    try {
+                    // Lade Materialien
+                    console.log("📦 Lade Materialien...");
+                    await loadMaterials(); // Lade alle Materialien initial
     
     // Lade Masterbatches
     console.log("📦 Lade Masterbatches...");
@@ -432,6 +458,7 @@ async function loadMaterialsForManagement() {
             <thead>
               <tr>
                 <th onclick="sortMaterials('name')">Name</th>
+                <th onclick="sortMaterials('type')">Typ</th>
                 <th onclick="sortMaterials('manufacturer')">Hersteller</th>
                 <th onclick="sortMaterials('netPrice')">EK Netto €/kg</th>
                 <th onclick="sortMaterials('grossPrice')">EK Brutto €/kg</th>
@@ -469,6 +496,7 @@ async function loadMaterialsForManagement() {
       containerHtml += `
         <tr id="material-row-${doc.id}">
           <td><span class="cell-value">${material.name}</span></td>
+          <td><span class="cell-value">${material.type === 'pellet' ? 'Pellets' : material.type === 'filament' ? 'Filament' : 'Unbekannt'}</span></td>
           <td><span class="cell-value">${material.manufacturer || 'Unbekannt'}</span></td>
           <td><span class="cell-value">${window.formatCurrency(netPrice)}</span></td>
           <td><span class="cell-value">${window.formatCurrency(grossPrice)}</span></td>
@@ -687,13 +715,14 @@ async function loadMasterbatchesForManagement() {
 
 async function addMaterial() {
   const name = document.getElementById('newMaterialName').value.trim();
+  const type = document.getElementById('newMaterialType').value;
   const manufacturer = document.getElementById('newMaterialManufacturer').value.trim();
   const netPrice = parseFloat(document.getElementById('newMaterialNetPrice').value);
   const taxRate = parseFloat(document.getElementById('newMaterialTaxRate').value) || 19;
   const markup = parseFloat(document.getElementById('newMaterialMarkup').value) || 30;
   
-  if (!name || isNaN(netPrice) || netPrice <= 0) {
-    showToast('Bitte gültigen Namen und EK-Netto-Preis eingeben!', 'warning');
+  if (!name || !type || isNaN(netPrice) || netPrice <= 0) {
+    showToast('Bitte gültigen Namen, Typ und EK-Netto-Preis eingeben!', 'warning');
     return;
   }
   
@@ -703,6 +732,7 @@ async function addMaterial() {
   try {
     await window.db.collection('materials').add({
       name: name,
+      type: type,
       manufacturer: manufacturer || 'Unbekannt',
       netPrice: netPrice,
       taxRate: taxRate,
@@ -714,6 +744,7 @@ async function addMaterial() {
     
     showToast('Material erfolgreich hinzugefügt!', 'success');
     document.getElementById('newMaterialName').value = '';
+    document.getElementById('newMaterialType').value = '';
     document.getElementById('newMaterialManufacturer').value = '';
     document.getElementById('newMaterialNetPrice').value = '';
     document.getElementById('newMaterialTaxRate').value = '19';
