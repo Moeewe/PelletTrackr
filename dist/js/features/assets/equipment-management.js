@@ -1014,9 +1014,32 @@ function updateMachineOverview() {
     const inUseElement = document.getElementById('inUseMachines');
     const maintenanceElement = document.getElementById('maintenanceMachines');
     
-    if (availableElement) availableElement.textContent = available;
-    if (inUseElement) inUseElement.textContent = inUse;
-    if (maintenanceElement) maintenanceElement.textContent = maintenance;
+    if (availableElement) {
+        availableElement.textContent = available;
+        // Update CSS class for empty state
+        const availableCircle = availableElement.closest('.status-circle');
+        if (availableCircle) {
+            availableCircle.classList.toggle('empty', available === 0);
+        }
+    }
+    
+    if (inUseElement) {
+        inUseElement.textContent = inUse;
+        // Update CSS class for empty state
+        const inUseCircle = inUseElement.closest('.status-circle');
+        if (inUseCircle) {
+            inUseCircle.classList.toggle('empty', inUse === 0);
+        }
+    }
+    
+    if (maintenanceElement) {
+        maintenanceElement.textContent = maintenance;
+        // Update CSS class for empty state
+        const maintenanceCircle = maintenanceElement.closest('.status-circle');
+        if (maintenanceCircle) {
+            maintenanceCircle.classList.toggle('empty', maintenance === 0);
+        }
+    }
     
     console.log(`📊 Printer Overview Updated: ${available} available, ${inUse} in use, ${maintenance} maintenance (Wartung + Defekt)`);
 }

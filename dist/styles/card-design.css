@@ -244,7 +244,10 @@
 }
 
 .machine-overview-header {
-  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 0;
 }
 
 .machine-overview-title {
@@ -253,18 +256,18 @@
   color: #666;
   text-decoration: underline;
   cursor: pointer;
+  margin: 0;
 }
 
 .machine-status-grid {
   display: flex;
-  gap: 20px;
-  justify-content: space-around;
+  gap: 16px;
+  align-items: center;
   flex-wrap: wrap;
 }
 
 .machine-status-item {
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 8px;
   cursor: pointer;
@@ -276,39 +279,54 @@
 }
 
 .status-circle {
-  width: 60px;
-  height: 60px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 20px;
+  font-size: 12px;
   color: white;
+  min-width: 20px;
+  text-align: center;
+  line-height: 1;
 }
 
 .status-available {
   background: #28a745;
 }
 
+.status-available.empty {
+  background: rgba(40, 167, 69, 0.3);
+}
+
 .status-in-use {
   background: #ffc107;
+}
+
+.status-in-use.empty {
+  background: rgba(255, 193, 7, 0.3);
 }
 
 .status-maintenance {
   background: #dc3545;
 }
 
+.status-maintenance.empty {
+  background: rgba(220, 53, 69, 0.3);
+}
+
 .status-number {
   font-weight: 700;
-  font-size: 20px;
+  font-size: 12px;
 }
 
 .status-label {
   font-size: 14px;
-  font-weight: 600;
-  color: #000000;
-  text-align: center;
+  font-weight: 500;
+  color: #666;
+  text-transform: none;
 }
 
 /* ==================== PAGINIERUNG CONTROLS ==================== */
