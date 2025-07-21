@@ -103,16 +103,16 @@
   background: #e6d200;
 }
 
-/* DANGER - Rot (Gefährliche Aktionen: Löschen) */
+/* DANGER - Systemweites Rot (wie PelletTracker-Logo in Admin) */
 .btn-danger {
-  background: #dc3545;
+  background: #F44336;
   color: white;
-  border: 2px solid #dc3545;
+  border: 2px solid #F44336;
 }
 
 .btn-danger:hover {
-  background: #c82333;
-  border-color: #c82333;
+  background: #d32f2f;
+  border-color: #d32f2f;
 }
 
 /* NACHWEIS - Spezial Gelb für Nachweis-Buttons */
@@ -196,6 +196,18 @@
   margin-left: 8px;
   cursor: pointer;
   color: #666666;
+}
+
+/* EDIT BUTTON - Systemweites Grau */
+.btn-edit {
+  background: #757575;
+  color: white;
+  border: 2px solid #757575;
+}
+
+.btn-edit:hover {
+  background: #616161;
+  border-color: #616161;
 }
 
 .btn-edit-note:hover {

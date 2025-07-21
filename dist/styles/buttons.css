@@ -104,16 +104,16 @@
   background: #e6d200;
 }
 
-/* DANGER - Harmonisches Rot (Gefährliche Aktionen: Löschen) */
+/* DANGER - Systemweites Rot (wie PelletTracker-Logo in Admin) */
 .btn-danger {
-  background: #FF5722; /* Harmonisches Orange-Rot, das mit Gelb harmoniert */
+  background: #F44336;
   color: white;
-  border: 2px solid #FF5722;
+  border: 2px solid #F44336;
 }
 
 .btn-danger:hover {
-  background: #e64a19;
-  border-color: #e64a19;
+  background: #d32f2f;
+  border-color: #d32f2f;
 }
 
 /* UNDO/RÜCKGÄNGIG - Neues Grau für Rückgängig-Aktionen */
@@ -157,16 +157,16 @@
   border-color: #000000;
 }
 
-/* EDIT BUTTON */
+/* EDIT BUTTON - Systemweites Grau */
 .btn-edit {
-  background: #000000;
+  background: #757575;
   color: white;
-  border: 2px solid #000000;
+  border: 2px solid #757575;
 }
 
 .btn-edit:hover {
-  background: #333333;
-  border-color: #333333;
+  background: #616161;
+  border-color: #616161;
 }
 
 /* ==================== PRINTER STATUS BUTTONS ==================== */
