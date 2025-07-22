@@ -1082,8 +1082,9 @@ async function requestEquipmentReturn(requestId) {
             return;
         }
         
-        // Create a return request in the equipmentRequests collection
+        // Create a return request directly in the equipment document
         const returnRequestData = {
+            id: `return_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             equipmentId: requestData.equipmentId,
             equipmentName: requestData.equipmentName,
             userKennung: requestData.userKennung,
@@ -1091,14 +1092,28 @@ async function requestEquipmentReturn(requestId) {
             requestedBy: window.currentUser?.kennung || 'user',
             requestedByName: window.currentUser?.name || 'Benutzer',
             status: 'pending',
-            type: 'return_request',
+            type: 'return',
             originalRequestId: requestId,
             createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
         };
         
         console.log('📝 Creating return request:', returnRequestData);
         
-        await window.db.collection('equipmentRequests').add(returnRequestData);
+        // Add to equipment document
+        const equipmentRef = window.db.collection('equipment').doc(requestData.equipmentId);
+        const equipmentDoc = await equipmentRef.get();
+        
+        if (!equipmentDoc.exists) {
+            throw new Error('Equipment nicht gefunden');
+        }
+        
+        const equipmentData = equipmentDoc.data();
+        const requests = equipmentData.requests || [];
+        requests.push(returnRequestData);
+        
+        await equipmentRef.update({
+            requests: requests
+        });
         
         // Update the original request status
         await window.db.collection('requests').doc(requestId).update({
