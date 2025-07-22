@@ -1,7 +1,7 @@
 /**
  * Equipment Management System
  * Handles lending system for keys, hardware, and books
- * Version 1.6 - Fixed return confirmation buttons and enhanced debugging
+ * Version 1.7 - Enhanced button logic for borrowed equipment detection
  */
 
 // Equipment Management Module - Extended with Requests Support
@@ -297,15 +297,16 @@ function renderEquipmentList(equipmentList) {
         });
         
         // Debug: Check if this equipment should show return button
-        const shouldShowReturnButton = item.status === 'borrowed' && (pendingReturnRequest || anyPendingReturn);
+        const shouldShowReturnButton = (item.status === 'borrowed' || item.borrowedBy) && (pendingReturnRequest || anyPendingReturn);
         console.log(`🔍 Should show return button for ${item.name}: ${shouldShowReturnButton ? 'YES' : 'NO'}`);
         if (shouldShowReturnButton) {
             console.log(`🔍 Return request details:`, pendingReturnRequest || returnRequests.find(r => r.status === 'pending'));
         }
         
         // Additional debug: Log all requests for borrowed items
-        if (item.status === 'borrowed') {
+        if (item.status === 'borrowed' || item.borrowedBy) {
             console.log(`🔍 All requests for borrowed item ${item.name}:`, requests);
+            console.log(`🔍 Equipment status: ${item.status}, borrowedBy: ${item.borrowedBy}, borrowedByKennung: ${item.borrowedByKennung}`);
         }
         
         return `
@@ -313,8 +314,8 @@ function renderEquipmentList(equipmentList) {
             <div class="equipment-header">
                 <div class="equipment-name">${item.name}</div>
                 <div class="equipment-status-row">
-                    <span class="equipment-status ${pendingRequest ? 'requested' : (pendingReturnRequest || anyPendingReturn) ? 'return-requested' : item.status}">
-                        ${pendingRequest ? 'Angefragt' : (pendingReturnRequest || anyPendingReturn) ? 'Rückgabe angefragt' : getEquipmentStatusText(item.status)}
+                    <span class="equipment-status ${pendingRequest ? 'requested' : (pendingReturnRequest || anyPendingReturn) ? 'return-requested' : (item.borrowedBy ? 'borrowed' : item.status)}">
+                        ${pendingRequest ? 'Angefragt' : (pendingReturnRequest || anyPendingReturn) ? 'Rückgabe angefragt' : (item.borrowedBy ? 'Ausgeliehen' : getEquipmentStatusText(item.status))}
                     </span>
                     ${item.requiresDeposit ? `
                         <span class="equipment-deposit ${item.depositPaid ? 'paid' : 'unpaid'}" title="Pfand ${item.depositPaid ? 'bezahlt' : 'ausstehend'}">
@@ -336,10 +337,10 @@ function renderEquipmentList(equipmentList) {
                     <strong>Rückgabe angefragt von:</strong> ${(pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).requestedByName} (${(pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).requestedBy})
                     <br><strong>Angefragt am:</strong> ${(pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).createdAt ? new Date((pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).createdAt.seconds * 1000).toLocaleDateString() : 'Unbekannt'}
                 </div>
-            ` : item.status === 'borrowed' && item.borrowedBy ? `
+            ` : (item.status === 'borrowed' || item.borrowedBy) && item.borrowedBy ? `
                 <div class="equipment-current-user">
                     Ausgeliehen an: <strong>${item.borrowedBy}</strong><br>
-                    Seit: ${new Date(item.borrowedAt.toDate()).toLocaleDateString()}
+                    Seit: ${item.borrowedAt ? new Date(item.borrowedAt.toDate()).toLocaleDateString() : 'Unbekannt'}
                     ${item.requiresDeposit ? `
                         <div class="equipment-deposit-status">
                             Pfand: <span class="${item.depositPaid ? 'deposit-paid' : 'deposit-unpaid'}">
@@ -360,7 +361,7 @@ function renderEquipmentList(equipmentList) {
                     <button class="btn btn-primary" onclick="borrowEquipment('${item.id}')">Ausleihen</button>
                     <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
                     <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
-                ` : item.status === 'borrowed' ? `
+                ` : item.status === 'borrowed' || item.borrowedBy ? `
                     ${(pendingReturnRequest || anyPendingReturn) ? `
                         <button class="btn btn-success" onclick="confirmEquipmentReturn('${item.id}')">Rückgabe bestätigen</button>
                         <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
@@ -1600,7 +1601,7 @@ window.loadAllUsersForEquipment = loadAllUsersForEquipment;
 window.approveEquipmentRequest = approveEquipmentRequest;
 window.rejectEquipmentRequest = rejectEquipmentRequest;
 
-console.log("🔧 Equipment Management Module geladen (v1.6)");
+console.log("🔧 Equipment Management Module geladen (v1.7)");
 console.log("🔧 Available functions:", {
     showEquipmentManager: typeof showEquipmentManager,
     confirmEquipmentReturn: typeof confirmEquipmentReturn,
