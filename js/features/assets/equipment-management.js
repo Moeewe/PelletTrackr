@@ -112,10 +112,6 @@ function showEquipmentManager() {
         </div>
         <div class="modal-footer">
             <button class="btn btn-primary" onclick="showAddEquipmentForm()">Equipment hinzufügen</button>
-            <button class="btn btn-warning" onclick="showEquipmentRequests()">
-                Anfragen verwalten
-                <span id="equipment-requests-footer-badge" class="notification-badge" style="display: none;">0</span>
-            </button>
             <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
         </div>
     `;
@@ -296,13 +292,16 @@ function renderEquipmentList(equipmentList) {
             
             <div class="equipment-actions">
                 ${pendingRequest ? `
-                    <button class="btn btn-warning" onclick="showEquipmentRequests('${item.id}')">Anfrage beantworten</button>
+                    <button class="btn btn-success" onclick="approveEquipmentRequest('${pendingRequest.id}', '${item.id}')">Anfrage genehmigen</button>
+                    <button class="btn btn-danger" onclick="rejectEquipmentRequest('${pendingRequest.id}')">Anfrage ablehnen</button>
                     <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
                     <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
+                    <button class="btn btn-danger" onclick="deleteEquipment('${item.id}')">Löschen</button>
                 ` : item.status === 'available' ? `
                     <button class="btn btn-primary" onclick="borrowEquipment('${item.id}')">Ausleihen</button>
                     <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
                     <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
+                    <button class="btn btn-danger" onclick="deleteEquipment('${item.id}')">Löschen</button>
                 ` : item.status === 'borrowed' ? `
                     <button class="btn btn-success" onclick="returnEquipment('${item.id}')">Zurückgeben</button>
                     ${item.requiresDeposit && !item.depositPaid ? `
@@ -310,9 +309,11 @@ function renderEquipmentList(equipmentList) {
                     ` : ''}
                     <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
                     <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
+                    <button class="btn btn-danger" onclick="deleteEquipment('${item.id}')">Löschen</button>
                 ` : `
                     <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
                     <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
+                    <button class="btn btn-danger" onclick="deleteEquipment('${item.id}')">Löschen</button>
                 `}
             </div>
         </div>
@@ -980,8 +981,7 @@ function setupEquipmentRequestsListener() {
   }
   
   try {
-    equipmentRequestsListener = window.db.collection('requests')
-      .where('type', '==', 'equipment')
+    equipmentRequestsListener = window.db.collection('equipmentRequests')
       .where('status', '==', 'pending')
       .onSnapshot((snapshot) => {
         equipmentRequests = [];
@@ -1024,8 +1024,7 @@ function getPendingRequestForEquipment(equipmentId) {
  */
 async function loadEquipmentRequests() {
   try {
-    const querySnapshot = await window.db.collection('requests')
-      .where('type', '==', 'equipment')
+    const querySnapshot = await window.db.collection('equipmentRequests')
       .where('status', '==', 'pending')
       .get();
     
@@ -1048,7 +1047,6 @@ async function loadEquipmentRequests() {
  */
 function updateEquipmentRequestsBadge() {
     const badge = document.getElementById('equipment-requests-badge');
-    const footerBadge = document.getElementById('equipment-requests-footer-badge');
     
     const count = equipmentRequests.length;
     const shouldShow = count > 0;
@@ -1056,11 +1054,6 @@ function updateEquipmentRequestsBadge() {
     if (badge) {
         badge.textContent = count;
         badge.style.display = shouldShow ? 'inline-block' : 'none';
-    }
-    
-    if (footerBadge) {
-        footerBadge.textContent = count;
-        footerBadge.style.display = shouldShow ? 'inline-block' : 'none';
     }
 }
 
@@ -1101,6 +1094,9 @@ window.submitAdminBorrowEquipment = submitAdminBorrowEquipment;
 window.updateEquipmentRequestsBadge = updateEquipmentRequestsBadge;
 window.approveEquipmentRequest = approveEquipmentRequest;
 window.rejectEquipmentRequest = rejectEquipmentRequest;
+window.duplicateEquipment = duplicateEquipment;
+window.deleteEquipment = deleteEquipment;
+window.updateMachineOverview = updateMachineOverview;
 
 /**
  * Approve equipment request and mark equipment as borrowed
@@ -1176,7 +1172,7 @@ async function rejectEquipmentRequest(requestId) {
     const loadingId = window.loading ? window.loading.show('Anfrage wird abgelehnt...') : null;
     
     // Update the request status to rejected
-    await window.db.collection('requests').doc(requestId).update({
+    await window.db.collection('equipmentRequests').doc(requestId).update({
       status: 'rejected',
       rejectedAt: window.firebase.firestore.FieldValue.serverTimestamp()
     });
