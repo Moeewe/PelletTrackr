@@ -41,25 +41,34 @@ function setupEquipmentListener() {
         equipmentListener = window.db.collection('equipment').onSnapshot((snapshot) => {
             equipment = [];
             snapshot.forEach((doc) => {
+                const data = doc.data();
                 equipment.push({
                     id: doc.id,
-                    ...doc.data()
+                    ...data
                 });
             });
             
             console.log('Live update: Loaded equipment:', equipment.length);
+            console.log('📋 Equipment data sample:', equipment.slice(0, 3).map(item => ({
+                id: item.id,
+                name: item.name,
+                status: item.status,
+                borrowedBy: item.borrowedBy,
+                requestsCount: (item.requests || []).length
+            })));
+            
             showEquipmentCategory(currentEquipmentCategory);
             
-                    // Update machine overview in admin dashboard
-        updateMachineOverview();
-        
-        // Also update when admin dashboard is shown
-        setTimeout(() => {
-            if (typeof updateMachineOverview === 'function') {
-                console.log('🔄 Manual updateMachineOverview call after equipment load');
-                updateMachineOverview();
-            }
-        }, 1000);
+            // Update machine overview in admin dashboard
+            updateMachineOverview();
+            
+            // Also update when admin dashboard is shown
+            setTimeout(() => {
+                if (typeof updateMachineOverview === 'function') {
+                    console.log('🔄 Manual updateMachineOverview call after equipment load');
+                    updateMachineOverview();
+                }
+            }, 1000);
         }, (error) => {
             console.error('Error in equipment listener:', error);
             safeShowToast('Fehler beim Live-Update des Equipments', 'error');
@@ -266,6 +275,13 @@ function renderEquipmentList(equipmentList) {
             pendingReturnRequest: pendingReturnRequest ? pendingReturnRequest.id : null,
             shouldShowReturnButton: item.status === 'borrowed' && pendingReturnRequest ? 'YES' : 'NO'
         });
+        
+        // Debug: Check if this equipment should show return button
+        const shouldShowReturnButton = item.status === 'borrowed' && pendingReturnRequest;
+        console.log(`🔍 Should show return button for ${item.name}: ${shouldShowReturnButton ? 'YES' : 'NO'}`);
+        if (shouldShowReturnButton) {
+            console.log(`🔍 Return request details:`, pendingReturnRequest);
+        }
         
         return `
         <div class="equipment-item ${item.requiresDeposit ? 'requires-deposit' : ''} ${pendingRequest ? 'has-pending-request' : ''}">

@@ -1157,14 +1157,17 @@ async function requestEquipmentReturn(requestId) {
             return;
         }
         
+        let equipmentId = requestData.equipmentId;
+        let equipmentName = requestData.equipmentName;
+        
         // If equipmentId is missing or invalid, try to find it by name
-        if (!requestData.equipmentId || requestData.equipmentId === 'undefined' || requestData.equipmentId === 'null') {
+        if (!equipmentId || equipmentId === 'undefined' || equipmentId === 'null') {
             console.log('⚠️ Equipment ID missing or invalid, searching by name...');
-            console.log('🔍 Searching for equipment with name:', requestData.equipmentName);
+            console.log('🔍 Searching for equipment with name:', equipmentName);
             
-            // First, let's check if the equipment exists in the equipment collection
+            // Search for equipment by name
             const equipmentQuery = await window.db.collection('equipment')
-                .where('name', '==', requestData.equipmentName)
+                .where('name', '==', equipmentName)
                 .limit(1)
                 .get();
             
@@ -1172,15 +1175,12 @@ async function requestEquipmentReturn(requestId) {
             
             if (!equipmentQuery.empty) {
                 const foundEquipment = equipmentQuery.docs[0];
-                const foundEquipmentData = foundEquipment.data();
-                console.log('✅ Found equipment by name:', foundEquipment.id);
-                console.log('📋 Found equipment data:', foundEquipmentData);
-                
-                requestData.equipmentId = foundEquipment.id;
+                equipmentId = foundEquipment.id;
+                console.log('✅ Found equipment by name:', equipmentId);
                 
                 // Update the original request with the correct equipment ID
                 await window.db.collection('requests').doc(requestId).update({
-                    equipmentId: foundEquipment.id
+                    equipmentId: equipmentId
                 });
                 console.log('✅ Updated original request with correct equipment ID');
             } else {
@@ -1193,16 +1193,26 @@ async function requestEquipmentReturn(requestId) {
                     console.log(`  - ID: ${doc.id}, Name: ${data.name}, Type: ${data.type}`);
                 });
                 
-                window.toast.error(`Equipment "${requestData.equipmentName}" nicht gefunden`);
+                window.toast.error(`Equipment "${equipmentName}" nicht gefunden`);
                 return;
             }
         }
         
-        // Create a return request directly in the equipment document
+        // Verify equipment exists
+        const equipmentRef = window.db.collection('equipment').doc(equipmentId);
+        const equipmentDoc = await equipmentRef.get();
+        
+        if (!equipmentDoc.exists) {
+            console.error('❌ Equipment document not found:', equipmentId);
+            window.toast.error('Equipment nicht gefunden');
+            return;
+        }
+        
+        // Create a return request
         const returnRequestData = {
             id: `return_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            equipmentId: requestData.equipmentId,
-            equipmentName: requestData.equipmentName,
+            equipmentId: equipmentId,
+            equipmentName: equipmentName,
             userKennung: requestData.userKennung,
             userName: requestData.userName,
             requestedBy: window.currentUser?.kennung || 'user',
@@ -1216,51 +1226,15 @@ async function requestEquipmentReturn(requestId) {
         console.log('📝 Creating return request:', returnRequestData);
         
         // Add to equipment document
-        console.log('🔍 Adding return request to equipment document...');
-        console.log('🔍 Equipment ID to use:', requestData.equipmentId);
+        const equipmentData = equipmentDoc.data();
+        const requests = equipmentData.requests || [];
+        requests.push(returnRequestData);
         
-        const equipmentRef = window.db.collection('equipment').doc(requestData.equipmentId);
-        const equipmentDoc = await equipmentRef.get();
+        await equipmentRef.update({
+            requests: requests
+        });
         
-        if (!equipmentDoc.exists) {
-            console.error('❌ Equipment document not found:', requestData.equipmentId);
-            console.error('❌ Request data:', requestData);
-            
-            // Try to find equipment by name as fallback
-            console.log('🔄 Trying to find equipment by name as fallback...');
-            const equipmentQuery = await window.db.collection('equipment')
-                .where('name', '==', requestData.equipmentName)
-                .limit(1)
-                .get();
-            
-            if (equipmentQuery.empty) {
-                console.error('❌ Equipment not found by name either:', requestData.equipmentName);
-                throw new Error(`Equipment nicht gefunden (ID: ${requestData.equipmentId}, Name: ${requestData.equipmentName})`);
-            }
-            
-            // Use the found equipment
-            const foundEquipment = equipmentQuery.docs[0];
-            console.log('✅ Found equipment by name:', foundEquipment.id);
-            
-            const equipmentData = foundEquipment.data();
-            const requests = equipmentData.requests || [];
-            requests.push(returnRequestData);
-            
-            await foundEquipment.ref.update({
-                requests: requests
-            });
-            console.log('✅ Return request added to equipment found by name');
-        } else {
-            console.log('✅ Equipment document found, adding return request...');
-            const equipmentData = equipmentDoc.data();
-            const requests = equipmentData.requests || [];
-            requests.push(returnRequestData);
-            
-            await equipmentRef.update({
-                requests: requests
-            });
-            console.log('✅ Return request added to equipment document');
-        }
+        console.log('✅ Return request added to equipment document');
         
         // Update the original request status
         await window.db.collection('requests').doc(requestId).update({
