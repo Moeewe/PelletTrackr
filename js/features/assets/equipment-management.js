@@ -159,6 +159,13 @@ async function loadEquipmentRequests() {
         });
         
         console.log('📋 Loaded equipment requests:', equipmentRequests.length);
+        console.log('📋 Equipment requests sample:', equipmentRequests.slice(0, 3).map(req => ({
+            id: req.id,
+            equipmentId: req.equipmentId,
+            status: req.status,
+            type: req.type,
+            userKennung: req.userKennung
+        })));
         
         // Update equipment list to show requests
         showEquipmentCategory(currentEquipmentCategory);
@@ -253,8 +260,15 @@ async function loadEquipment() {
         });
         
         filteredEquipment = equipment;
+        console.log('📋 Loaded equipment:', equipment.length);
+        console.log('📋 Equipment data sample:', equipment.slice(0, 3).map(item => ({
+            id: item.id,
+            name: item.name,
+            status: item.status,
+            category: item.category,
+            borrowedBy: item.borrowedBy
+        })));
         showEquipmentCategory(currentEquipmentCategory);
-        console.log('Loaded equipment:', equipment.length);
         
     } catch (error) {
         console.error('Error loading equipment:', error);
@@ -447,33 +461,57 @@ function renderEquipmentList(equipmentList) {
             ` : ''}
             
             <div class="equipment-actions">
-                ${pendingRequest ? `
-                    <button class="btn btn-success" onclick="approveEquipmentRequest('${pendingRequest.id}', '${item.id}')">Anfrage genehmigen</button>
-                    <button class="btn btn-danger" onclick="rejectEquipmentRequest('${pendingRequest.id}', '${item.id}')">Anfrage ablehnen</button>
-                    <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
-                    <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
-                ` : item.status === 'available' ? `
-                    <button class="btn btn-primary" onclick="borrowEquipment('${item.id}')">Ausleihen</button>
-                    <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
-                    <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
-                ` : item.status === 'borrowed' || item.borrowedBy ? `
-                    ${(pendingReturnRequest || anyPendingReturn) ? `
-                        <button class="btn btn-success" onclick="confirmEquipmentReturn('${item.id}')">Rückgabe bestätigen</button>
-                        <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
-                        <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
-                    ` : `
-                        <button class="btn btn-success" onclick="returnEquipment('${item.id}')">Zurückgeben</button>
-                        <button class="btn btn-warning" onclick="requestEquipmentReturn('${item.id}')">Rücknahme anfragen</button>
-                        <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
-                        <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
-                    `}
-                    ${item.requiresDeposit && !item.depositPaid ? `
-                        <button class="btn btn-warning" onclick="markDepositAsPaid('${item.id}')">Pfand als bezahlt markieren</button>
-                    ` : ''}
-                ` : `
-                    <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
-                    <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
-                `}
+                ${(() => {
+                    console.log(`🔍 Action buttons debug for ${item.name}:`, {
+                        status: item.status,
+                        borrowedBy: item.borrowedBy,
+                        pendingRequest: pendingRequest ? pendingRequest.id : null,
+                        pendingReturnRequest: pendingReturnRequest ? pendingReturnRequest.id : null,
+                        anyPendingReturn: anyPendingReturn
+                    });
+                    
+                    if (pendingRequest) {
+                        console.log('🔍 Showing pending request buttons');
+                        return `
+                            <button class="btn btn-success" onclick="approveEquipmentRequest('${pendingRequest.id}', '${item.id}')">Anfrage genehmigen</button>
+                            <button class="btn btn-danger" onclick="rejectEquipmentRequest('${pendingRequest.id}', '${item.id}')">Anfrage ablehnen</button>
+                            <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
+                            <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
+                        `;
+                    } else if (item.status === 'available' || (!item.borrowedBy && item.status !== 'borrowed')) {
+                        console.log('🔍 Showing available equipment buttons');
+                        return `
+                            <button class="btn btn-primary" onclick="borrowEquipment('${item.id}')">Ausleihen</button>
+                            <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
+                            <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
+                        `;
+                    } else if (item.status === 'borrowed' || item.borrowedBy) {
+                        console.log('🔍 Showing borrowed equipment buttons');
+                        if (pendingReturnRequest || anyPendingReturn) {
+                            return `
+                                <button class="btn btn-success" onclick="confirmEquipmentReturn('${item.id}')">Rückgabe bestätigen</button>
+                                <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
+                                <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
+                            `;
+                        } else {
+                            return `
+                                <button class="btn btn-success" onclick="returnEquipment('${item.id}')">Zurückgeben</button>
+                                <button class="btn btn-warning" onclick="requestEquipmentReturn('${item.id}')">Rücknahme anfragen</button>
+                                <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
+                                <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
+                                ${item.requiresDeposit && !item.depositPaid ? `
+                                    <button class="btn btn-warning" onclick="markDepositAsPaid('${item.id}')">Pfand als bezahlt markieren</button>
+                                ` : ''}
+                            `;
+                        }
+                    } else {
+                        console.log('🔍 Showing default buttons');
+                        return `
+                            <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
+                            <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
+                        `;
+                    }
+                })()}
             </div>
         </div>
         `;
@@ -1647,6 +1685,16 @@ window.waitForUpdateMachineOverview = function(callback, maxAttempts = 10) {
   checkFunction();
 };
 
+// Global function to manually trigger equipment manager (fallback)
+window.triggerEquipmentManager = function() {
+    console.log('🔧 Manually triggering equipment manager...');
+    if (typeof showEquipmentManager === 'function') {
+        showEquipmentManager();
+    } else {
+        console.error('showEquipmentManager function not available');
+    }
+};
+
 console.log("🔧 Equipment Management Module geladen (v1.9)");
 console.log("🔧 Available functions:", {
     showEquipmentManager: typeof showEquipmentManager,
@@ -1658,7 +1706,7 @@ console.log("🔧 Available functions:", {
 
 // ==================== EVENT LISTENER SETUP ====================
 // Set up event listeners for buttons that use inline onclick handlers
-document.addEventListener('DOMContentLoaded', () => {
+function setupEquipmentEventListeners() {
     // Equipment Manager Button
     const equipmentManagerBtn = document.getElementById('equipmentManagerBtn');
     if (equipmentManagerBtn) {
@@ -1671,6 +1719,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         console.log('✅ Equipment Manager button event listener set up');
+    } else {
+        console.log('⚠️ Equipment Manager button not found, will retry...');
     }
     
     // Also handle notification items that might be dynamically created
@@ -1686,4 +1736,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
-}); 
+}
+
+// Try to set up event listeners immediately
+setupEquipmentEventListeners();
+
+// Also try on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', setupEquipmentEventListeners);
+
+// And try after a delay to catch dynamically loaded content
+setTimeout(setupEquipmentEventListeners, 1000);
+setTimeout(setupEquipmentEventListeners, 2000); 

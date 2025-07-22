@@ -82,27 +82,22 @@ function updateWelcomeMessage() {
   }
 }
 
-// Helper function to wait for updateMachineOverview (uses global function if available)
+// Helper function to wait for updateMachineOverview (fallback implementation)
 function waitForUpdateMachineOverview(callback, maxAttempts = 10) {
-  if (typeof window.waitForUpdateMachineOverview === 'function') {
-    window.waitForUpdateMachineOverview(callback, maxAttempts);
-  } else {
-    // Fallback implementation
-    let attempts = 0;
-    const checkFunction = () => {
-      attempts++;
-      if (typeof updateMachineOverview === 'function') {
-        console.log('🔄 updateMachineOverview function found after', attempts, 'attempts');
-        callback();
-      } else if (attempts < maxAttempts) {
-        console.log('⏳ Waiting for updateMachineOverview function... (attempt', attempts, '/', maxAttempts, ')');
-        setTimeout(checkFunction, 500);
-      } else {
-        console.warn('⚠️ updateMachineOverview function not available after', maxAttempts, 'attempts');
-      }
-    };
-    checkFunction();
-  }
+  let attempts = 0;
+  const checkFunction = () => {
+    attempts++;
+    if (typeof updateMachineOverview === 'function') {
+      console.log('🔄 updateMachineOverview function found after', attempts, 'attempts');
+      callback();
+    } else if (attempts < maxAttempts) {
+      console.log('⏳ Waiting for updateMachineOverview function... (attempt', attempts, '/', maxAttempts, ')');
+      setTimeout(checkFunction, 500);
+    } else {
+      console.warn('⚠️ updateMachineOverview function not available after', maxAttempts, 'attempts');
+    }
+  };
+  checkFunction();
 }
 
 // Dashboard-Initialisierung

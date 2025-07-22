@@ -373,7 +373,7 @@
                 <div class="control-section">
                     <h3 class="control-title">Asset-Verwaltung</h3>
                     <div class="control-buttons">
-                        <button class="btn btn-secondary" id="equipmentManagerBtn">
+                        <button class="btn btn-secondary" id="equipmentManagerBtn" onclick="if(typeof triggerEquipmentManager === 'function') { triggerEquipmentManager(); } else if(typeof showEquipmentManager === 'function') { showEquipmentManager(); } else { console.error('Equipment manager functions not available'); }">
                             Equipment verwalten
                             <span class="notification-badge" data-badge="equipment-requests" style="display: none;">0</span>
                         </button>

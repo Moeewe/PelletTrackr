@@ -12,7 +12,7 @@ let userPrinterListener = null;
 window.userPrinters = userPrinters;
 
 // Global variable to store all users
-let allUsers = [];
+let userServicesAllUsers = [];
 
 /**
  * Initialize user services
@@ -451,7 +451,7 @@ async function showEquipmentRequest() {
     }
     
     console.log('✅ Equipment loaded:', availableEquipment.length, 'items');
-    console.log('✅ Users loaded:', allUsers.length, 'users');
+            console.log('✅ Users loaded:', userServicesAllUsers.length, 'users');
 }
 
 /**
@@ -479,13 +479,13 @@ async function autoFillPhoneNumber() {
         }
         
         // Then try to find in loaded users
-        if (typeof allUsers !== 'undefined' && allUsers.length > 0) {
-            const currentUserData = allUsers.find(user => user.kennung === window.currentUser.kennung);
+        if (typeof userServicesAllUsers !== 'undefined' && userServicesAllUsers.length > 0) {
+            const currentUserData = userServicesAllUsers.find(user => user.kennung === window.currentUser.kennung);
             
             if (currentUserData && currentUserData.phone) {
                 phoneInput.value = currentUserData.phone;
                 phoneInput.setAttribute('data-prefilled', 'true');
-                console.log('✅ Auto-filled phone number from allUsers:', currentUserData.phone);
+                console.log('✅ Auto-filled phone number from userServicesAllUsers:', currentUserData.phone);
                 
                 // Update current user object
                 window.currentUser.phone = currentUserData.phone;
@@ -2530,10 +2530,10 @@ async function loadAllUsers() {
         console.log('🔄 Loading all users for equipment requests...');
         const usersSnapshot = await window.db.collection('users').get();
         
-        allUsers = [];
+        userServicesAllUsers = [];
         usersSnapshot.forEach(doc => {
             const userData = doc.data();
-            allUsers.push({
+            userServicesAllUsers.push({
                 id: doc.id,
                 name: userData.name || 'Unbekannter Benutzer',
                 kennung: userData.kennung || '',
@@ -2543,10 +2543,10 @@ async function loadAllUsers() {
         });
         
         // Sort by name
-        allUsers.sort((a, b) => a.name.localeCompare(b.name));
+        userServicesAllUsers.sort((a, b) => a.name.localeCompare(b.name));
         
-        console.log(`✅ Loaded ${allUsers.length} users for equipment requests`);
-        return allUsers;
+        console.log(`✅ Loaded ${userServicesAllUsers.length} users for equipment requests`);
+        return userServicesAllUsers;
         
     } catch (error) {
         console.error('Error loading users:', error);
