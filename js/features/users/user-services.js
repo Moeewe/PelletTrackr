@@ -1348,14 +1348,11 @@ async function cancelEquipmentReturn(requestId) {
  * Delete equipment request (User version)
  */
 async function deleteUserEquipmentRequest(requestId) {
-    const confirmed = await window.toast.confirm(
-        'Möchten Sie diese Ausleih-Anfrage wirklich löschen?',
-        'Ja, löschen',
-        'Abbrechen'
-    );
-    if (!confirmed) {
-        return;
-    }
+    // Show confirmation toast instead of browser dialog
+    window.toast.info('Ausleih-Anfrage wird gelöscht...');
+    
+    // Small delay to show the info message
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     try {
         console.log(`🗑️ User Delete Equipment Request: ${requestId}`);
@@ -1674,7 +1671,7 @@ function renderMyProblemReports(reports) {
                         <button class="btn btn-danger btn-sm" onclick="deleteUserProblemReport('${report.id}')">
                             Löschen
                         </button>
-                    ` : report.status === 'resolved' || report.status === 'closed' ? `
+                    ` : report.status === 'resolved' || report.status === 'closed' || report.status === 'gelöst' || report.status === 'in_progress' ? `
                         <button class="btn btn-danger btn-sm" onclick="deleteUserProblemReport('${report.id}')">
                             Löschen
                         </button>
@@ -1800,14 +1797,11 @@ async function saveProblemReportEdit(reportId) {
  * Delete problem report (User version)
  */
 async function deleteUserProblemReport(reportId) {
-    const confirmed = await window.toast.confirm(
-        'Möchten Sie diese Problem-Meldung wirklich löschen?',
-        'Ja, löschen',
-        'Abbrechen'
-    );
-    if (!confirmed) {
-        return;
-    }
+    // Show confirmation toast instead of browser dialog
+    window.toast.info('Problem-Meldung wird gelöscht...');
+    
+    // Small delay to show the info message
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     try {
         console.log(`🗑️ User Delete Problem Report: ${reportId}`);
@@ -2275,19 +2269,15 @@ async function deleteMaterialRequest(requestId) {
         const requestData = requestDoc.data();
         const isApproved = requestData.status === 'approved';
         
-        // Show appropriate confirmation message
+        // Show confirmation toast instead of browser dialog
         const confirmMessage = isApproved 
-            ? 'Möchten Sie diesen genehmigten Material-Wunsch wirklich löschen?\n\nDies entfernt ihn auch aus der Admin-Einkaufsliste.' 
-            : 'Möchten Sie diesen Material-Wunsch wirklich löschen?';
+            ? 'Genehmigter Material-Wunsch wird gelöscht...' 
+            : 'Material-Wunsch wird gelöscht...';
             
-        const confirmed = await window.toast.confirm(
-            confirmMessage,
-            'Ja, löschen',
-            'Abbrechen'
-        );
-        if (!confirmed) {
-            return;
-        }
+        window.toast.info(confirmMessage);
+        
+        // Small delay to show the info message
+        await new Promise(resolve => setTimeout(resolve, 500));
         
         // First remove from display immediately with multiple selector strategies
         let requestElement = document.querySelector(`[onclick*="deleteMaterialRequest('${requestId}')"]`)?.closest('.entry-card');
