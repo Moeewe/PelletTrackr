@@ -78,7 +78,7 @@ function setupEquipmentListener() {
 /**
  * Show equipment manager modal
  */
-function showEquipmentManager() {
+async function showEquipmentManager() {
     const modalContent = `
         <div class="modal-header">
             <h3>Equipment verwalten
@@ -117,14 +117,16 @@ function showEquipmentManager() {
     `;
     
     showModalWithContent(modalContent);
+    
+    // Load equipment requests first, then setup listeners
+    await loadEquipmentRequests();
     setupEquipmentListener();
     setupEquipmentRequestsListener();
-    loadEquipmentRequests();
     
     // Update notification badge immediately
     updateEquipmentRequestsBadge();
     
-    // Show hardware category by default
+    // Show hardware category by default after requests are loaded
     setTimeout(() => {
         showEquipmentCategory('hardware');
     }, 100);
@@ -251,11 +253,20 @@ function renderEquipmentList(equipmentList) {
         return;
     }
     
+    console.log('🔍 Rendering equipment list with', equipmentList.length, 'items');
+    console.log('📋 Current equipment requests:', equipmentRequests);
+    
     container.innerHTML = equipmentList.map(item => {
         // Check if there's a pending request for this equipment
         const pendingRequest = getPendingRequestForEquipment(item.id);
         // Check if there's a pending return request for this equipment
         const pendingReturnRequest = getPendingReturnRequestForEquipment(item.id);
+        
+        console.log(`🔍 Equipment ${item.id} (${item.name}):`, {
+            status: item.status,
+            pendingRequest: pendingRequest ? pendingRequest.id : null,
+            pendingReturnRequest: pendingReturnRequest ? pendingReturnRequest.id : null
+        });
         
         return `
         <div class="equipment-item ${item.requiresDeposit ? 'requires-deposit' : ''} ${pendingRequest ? 'has-pending-request' : ''}">
@@ -1026,11 +1037,22 @@ function getPendingRequestForEquipment(equipmentId) {
  * Get pending return request for specific equipment
  */
 function getPendingReturnRequestForEquipment(equipmentId) {
-  return equipmentRequests.find(request => 
+  console.log(`🔍 Looking for return request for equipment ${equipmentId}`);
+  console.log(`📋 Available requests:`, equipmentRequests.map(r => ({
+    id: r.id,
+    equipmentId: r.equipmentId,
+    status: r.status,
+    type: r.type
+  })));
+  
+  const returnRequest = equipmentRequests.find(request => 
     request.equipmentId === equipmentId && 
     request.status === 'pending' &&
     request.type === 'return_request'
   );
+  
+  console.log(`🔍 Return request found for ${equipmentId}:`, returnRequest);
+  return returnRequest;
 }
 
 /**
@@ -1504,5 +1526,6 @@ window.selectAdminBorrowUser = selectAdminBorrowUser;
 window.submitAdminBorrowEquipment = submitAdminBorrowEquipment;
 window.requestEquipmentReturn = requestEquipmentReturn;
 window.confirmEquipmentReturn = confirmEquipmentReturn;
+window.getPendingReturnRequestForEquipment = getPendingReturnRequestForEquipment;
 
 console.log("🔧 Equipment Management Module geladen"); 
