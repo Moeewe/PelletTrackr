@@ -91,6 +91,31 @@
 
 /* ==================== ENTRY CARD STRUKTUR ==================== */
 
+/* Disable all animations for entry card buttons */
+.entry-card .btn,
+.entry-card-footer .btn,
+.entry-actions .btn {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+}
+
+.entry-card .btn:hover,
+.entry-card-footer .btn:hover,
+.entry-actions .btn:hover {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+}
+
+.entry-card .btn:active,
+.entry-card-footer .btn:active,
+.entry-actions .btn:active {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+}
+
 .entry-cards {
   display: block;
   width: 100%;
@@ -231,6 +256,9 @@
   text-transform: none;
   letter-spacing: 0.5px;
   margin: 0;
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
 }
 
 /* ==================== MACHINE OVERVIEW SECTION ==================== */
