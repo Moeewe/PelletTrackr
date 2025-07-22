@@ -38,8 +38,17 @@ function initializeFirebase() {
     // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     
-    // Initialize Firestore with cache settings (new API)
+    // Initialize Firestore with CORS-compatible settings
     const db = firebase.firestore();
+    
+    // Configure Firestore for local development
+    const settings = {
+      cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
+      experimentalForceLongPolling: true, // Better for local development
+      useFetchStreams: false // Disable streaming for better compatibility
+    };
+    
+    db.settings(settings);
     
     // Use the legacy enablePersistence for compatibility (the new cache API requires different setup)
     try {
@@ -77,8 +86,8 @@ function initializeFirebase() {
 
 // Passive connection monitoring - only check when operations fail
 function checkFirebaseConnection(error) {
-  if (error && (error.code === 'unavailable' || error.code === 'deadline-exceeded')) {
-    console.warn("🔌 Firebase connection issue detected:", error.code);
+  if (error && (error.code === 'unavailable' || error.code === 'deadline-exceeded' || error.message.includes('access control checks'))) {
+    console.warn("🔌 Firebase connection issue detected:", error.code || error.message);
     connectionHealthy = false;
     return false;
   }
