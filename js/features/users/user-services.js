@@ -658,11 +658,7 @@ async function submitEquipmentRequest() {
         duration: duration,
         purpose: purpose,
         status: 'pending',
-        userName: window.currentUser?.name || 'Unbekannter User',
         userKennung: window.currentUser?.kennung || '',
-        userEmail: window.currentUser?.email || '',
-        userPhone: phoneNumber,
-        requestedBy: window.currentUser?.name || 'Unbekannter User',
         requestedByKennung: window.currentUser?.kennung || '',
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };

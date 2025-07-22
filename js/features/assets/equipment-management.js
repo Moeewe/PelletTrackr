@@ -1,14 +1,17 @@
 /**
  * Equipment Management System
  * Handles lending system for keys, hardware, and books
- * Version 1.7 - Enhanced button logic for borrowed equipment detection
+ * Version 1.9 - Optimized to store only FH-Kennung, fetch user details on demand
  */
 
 // Equipment Management Module - Extended with Requests Support
 let equipment = [];
 let equipmentListener = null;
+let equipmentRequestsListener = null;
 let currentEquipmentCategory = 'hardware';
 let filteredEquipment = [];
+let equipmentRequests = []; // Store requests from requests collection
+let allUsers = []; // Cache for user data
 
 // Fixed categories - no more dynamic categories
 const EQUIPMENT_CATEGORIES = {
@@ -58,6 +61,10 @@ function setupEquipmentListener() {
                 requestsCount: (item.requests || []).length
             })));
             
+            // Load equipment requests and users after equipment is loaded
+            loadEquipmentRequests();
+            loadAllUsersForEquipment();
+            
             showEquipmentCategory(currentEquipmentCategory);
             
             // Update machine overview in admin dashboard
@@ -80,6 +87,85 @@ function setupEquipmentListener() {
         console.error("❌ Failed to setup equipment listener:", error);
         // Fallback to manual loading
         loadEquipment();
+    }
+}
+
+/**
+ * Setup real-time listener for equipment requests
+ */
+function setupEquipmentRequestsListener() {
+    // Clean up existing listener
+    if (equipmentRequestsListener) {
+        equipmentRequestsListener();
+        equipmentRequestsListener = null;
+    }
+    
+    try {
+        equipmentRequestsListener = window.db.collection('requests')
+            .where('type', '==', 'equipment')
+            .onSnapshot((snapshot) => {
+                equipmentRequests = [];
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    equipmentRequests.push({
+                        id: doc.id,
+                        ...data,
+                        requestedAt: data.createdAt?.toDate() || data.requestedAt?.toDate(),
+                        fromDate: data.fromDate?.toDate(),
+                        toDate: data.toDate?.toDate()
+                    });
+                });
+                
+                console.log('📋 Live update: Loaded equipment requests:', equipmentRequests.length);
+                
+                // Update equipment list to show requests
+                showEquipmentCategory(currentEquipmentCategory);
+                
+                // Update notification badge
+                updateEquipmentRequestsBadge();
+                
+            }, (error) => {
+                console.error('Error in equipment requests listener:', error);
+                safeShowToast('Fehler beim Live-Update der Equipment-Anfragen', 'error');
+            });
+        
+        console.log("✅ Equipment requests listener registered");
+    } catch (error) {
+        console.error("❌ Failed to setup equipment requests listener:", error);
+        // Fallback to manual loading
+        loadEquipmentRequests();
+    }
+}
+
+/**
+ * Load equipment requests from requests collection (fallback)
+ */
+async function loadEquipmentRequests() {
+    try {
+        const querySnapshot = await window.db.collection('requests')
+            .where('type', '==', 'equipment')
+            .get();
+        
+        equipmentRequests = [];
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            equipmentRequests.push({
+                id: doc.id,
+                ...data,
+                requestedAt: data.createdAt?.toDate() || data.requestedAt?.toDate(),
+                fromDate: data.fromDate?.toDate(),
+                toDate: data.toDate?.toDate()
+            });
+        });
+        
+        console.log('📋 Loaded equipment requests:', equipmentRequests.length);
+        
+        // Update equipment list to show requests
+        showEquipmentCategory(currentEquipmentCategory);
+        
+    } catch (error) {
+        console.error('Error loading equipment requests:', error);
+        equipmentRequests = [];
     }
 }
 
@@ -127,6 +213,7 @@ async function showEquipmentManager() {
     showModalWithContent(modalContent);
     
     setupEquipmentListener();
+    setupEquipmentRequestsListener();
     
     // Show hardware category by default after requests are loaded
     setTimeout(() => {
@@ -142,6 +229,10 @@ function closeEquipmentManager() {
     if (equipmentListener) {
         equipmentListener();
         equipmentListener = null;
+    }
+    if (equipmentRequestsListener) {
+        equipmentRequestsListener();
+        equipmentRequestsListener = null;
     }
     closeModal();
 }
@@ -261,9 +352,9 @@ function renderEquipmentList(equipmentList) {
     })));
     
     container.innerHTML = equipmentList.map(item => {
-        // Get requests directly from equipment document
-        const requests = item.requests || [];
-        const pendingRequest = requests.find(req => req.status === 'pending' && req.type === 'borrow');
+        // Get requests from equipmentRequests array (from requests collection)
+        const requests = equipmentRequests.filter(req => req.equipmentId === item.id);
+        const pendingRequest = requests.find(req => req.status === 'pending' && req.type === 'equipment');
         const pendingReturnRequest = requests.find(req => req.status === 'pending' && req.type === 'return');
         
         // Enhanced return request detection
@@ -328,19 +419,23 @@ function renderEquipmentList(equipmentList) {
             
             ${pendingRequest ? `
                 <div class="equipment-request-info">
-                    <strong>Ausleihe angefragt von:</strong> ${pendingRequest.userName} (${pendingRequest.userKennung})
+                    <strong>Ausleihe angefragt von:</strong> ${pendingRequest.userName || getUserDetails(pendingRequest.userKennung).name} (${pendingRequest.userKennung})
                     <br><strong>Zeitraum:</strong> ${pendingRequest.fromDate ? new Date(pendingRequest.fromDate.seconds * 1000).toLocaleDateString() : 'Unbekannt'} - ${pendingRequest.toDate ? new Date(pendingRequest.toDate.seconds * 1000).toLocaleDateString() : 'Unbekannt'}
                     <br><strong>Grund:</strong> ${pendingRequest.reason || 'Kein Grund angegeben'}
                 </div>
             ` : (pendingReturnRequest || anyPendingReturn) ? `
                 <div class="equipment-request-info">
-                    <strong>Rückgabe angefragt von:</strong> ${(pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).requestedByName} (${(pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).requestedBy})
+                    <strong>Rückgabe angefragt von:</strong> ${(pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).requestedByName || getUserDetails((pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).requestedBy).name} (${(pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).requestedBy})
                     <br><strong>Angefragt am:</strong> ${(pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).createdAt ? new Date((pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).createdAt.seconds * 1000).toLocaleDateString() : 'Unbekannt'}
                 </div>
-            ` : (item.status === 'borrowed' || item.borrowedBy) && item.borrowedBy ? `
+            ` : (item.status === 'borrowed' || item.borrowedBy) && item.borrowedByKennung ? `
                 <div class="equipment-current-user">
-                    Ausgeliehen an: <strong>${item.borrowedBy}</strong><br>
-                    Seit: ${item.borrowedAt ? new Date(item.borrowedAt.toDate()).toLocaleDateString() : 'Unbekannt'}
+                    ${(() => {
+                        const userDetails = getUserDetails(item.borrowedByKennung);
+                        return `Ausgeliehen an: <strong>${userDetails.name}</strong> (${userDetails.kennung})<br>
+                        ${userDetails.phone ? `📱 ${userDetails.phone}<br>` : ''}
+                        Seit: ${item.borrowedAt ? new Date(item.borrowedAt.toDate()).toLocaleDateString() : 'Unbekannt'}`;
+                    })()}
                     ${item.requiresDeposit ? `
                         <div class="equipment-deposit-status">
                             Pfand: <span class="${item.depositPaid ? 'deposit-paid' : 'deposit-unpaid'}">
@@ -781,11 +876,11 @@ async function loadAllUsersForEquipment() {
         console.log('🔄 Loading all users for equipment selection...');
         
         const querySnapshot = await window.db.collection('users').get();
-        window.allUsers = [];
+        allUsers = [];
         
         querySnapshot.forEach(doc => {
             const userData = doc.data();
-            window.allUsers.push({
+            allUsers.push({
                 id: doc.id,
                 kennung: userData.kennung || doc.id,
                 name: userData.name || 'Unbekannter Benutzer',
@@ -795,12 +890,11 @@ async function loadAllUsersForEquipment() {
             });
         });
         
-        console.log(`✅ Loaded ${window.allUsers.length} users for equipment selection`);
+        console.log(`✅ Loaded ${allUsers.length} users for equipment selection`);
         
     } catch (error) {
         console.error('❌ Error loading users for equipment selection:', error);
-        safeShowToast('Fehler beim Laden der Benutzer', 'error');
-        window.allUsers = [];
+        allUsers = [];
     }
 }
 
@@ -812,21 +906,21 @@ function filterAdminBorrowUsers() {
     const resultsDiv = document.getElementById('adminBorrowUserResults');
     
     console.log('🔍 Filtering users with search term:', searchTerm);
-    console.log('📋 Available users:', window.allUsers ? window.allUsers.length : 0);
+    console.log('�� Available users:', allUsers ? allUsers.length : 0);
     
     if (!searchTerm) {
         resultsDiv.style.display = 'none';
         return;
     }
     
-    if (!window.allUsers || window.allUsers.length === 0) {
+    if (!allUsers || allUsers.length === 0) {
         console.warn('⚠️ No users available for search');
         resultsDiv.innerHTML = '<div class="no-results">Keine Benutzer verfügbar</div>';
         resultsDiv.style.display = 'block';
         return;
     }
     
-    const filteredUsers = window.allUsers.filter(user => {
+    const filteredUsers = allUsers.filter(user => {
         const nameMatch = user.name && user.name.toLowerCase().includes(searchTerm);
         const kennungMatch = user.kennung && user.kennung.toLowerCase().includes(searchTerm);
         const emailMatch = user.email && user.email.toLowerCase().includes(searchTerm);
@@ -910,7 +1004,7 @@ async function submitAdminBorrowEquipment(equipmentId) {
     
     try {
         // Find selected user
-        const selectedUser = window.allUsers ? window.allUsers.find(user => user.kennung === selectedUserKennung) : null;
+        const selectedUser = allUsers ? allUsers.find(user => user.kennung === selectedUserKennung) : null;
         if (!selectedUser) {
             safeShowToast('Ausgewählter Benutzer nicht gefunden', 'error');
             return;
@@ -983,10 +1077,9 @@ async function submitAdminBorrowEquipment(equipmentId) {
         
         await window.db.collection('requests').add(loanData);
         
-        // Update equipment status
+        // Update equipment status - only store FH-Kennung
         const updateData = {
             status: 'rented',
-            rentedBy: selectedUser.name,
             rentedByKennung: selectedUser.kennung,
             rentedAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1036,7 +1129,7 @@ async function returnEquipment(equipmentId) {
     try {
         const updateData = {
             status: 'available',
-            borrowedBy: firebase.firestore.FieldValue.delete(),
+            borrowedByKennung: firebase.firestore.FieldValue.delete(),
             borrowedAt: firebase.firestore.FieldValue.delete(),
             returnedAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1098,10 +1191,7 @@ function updateEquipmentRequestsBadge() {
     const badge = document.getElementById('equipment-requests-badge');
     
     // Count pending requests across all equipment
-    const pendingCount = equipment.reduce((count, item) => {
-        const requests = item.requests || [];
-        return count + requests.filter(req => req.status === 'pending').length;
-    }, 0);
+    const pendingCount = equipmentRequests.filter(req => req.status === 'pending').length;
     
     const shouldShow = pendingCount > 0;
     
@@ -1152,6 +1242,11 @@ window.duplicateEquipment = duplicateEquipment;
 window.deleteEquipment = deleteEquipment;
 window.updateMachineOverview = updateMachineOverview;
 window.requestEquipmentReturn = requestEquipmentReturn;
+window.confirmEquipmentReturn = confirmEquipmentReturn;
+window.setupEquipmentRequestsListener = setupEquipmentRequestsListener;
+window.loadEquipmentRequests = loadEquipmentRequests;
+window.loadAllUsersForEquipment = loadAllUsersForEquipment;
+window.getUserDetails = getUserDetails;
 
 /**
  * Approve equipment request and mark equipment as borrowed
@@ -1169,41 +1264,26 @@ async function approveEquipmentRequest(requestId, equipmentId) {
     
     const loadingId = window.loading ? window.loading.show('Anfrage wird genehmigt...') : null;
     
-    // Get equipment document
-    const equipmentRef = window.db.collection('equipment').doc(equipmentId);
-    const equipmentDoc = await equipmentRef.get();
-    
-    if (!equipmentDoc.exists) {
-      throw new Error('Equipment nicht gefunden');
-    }
-    
-    const equipmentData = equipmentDoc.data();
-    const requests = equipmentData.requests || [];
-    
-    // Find and update the specific request
-    const requestIndex = requests.findIndex(req => req.id === requestId);
-    if (requestIndex === -1) {
+    // Find the request in equipmentRequests array
+    const requestData = equipmentRequests.find(req => req.id === requestId);
+    if (!requestData) {
       throw new Error('Anfrage nicht gefunden');
     }
     
-    const requestData = requests[requestIndex];
-    
-    // Update request status
-    requests[requestIndex] = {
-      ...requestData,
+    // Update request status in requests collection
+    await window.db.collection('requests').doc(requestId).update({
       status: 'approved',
       approvedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
       approvedBy: window.currentUser?.kennung || 'admin'
-    };
+    });
     
-    // Update equipment status and requests
-    await equipmentRef.update({
+    // Update equipment status - only store FH-Kennung
+    await window.db.collection('equipment').doc(equipmentId).update({
       status: 'borrowed',
-      borrowedBy: requestData.userName,
       borrowedByKennung: requestData.userKennung,
       borrowedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
       depositPaid: false,
-      requests: requests
+      updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
     });
     
     if (loadingId && window.loading) window.loading.hide(loadingId);
@@ -1242,34 +1322,11 @@ async function rejectEquipmentRequest(requestId, equipmentId) {
     
     const loadingId = window.loading ? window.loading.show('Anfrage wird abgelehnt...') : null;
     
-    // Get equipment document
-    const equipmentRef = window.db.collection('equipment').doc(equipmentId);
-    const equipmentDoc = await equipmentRef.get();
-    
-    if (!equipmentDoc.exists) {
-      throw new Error('Equipment nicht gefunden');
-    }
-    
-    const equipmentData = equipmentDoc.data();
-    const requests = equipmentData.requests || [];
-    
-    // Find and update the specific request
-    const requestIndex = requests.findIndex(req => req.id === requestId);
-    if (requestIndex === -1) {
-      throw new Error('Anfrage nicht gefunden');
-    }
-    
-    // Update request status
-    requests[requestIndex] = {
-      ...requests[requestIndex],
+    // Update request status in requests collection
+    await window.db.collection('requests').doc(requestId).update({
       status: 'rejected',
       rejectedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
       rejectedBy: window.currentUser?.kennung || 'admin'
-    };
-    
-    // Update equipment requests
-    await equipmentRef.update({
-      requests: requests
     });
     
     if (loadingId && window.loading) window.loading.hide(loadingId);
@@ -1343,35 +1400,19 @@ async function requestEquipmentReturn(equipmentId) {
     }
     
     try {
-        // Create return request
+        // Create return request in requests collection - only store FH-Kennung
         const returnRequestData = {
-            id: `return_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             equipmentId: equipmentId,
             equipmentName: equipmentItem.name,
+            equipmentType: equipmentItem.category,
             userKennung: equipmentItem.borrowedByKennung,
-            userName: equipmentItem.borrowedBy,
             requestedBy: window.currentUser?.kennung || 'admin',
-            requestedByName: window.currentUser?.name || 'Administrator',
             status: 'pending',
             type: 'return',
             createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
         };
         
-        // Add to equipment document
-        const equipmentRef = window.db.collection('equipment').doc(equipmentId);
-        const equipmentDoc = await equipmentRef.get();
-        
-        if (!equipmentDoc.exists) {
-            throw new Error('Equipment nicht gefunden');
-        }
-        
-        const equipmentData = equipmentDoc.data();
-        const requests = equipmentData.requests || [];
-        requests.push(returnRequestData);
-        
-        await equipmentRef.update({
-            requests: requests
-        });
+        await window.db.collection('requests').add(returnRequestData);
         
         safeShowToast('Rücknahme-Anfrage erfolgreich erstellt', 'success');
         
@@ -1398,46 +1439,33 @@ async function confirmEquipmentReturn(equipmentId) {
     await new Promise(resolve => setTimeout(resolve, 500));
     
     try {
-        // Get equipment document
-        const equipmentRef = window.db.collection('equipment').doc(equipmentId);
-        const equipmentDoc = await equipmentRef.get();
-        
-        if (!equipmentDoc.exists) {
-            safeShowToast('Equipment nicht gefunden', 'error');
-            return;
-        }
-        
-        const equipmentData = equipmentDoc.data();
-        const requests = equipmentData.requests || [];
-        
-        // Find pending return request
-        const returnRequestIndex = requests.findIndex(req => 
-            req.status === 'pending' && req.type === 'return'
+        // Find pending return request in equipmentRequests
+        const returnRequest = equipmentRequests.find(req => 
+            req.equipmentId === equipmentId && 
+            req.status === 'pending' && 
+            req.type === 'return'
         );
         
-        if (returnRequestIndex === -1) {
+        if (!returnRequest) {
             safeShowToast('Keine Rückgabe-Anfrage für dieses Equipment gefunden', 'error');
             return;
         }
         
-        // Update return request status
-        requests[returnRequestIndex] = {
-            ...requests[returnRequestIndex],
+        // Update return request status in requests collection
+        await window.db.collection('requests').doc(returnRequest.id).update({
             status: 'confirmed',
             confirmedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
             confirmedBy: window.currentUser?.kennung || 'admin',
             confirmedByName: window.currentUser?.name || 'Administrator'
-        };
+        });
         
-        // Update equipment status and requests
+        // Update equipment status
         const updateData = {
             status: 'available',
-            borrowedBy: window.firebase.firestore.FieldValue.delete(),
             borrowedByKennung: window.firebase.firestore.FieldValue.delete(),
             borrowedAt: window.firebase.firestore.FieldValue.delete(),
             returnedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
-            requests: requests
+            updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
         };
         
         // Reset deposit status when returning
@@ -1445,7 +1473,7 @@ async function confirmEquipmentReturn(equipmentId) {
             updateData.depositPaid = false;
         }
         
-        await equipmentRef.update(updateData);
+        await window.db.collection('equipment').doc(equipmentId).update(updateData);
         
         safeShowToast('Rückgabe erfolgreich bestätigt', 'success');
         
@@ -1601,7 +1629,7 @@ window.loadAllUsersForEquipment = loadAllUsersForEquipment;
 window.approveEquipmentRequest = approveEquipmentRequest;
 window.rejectEquipmentRequest = rejectEquipmentRequest;
 
-console.log("🔧 Equipment Management Module geladen (v1.7)");
+console.log("🔧 Equipment Management Module geladen (v1.9)");
 console.log("🔧 Available functions:", {
     showEquipmentManager: typeof showEquipmentManager,
     confirmEquipmentReturn: typeof confirmEquipmentReturn,
