@@ -296,24 +296,21 @@ function renderEquipmentList(equipmentList) {
                     <button class="btn btn-danger" onclick="rejectEquipmentRequest('${pendingRequest.id}')">Anfrage ablehnen</button>
                     <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
                     <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
-                    <button class="btn btn-danger" onclick="deleteEquipment('${item.id}')">Löschen</button>
                 ` : item.status === 'available' ? `
                     <button class="btn btn-primary" onclick="borrowEquipment('${item.id}')">Ausleihen</button>
                     <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
                     <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
-                    <button class="btn btn-danger" onclick="deleteEquipment('${item.id}')">Löschen</button>
                 ` : item.status === 'borrowed' ? `
                     <button class="btn btn-success" onclick="returnEquipment('${item.id}')">Zurückgeben</button>
+                    <button class="btn btn-warning" onclick="requestEquipmentReturn('${item.id}')">Rücknahme anfragen</button>
                     ${item.requiresDeposit && !item.depositPaid ? `
                         <button class="btn btn-warning" onclick="markDepositAsPaid('${item.id}')">Pfand als bezahlt markieren</button>
                     ` : ''}
                     <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
                     <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
-                    <button class="btn btn-danger" onclick="deleteEquipment('${item.id}')">Löschen</button>
                 ` : `
                     <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
                     <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
-                    <button class="btn btn-danger" onclick="deleteEquipment('${item.id}')">Löschen</button>
                 `}
             </div>
         </div>
@@ -1097,6 +1094,7 @@ window.rejectEquipmentRequest = rejectEquipmentRequest;
 window.duplicateEquipment = duplicateEquipment;
 window.deleteEquipment = deleteEquipment;
 window.updateMachineOverview = updateMachineOverview;
+window.requestEquipmentReturn = requestEquipmentReturn;
 
 /**
  * Approve equipment request and mark equipment as borrowed
@@ -1229,6 +1227,45 @@ async function duplicateEquipment(equipmentId) {
     } catch (error) {
         console.error('Error duplicating equipment:', error);
         safeShowToast('Fehler beim Duplizieren', 'error');
+    }
+}
+
+/**
+ * Request equipment return from user
+ */
+async function requestEquipmentReturn(equipmentId) {
+    const equipmentItem = equipment.find(item => item.id === equipmentId);
+    if (!equipmentItem) {
+        safeShowToast('Equipment nicht gefunden', 'error');
+        return;
+    }
+    
+    if (!equipmentItem.borrowedByKennung) {
+        safeShowToast('Kein Benutzer für Rücknahme-Anfrage gefunden', 'error');
+        return;
+    }
+    
+    try {
+        // Create return request
+        const returnRequestData = {
+            equipmentId: equipmentId,
+            equipmentName: equipmentItem.name,
+            userKennung: equipmentItem.borrowedByKennung,
+            userName: equipmentItem.borrowedBy,
+            requestedBy: window.currentUser?.kennung || 'admin',
+            requestedByName: window.currentUser?.name || 'Administrator',
+            status: 'pending',
+            type: 'return_request',
+            createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        await window.db.collection('equipmentRequests').add(returnRequestData);
+        
+        safeShowToast('Rücknahme-Anfrage erfolgreich erstellt', 'success');
+        
+    } catch (error) {
+        console.error('Error requesting equipment return:', error);
+        safeShowToast('Fehler beim Erstellen der Rücknahme-Anfrage', 'error');
     }
 }
 
