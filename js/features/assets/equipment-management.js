@@ -998,23 +998,49 @@ function filterAdminBorrowUsers() {
         return;
     }
     
+    // Filter users and remove duplicates based on kennung
     const filteredUsers = allUsers.filter(user => {
         const nameMatch = user.name && user.name.toLowerCase().includes(searchTerm);
         const kennungMatch = user.kennung && user.kennung.toLowerCase().includes(searchTerm);
         const emailMatch = user.email && user.email.toLowerCase().includes(searchTerm);
         
         return nameMatch || kennungMatch || emailMatch;
-    }).slice(0, 10); // Limit to 10 results
+    });
     
-    console.log(`🔍 Found ${filteredUsers.length} matching users`);
+    // Remove duplicates based on kennung (keep the one with most complete data)
+    const uniqueUsers = [];
+    const seenKennungen = new Set();
     
-    if (filteredUsers.length === 0) {
+    filteredUsers.forEach(user => {
+        if (!seenKennungen.has(user.kennung)) {
+            seenKennungen.add(user.kennung);
+            uniqueUsers.push(user);
+        } else {
+            // If we already have this kennung, replace with more complete data
+            const existingIndex = uniqueUsers.findIndex(u => u.kennung === user.kennung);
+            const existing = uniqueUsers[existingIndex];
+            
+            // Keep the user with more complete data (phone, email, etc.)
+            const existingScore = (existing.phone ? 1 : 0) + (existing.email ? 1 : 0);
+            const newScore = (user.phone ? 1 : 0) + (user.email ? 1 : 0);
+            
+            if (newScore > existingScore) {
+                uniqueUsers[existingIndex] = user;
+            }
+        }
+    });
+    
+    const limitedUsers = uniqueUsers.slice(0, 10); // Limit to 10 results
+    
+    console.log(`🔍 Found ${filteredUsers.length} matching users, ${limitedUsers.length} unique users`);
+    
+    if (limitedUsers.length === 0) {
         resultsDiv.innerHTML = '<div class="no-results">Keine Benutzer gefunden</div>';
         resultsDiv.style.display = 'block';
         return;
     }
     
-    resultsDiv.innerHTML = filteredUsers.map(user => `
+    resultsDiv.innerHTML = limitedUsers.map(user => `
         <div class="user-result-item" onclick="selectAdminBorrowUser('${user.kennung}', '${user.name}', '${user.email || ''}', '${user.phone || ''}')">
             <strong>${user.name}</strong> (${user.kennung})
             ${user.email ? `<br><small>📧 ${user.email}</small>` : ''}
