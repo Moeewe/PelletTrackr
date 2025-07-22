@@ -485,9 +485,10 @@ function renderEquipmentList(equipmentList) {
                     
                     if (pendingRequest) {
                         console.log('🔍 Showing pending request buttons');
+                        const userName = pendingRequest.userName || pendingRequest.userKennung || 'Unbekannter User';
                         return `
-                            <button class="btn btn-success" onclick="approveEquipmentRequest('${pendingRequest.id}', '${item.id}')">Anfrage genehmigen</button>
-                            <button class="btn btn-danger" onclick="rejectEquipmentRequest('${pendingRequest.id}', '${item.id}')">Anfrage ablehnen</button>
+                            <button class="btn btn-success" onclick="approveEquipmentRequest('${pendingRequest.id}', '${item.id}')">Anfrage von ${userName} genehmigen</button>
+                            <button class="btn btn-danger" onclick="rejectEquipmentRequest('${pendingRequest.id}', '${item.id}')">Anfrage von ${userName} ablehnen</button>
                             <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
                             <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
                         `;
@@ -501,8 +502,10 @@ function renderEquipmentList(equipmentList) {
                     } else if (item.status === 'borrowed' || item.status === 'rented' || item.borrowedBy || item.borrowedByKennung) {
                         console.log('🔍 Showing borrowed equipment buttons');
                         if (pendingReturnRequest || anyPendingReturn) {
+                            const returnRequest = pendingReturnRequest || returnRequests.find(r => r.status === 'pending');
+                            const userName = returnRequest ? (returnRequest.requestedByName || returnRequest.requestedBy || 'Unbekannter User') : 'Unbekannter User';
                             return `
-                                <button class="btn btn-success" onclick="confirmEquipmentReturn('${item.id}')">Rückgabe bestätigen</button>
+                                <button class="btn btn-success" onclick="confirmEquipmentReturn('${item.id}')">Rückgabe von ${userName} bestätigen</button>
                                 <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
                                 <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
                             `;
