@@ -476,14 +476,14 @@ function renderEquipmentList(equipmentList) {
                             <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
                             <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
                         `;
-                    } else if (item.status === 'available' || (!item.borrowedBy && !item.borrowedByKennung && item.status !== 'borrowed')) {
+                    } else if (item.status === 'available' || (!item.borrowedBy && !item.borrowedByKennung && item.status !== 'borrowed' && item.status !== 'rented')) {
                         console.log('🔍 Showing available equipment buttons');
                         return `
                             <button class="btn btn-primary" onclick="borrowEquipment('${item.id}')">Ausleihen</button>
                             <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
                             <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
                         `;
-                    } else if (item.status === 'borrowed' || item.borrowedBy || item.borrowedByKennung) {
+                    } else if (item.status === 'borrowed' || item.status === 'rented' || item.borrowedBy || item.borrowedByKennung) {
                         console.log('🔍 Showing borrowed equipment buttons');
                         if (pendingReturnRequest || anyPendingReturn) {
                             return `
