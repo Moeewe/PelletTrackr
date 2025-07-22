@@ -1,4 +1,5 @@
 // ==================== USER MANAGEMENT SYSTEM ====================
+// Version 1.5 - Replaced all browser dialogs with toast notifications
 
 function showUserManager() {
   if (!window.checkAdminAccess()) return;
@@ -507,11 +508,7 @@ async function toggleAdminStatus(kennung, isAdmin) {
 function showUserDetails(kennung) {
   const user = window.allUsers.find(u => u.kennung === kennung);
   if (!user) {
-    if (window.toast && typeof window.toast.error === 'function') {
-      window.toast.error('Benutzer nicht gefunden!');
-    } else {
-      alert('Benutzer nicht gefunden!');
-    }
+    window.toast.error('Benutzer nicht gefunden!');
     return;
   }
   
@@ -573,20 +570,12 @@ function showUserDetails(kennung) {
 function sendPaymentReminder(kennung) {
   const user = window.allUsers.find(u => u.kennung === kennung);
   if (!user) {
-    if (window.toast && typeof window.toast.error === 'function') {
-      window.toast.error('Benutzer nicht gefunden!');
-    } else {
-      alert('Benutzer nicht gefunden!');
-    }
+    window.toast.error('Benutzer nicht gefunden!');
     return;
   }
   
   if (user.unpaidAmount <= 0) {
-    if (window.toast && typeof window.toast.info === 'function') {
-      window.toast.info('Dieser Benutzer hat keine offenen Beträge.');
-    } else {
-      alert('Dieser Benutzer hat keine offenen Beträge.');
-    }
+    window.toast.info('Dieser Benutzer hat keine offenen Beträge.');
     return;
   }
   
@@ -658,20 +647,12 @@ Generiert am: ${currentDate}
 function sendUrgentReminder(kennung) {
   const user = window.allUsers.find(u => u.kennung === kennung);
   if (!user) {
-    if (window.toast && typeof window.toast.error === 'function') {
-      window.toast.error('Benutzer nicht gefunden!');
-    } else {
-      alert('Benutzer nicht gefunden!');
-    }
+    window.toast.error('Benutzer nicht gefunden!');
     return;
   }
   
   if (user.unpaidAmount <= 0) {
-    if (window.toast && typeof window.toast.info === 'function') {
-      window.toast.info('Dieser Benutzer hat keine offenen Beträge.');
-    } else {
-      alert('Dieser Benutzer hat keine offenen Beträge.');
-    }
+    window.toast.info('Dieser Benutzer hat keine offenen Beträge.');
     return;
   }
   
@@ -768,7 +749,12 @@ DRINGENDE MAHNUNG - Generiert am: ${currentDate}
 
 async function deleteUser(kennung) {
   if (!window.checkAdminAccess()) return;
-  if (!confirm("Benutzer wirklich löschen? Alle zugehörigen Daten werden entfernt!")) return;
+  
+  // Show confirmation toast instead of browser dialog
+  window.toast.info('Benutzer wird gelöscht...');
+  
+  // Small delay to show the info message
+  await new Promise(resolve => setTimeout(resolve, 500));
   
   try {
     // Alle Einträge des Benutzers abrufen
@@ -790,22 +776,14 @@ async function deleteUser(kennung) {
     
     await batch.commit();
     
-    if (window.toast && typeof window.toast.success === 'function') {
-      window.toast.success('Benutzer und alle zugehörigen Daten wurden gelöscht.');
-    } else {
-      alert('Benutzer und alle zugehörigen Daten wurden gelöscht.');
-    }
+    window.toast.success('Benutzer und alle zugehörigen Daten wurden gelöscht.');
     loadUsersForManagement();
     window.loadAdminStats();
     window.loadAllEntries();
     
   } catch (error) {
     console.error('Fehler beim Löschen des Benutzers:', error);
-    if (window.toast && typeof window.toast.error === 'function') {
-      window.toast.error('Fehler beim Löschen: ' + error.message);
-    } else {
-      alert('Fehler beim Löschen: ' + error.message);
-    }
+    window.toast.error('Fehler beim Löschen: ' + error.message);
   }
 }
 
@@ -816,11 +794,7 @@ async function editUser(kennung) {
   
   const user = window.allUsers.find(u => u.kennung === kennung);
   if (!user) {
-    if (window.toast && typeof window.toast.error === 'function') {
-      window.toast.error('Benutzer nicht gefunden!');
-    } else {
-      alert('Benutzer nicht gefunden!');
-    }
+    window.toast.error('Benutzer nicht gefunden!');
     return;
   }
   
@@ -834,11 +808,7 @@ async function editUser(kennung) {
 async function showEditUserForm(kennung) {
   const user = window.allUsers.find(u => u.kennung === kennung);
   if (!user) {
-    if (window.toast && typeof window.toast.error === 'function') {
-      window.toast.error('Benutzer nicht gefunden!');
-    } else {
-      alert('Benutzer nicht gefunden!');
-    }
+    window.toast.error('Benutzer nicht gefunden!');
     return;
   }
   
@@ -890,21 +860,13 @@ async function updateUser(oldKennung) {
   const newPhone = document.getElementById('editUserPhone').value.trim();
   
   if (!newName || !newKennung) {
-    if (window.toast && typeof window.toast.warning === 'function') {
-      window.toast.warning('Name und FH-Kennung sind erforderlich!');
-    } else {
-      alert('Name und FH-Kennung sind erforderlich!');
-    }
+    window.toast.warning('Name und FH-Kennung sind erforderlich!');
     return;
   }
   
   // Prüfen ob neue Kennung bereits existiert (außer bei unveränderter Kennung)
   if (newKennung !== oldKennung && window.allUsers && window.allUsers.find(u => u.kennung === newKennung)) {
-    if (window.toast && typeof window.toast.warning === 'function') {
-      window.toast.warning('Diese FH-Kennung wird bereits verwendet!');
-    } else {
-      alert('Diese FH-Kennung wird bereits verwendet!');
-    }
+    window.toast.warning('Diese FH-Kennung wird bereits verwendet!');
     return;
   }
   
@@ -963,11 +925,7 @@ async function updateUser(oldKennung) {
     
   } catch (error) {
     console.error('Fehler beim Aktualisieren des Benutzers:', error);
-    if (window.toast && typeof window.toast.error === 'function') {
-      window.toast.error('Fehler beim Speichern: ' + error.message);
-    } else {
-      alert('Fehler beim Speichern: ' + error.message);
-    }
+    window.toast.error('Fehler beim Speichern: ' + error.message);
   }
 }
 
@@ -1052,21 +1010,13 @@ async function createNewUser() {
   const phone = document.getElementById('newUserPhone').value.trim();
   
   if (!name || !kennung) {
-    if (window.toast && typeof window.toast.warning === 'function') {
-      window.toast.warning('Name und FH-Kennung sind erforderlich!');
-    } else {
-      alert('Name und FH-Kennung sind erforderlich!');
-    }
+    window.toast.warning('Name und FH-Kennung sind erforderlich!');
     return;
   }
   
   // Prüfen ob Kennung bereits existiert
   if (window.allUsers && window.allUsers.find(u => u.kennung === kennung)) {
-    if (window.toast && typeof window.toast.warning === 'function') {
-      window.toast.warning('Diese FH-Kennung wird bereits verwendet!');
-    } else {
-      alert('Diese FH-Kennung wird bereits verwendet!');
-    }
+    window.toast.warning('Diese FH-Kennung wird bereits verwendet!');
     return;
   }
   
@@ -1082,11 +1032,7 @@ async function createNewUser() {
     });
     
     console.log('Neuer Benutzer erstellt mit ID:', userRef.id);
-    if (window.toast && typeof window.toast.success === 'function') {
-      window.toast.success('Benutzer erfolgreich hinzugefügt!');
-    } else {
-      alert('Benutzer erfolgreich hinzugefügt!');
-    }
+    window.toast.success('Benutzer erfolgreich hinzugefügt!');
     window.closeModal();
     
     // Nutzer-Liste neu laden
@@ -1094,11 +1040,7 @@ async function createNewUser() {
     
   } catch (error) {
     console.error('Fehler beim Erstellen des Benutzers:', error);
-    if (window.toast && typeof window.toast.error === 'function') {
-      window.toast.error('Fehler beim Erstellen: ' + error.message);
-    } else {
-      alert('Fehler beim Erstellen: ' + error.message);
-    }
+    window.toast.error('Fehler beim Erstellen: ' + error.message);
   }
 }
 
