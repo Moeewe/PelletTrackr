@@ -655,37 +655,36 @@ async function submitEquipmentRequest() {
         return;
     }
     
-    // Check if equipment is already borrowed
+    // Check if equipment is already borrowed (unified system)
     if (selectedEquipment.status === 'borrowed' || selectedEquipment.borrowedByKennung) {
         window.toast.error('Equipment ist bereits ausgeliehen und kann nicht angefragt werden');
         return;
     }
     
-    // Check if user already has a pending request for this equipment
-    const existingUserRequests = userEquipmentRequests?.filter(req => 
-        req.equipmentId === selectedEquipment.id && 
+    // Check if user already has a pending request for this equipment (unified system)
+    const existingUserRequests = selectedEquipment.pendingRequests?.filter(req => 
+        req.userKennung === window.currentUser?.kennung && 
         (req.status === 'pending' || req.status === 'approved')
     ) || [];
     
     if (existingUserRequests.length > 0) {
         const requestInfo = existingUserRequests.map(req => {
-            return `${req.equipmentName} (${req.status === 'pending' ? 'Anfrage ausstehend' : 'Anfrage genehmigt'})`;
+            return `${selectedEquipment.name} (${req.status === 'pending' ? 'Anfrage ausstehend' : 'Anfrage genehmigt'})`;
         }).join(', ');
         
         window.toast.error(`Sie haben bereits eine ausstehende Anfrage für dieses Equipment: ${requestInfo}`);
         return;
     }
     
-    // Check if equipment has any pending requests from other users
-    const allPendingRequests = window.equipmentRequests?.filter(req => 
-        req.equipmentId === selectedEquipment.id && 
+    // Check if equipment has any pending requests from other users (unified system)
+    const allPendingRequests = selectedEquipment.pendingRequests?.filter(req => 
         req.status === 'pending' &&
         req.userKennung !== window.currentUser?.kennung
     ) || [];
     
     if (allPendingRequests.length > 0) {
         const requestInfo = allPendingRequests.map(req => {
-            const userName = req.userName || req.userKennung || req.requestedByName || 'Unbekannter User';
+            const userName = req.userName || req.userKennung || 'Unbekannter User';
             return `${userName}`;
         }).join(', ');
         
@@ -694,6 +693,7 @@ async function submitEquipmentRequest() {
     }
     
     const requestData = {
+        id: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         type: 'equipment',
         equipmentId: selectedEquipment.id,
         equipmentType: equipmentType,
@@ -703,8 +703,8 @@ async function submitEquipmentRequest() {
         purpose: purpose,
         status: 'pending',
         userKennung: window.currentUser?.kennung || '',
-        requestedByKennung: window.currentUser?.kennung || '',
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        userName: window.currentUser?.name || '',
+        createdAt: new Date().toISOString()
     };
     
     try {
@@ -754,7 +754,22 @@ async function submitEquipmentRequest() {
             }
         }
         
-        await window.db.collection('requests').add(requestData);
+        // Add request to equipment document (unified system)
+        const equipmentRef = window.db.collection('equipment').doc(selectedEquipment.id);
+        const equipmentDoc = await equipmentRef.get();
+        
+        if (!equipmentDoc.exists) {
+            throw new Error('Equipment nicht gefunden');
+        }
+        
+        const equipmentData = equipmentDoc.data();
+        const pendingRequests = equipmentData.pendingRequests || [];
+        pendingRequests.push(requestData);
+        
+        await equipmentRef.update({
+            pendingRequests: pendingRequests,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
         
         window.toast.success('Equipment-Anfrage erfolgreich gesendet');
         closeModal();

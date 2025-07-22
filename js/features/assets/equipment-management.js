@@ -91,121 +91,29 @@ function setupEquipmentListener() {
 }
 
 /**
- * Setup real-time listener for equipment requests
+ * Unified equipment system - no separate requests collection needed
+ * All requests are stored directly in equipment documents
  */
 function setupEquipmentRequestsListener() {
-    // Clean up existing listener
-    if (equipmentRequestsListener) {
-        equipmentRequestsListener();
-        equipmentRequestsListener = null;
-    }
-    
-    try {
-        // Listen to both equipment and return requests
-        equipmentRequestsListener = window.db.collection('requests')
-            .where('type', 'in', ['equipment', 'return'])
-            .onSnapshot((snapshot) => {
-                equipmentRequests = [];
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    equipmentRequests.push({
-                        id: doc.id,
-                        ...data,
-                        requestedAt: data.createdAt?.toDate() || data.requestedAt?.toDate(),
-                        fromDate: data.fromDate?.toDate(),
-                        toDate: data.toDate?.toDate()
-                    });
-                });
-                
-                // Update global variable
-                window.equipmentRequests = equipmentRequests;
-                
-                console.log('📋 Live update: Loaded equipment requests:', equipmentRequests.length);
-                console.log('📋 Equipment requests details:', equipmentRequests.map(req => ({
-                    id: req.id,
-                    type: req.type,
-                    status: req.status,
-                    equipmentId: req.equipmentId,
-                    userKennung: req.userKennung,
-                    requestedBy: req.requestedBy
-                })));
-                
-                // Update equipment list to show requests
-                showEquipmentCategory(currentEquipmentCategory);
-                
-                // Update notification badge
-                updateEquipmentRequestsBadge();
-                
-            }, (error) => {
-                console.error('Error in equipment requests listener:', error);
-                safeShowToast('Fehler beim Live-Update der Equipment-Anfragen', 'error');
-            });
-        
-        console.log("✅ Equipment requests listener registered");
-    } catch (error) {
-        console.error("❌ Failed to setup equipment requests listener:", error);
-        // Fallback to manual loading
-        loadEquipmentRequests();
-    }
+    // This function is now deprecated - all requests are in equipment collection
+    console.log("🔄 Unified system: No separate requests listener needed");
+    return;
 }
 
 /**
- * Load equipment requests from requests collection (fallback)
+ * Unified equipment system - load requests from equipment collection
  */
 async function loadEquipmentRequests() {
     try {
-        // Load both equipment requests and return requests
-        const equipmentQuerySnapshot = await window.db.collection('requests')
-            .where('type', '==', 'equipment')
-            .get();
+        // In unified system, requests are stored in equipment documents
+        // No separate loading needed - data comes from equipment listener
+        console.log('🔄 Unified system: Requests loaded from equipment collection');
         
-        const returnQuerySnapshot = await window.db.collection('requests')
-            .where('type', '==', 'return')
-            .get();
-        
-        equipmentRequests = [];
-        
-        // Add equipment requests
-        equipmentQuerySnapshot.forEach((doc) => {
-            const data = doc.data();
-            equipmentRequests.push({
-                id: doc.id,
-                ...data,
-                requestedAt: data.createdAt?.toDate() || data.requestedAt?.toDate(),
-                fromDate: data.fromDate?.toDate(),
-                toDate: data.toDate?.toDate()
-            });
-        });
-        
-        // Add return requests
-        returnQuerySnapshot.forEach((doc) => {
-            const data = doc.data();
-            equipmentRequests.push({
-                id: doc.id,
-                ...data,
-                requestedAt: data.createdAt?.toDate() || data.requestedAt?.toDate()
-            });
-        });
-        
-        // Update global variable
-        window.equipmentRequests = equipmentRequests;
-        
-        console.log('📋 Loaded equipment requests:', equipmentRequests.length);
-        console.log('📋 Equipment requests sample:', equipmentRequests.slice(0, 3).map(req => ({
-            id: req.id,
-            equipmentId: req.equipmentId,
-            status: req.status,
-            type: req.type,
-            userKennung: req.userKennung,
-            requestedBy: req.requestedBy
-        })));
-        
-        // Update equipment list to show requests
-        showEquipmentCategory(currentEquipmentCategory);
+        // Update notification badge
+        updateEquipmentRequestsBadge();
         
     } catch (error) {
-        console.error('Error loading equipment requests:', error);
-        equipmentRequests = [];
+        console.error('Error in unified equipment system:', error);
     }
 }
 
@@ -409,62 +317,24 @@ function renderEquipmentList(equipmentList) {
         id: item.id,
         name: item.name,
         status: item.status,
-        borrowedBy: item.borrowedBy,
         borrowedByKennung: item.borrowedByKennung,
         category: item.category,
-        requestsCount: (item.requests || []).length
+        pendingRequestsCount: (item.pendingRequests || []).length
     })));
     
     container.innerHTML = equipmentList.map(item => {
-        // Get requests from equipmentRequests array (from requests collection)
-        const requests = equipmentRequests.filter(req => req.equipmentId === item.id);
-        const pendingRequest = requests.find(req => req.status === 'pending' && req.type === 'equipment');
-        const pendingReturnRequest = requests.find(req => req.status === 'pending' && req.type === 'return');
+        // Unified system: Get requests directly from equipment document
+        const pendingRequests = item.pendingRequests || [];
+        const pendingRequest = pendingRequests.find(req => req.status === 'pending' && req.type === 'equipment');
+        const pendingReturnRequest = pendingRequests.find(req => req.status === 'pending' && req.type === 'return');
         
-        // Enhanced return request detection
-        const returnRequests = requests.filter(req => req.type === 'return');
-        const anyPendingReturn = returnRequests.some(req => req.status === 'pending');
-        
-        console.log(`🔍 Return request analysis for ${item.name}:`, {
-            totalRequests: requests.length,
-            returnRequests: returnRequests.length,
-            returnRequestsDetails: returnRequests.map(r => ({ id: r.id, status: r.status, type: r.type })),
-            anyPendingReturn: anyPendingReturn,
-            pendingReturnRequest: pendingReturnRequest ? pendingReturnRequest.id : null
-        });
-        
-        // Enhanced debugging for return requests
         console.log(`🔍 Equipment ${item.id} (${item.name}):`, {
             status: item.status,
-            borrowedBy: item.borrowedBy,
             borrowedByKennung: item.borrowedByKennung,
-            requestsCount: requests.length,
-            requests: requests.map(r => ({ 
-                id: r.id, 
-                type: r.type, 
-                status: r.status, 
-                requestedBy: r.requestedBy,
-                requestedByName: r.requestedByName,
-                userKennung: r.userKennung,
-                requestedByKennung: r.requestedByKennung
-            })),
+            pendingRequestsCount: pendingRequests.length,
             pendingRequest: pendingRequest ? pendingRequest.id : null,
-            pendingReturnRequest: pendingReturnRequest ? pendingReturnRequest.id : null,
-            shouldShowReturnButton: item.status === 'borrowed' && pendingReturnRequest ? 'YES' : 'NO'
+            pendingReturnRequest: pendingReturnRequest ? pendingReturnRequest.id : null
         });
-        
-        // Debug: Check if this equipment should show return button
-        const shouldShowReturnButton = (item.status === 'borrowed' || item.borrowedBy) && (pendingReturnRequest || anyPendingReturn);
-        console.log(`🔍 Should show return button for ${item.name}: ${shouldShowReturnButton ? 'YES' : 'NO'}`);
-        if (shouldShowReturnButton) {
-            console.log(`🔍 Return request details:`, pendingReturnRequest || returnRequests.find(r => r.status === 'pending'));
-        }
-        
-        // Additional debug: Log all requests for borrowed items
-        if (item.status === 'borrowed' || item.borrowedBy) {
-            console.log(`🔍 All requests for borrowed item ${item.name}:`, requests);
-            console.log(`🔍 Equipment status: ${item.status}, borrowedBy: ${item.borrowedBy}, borrowedByKennung: ${item.borrowedByKennung}`);
-        }
         
         return `
         <div class="equipment-item ${item.requiresDeposit ? 'requires-deposit' : ''} ${pendingRequest ? 'has-pending-request' : ''}">
@@ -504,36 +374,33 @@ function renderEquipmentList(equipmentList) {
                 ${(() => {
                     console.log(`🔍 Action buttons debug for ${item.name}:`, {
                         status: item.status,
-                        borrowedBy: item.borrowedBy,
+                        borrowedByKennung: item.borrowedByKennung,
                         pendingRequest: pendingRequest ? pendingRequest.id : null,
-                        pendingReturnRequest: pendingReturnRequest ? pendingReturnRequest.id : null,
-                        anyPendingReturn: anyPendingReturn
+                        pendingReturnRequest: pendingReturnRequest ? pendingReturnRequest.id : null
                     });
                     
                     if (pendingRequest) {
                         console.log('🔍 Showing pending request buttons');
-                        const userName = pendingRequest.userName || pendingRequest.userKennung || pendingRequest.requestedByName || 'Unbekannter User';
+                        const userName = pendingRequest.userName || pendingRequest.userKennung || 'Unbekannter User';
                         return `
                             <button class="btn btn-success" onclick="approveEquipmentRequest('${pendingRequest.id}', '${item.id}')">Anfrage von ${userName} genehmigen</button>
                             <button class="btn btn-danger" onclick="rejectEquipmentRequest('${pendingRequest.id}', '${item.id}')">Anfrage von ${userName} ablehnen</button>
                             <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
                             <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
                         `;
-                    } else if (item.status === 'available' || (!item.borrowedBy && !item.borrowedByKennung && item.status !== 'borrowed' && item.status !== 'rented')) {
+                    } else if (item.status === 'available' || (!item.borrowedByKennung && item.status !== 'borrowed')) {
                         console.log('🔍 Showing available equipment buttons');
                         
-                        // Check if equipment has pending requests
-                        const hasPendingRequests = equipmentRequests.some(req => 
-                            req.equipmentId === item.id && 
-                            (req.status === 'pending' || req.status === 'approved')
+                        // Check if equipment has pending requests (unified system)
+                        const hasPendingRequests = pendingRequests.some(req => 
+                            req.status === 'pending' || req.status === 'approved'
                         );
                         
                         if (hasPendingRequests) {
-                            const pendingRequest = equipmentRequests.find(req => 
-                                req.equipmentId === item.id && 
-                                (req.status === 'pending' || req.status === 'approved')
+                            const blockingRequest = pendingRequests.find(req => 
+                                req.status === 'pending' || req.status === 'approved'
                             );
-                            const userName = pendingRequest ? (pendingRequest.userName || pendingRequest.userKennung || pendingRequest.requestedByName || 'Unbekannter User') : 'Unbekannter User';
+                            const userName = blockingRequest ? (blockingRequest.userName || blockingRequest.userKennung || 'Unbekannter User') : 'Unbekannter User';
                             return `
                                 <button class="btn btn-primary" disabled title="Equipment hat ausstehende Anfragen von ${userName}">Ausleihen (Blockiert)</button>
                                 <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
@@ -546,11 +413,10 @@ function renderEquipmentList(equipmentList) {
                                 <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
                             `;
                         }
-                    } else if (item.status === 'borrowed' || item.status === 'rented' || item.borrowedBy || item.borrowedByKennung) {
+                    } else if (item.status === 'borrowed' || item.borrowedByKennung) {
                         console.log('🔍 Showing borrowed equipment buttons');
-                        if (pendingReturnRequest || anyPendingReturn) {
-                            const returnRequest = pendingReturnRequest || returnRequests.find(r => r.status === 'pending');
-                            const userName = returnRequest ? (returnRequest.requestedByName || returnRequest.requestedBy || returnRequest.userName || returnRequest.userKennung || 'Unbekannter User') : 'Unbekannter User';
+                        if (pendingReturnRequest) {
+                            const userName = pendingReturnRequest.userName || pendingReturnRequest.userKennung || 'Unbekannter User';
                             return `
                                 <button class="btn btn-success" onclick="confirmEquipmentReturn('${item.id}')">Rückgabe von ${userName} bestätigen</button>
                                 <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
@@ -584,7 +450,7 @@ function renderEquipmentList(equipmentList) {
  * Get borrower information display with contact details
  */
 function getBorrowerInfoDisplay(item) {
-    const kennung = item.borrowedByKennung || item.borrowedBy;
+    const kennung = item.borrowedByKennung;
     if (!kennung) return 'Keine Benutzerinformationen verfügbar';
     
     // Try to find user in allUsers array first
@@ -1207,21 +1073,20 @@ async function submitAdminBorrowEquipment(equipmentId) {
         return;
     }
     
-    // Check if equipment is already borrowed or has pending requests
+    // Check if equipment is already borrowed (unified system)
     if (equipmentItem.status === 'borrowed' || equipmentItem.borrowedByKennung) {
         safeShowToast('Equipment ist bereits ausgeliehen und kann nicht erneut ausgeliehen werden', 'error');
         return;
     }
     
-    // Check for pending requests
-    const pendingRequests = equipmentRequests.filter(req => 
-        req.equipmentId === equipmentId && 
-        (req.status === 'pending' || req.status === 'approved')
-    );
+    // Check for pending requests (unified system)
+    const pendingRequests = equipmentItem.pendingRequests?.filter(req => 
+        req.status === 'pending' || req.status === 'approved'
+    ) || [];
     
     if (pendingRequests.length > 0) {
         const requestInfo = pendingRequests.map(req => {
-            const userName = req.userName || req.userKennung || req.requestedByName || 'Unbekannter User';
+            const userName = req.userName || req.userKennung || 'Unbekannter User';
             return `${userName} (${req.status === 'pending' ? 'Anfrage ausstehend' : 'Anfrage genehmigt'})`;
         }).join(', ');
         
@@ -1423,15 +1288,19 @@ async function markDepositAsPaid(equipmentId) {
  */
 function updateEquipmentRequestsBadge() {
     const badge = document.getElementById('equipment-requests-badge');
+    if (!badge) return;
     
-    // Count pending requests across all equipment
-    const pendingCount = equipmentRequests.filter(req => req.status === 'pending').length;
+    // Count pending requests from equipment collection (unified system)
+    const pendingCount = equipment.reduce((count, item) => {
+        const pendingRequests = item.pendingRequests?.filter(req => req.status === 'pending') || [];
+        return count + pendingRequests.length;
+    }, 0);
     
-    const shouldShow = pendingCount > 0;
-    
-    if (badge) {
+    if (pendingCount > 0) {
         badge.textContent = pendingCount;
-        badge.style.display = shouldShow ? 'inline-block' : 'none';
+        badge.style.display = 'inline-block';
+    } else {
+        badge.style.display = 'none';
     }
 }
 
