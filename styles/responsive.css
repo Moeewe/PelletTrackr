@@ -38,7 +38,7 @@
   }
   
   .data-table th {
-    position: sticky;
+    /* Removed sticky positioning for normal table behavior */
   }
   
   .actions {
