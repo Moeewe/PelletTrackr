@@ -141,6 +141,14 @@ function initializeUserDashboard() {
   // User Services initialisieren
   if (typeof initializeUserServices === 'function') {
     initializeUserServices();
+  } else {
+    console.warn("⚠️ User Services Funktion noch nicht verfügbar");
+    setTimeout(() => {
+      if (typeof initializeUserServices === 'function') {
+        console.log('🔄 initializeUserServices called with delay');
+        initializeUserServices();
+      }
+    }, 500);
   }
   
   // Notification badges für User initialisieren

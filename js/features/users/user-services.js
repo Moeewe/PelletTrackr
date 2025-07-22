@@ -2222,5 +2222,6 @@ window.saveMaterialRequestEdit = saveMaterialRequestEdit;
 window.deleteMaterialRequest = deleteMaterialRequest;
 window.loadAllUsers = loadAllUsers;
 window.getUserDisplayText = getUserDisplayText;
+window.loadPrinterStatus = loadPrinterStatus;
 
 console.log('👥 User Services Module loaded'); 

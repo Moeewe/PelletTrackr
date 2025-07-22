@@ -1246,7 +1246,28 @@ function updateMachineOverview() {
     const userPrinters = window.userPrinters || [];
     
     if (userPrinters.length === 0) {
-        console.log('❌ userPrinters array is empty');
+        console.log('❌ userPrinters array is empty - trying to load printer data...');
+        
+        // Try to load printer data if not available
+        if (typeof loadPrinterStatus === 'function') {
+            loadPrinterStatus();
+        }
+        
+        // Set default values to 0
+        const availableElement = document.getElementById('availableMachines');
+        const inUseElement = document.getElementById('inUseMachines');
+        const maintenanceElement = document.getElementById('maintenanceMachines');
+        const userAvailableElement = document.getElementById('userAvailableMachines');
+        const userInUseElement = document.getElementById('userInUseMachines');
+        const userMaintenanceElement = document.getElementById('userMaintenanceMachines');
+        
+        if (availableElement) availableElement.textContent = '0';
+        if (inUseElement) inUseElement.textContent = '0';
+        if (maintenanceElement) maintenanceElement.textContent = '0';
+        if (userAvailableElement) userAvailableElement.textContent = '0';
+        if (userInUseElement) userInUseElement.textContent = '0';
+        if (userMaintenanceElement) userMaintenanceElement.textContent = '0';
+        
         return;
     }
     
