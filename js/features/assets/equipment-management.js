@@ -254,6 +254,8 @@ function renderEquipmentList(equipmentList) {
     container.innerHTML = equipmentList.map(item => {
         // Check if there's a pending request for this equipment
         const pendingRequest = getPendingRequestForEquipment(item.id);
+        // Check if there's a pending return request for this equipment
+        const pendingReturnRequest = getPendingReturnRequestForEquipment(item.id);
         
         return `
         <div class="equipment-item ${item.requiresDeposit ? 'requires-deposit' : ''} ${pendingRequest ? 'has-pending-request' : ''}">
@@ -301,8 +303,12 @@ function renderEquipmentList(equipmentList) {
                     <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
                     <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
                 ` : item.status === 'borrowed' ? `
-                    <button class="btn btn-success" onclick="returnEquipment('${item.id}')">Zurückgeben</button>
-                    <button class="btn btn-warning" onclick="requestEquipmentReturn('${item.id}')">Rücknahme anfragen</button>
+                    ${pendingReturnRequest ? `
+                        <button class="btn btn-success" onclick="confirmEquipmentReturn('${item.id}')">Rückgabe bestätigen</button>
+                    ` : `
+                        <button class="btn btn-success" onclick="returnEquipment('${item.id}')">Zurückgeben</button>
+                        <button class="btn btn-warning" onclick="requestEquipmentReturn('${item.id}')">Rücknahme anfragen</button>
+                    `}
                     ${item.requiresDeposit && !item.depositPaid ? `
                         <button class="btn btn-warning" onclick="markDepositAsPaid('${item.id}')">Pfand als bezahlt markieren</button>
                     ` : ''}
@@ -1017,6 +1023,17 @@ function getPendingRequestForEquipment(equipmentId) {
 }
 
 /**
+ * Get pending return request for specific equipment
+ */
+function getPendingReturnRequestForEquipment(equipmentId) {
+  return equipmentRequests.find(request => 
+    request.equipmentId === equipmentId && 
+    request.status === 'pending' &&
+    request.type === 'return_request'
+  );
+}
+
+/**
  * Load equipment requests from Firebase
  */
 async function loadEquipmentRequests() {
@@ -1270,6 +1287,70 @@ async function requestEquipmentReturn(equipmentId) {
 }
 
 /**
+ * Confirm equipment return request
+ */
+async function confirmEquipmentReturn(equipmentId) {
+    const equipmentItem = equipment.find(item => item.id === equipmentId);
+    if (!equipmentItem) {
+        safeShowToast('Equipment nicht gefunden', 'error');
+        return;
+    }
+    
+    if (!confirm('Rückgabe dieses Equipments bestätigen?')) {
+        return;
+    }
+    
+    try {
+        // Find and update the return request
+        const returnRequestsSnapshot = await window.db.collection('equipmentRequests')
+            .where('equipmentId', '==', equipmentId)
+            .where('type', '==', 'return_request')
+            .where('status', '==', 'pending')
+            .get();
+        
+        if (returnRequestsSnapshot.empty) {
+            safeShowToast('Keine Rückgabe-Anfrage für dieses Equipment gefunden', 'error');
+            return;
+        }
+        
+        // Update the return request status
+        const returnRequestDoc = returnRequestsSnapshot.docs[0];
+        await returnRequestDoc.ref.update({
+            status: 'confirmed',
+            confirmedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+            confirmedBy: window.currentUser?.kennung || 'admin',
+            confirmedByName: window.currentUser?.name || 'Administrator'
+        });
+        
+        // Update equipment status
+        const updateData = {
+            status: 'available',
+            borrowedBy: window.firebase.firestore.FieldValue.delete(),
+            borrowedByKennung: window.firebase.firestore.FieldValue.delete(),
+            borrowedAt: window.firebase.firestore.FieldValue.delete(),
+            returnedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        // Reset deposit status when returning
+        if (equipmentItem.requiresDeposit) {
+            updateData.depositPaid = false;
+        }
+        
+        await window.db.collection('equipment').doc(equipmentId).update(updateData);
+        
+        safeShowToast('Rückgabe erfolgreich bestätigt', 'success');
+        
+        // Update machine overview
+        updateMachineOverview();
+        
+    } catch (error) {
+        console.error('Error confirming equipment return:', error);
+        safeShowToast('Fehler bei der Bestätigung der Rückgabe', 'error');
+    }
+}
+
+/**
  * Update machine overview in admin dashboard and user dashboard
  */
 function updateMachineOverview() {
@@ -1406,5 +1487,7 @@ window.updateMachineOverview = updateMachineOverview;
 window.filterAdminBorrowUsers = filterAdminBorrowUsers;
 window.selectAdminBorrowUser = selectAdminBorrowUser;
 window.submitAdminBorrowEquipment = submitAdminBorrowEquipment;
+window.requestEquipmentReturn = requestEquipmentReturn;
+window.confirmEquipmentReturn = confirmEquipmentReturn;
 
 console.log("🔧 Equipment Management Module geladen"); 
