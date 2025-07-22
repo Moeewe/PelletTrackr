@@ -265,22 +265,46 @@ function renderEquipmentList(equipmentList) {
         const pendingRequest = requests.find(req => req.status === 'pending' && req.type === 'borrow');
         const pendingReturnRequest = requests.find(req => req.status === 'pending' && req.type === 'return');
         
+        // Enhanced return request detection
+        const returnRequests = requests.filter(req => req.type === 'return');
+        const anyPendingReturn = returnRequests.some(req => req.status === 'pending');
+        
+        console.log(`🔍 Return request analysis for ${item.name}:`, {
+            totalRequests: requests.length,
+            returnRequests: returnRequests.length,
+            returnRequestsDetails: returnRequests.map(r => ({ id: r.id, status: r.status, type: r.type })),
+            anyPendingReturn: anyPendingReturn,
+            pendingReturnRequest: pendingReturnRequest ? pendingReturnRequest.id : null
+        });
+        
+        // Enhanced debugging for return requests
         console.log(`🔍 Equipment ${item.id} (${item.name}):`, {
             status: item.status,
             borrowedBy: item.borrowedBy,
             borrowedByKennung: item.borrowedByKennung,
             requestsCount: requests.length,
-            requests: requests.map(r => ({ id: r.id, type: r.type, status: r.status, requestedBy: r.requestedBy })),
+            requests: requests.map(r => ({ 
+                id: r.id, 
+                type: r.type, 
+                status: r.status, 
+                requestedBy: r.requestedBy,
+                requestedByName: r.requestedByName 
+            })),
             pendingRequest: pendingRequest ? pendingRequest.id : null,
             pendingReturnRequest: pendingReturnRequest ? pendingReturnRequest.id : null,
             shouldShowReturnButton: item.status === 'borrowed' && pendingReturnRequest ? 'YES' : 'NO'
         });
         
         // Debug: Check if this equipment should show return button
-        const shouldShowReturnButton = item.status === 'borrowed' && pendingReturnRequest;
+        const shouldShowReturnButton = item.status === 'borrowed' && (pendingReturnRequest || anyPendingReturn);
         console.log(`🔍 Should show return button for ${item.name}: ${shouldShowReturnButton ? 'YES' : 'NO'}`);
         if (shouldShowReturnButton) {
-            console.log(`🔍 Return request details:`, pendingReturnRequest);
+            console.log(`🔍 Return request details:`, pendingReturnRequest || returnRequests.find(r => r.status === 'pending'));
+        }
+        
+        // Additional debug: Log all requests for borrowed items
+        if (item.status === 'borrowed') {
+            console.log(`🔍 All requests for borrowed item ${item.name}:`, requests);
         }
         
         return `
@@ -288,8 +312,8 @@ function renderEquipmentList(equipmentList) {
             <div class="equipment-header">
                 <div class="equipment-name">${item.name}</div>
                 <div class="equipment-status-row">
-                    <span class="equipment-status ${pendingRequest ? 'requested' : pendingReturnRequest ? 'return-requested' : item.status}">
-                        ${pendingRequest ? 'Angefragt' : pendingReturnRequest ? 'Rückgabe angefragt' : getEquipmentStatusText(item.status)}
+                    <span class="equipment-status ${pendingRequest ? 'requested' : (pendingReturnRequest || anyPendingReturn) ? 'return-requested' : item.status}">
+                        ${pendingRequest ? 'Angefragt' : (pendingReturnRequest || anyPendingReturn) ? 'Rückgabe angefragt' : getEquipmentStatusText(item.status)}
                     </span>
                     ${item.requiresDeposit ? `
                         <span class="equipment-deposit ${item.depositPaid ? 'paid' : 'unpaid'}" title="Pfand ${item.depositPaid ? 'bezahlt' : 'ausstehend'}">
@@ -306,10 +330,10 @@ function renderEquipmentList(equipmentList) {
                     <br><strong>Zeitraum:</strong> ${pendingRequest.fromDate ? new Date(pendingRequest.fromDate.seconds * 1000).toLocaleDateString() : 'Unbekannt'} - ${pendingRequest.toDate ? new Date(pendingRequest.toDate.seconds * 1000).toLocaleDateString() : 'Unbekannt'}
                     <br><strong>Grund:</strong> ${pendingRequest.reason || 'Kein Grund angegeben'}
                 </div>
-            ` : pendingReturnRequest ? `
+            ` : (pendingReturnRequest || anyPendingReturn) ? `
                 <div class="equipment-request-info">
-                    <strong>Rückgabe angefragt von:</strong> ${pendingReturnRequest.requestedByName} (${pendingReturnRequest.requestedBy})
-                    <br><strong>Angefragt am:</strong> ${pendingReturnRequest.createdAt ? new Date(pendingReturnRequest.createdAt.seconds * 1000).toLocaleDateString() : 'Unbekannt'}
+                    <strong>Rückgabe angefragt von:</strong> ${(pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).requestedByName} (${(pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).requestedBy})
+                    <br><strong>Angefragt am:</strong> ${(pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).createdAt ? new Date((pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).createdAt.seconds * 1000).toLocaleDateString() : 'Unbekannt'}
                 </div>
             ` : item.status === 'borrowed' && item.borrowedBy ? `
                 <div class="equipment-current-user">
@@ -336,7 +360,7 @@ function renderEquipmentList(equipmentList) {
                     <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
                     <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
                 ` : item.status === 'borrowed' ? `
-                    ${pendingReturnRequest ? `
+                    ${(pendingReturnRequest || anyPendingReturn) ? `
                         <button class="btn btn-success" onclick="confirmEquipmentReturn('${item.id}')">Rückgabe bestätigen</button>
                         <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
                         <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
@@ -1365,14 +1389,11 @@ async function confirmEquipmentReturn(equipmentId) {
         return;
     }
     
-    const confirmed = await toast.confirm(
-        'Rückgabe dieses Equipments bestätigen?',
-        'Ja, bestätigen',
-        'Abbrechen'
-    );
-    if (!confirmed) {
-        return;
-    }
+    // Show confirmation toast instead of browser dialog
+    safeShowToast('Rückgabe wird bestätigt...', 'info');
+    
+    // Small delay to show the info message
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     try {
         // Get equipment document
