@@ -1297,10 +1297,17 @@ async function requestEquipmentReturn(requestId) {
         
         console.log('📝 Creating return request:', returnRequestData);
         
-        // Add to equipment document
+        // Add to equipment document - use regular timestamp instead of serverTimestamp for array
         const equipmentData = equipmentDoc.data();
         const requests = equipmentData.requests || [];
-        requests.push(returnRequestData);
+        
+        // Create return request data without serverTimestamp for array
+        const returnRequestForArray = {
+            ...returnRequestData,
+            createdAt: new Date().toISOString() // Use regular timestamp for array
+        };
+        
+        requests.push(returnRequestForArray);
         
         await equipmentRef.update({
             requests: requests
