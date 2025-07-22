@@ -259,7 +259,7 @@
 }
 
 .status-number {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 700;
     line-height: 1;
     text-align: center;
@@ -321,32 +321,11 @@
     margin-top: 12px;
 }
 
-.status-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 12px 16px;
-    background: #f8f9fa;
-    border: 2px solid #cccccc;
-    border-radius: 0;
-    cursor: pointer;
-    opacity: 0.7;
-    font-size: 14px;
-    font-weight: 600;
-    color: #495057;
-    min-width: 100px;
-    justify-content: center;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    min-height: 48px;
-}
-
-.status-btn:hover {
-    background: #e9ecef;
-    opacity: 0.9;
-}
-
-/* Status button styles moved to buttons.css */
+/* 
+ * OLD STATUS BUTTON STYLES REMOVED - Now handled by card-design.css
+ * The new printer status buttons use .printer-card .printer-status-grid .status-btn
+ * which provides better specificity and prevents conflicts
+ */
 
 .status-icon {
     font-size: 16px;
@@ -360,7 +339,7 @@
 .status-text {
     font-size: 13px;
     font-weight: 500;
-    white-space: nowrap;
+    white-space: normal;
 }
 
 /* Printer Status Layout */
@@ -421,10 +400,7 @@
         justify-content: flex-start;
     }
     
-    .status-btn {
-        flex: 1;
-        min-width: 80px;
-    }
+    /* Status button styles now handled by card-design.css */
 }
 
 .printer-info h4 {
@@ -717,7 +693,7 @@
 }
 
 .status-number {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 700;
     line-height: 1;
     text-align: center;
@@ -753,7 +729,7 @@
     }
     
     .status-number {
-        font-size: 14px;
+        font-size: 12px;
     }
     
     .status-label {
@@ -1018,7 +994,7 @@
     font-weight: 600;
     letter-spacing: 0.5px;
     text-transform: uppercase;
-    white-space: nowrap;
+    white-space: normal;
 }
 
 /* Source Badges */
