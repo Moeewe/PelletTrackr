@@ -140,6 +140,11 @@ async function loadUsersForManagement() {
     
     console.log(`✅ ${users.length} registrierte Benutzer geladen (${legacyUsers.length} Legacy-Benutzer ignoriert)`);
     console.log('🔍 User Data Sample:', users.slice(0, 2)); // Debug: Show first 2 users
+    
+    // Debug: Check for phone numbers
+    const usersWithPhone = users.filter(user => user.phone && user.phone.trim() !== '');
+    console.log(`📱 ${usersWithPhone.length} Benutzer mit Handynummer:`, usersWithPhone.map(u => ({ kennung: u.kennung, phone: u.phone })));
+    
     renderUsersTable(users);
     
   } catch (error) {
@@ -169,7 +174,12 @@ async function loadUsersForManagement() {
 function renderUsersTable(users) {
   const tableDiv = document.getElementById("usersTable");
   
-  if (users.length === 0) {
+  // Use window.allUsers if no users parameter provided
+  if (!users && window.allUsers) {
+    users = window.allUsers;
+  }
+  
+  if (!users || users.length === 0) {
     tableDiv.innerHTML = '<p>Keine Benutzer gefunden.</p>';
     return;
   }
@@ -1095,6 +1105,30 @@ function closeEditUserModal() {
   }, 100);
 }
 
+// ==================== HELPER FUNCTIONS ====================
+
+/**
+ * Update user in window.allUsers and refresh table if needed
+ */
+function updateUserInList(kennung, updates) {
+  if (window.allUsers) {
+    const userIndex = window.allUsers.findIndex(user => user.kennung === kennung);
+    if (userIndex !== -1) {
+      // Update existing user
+      window.allUsers[userIndex] = { ...window.allUsers[userIndex], ...updates };
+    } else {
+      // Add new user
+      window.allUsers.push(updates);
+    }
+    
+    // Refresh table if user manager is open
+    const userManager = document.getElementById('userManager');
+    if (userManager && userManager.classList.contains('active')) {
+      renderUsersTable(window.allUsers);
+    }
+  }
+}
+
 // ==================== GLOBAL EXPORTS ====================
 // Funktionen global verfügbar machen
 window.showAddUserDialog = showAddUserDialog;
@@ -1110,6 +1144,7 @@ window.loadUsersForManagement = loadUsersForManagement;
 window.sortUsersBy = sortUsersBy;
 window.showEditUserForm = showEditUserForm; // Export the function
 window.closeEditUserModal = closeEditUserModal;
+window.updateUserInList = updateUserInList;
 
 // ==================== USER MANAGEMENT MODULE ====================
 

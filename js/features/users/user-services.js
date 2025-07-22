@@ -526,6 +526,7 @@ async function submitEquipmentRequest() {
     
     try {
         // Update user data with phone number if not already set
+        let userWasCreated = false;
         if (window.currentUser?.kennung) {
             try {
                 await window.db.collection('users').doc(window.currentUser.kennung).update({
@@ -543,9 +544,30 @@ async function submitEquipmentRequest() {
                         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
+                    userWasCreated = true;
                 } else {
                     throw error; // Re-throw other errors
                 }
+            }
+        }
+        
+        // Update window.allUsers if user was created or phone was updated
+        if (typeof updateUserInList === 'function' && window.currentUser?.kennung) {
+            if (userWasCreated) {
+                updateUserInList(window.currentUser.kennung, {
+                    docId: window.currentUser.kennung,
+                    name: window.currentUser.name,
+                    kennung: window.currentUser.kennung,
+                    email: window.currentUser.email || `${window.currentUser.kennung}@fh-muenster.de`,
+                    phone: phoneNumber,
+                    isAdmin: false,
+                    entries: [],
+                    totalCost: 0,
+                    paidAmount: 0,
+                    unpaidAmount: 0
+                });
+            } else {
+                updateUserInList(window.currentUser.kennung, { phone: phoneNumber });
             }
         }
         

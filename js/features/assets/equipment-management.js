@@ -804,6 +804,7 @@ async function submitAdminBorrowEquipment(equipmentId) {
         }
         
         // Update user phone number - create document if it doesn't exist
+        let userWasCreated = false;
         try {
             await window.db.collection('users').doc(selectedUserKennung).update({
                 phone: phoneNumber,
@@ -820,8 +821,29 @@ async function submitAdminBorrowEquipment(equipmentId) {
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
+                userWasCreated = true;
             } else {
                 throw error; // Re-throw other errors
+            }
+        }
+        
+        // Update window.allUsers if user was created or phone was updated
+        if (typeof updateUserInList === 'function') {
+            if (userWasCreated) {
+                updateUserInList(selectedUserKennung, {
+                    docId: selectedUserKennung,
+                    name: selectedUser.name,
+                    kennung: selectedUser.kennung,
+                    email: selectedUser.email || `${selectedUser.kennung}@fh-muenster.de`,
+                    phone: phoneNumber,
+                    isAdmin: false,
+                    entries: [],
+                    totalCost: 0,
+                    paidAmount: 0,
+                    unpaidAmount: 0
+                });
+            } else {
+                updateUserInList(selectedUserKennung, { phone: phoneNumber });
             }
         }
         
@@ -865,6 +887,15 @@ async function submitAdminBorrowEquipment(equipmentId) {
         await window.db.collection('equipment').doc(equipmentId).update(updateData);
         
         safeShowToast(`Equipment erfolgreich an ${selectedUser.name} ausgeliehen`, 'success');
+        
+        // Refresh user management if it's open
+        if (typeof loadUsersForManagement === 'function') {
+            // Force reload of user data
+            setTimeout(() => {
+                loadUsersForManagement();
+            }, 500); // Small delay to ensure Firestore update is complete
+        }
+        
         closeModal();
         
         // Update machine overview
