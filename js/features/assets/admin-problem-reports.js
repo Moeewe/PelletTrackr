@@ -339,7 +339,12 @@ async function updateProblemStatus(reportId, newStatus) {
  * Delete problem report
  */
 async function deleteProblemReport(reportId) {
-    if (!confirm('Möchten Sie diese Problem-Meldung wirklich löschen?')) {
+    const confirmed = await window.toast.confirm(
+        'Möchten Sie diese Problem-Meldung wirklich löschen?',
+        'Ja, löschen',
+        'Abbrechen'
+    );
+    if (!confirmed) {
         return;
     }
     
@@ -903,7 +908,12 @@ async function markEquipmentAsReturned(requestId) {
  * Delete equipment request and restore equipment availability
  */
 async function deleteEquipmentRequest(requestId) {
-    if (!confirm('Möchten Sie diese Equipment-Anfrage wirklich löschen?')) {
+    const confirmed = await window.toast.confirm(
+        'Möchten Sie diese Equipment-Anfrage wirklich löschen?',
+        'Ja, löschen',
+        'Abbrechen'
+    );
+    if (!confirmed) {
         return;
     }
     

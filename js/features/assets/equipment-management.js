@@ -803,7 +803,11 @@ async function submitAdminBorrowEquipment(equipmentId) {
     
     // Check if deposit is required
     if (equipmentItem.requiresDeposit) {
-        const depositConfirm = confirm(`Für dieses Equipment ist ein Pfand von ${equipmentItem.depositAmount}€ erforderlich. Wurde das Pfand bezahlt?`);
+        const depositConfirm = await toast.confirm(
+            `Für dieses Equipment ist ein Pfand von ${equipmentItem.depositAmount}€ erforderlich. Wurde das Pfand bezahlt?`,
+            'Ja, bezahlt',
+            'Nein, nicht bezahlt'
+        );
         if (!depositConfirm) {
             safeShowToast('Ausleihe abgebrochen. Pfand muss vor der Ausleihe bezahlt werden.', 'warning');
             return;
@@ -928,7 +932,12 @@ async function submitAdminBorrowEquipment(equipmentId) {
 async function returnEquipment(equipmentId) {
     const equipmentItem = equipment.find(item => item.id === equipmentId);
     
-    if (!confirm('Equipment als zurückgegeben markieren?')) return;
+    const confirmed = await toast.confirm(
+        'Equipment als zurückgegeben markieren?',
+        'Ja, zurückgeben',
+        'Abbrechen'
+    );
+    if (!confirmed) return;
     
     try {
         const updateData = {
@@ -962,7 +971,12 @@ async function returnEquipment(equipmentId) {
  * Mark deposit as paid
  */
 async function markDepositAsPaid(equipmentId) {
-    if (!confirm('Pfand als bezahlt markieren?')) return;
+    const confirmed = await toast.confirm(
+        'Pfand als bezahlt markieren?',
+        'Ja, markieren',
+        'Abbrechen'
+    );
+    if (!confirmed) return;
     
     try {
         await window.db.collection('equipment').doc(equipmentId).update({
@@ -1140,8 +1154,13 @@ window.requestEquipmentReturn = requestEquipmentReturn;
  */
 async function approveEquipmentRequest(requestId, equipmentId) {
   try {
-    if (!confirm('Möchtest du diese Ausleihe-Anfrage genehmigen?')) {
-      return;
+        const confirmed = await toast.confirm(
+        'Möchtest du diese Ausleihe-Anfrage genehmigen?',
+        'Ja, genehmigen',
+        'Abbrechen'
+    );
+    if (!confirmed) {
+        return;
     }
     
     const loadingId = window.loading ? window.loading.show('Anfrage wird genehmigt...') : null;
@@ -1202,8 +1221,13 @@ async function approveEquipmentRequest(requestId, equipmentId) {
  */
 async function rejectEquipmentRequest(requestId) {
   try {
-    if (!confirm('Möchtest du diese Ausleihe-Anfrage ablehnen?')) {
-      return;
+        const confirmed = await toast.confirm(
+        'Möchtest du diese Ausleihe-Anfrage ablehnen?',
+        'Ja, ablehnen',
+        'Abbrechen'
+    );
+    if (!confirmed) {
+        return;
     }
     
     const loadingId = window.loading ? window.loading.show('Anfrage wird abgelehnt...') : null;
@@ -1318,7 +1342,12 @@ async function confirmEquipmentReturn(equipmentId) {
         return;
     }
     
-    if (!confirm('Rückgabe dieses Equipments bestätigen?')) {
+    const confirmed = await toast.confirm(
+        'Rückgabe dieses Equipments bestätigen?',
+        'Ja, bestätigen',
+        'Abbrechen'
+    );
+    if (!confirmed) {
         return;
     }
     

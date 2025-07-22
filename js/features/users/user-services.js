@@ -1052,7 +1052,12 @@ function renderMyEquipmentRequests(requests) {
  * Request return of equipment
  */
 async function requestEquipmentReturn(requestId) {
-    if (!confirm('Möchten Sie die Rückgabe dieses Equipments anfragen?')) {
+    const confirmed = await window.toast.confirm(
+        'Möchten Sie die Rückgabe dieses Equipments anfragen?',
+        'Ja, anfragen',
+        'Abbrechen'
+    );
+    if (!confirmed) {
         return;
     }
     
@@ -1120,7 +1125,12 @@ async function requestEquipmentReturn(requestId) {
  * Delete equipment request (User version)
  */
 async function deleteUserEquipmentRequest(requestId) {
-    if (!confirm('Möchten Sie diese Ausleih-Anfrage wirklich löschen?')) {
+    const confirmed = await window.toast.confirm(
+        'Möchten Sie diese Ausleih-Anfrage wirklich löschen?',
+        'Ja, löschen',
+        'Abbrechen'
+    );
+    if (!confirmed) {
         return;
     }
     
@@ -1567,7 +1577,12 @@ async function saveProblemReportEdit(reportId) {
  * Delete problem report (User version)
  */
 async function deleteUserProblemReport(reportId) {
-    if (!confirm('Möchten Sie diese Problem-Meldung wirklich löschen?')) {
+    const confirmed = await window.toast.confirm(
+        'Möchten Sie diese Problem-Meldung wirklich löschen?',
+        'Ja, löschen',
+        'Abbrechen'
+    );
+    if (!confirmed) {
         return;
     }
     
@@ -2042,7 +2057,12 @@ async function deleteMaterialRequest(requestId) {
             ? 'Möchten Sie diesen genehmigten Material-Wunsch wirklich löschen?\n\nDies entfernt ihn auch aus der Admin-Einkaufsliste.' 
             : 'Möchten Sie diesen Material-Wunsch wirklich löschen?';
             
-        if (!confirm(confirmMessage)) {
+        const confirmed = await window.toast.confirm(
+            confirmMessage,
+            'Ja, löschen',
+            'Abbrechen'
+        );
+        if (!confirmed) {
             return;
         }
         

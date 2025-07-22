@@ -671,7 +671,12 @@ async function deletePrinter(printerId) {
     const printer = printers.find(p => p.id === printerId);
     if (!printer) return;
     
-    if (!confirm(`Möchten Sie den Drucker "${printer.name}" wirklich löschen?`)) {
+    const confirmed = await window.toast.confirm(
+        `Möchten Sie den Drucker "${printer.name}" wirklich löschen?`,
+        'Ja, löschen',
+        'Abbrechen'
+    );
+    if (!confirmed) {
         return;
     }
     
