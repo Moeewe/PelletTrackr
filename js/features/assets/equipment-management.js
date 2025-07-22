@@ -515,11 +515,31 @@ function renderEquipmentList(equipmentList) {
                         `;
                     } else if (item.status === 'available' || (!item.borrowedBy && !item.borrowedByKennung && item.status !== 'borrowed' && item.status !== 'rented')) {
                         console.log('🔍 Showing available equipment buttons');
-                        return `
-                            <button class="btn btn-primary" onclick="borrowEquipment('${item.id}')">Ausleihen</button>
-                            <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
-                            <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
-                        `;
+                        
+                        // Check if equipment has pending requests
+                        const hasPendingRequests = requests.some(req => 
+                            req.equipmentId === item.id && 
+                            (req.status === 'pending' || req.status === 'approved')
+                        );
+                        
+                        if (hasPendingRequests) {
+                            const pendingRequest = requests.find(req => 
+                                req.equipmentId === item.id && 
+                                (req.status === 'pending' || req.status === 'approved')
+                            );
+                            const userName = pendingRequest ? (pendingRequest.userName || pendingRequest.userKennung || pendingRequest.requestedByName || 'Unbekannter User') : 'Unbekannter User';
+                            return `
+                                <button class="btn btn-primary" disabled title="Equipment hat ausstehende Anfragen von ${userName}">Ausleihen (Blockiert)</button>
+                                <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
+                                <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
+                            `;
+                        } else {
+                            return `
+                                <button class="btn btn-primary" onclick="borrowEquipment('${item.id}')">Ausleihen</button>
+                                <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
+                                <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
+                            `;
+                        }
                     } else if (item.status === 'borrowed' || item.status === 'rented' || item.borrowedBy || item.borrowedByKennung) {
                         console.log('🔍 Showing borrowed equipment buttons');
                         if (pendingReturnRequest || anyPendingReturn) {
@@ -1178,6 +1198,28 @@ async function submitAdminBorrowEquipment(equipmentId) {
     const equipmentItem = equipment.find(item => item.id === equipmentId);
     if (!equipmentItem) {
         safeShowToast('Equipment nicht gefunden', 'error');
+        return;
+    }
+    
+    // Check if equipment is already borrowed or has pending requests
+    if (equipmentItem.status === 'borrowed' || equipmentItem.borrowedByKennung) {
+        safeShowToast('Equipment ist bereits ausgeliehen und kann nicht erneut ausgeliehen werden', 'error');
+        return;
+    }
+    
+    // Check for pending requests
+    const pendingRequests = equipmentRequests.filter(req => 
+        req.equipmentId === equipmentId && 
+        (req.status === 'pending' || req.status === 'approved')
+    );
+    
+    if (pendingRequests.length > 0) {
+        const requestInfo = pendingRequests.map(req => {
+            const userName = req.userName || req.userKennung || req.requestedByName || 'Unbekannter User';
+            return `${userName} (${req.status === 'pending' ? 'Anfrage ausstehend' : 'Anfrage genehmigt'})`;
+        }).join(', ');
+        
+        safeShowToast(`Equipment hat bereits ausstehende Anfragen: ${requestInfo}`, 'error');
         return;
     }
     

@@ -655,6 +655,44 @@ async function submitEquipmentRequest() {
         return;
     }
     
+    // Check if equipment is already borrowed
+    if (selectedEquipment.status === 'borrowed' || selectedEquipment.borrowedByKennung) {
+        window.toast.error('Equipment ist bereits ausgeliehen und kann nicht angefragt werden');
+        return;
+    }
+    
+    // Check if user already has a pending request for this equipment
+    const existingUserRequests = userEquipmentRequests?.filter(req => 
+        req.equipmentId === selectedEquipment.id && 
+        (req.status === 'pending' || req.status === 'approved')
+    ) || [];
+    
+    if (existingUserRequests.length > 0) {
+        const requestInfo = existingUserRequests.map(req => {
+            return `${req.equipmentName} (${req.status === 'pending' ? 'Anfrage ausstehend' : 'Anfrage genehmigt'})`;
+        }).join(', ');
+        
+        window.toast.error(`Sie haben bereits eine ausstehende Anfrage für dieses Equipment: ${requestInfo}`);
+        return;
+    }
+    
+    // Check if equipment has any pending requests from other users
+    const allPendingRequests = window.equipmentRequests?.filter(req => 
+        req.equipmentId === selectedEquipment.id && 
+        req.status === 'pending' &&
+        req.userKennung !== window.currentUser?.kennung
+    ) || [];
+    
+    if (allPendingRequests.length > 0) {
+        const requestInfo = allPendingRequests.map(req => {
+            const userName = req.userName || req.userKennung || req.requestedByName || 'Unbekannter User';
+            return `${userName}`;
+        }).join(', ');
+        
+        window.toast.error(`Equipment hat bereits ausstehende Anfragen von anderen Benutzern: ${requestInfo}`);
+        return;
+    }
+    
     const requestData = {
         type: 'equipment',
         equipmentId: selectedEquipment.id,
