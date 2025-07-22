@@ -52,6 +52,9 @@ function setupEquipmentListener() {
                 });
             });
             
+            // Make equipment globally available
+            window.equipment = equipment;
+            
             console.log('Live update: Loaded equipment:', equipment.length);
             console.log('📋 Equipment data sample:', equipment.slice(0, 3).map(item => ({
                 id: item.id,
@@ -160,7 +163,10 @@ async function showEquipmentManager() {
     
     showModalWithContent(modalContent);
     
-    setupEquipmentListener();
+    // Only setup listener if not already running
+    if (!equipmentListener) {
+        setupEquipmentListener();
+    }
     setupEquipmentRequestsListener();
     
     // Show hardware category by default after requests are loaded
@@ -173,11 +179,8 @@ async function showEquipmentManager() {
  * Close equipment manager modal
  */
 function closeEquipmentManager() {
-    // Clean up listeners
-    if (equipmentListener) {
-        equipmentListener();
-        equipmentListener = null;
-    }
+    // Don't clean up equipment listener - it's global now
+    // Only clean up requests listener if it exists
     if (equipmentRequestsListener) {
         equipmentRequestsListener();
         equipmentRequestsListener = null;

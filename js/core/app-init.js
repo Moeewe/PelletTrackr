@@ -19,6 +19,16 @@ function initializeApp() {
   // Firebase-Verbindung testen
   testFirebaseConnection();
   
+  // Initialize equipment listener globally
+  setTimeout(() => {
+    if (typeof setupEquipmentListener === 'function') {
+      console.log("🔧 Initializing global equipment listener...");
+      setupEquipmentListener();
+    } else {
+      console.warn("⚠️ setupEquipmentListener function not available yet");
+    }
+  }, 500);
+  
   // Check for existing session (auto-login)
   if (typeof checkExistingSession === 'function') {
     const hasSession = checkExistingSession();

@@ -1022,21 +1022,35 @@ async function loadEquipmentForRequest() {
     if (!window.db) return;
     
     try {
-        const snapshot = await window.db.collection('equipment').get();
-        availableEquipment = [];
-        snapshot.forEach((doc) => {
-            const equipmentData = doc.data();
-            // Only show available equipment
-            if (equipmentData.status === 'available') {
-                availableEquipment.push({
-                    id: doc.id,
-                    name: equipmentData.name,
-                    category: equipmentData.category,
-                    location: equipmentData.location
-                });
-            }
-        });
-        console.log('✅ Equipment loaded:', availableEquipment.length, 'items');
+        // Use global equipment data if available (from equipment listener)
+        if (window.equipment && Array.isArray(window.equipment)) {
+            availableEquipment = window.equipment
+                .filter(item => item.status === 'available' && !item.borrowedByKennung)
+                .map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    category: item.category,
+                    location: item.location
+                }));
+            console.log('✅ Equipment loaded from global data:', availableEquipment.length, 'items');
+        } else {
+            // Fallback: load directly from database
+            const snapshot = await window.db.collection('equipment').get();
+            availableEquipment = [];
+            snapshot.forEach((doc) => {
+                const equipmentData = doc.data();
+                // Only show available equipment
+                if (equipmentData.status === 'available' && !equipmentData.borrowedByKennung) {
+                    availableEquipment.push({
+                        id: doc.id,
+                        name: equipmentData.name,
+                        category: equipmentData.category,
+                        location: equipmentData.location
+                    });
+                }
+            });
+            console.log('✅ Equipment loaded from database:', availableEquipment.length, 'items');
+        }
     } catch (error) {
         console.error('Error loading equipment:', error);
         availableEquipment = [];
