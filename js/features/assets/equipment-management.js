@@ -117,6 +117,9 @@ function setupEquipmentRequestsListener() {
                     });
                 });
                 
+                // Update global variable
+                window.equipmentRequests = equipmentRequests;
+                
                 console.log('📋 Live update: Loaded equipment requests:', equipmentRequests.length);
                 console.log('📋 Equipment requests details:', equipmentRequests.map(req => ({
                     id: req.id,
@@ -183,6 +186,9 @@ async function loadEquipmentRequests() {
                 requestedAt: data.createdAt?.toDate() || data.requestedAt?.toDate()
             });
         });
+        
+        // Update global variable
+        window.equipmentRequests = equipmentRequests;
         
         console.log('📋 Loaded equipment requests:', equipmentRequests.length);
         console.log('📋 Equipment requests sample:', equipmentRequests.slice(0, 3).map(req => ({
@@ -517,13 +523,13 @@ function renderEquipmentList(equipmentList) {
                         console.log('🔍 Showing available equipment buttons');
                         
                         // Check if equipment has pending requests
-                        const hasPendingRequests = requests.some(req => 
+                        const hasPendingRequests = equipmentRequests.some(req => 
                             req.equipmentId === item.id && 
                             (req.status === 'pending' || req.status === 'approved')
                         );
                         
                         if (hasPendingRequests) {
-                            const pendingRequest = requests.find(req => 
+                            const pendingRequest = equipmentRequests.find(req => 
                                 req.equipmentId === item.id && 
                                 (req.status === 'pending' || req.status === 'approved')
                             );
@@ -1474,6 +1480,9 @@ window.confirmEquipmentReturn = confirmEquipmentReturn;
 window.setupEquipmentRequestsListener = setupEquipmentRequestsListener;
 window.loadEquipmentRequests = loadEquipmentRequests;
 window.loadAllUsersForEquipment = loadAllUsersForEquipment;
+
+// Make equipmentRequests globally available for button logic
+window.equipmentRequests = equipmentRequests;
 // getUserDetails function removed - using direct data access instead
 
 /**
