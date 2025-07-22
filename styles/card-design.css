@@ -1057,6 +1057,11 @@
     color: white;
 }
 
+.equipment-status.return-requested {
+    background: #fd7e14;
+    color: white;
+}
+
 .equipment-status.borrowed {
     background: #FF9800;
     color: white;

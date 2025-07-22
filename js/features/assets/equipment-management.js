@@ -252,6 +252,7 @@ function renderEquipmentList(equipmentList) {
         console.log(`🔍 Equipment ${item.id} (${item.name}):`, {
             status: item.status,
             requestsCount: requests.length,
+            requests: requests.map(r => ({ id: r.id, type: r.type, status: r.status })),
             pendingRequest: pendingRequest ? pendingRequest.id : null,
             pendingReturnRequest: pendingReturnRequest ? pendingReturnRequest.id : null
         });
@@ -261,7 +262,9 @@ function renderEquipmentList(equipmentList) {
             <div class="equipment-header">
                 <div class="equipment-name">${item.name}</div>
                 <div class="equipment-status-row">
-                    <span class="equipment-status ${pendingRequest ? 'requested' : item.status}">${pendingRequest ? 'Angefragt' : getEquipmentStatusText(item.status)}</span>
+                    <span class="equipment-status ${pendingRequest ? 'requested' : pendingReturnRequest ? 'return-requested' : item.status}">
+                        ${pendingRequest ? 'Angefragt' : pendingReturnRequest ? 'Rückgabe angefragt' : getEquipmentStatusText(item.status)}
+                    </span>
                     ${item.requiresDeposit ? `
                         <span class="equipment-deposit ${item.depositPaid ? 'paid' : 'unpaid'}" title="Pfand ${item.depositPaid ? 'bezahlt' : 'ausstehend'}">
                             ${item.depositAmount}€ ${item.depositPaid ? 'Bezahlt' : 'Ausstehend'}
@@ -276,6 +279,11 @@ function renderEquipmentList(equipmentList) {
                     <strong>Ausleihe angefragt von:</strong> ${pendingRequest.userName} (${pendingRequest.userKennung})
                     <br><strong>Zeitraum:</strong> ${pendingRequest.fromDate ? new Date(pendingRequest.fromDate.seconds * 1000).toLocaleDateString() : 'Unbekannt'} - ${pendingRequest.toDate ? new Date(pendingRequest.toDate.seconds * 1000).toLocaleDateString() : 'Unbekannt'}
                     <br><strong>Grund:</strong> ${pendingRequest.reason || 'Kein Grund angegeben'}
+                </div>
+            ` : pendingReturnRequest ? `
+                <div class="equipment-request-info">
+                    <strong>Rückgabe angefragt von:</strong> ${pendingReturnRequest.requestedByName} (${pendingReturnRequest.requestedBy})
+                    <br><strong>Angefragt am:</strong> ${pendingReturnRequest.createdAt ? new Date(pendingReturnRequest.createdAt.seconds * 1000).toLocaleDateString() : 'Unbekannt'}
                 </div>
             ` : item.status === 'borrowed' && item.borrowedBy ? `
                 <div class="equipment-current-user">
@@ -294,7 +302,7 @@ function renderEquipmentList(equipmentList) {
             <div class="equipment-actions">
                 ${pendingRequest ? `
                     <button class="btn btn-success" onclick="approveEquipmentRequest('${pendingRequest.id}', '${item.id}')">Anfrage genehmigen</button>
-                    <button class="btn btn-danger" onclick="rejectEquipmentRequest('${pendingRequest.id}')">Anfrage ablehnen</button>
+                    <button class="btn btn-danger" onclick="rejectEquipmentRequest('${pendingRequest.id}', '${item.id}')">Anfrage ablehnen</button>
                     <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
                     <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
                 ` : item.status === 'available' ? `
