@@ -438,7 +438,9 @@ function renderEquipmentList(equipmentList) {
                 type: r.type, 
                 status: r.status, 
                 requestedBy: r.requestedBy,
-                requestedByName: r.requestedByName 
+                requestedByName: r.requestedByName,
+                userKennung: r.userKennung,
+                requestedByKennung: r.requestedByKennung
             })),
             pendingRequest: pendingRequest ? pendingRequest.id : null,
             pendingReturnRequest: pendingReturnRequest ? pendingReturnRequest.id : null,
@@ -477,13 +479,13 @@ function renderEquipmentList(equipmentList) {
             
             ${pendingRequest ? `
                 <div class="equipment-request-info">
-                    <strong>Ausleihe angefragt von:</strong> ${pendingRequest.userName || pendingRequest.userKennung} (${pendingRequest.userKennung})
+                    <strong>Ausleihe angefragt von:</strong> ${pendingRequest.userName || pendingRequest.userKennung || pendingRequest.requestedByName || 'Unbekannter User'} (${pendingRequest.userKennung || pendingRequest.requestedBy || 'Unbekannt'})
                     <br><strong>Zeitraum:</strong> ${pendingRequest.fromDate ? new Date(pendingRequest.fromDate.seconds * 1000).toLocaleDateString() : 'Unbekannt'} - ${pendingRequest.toDate ? new Date(pendingRequest.toDate.seconds * 1000).toLocaleDateString() : 'Unbekannt'}
-                    <br><strong>Grund:</strong> ${pendingRequest.reason || 'Kein Grund angegeben'}
+                    <br><strong>Grund:</strong> ${pendingRequest.reason || pendingRequest.purpose || 'Kein Grund angegeben'}
                 </div>
             ` : (pendingReturnRequest || anyPendingReturn) ? `
                 <div class="equipment-request-info">
-                    <strong>Rückgabe angefragt von:</strong> ${(pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).requestedByName || (pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).requestedBy} (${(pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).requestedBy})
+                    <strong>Rückgabe angefragt von:</strong> ${(pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).requestedByName || (pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).requestedBy || (pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).userName || 'Unbekannter User'} (${(pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).requestedBy || (pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).userKennung || 'Unbekannt'})
                     <br><strong>Angefragt am:</strong> ${(pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).createdAt ? new Date((pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).createdAt.seconds * 1000).toLocaleDateString() : 'Unbekannt'}
                 </div>
             ` : (item.status === 'borrowed' || item.borrowedBy) && item.borrowedByKennung ? `
@@ -512,7 +514,7 @@ function renderEquipmentList(equipmentList) {
                     
                     if (pendingRequest) {
                         console.log('🔍 Showing pending request buttons');
-                        const userName = pendingRequest.userName || pendingRequest.userKennung || 'Unbekannter User';
+                        const userName = pendingRequest.userName || pendingRequest.userKennung || pendingRequest.requestedByName || 'Unbekannter User';
                         return `
                             <button class="btn btn-success" onclick="approveEquipmentRequest('${pendingRequest.id}', '${item.id}')">Anfrage von ${userName} genehmigen</button>
                             <button class="btn btn-danger" onclick="rejectEquipmentRequest('${pendingRequest.id}', '${item.id}')">Anfrage von ${userName} ablehnen</button>
@@ -530,7 +532,7 @@ function renderEquipmentList(equipmentList) {
                         console.log('🔍 Showing borrowed equipment buttons');
                         if (pendingReturnRequest || anyPendingReturn) {
                             const returnRequest = pendingReturnRequest || returnRequests.find(r => r.status === 'pending');
-                            const userName = returnRequest ? (returnRequest.requestedByName || returnRequest.requestedBy || 'Unbekannter User') : 'Unbekannter User';
+                            const userName = returnRequest ? (returnRequest.requestedByName || returnRequest.requestedBy || returnRequest.userName || returnRequest.userKennung || 'Unbekannter User') : 'Unbekannter User';
                             return `
                                 <button class="btn btn-success" onclick="confirmEquipmentReturn('${item.id}')">Rückgabe von ${userName} bestätigen</button>
                                 <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
@@ -1341,10 +1343,11 @@ async function approveEquipmentRequest(requestId, equipmentId) {
       approvedBy: window.currentUser?.kennung || 'admin'
     });
     
-    // Update equipment status - only store FH-Kennung
+    // Update equipment status - use the correct field for user kennung
+    const userKennung = requestData.userKennung || requestData.requestedByKennung || requestData.requestedBy;
     await window.db.collection('equipment').doc(equipmentId).update({
       status: 'borrowed',
-      borrowedByKennung: requestData.userKennung,
+      borrowedByKennung: userKennung,
       borrowedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
       depositPaid: false,
       updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
