@@ -1161,7 +1161,7 @@ function renderMyEquipmentRequests(requests) {
                 </div>
                 
                 <div class="entry-card-footer">
-                    ${request.status === 'given' || request.status === 'active' ? `
+                    ${request.status === 'given' || request.status === 'active' || request.status === 'borrowed' ? `
                         <button class="btn btn-primary btn-sm" onclick="requestEquipmentReturn('${request.id}')">
                             Rückgabe anfragen
                         </button>
@@ -1395,19 +1395,26 @@ async function cancelEquipmentReturn(requestId) {
         
         console.log('✅ Return request removed from equipment document');
         
-        // Update the original request status back to borrowed
+        // Update the original request status back to given/active (not borrowed)
         await window.db.collection('requests').doc(requestId).update({
-            status: 'borrowed',
+            status: 'given',
             returnRequestedAt: window.firebase.firestore.FieldValue.delete()
         });
         
         console.log('✅ Return request canceled successfully');
         window.toast.success('Rückgabe-Anfrage erfolgreich zurückgezogen');
         
-        // Refresh the view if still on the equipment requests modal
+        // Small delay to ensure database updates are processed
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Immediately refresh the view to show the "Rückgabe anfragen" button
         const equipmentRequestsList = document.getElementById('myEquipmentRequestsList');
         if (equipmentRequestsList) {
-            refreshMyEquipmentRequests();
+            console.log('🔄 Immediately refreshing equipment requests view...');
+            await refreshMyEquipmentRequests();
+            console.log('✅ Equipment requests view refreshed successfully');
+        } else {
+            console.log('⚠️ Equipment requests list container not found, cannot refresh view');
         }
         
     } catch (error) {
