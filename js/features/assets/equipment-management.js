@@ -669,9 +669,7 @@ async function borrowEquipment(equipmentId) {
     const equipmentItem = equipment.find(item => item.id === equipmentId);
     
     // Load all users first for admin selection
-    if (typeof loadAllUsers === 'function') {
-        await loadAllUsers();
-    }
+    await loadAllUsersForEquipment();
     
     // Show admin loan modal
     const modalContent = `
@@ -726,21 +724,67 @@ async function borrowEquipment(equipmentId) {
 }
 
 /**
+ * Load all users for equipment admin selection
+ */
+async function loadAllUsersForEquipment() {
+    try {
+        console.log('🔄 Loading all users for equipment selection...');
+        
+        const querySnapshot = await window.db.collection('users').get();
+        window.allUsers = [];
+        
+        querySnapshot.forEach(doc => {
+            const userData = doc.data();
+            window.allUsers.push({
+                id: doc.id,
+                kennung: userData.kennung || doc.id,
+                name: userData.name || 'Unbekannter Benutzer',
+                email: userData.email || '',
+                phone: userData.phone || '',
+                isAdmin: userData.isAdmin || false
+            });
+        });
+        
+        console.log(`✅ Loaded ${window.allUsers.length} users for equipment selection`);
+        
+    } catch (error) {
+        console.error('❌ Error loading users for equipment selection:', error);
+        safeShowToast('Fehler beim Laden der Benutzer', 'error');
+        window.allUsers = [];
+    }
+}
+
+/**
  * Filter users for admin borrow modal
  */
 function filterAdminBorrowUsers() {
-    const searchTerm = document.getElementById('adminBorrowUserSearch').value.toLowerCase();
+    const searchTerm = document.getElementById('adminBorrowUserSearch').value.toLowerCase().trim();
     const resultsDiv = document.getElementById('adminBorrowUserResults');
     
-    if (!searchTerm || !window.allUsers) {
+    console.log('🔍 Filtering users with search term:', searchTerm);
+    console.log('📋 Available users:', window.allUsers ? window.allUsers.length : 0);
+    
+    if (!searchTerm) {
         resultsDiv.style.display = 'none';
         return;
     }
     
-    const filteredUsers = window.allUsers.filter(user => 
-        user.name.toLowerCase().includes(searchTerm) || 
-        user.kennung.toLowerCase().includes(searchTerm)
-    ).slice(0, 10); // Limit to 10 results
+    if (!window.allUsers || window.allUsers.length === 0) {
+        console.warn('⚠️ No users available for search');
+        resultsDiv.innerHTML = '<div class="no-results">Keine Benutzer verfügbar</div>';
+        resultsDiv.style.display = 'block';
+        return;
+    }
+    
+    const filteredUsers = window.allUsers.filter(user => {
+        const nameMatch = user.name && user.name.toLowerCase().includes(searchTerm);
+        const kennungMatch = user.kennung && user.kennung.toLowerCase().includes(searchTerm);
+        const emailMatch = user.email && user.email.toLowerCase().includes(searchTerm);
+        
+        return nameMatch || kennungMatch || emailMatch;
+    }).slice(0, 10); // Limit to 10 results
+    
+    console.log(`🔍 Found ${filteredUsers.length} matching users`);
     
     if (filteredUsers.length === 0) {
         resultsDiv.innerHTML = '<div class="no-results">Keine Benutzer gefunden</div>';
@@ -1556,5 +1600,6 @@ window.submitAdminBorrowEquipment = submitAdminBorrowEquipment;
 window.requestEquipmentReturn = requestEquipmentReturn;
 window.confirmEquipmentReturn = confirmEquipmentReturn;
 window.getPendingReturnRequestForEquipment = getPendingReturnRequestForEquipment;
+window.loadAllUsersForEquipment = loadAllUsersForEquipment;
 
 console.log("🔧 Equipment Management Module geladen"); 

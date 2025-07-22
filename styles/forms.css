@@ -327,3 +327,49 @@
   order: 1;
   display: block !important;
 }
+
+/* ==================== USER SEARCH RESULTS ==================== */
+
+.user-search-results {
+  background: white;
+  border: 2px solid #000000;
+  border-radius: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 8px;
+  display: none;
+}
+
+.user-result-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.user-result-item:hover {
+  background-color: #f8f8f8;
+}
+
+.user-result-item:last-child {
+  border-bottom: none;
+}
+
+.user-result-item strong {
+  color: #000000;
+  font-weight: 600;
+}
+
+.user-result-item small {
+  color: #666666;
+  font-size: 12px;
+}
+
+.no-results {
+  padding: 16px;
+  text-align: center;
+  color: #666666;
+  font-style: italic;
+}
