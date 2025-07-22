@@ -268,6 +268,15 @@ async function loadEquipment() {
             category: item.category,
             borrowedBy: item.borrowedBy
         })));
+        
+        // Debug: Show all unique categories in the data
+        const uniqueCategories = [...new Set(equipment.map(item => item.category))];
+        console.log('🔍 Available categories in data:', uniqueCategories);
+        console.log('🔍 Equipment by category:', uniqueCategories.map(cat => ({
+            category: cat,
+            count: equipment.filter(item => item.category === cat).length,
+            items: equipment.filter(item => item.category === cat).map(item => item.name)
+        })));
         showEquipmentCategory(currentEquipmentCategory);
         
     } catch (error) {
@@ -313,6 +322,10 @@ function showEquipmentCategory(category) {
     // Filter equipment by category from all equipment (not just search results)
     const categoryEquipment = equipment.filter(item => item.category === category);
     
+    console.log(`🔍 Category filter: looking for category '${category}'`);
+    console.log(`🔍 All equipment categories:`, equipment.map(item => item.category));
+    console.log(`🔍 Found ${categoryEquipment.length} items for category '${category}':`, categoryEquipment.map(item => item.name));
+    
     // Apply search filter if there's a search term
     const searchInput = document.getElementById('equipmentSearchInput');
     if (searchInput && searchInput.value.trim()) {
@@ -328,6 +341,8 @@ function showEquipmentCategory(category) {
     } else {
         renderEquipmentList(categoryEquipment);
     }
+    
+    console.log(`🔍 Switched to category: ${category}, showing ${categoryEquipment.length} items`);
 }
 
 
