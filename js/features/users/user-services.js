@@ -1883,6 +1883,10 @@ function renderMyMaterialRequests(requests) {
                         <button class="btn btn-danger btn-sm" onclick="deleteMaterialRequest('${request.id}')">
                             Löschen
                         </button>
+                    ` : request.status === 'rejected' ? `
+                        <button class="btn btn-danger btn-sm" onclick="deleteMaterialRequest('${request.id}')">
+                            Löschen
+                        </button>
                     ` : ''}
                 </div>
             </div>
