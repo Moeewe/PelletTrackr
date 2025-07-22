@@ -1180,13 +1180,26 @@ async function submitAdminBorrowEquipment(equipmentId) {
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         
-        await window.db.collection('requests').add(loanData);
+        // Get equipment document to clean up pending requests (unified system)
+        const equipmentRef = window.db.collection('equipment').doc(equipmentId);
+        const equipmentDoc = await equipmentRef.get();
         
-        // Update equipment status - use same fields as user request workflow
+        if (!equipmentDoc.exists) {
+            throw new Error('Equipment nicht gefunden');
+        }
+        
+        const equipmentData = equipmentDoc.data();
+        const pendingRequests = equipmentData.pendingRequests || [];
+        
+        // Remove any approved requests for this equipment (unified system)
+        const cleanedRequests = pendingRequests.filter(req => req.status !== 'approved');
+        
+        // Update equipment status (unified system)
         const updateData = {
             status: 'borrowed',
             borrowedByKennung: selectedUser.kennung,
             borrowedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            pendingRequests: cleanedRequests,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         
@@ -1195,7 +1208,7 @@ async function submitAdminBorrowEquipment(equipmentId) {
             updateData.depositPaid = true;
         }
         
-        await window.db.collection('equipment').doc(equipmentId).update(updateData);
+        await equipmentRef.update(updateData);
         
         safeShowToast(`Equipment erfolgreich an ${selectedUser.name} ausgeliehen`, 'success');
         
@@ -1223,11 +1236,29 @@ async function submitAdminBorrowEquipment(equipmentId) {
  */
 async function returnEquipment(equipmentId) {
     const equipmentItem = equipment.find(item => item.id === equipmentId);
+    if (!equipmentItem) {
+        safeShowToast('Equipment nicht gefunden', 'error');
+        return;
+    }
     
     const confirmed = confirm('Equipment als zurückgegeben markieren?');
     if (!confirmed) return;
     
     try {
+        // Get equipment document to clean up pending requests (unified system)
+        const equipmentRef = window.db.collection('equipment').doc(equipmentId);
+        const equipmentDoc = await equipmentRef.get();
+        
+        if (!equipmentDoc.exists) {
+            throw new Error('Equipment nicht gefunden');
+        }
+        
+        const equipmentData = equipmentDoc.data();
+        const pendingRequests = equipmentData.pendingRequests || [];
+        
+        // Remove any approved requests for this equipment (unified system)
+        const cleanedRequests = pendingRequests.filter(req => req.status !== 'approved');
+        
         const updateData = {
             status: 'available',
             borrowedByKennung: firebase.firestore.FieldValue.delete(),
@@ -1235,6 +1266,7 @@ async function returnEquipment(equipmentId) {
             rentedByKennung: firebase.firestore.FieldValue.delete(),
             rentedAt: firebase.firestore.FieldValue.delete(),
             returnedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            pendingRequests: cleanedRequests,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         
@@ -1243,7 +1275,7 @@ async function returnEquipment(equipmentId) {
             updateData.depositPaid = false;
         }
         
-        await window.db.collection('equipment').doc(equipmentId).update(updateData);
+        await equipmentRef.update(updateData);
         
         safeShowToast('Equipment erfolgreich zurückgegeben', 'success');
         // Removed manual reload - real-time listener will handle the update
@@ -1355,7 +1387,7 @@ window.equipmentRequests = equipmentRequests;
 // getUserDetails function removed - using direct data access instead
 
 /**
- * Approve equipment request and mark equipment as borrowed
+ * Approve equipment request and mark equipment as borrowed (unified system)
  */
 async function approveEquipmentRequest(requestId, equipmentId) {
   try {
@@ -1366,25 +1398,39 @@ async function approveEquipmentRequest(requestId, equipmentId) {
     
     const loadingId = window.loading ? window.loading.show('Anfrage wird genehmigt...') : null;
     
-    // Find the request in equipmentRequests array
-    const requestData = equipmentRequests.find(req => req.id === requestId);
-    if (!requestData) {
+    // Get equipment document
+    const equipmentRef = window.db.collection('equipment').doc(equipmentId);
+    const equipmentDoc = await equipmentRef.get();
+    
+    if (!equipmentDoc.exists) {
+      throw new Error('Equipment nicht gefunden');
+    }
+    
+    const equipmentData = equipmentDoc.data();
+    const pendingRequests = equipmentData.pendingRequests || [];
+    
+    // Find the request in pendingRequests array
+    const requestIndex = pendingRequests.findIndex(req => req.id === requestId);
+    if (requestIndex === -1) {
       throw new Error('Anfrage nicht gefunden');
     }
     
-    // Update request status in requests collection
-    await window.db.collection('requests').doc(requestId).update({
-      status: 'approved',
-      approvedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
-      approvedBy: window.currentUser?.kennung || 'admin'
-    });
+    const requestData = pendingRequests[requestIndex];
     
-    // Update equipment status - use the correct field for user kennung
-    const userKennung = requestData.userKennung || requestData.requestedByKennung || requestData.requestedBy;
-    await window.db.collection('equipment').doc(equipmentId).update({
+    // Update request status to approved
+    pendingRequests[requestIndex] = {
+      ...requestData,
+      status: 'approved',
+      approvedAt: new Date().toISOString(),
+      approvedBy: window.currentUser?.kennung || 'admin'
+    };
+    
+    // Update equipment: approve request and mark as borrowed
+    await equipmentRef.update({
       status: 'borrowed',
-      borrowedByKennung: userKennung,
+      borrowedByKennung: requestData.userKennung,
       borrowedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+      pendingRequests: pendingRequests,
       depositPaid: false,
       updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -1410,7 +1456,7 @@ async function approveEquipmentRequest(requestId, equipmentId) {
 }
 
 /**
- * Reject equipment request
+ * Reject equipment request (unified system)
  */
 async function rejectEquipmentRequest(requestId, equipmentId) {
   try {
@@ -1421,11 +1467,37 @@ async function rejectEquipmentRequest(requestId, equipmentId) {
     
     const loadingId = window.loading ? window.loading.show('Anfrage wird abgelehnt...') : null;
     
-    // Update request status in requests collection
-    await window.db.collection('requests').doc(requestId).update({
+    // Get equipment document
+    const equipmentRef = window.db.collection('equipment').doc(equipmentId);
+    const equipmentDoc = await equipmentRef.get();
+    
+    if (!equipmentDoc.exists) {
+      throw new Error('Equipment nicht gefunden');
+    }
+    
+    const equipmentData = equipmentDoc.data();
+    const pendingRequests = equipmentData.pendingRequests || [];
+    
+    // Find the request in pendingRequests array
+    const requestIndex = pendingRequests.findIndex(req => req.id === requestId);
+    if (requestIndex === -1) {
+      throw new Error('Anfrage nicht gefunden');
+    }
+    
+    const requestData = pendingRequests[requestIndex];
+    
+    // Update request status to rejected
+    pendingRequests[requestIndex] = {
+      ...requestData,
       status: 'rejected',
-      rejectedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+      rejectedAt: new Date().toISOString(),
       rejectedBy: window.currentUser?.kennung || 'admin'
+    };
+    
+    // Update equipment: reject request
+    await equipmentRef.update({
+      pendingRequests: pendingRequests,
+      updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
     });
     
     if (loadingId && window.loading) window.loading.hide(loadingId);

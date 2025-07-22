@@ -709,16 +709,24 @@ async function submitEquipmentRequest() {
     
     try {
         // Update user data with phone number if not already set
-        let userWasCreated = false;
-        if (window.currentUser?.kennung) {
+        if (window.currentUser?.kennung && phoneNumber) {
             try {
-                await window.db.collection('users').doc(window.currentUser.kennung).update({
-                    phone: phoneNumber,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            } catch (error) {
-                // If document doesn't exist, create it
-                if (error.code === 'not-found') {
+                // First check if user exists
+                const userDoc = await window.db.collection('users').doc(window.currentUser.kennung).get();
+                
+                if (userDoc.exists) {
+                    // User exists - just update phone number
+                    await window.db.collection('users').doc(window.currentUser.kennung).update({
+                        phone: phoneNumber,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    // Update window.allUsers if function exists
+                    if (typeof updateUserInList === 'function') {
+                        updateUserInList(window.currentUser.kennung, { phone: phoneNumber });
+                    }
+                } else {
+                    // User doesn't exist - create new user
                     await window.db.collection('users').doc(window.currentUser.kennung).set({
                         name: window.currentUser.name,
                         kennung: window.currentUser.kennung,
@@ -727,30 +735,26 @@ async function submitEquipmentRequest() {
                         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
-                    userWasCreated = true;
-                } else {
-                    throw error; // Re-throw other errors
+                    
+                    // Update window.allUsers if function exists
+                    if (typeof updateUserInList === 'function') {
+                        updateUserInList(window.currentUser.kennung, {
+                            docId: window.currentUser.kennung,
+                            name: window.currentUser.name,
+                            kennung: window.currentUser.kennung,
+                            email: window.currentUser.email || `${window.currentUser.kennung}@fh-muenster.de`,
+                            phone: phoneNumber,
+                            isAdmin: false,
+                            entries: [],
+                            totalCost: 0,
+                            paidAmount: 0,
+                            unpaidAmount: 0
+                        });
+                    }
                 }
-            }
-        }
-        
-        // Update window.allUsers if user was created or phone was updated
-        if (typeof updateUserInList === 'function' && window.currentUser?.kennung) {
-            if (userWasCreated) {
-                updateUserInList(window.currentUser.kennung, {
-                    docId: window.currentUser.kennung,
-                    name: window.currentUser.name,
-                    kennung: window.currentUser.kennung,
-                    email: window.currentUser.email || `${window.currentUser.kennung}@fh-muenster.de`,
-                    phone: phoneNumber,
-                    isAdmin: false,
-                    entries: [],
-                    totalCost: 0,
-                    paidAmount: 0,
-                    unpaidAmount: 0
-                });
-            } else {
-                updateUserInList(window.currentUser.kennung, { phone: phoneNumber });
+            } catch (error) {
+                console.error('Error updating user phone number:', error);
+                // Don't throw error - continue with equipment request
             }
         }
         
