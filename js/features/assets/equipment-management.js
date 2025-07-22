@@ -242,6 +242,13 @@ function renderEquipmentList(equipmentList) {
     }
     
     console.log('🔍 Rendering equipment list with', equipmentList.length, 'items');
+    console.log('📋 Equipment list data:', equipmentList.map(item => ({
+        id: item.id,
+        name: item.name,
+        status: item.status,
+        borrowedBy: item.borrowedBy,
+        requestsCount: (item.requests || []).length
+    })));
     
     container.innerHTML = equipmentList.map(item => {
         // Get requests directly from equipment document
@@ -251,10 +258,13 @@ function renderEquipmentList(equipmentList) {
         
         console.log(`🔍 Equipment ${item.id} (${item.name}):`, {
             status: item.status,
+            borrowedBy: item.borrowedBy,
+            borrowedByKennung: item.borrowedByKennung,
             requestsCount: requests.length,
-            requests: requests.map(r => ({ id: r.id, type: r.type, status: r.status })),
+            requests: requests.map(r => ({ id: r.id, type: r.type, status: r.status, requestedBy: r.requestedBy })),
             pendingRequest: pendingRequest ? pendingRequest.id : null,
-            pendingReturnRequest: pendingReturnRequest ? pendingReturnRequest.id : null
+            pendingReturnRequest: pendingReturnRequest ? pendingReturnRequest.id : null,
+            shouldShowReturnButton: item.status === 'borrowed' && pendingReturnRequest ? 'YES' : 'NO'
         });
         
         return `
@@ -312,15 +322,17 @@ function renderEquipmentList(equipmentList) {
                 ` : item.status === 'borrowed' ? `
                     ${pendingReturnRequest ? `
                         <button class="btn btn-success" onclick="confirmEquipmentReturn('${item.id}')">Rückgabe bestätigen</button>
+                        <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
+                        <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
                     ` : `
                         <button class="btn btn-success" onclick="returnEquipment('${item.id}')">Zurückgeben</button>
                         <button class="btn btn-warning" onclick="requestEquipmentReturn('${item.id}')">Rücknahme anfragen</button>
+                        <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
+                        <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
                     `}
                     ${item.requiresDeposit && !item.depositPaid ? `
                         <button class="btn btn-warning" onclick="markDepositAsPaid('${item.id}')">Pfand als bezahlt markieren</button>
                     ` : ''}
-                    <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
-                    <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
                 ` : `
                     <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
                     <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
