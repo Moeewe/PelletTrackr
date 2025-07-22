@@ -1710,7 +1710,7 @@ function renderMyMaterialRequests(requests) {
  */
 async function editMaterialRequest(requestId) {
     try {
-        const doc = await window.db.collection('materialRequests').doc(requestId).get();
+        const doc = await window.db.collection('materialOrders').doc(requestId).get();
         if (!doc.exists) {
             window.toast.error('Wunsch nicht gefunden');
             return;
@@ -1731,7 +1731,7 @@ async function editMaterialRequest(requestId) {
                     </div>
                     <div class="form-group">
                         <label class="form-label">Name/Bezeichnung</label>
-                        <input type="text" id="editMaterialName" class="form-input" value="${request.name || ''}" placeholder="z.B. PLA Schwarz, PETG Transparent...">
+                        <input type="text" id="editMaterialName" class="form-input" value="${request.materialName || request.name || ''}" placeholder="z.B. PLA Schwarz, PETG Transparent...">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Menge</label>
@@ -1751,7 +1751,7 @@ async function editMaterialRequest(requestId) {
                     </div>
                     <div class="form-group">
                         <label class="form-label">Lieferant (optional)</label>
-                        <input type="text" id="editMaterialSupplier" class="form-input" value="${request.supplier || ''}" placeholder="z.B. Prusament, eSUN...">
+                        <input type="text" id="editMaterialSupplier" class="form-input" value="${request.manufacturer || request.supplier || ''}" placeholder="z.B. Prusament, eSUN...">
                     </div>
                 </div>
             </div>
@@ -1786,13 +1786,13 @@ async function saveMaterialRequestEdit(requestId) {
     }
     
     try {
-        await window.db.collection('materialRequests').doc(requestId).update({
+        await window.db.collection('materialOrders').doc(requestId).update({
             type,
-            name,
+            materialName: name, // Use materialName to match submitMaterialWish
             quantity,
             priority,
             reason,
-            supplier,
+            manufacturer: supplier, // Use manufacturer to match submitMaterialWish
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
