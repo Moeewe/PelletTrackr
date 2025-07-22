@@ -1629,6 +1629,24 @@ window.loadAllUsersForEquipment = loadAllUsersForEquipment;
 window.approveEquipmentRequest = approveEquipmentRequest;
 window.rejectEquipmentRequest = rejectEquipmentRequest;
 
+// Global helper function for waiting for updateMachineOverview
+window.waitForUpdateMachineOverview = function(callback, maxAttempts = 10) {
+  let attempts = 0;
+  const checkFunction = () => {
+    attempts++;
+    if (typeof updateMachineOverview === 'function') {
+      console.log('🔄 updateMachineOverview function found after', attempts, 'attempts');
+      callback();
+    } else if (attempts < maxAttempts) {
+      console.log('⏳ Waiting for updateMachineOverview function... (attempt', attempts, '/', maxAttempts, ')');
+      setTimeout(checkFunction, 500);
+    } else {
+      console.warn('⚠️ updateMachineOverview function not available after', maxAttempts, 'attempts');
+    }
+  };
+  checkFunction();
+};
+
 console.log("🔧 Equipment Management Module geladen (v1.9)");
 console.log("🔧 Available functions:", {
     showEquipmentManager: typeof showEquipmentManager,
@@ -1636,4 +1654,36 @@ console.log("🔧 Available functions:", {
     requestEquipmentReturn: typeof requestEquipmentReturn,
     approveEquipmentRequest: typeof approveEquipmentRequest,
     rejectEquipmentRequest: typeof rejectEquipmentRequest
+});
+
+// ==================== EVENT LISTENER SETUP ====================
+// Set up event listeners for buttons that use inline onclick handlers
+document.addEventListener('DOMContentLoaded', () => {
+    // Equipment Manager Button
+    const equipmentManagerBtn = document.getElementById('equipmentManagerBtn');
+    if (equipmentManagerBtn) {
+        equipmentManagerBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (typeof showEquipmentManager === 'function') {
+                showEquipmentManager();
+            } else {
+                console.error('showEquipmentManager function not available');
+            }
+        });
+        console.log('✅ Equipment Manager button event listener set up');
+    }
+    
+    // Also handle notification items that might be dynamically created
+    document.addEventListener('click', (e) => {
+        const notificationItem = e.target.closest('.notification-item[data-action="showEquipmentManager"]');
+        if (notificationItem) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof showEquipmentManager === 'function') {
+                showEquipmentManager();
+            } else {
+                console.error('showEquipmentManager function not available');
+            }
+        }
+    });
 }); 

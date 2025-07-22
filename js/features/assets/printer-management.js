@@ -62,7 +62,9 @@ function setupPrintersListener() {
             renderPrinterGrid();
             
             // Update machine overview in admin dashboard
-            if (typeof updateMachineOverview === 'function') {
+            if (typeof window.waitForUpdateMachineOverview === 'function') {
+                window.waitForUpdateMachineOverview(() => updateMachineOverview());
+            } else if (typeof updateMachineOverview === 'function') {
                 updateMachineOverview();
             }
         }, (error) => {

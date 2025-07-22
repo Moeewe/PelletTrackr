@@ -412,7 +412,7 @@ function showAdminNotificationOverview() {
                 ` : ''}
                 
                 ${notificationCounts.equipmentRequests > 0 ? `
-                    <div class="notification-item" onclick="showEquipmentManager()">
+                    <div class="notification-item" data-action="showEquipmentManager">
                         <div class="notification-icon">📦</div>
                         <div class="notification-content">
                             <h4>Equipment-Anfragen</h4>

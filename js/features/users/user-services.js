@@ -60,7 +60,9 @@ function setupUserPrinterListener() {
             updatePrinterStatusDisplay();
             
             // Update machine overview in admin dashboard
-            if (typeof updateMachineOverview === 'function') {
+            if (typeof window.waitForUpdateMachineOverview === 'function') {
+                window.waitForUpdateMachineOverview(() => updateMachineOverview());
+            } else if (typeof updateMachineOverview === 'function') {
                 updateMachineOverview();
             }
         });
@@ -92,7 +94,9 @@ function loadPrinterStatus() {
         updatePrinterStatusDisplay();
         
         // Update machine overview in admin dashboard
-        if (typeof updateMachineOverview === 'function') {
+        if (typeof window.waitForUpdateMachineOverview === 'function') {
+            window.waitForUpdateMachineOverview(() => updateMachineOverview());
+        } else if (typeof updateMachineOverview === 'function') {
             updateMachineOverview();
         }
     }).catch((error) => {
@@ -261,7 +265,9 @@ async function cyclePrinterStatus(printerId, newStatus) {
         updatePrinterStatusDisplay();
         
         // Also update machine overview for consistency
-        if (typeof updateMachineOverview === 'function') {
+        if (typeof window.waitForUpdateMachineOverview === 'function') {
+            window.waitForUpdateMachineOverview(() => updateMachineOverview());
+        } else if (typeof updateMachineOverview === 'function') {
             updateMachineOverview();
         }
         

@@ -82,20 +82,39 @@ function updateWelcomeMessage() {
   }
 }
 
+// Helper function to wait for updateMachineOverview (uses global function if available)
+function waitForUpdateMachineOverview(callback, maxAttempts = 10) {
+  if (typeof window.waitForUpdateMachineOverview === 'function') {
+    window.waitForUpdateMachineOverview(callback, maxAttempts);
+  } else {
+    // Fallback implementation
+    let attempts = 0;
+    const checkFunction = () => {
+      attempts++;
+      if (typeof updateMachineOverview === 'function') {
+        console.log('🔄 updateMachineOverview function found after', attempts, 'attempts');
+        callback();
+      } else if (attempts < maxAttempts) {
+        console.log('⏳ Waiting for updateMachineOverview function... (attempt', attempts, '/', maxAttempts, ')');
+        setTimeout(checkFunction, 500);
+      } else {
+        console.warn('⚠️ updateMachineOverview function not available after', maxAttempts, 'attempts');
+      }
+    };
+    checkFunction();
+  }
+}
+
 // Dashboard-Initialisierung
 function initializeUserDashboard() {
   // Show/hide admin elements based on user type
   updateAdminUI();
   
   // Update machine overview for user dashboard
-  setTimeout(() => {
-    if (typeof updateMachineOverview === 'function') {
-      console.log('🔄 updateMachineOverview called from initializeUserDashboard');
-      updateMachineOverview();
-    } else {
-      console.warn('⚠️ updateMachineOverview function not available');
-    }
-  }, 1000);
+  waitForUpdateMachineOverview(() => {
+    console.log('🔄 updateMachineOverview called from initializeUserDashboard');
+    updateMachineOverview();
+  });
   
   // Warten bis alle Funktionen verfügbar sind
   if (typeof loadAllFormData === 'function') {
@@ -186,14 +205,10 @@ function initializeAdminDashboard() {
   updateWelcomeMessage();
   
   // Update machine overview after a delay to ensure printer data is loaded
-  setTimeout(() => {
-    if (typeof updateMachineOverview === 'function') {
-      console.log('🔄 updateMachineOverview called from initializeAdminDashboard');
-      updateMachineOverview();
-    } else {
-      console.warn('⚠️ updateMachineOverview function not available');
-    }
-  }, 1000);
+  waitForUpdateMachineOverview(() => {
+    console.log('🔄 updateMachineOverview called from initializeAdminDashboard');
+    updateMachineOverview();
+  });
 }
 
 // Event Listeners einrichten
