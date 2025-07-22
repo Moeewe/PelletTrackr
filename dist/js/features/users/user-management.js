@@ -1,4 +1,5 @@
 // ==================== USER MANAGEMENT SYSTEM ====================
+// Version 1.5 - Replaced all browser dialogs with toast notifications
 
 function showUserManager() {
   if (!window.checkAdminAccess()) return;
@@ -94,6 +95,7 @@ async function loadUsersForManagement() {
         name: userData.name,
         kennung: userData.kennung,
         email: userData.email || `${userData.kennung}@fh-muenster.de`,
+        phone: userData.phone || '',
         isAdmin: userData.isAdmin || false,
         createdAt: userData.createdAt,
         lastLogin: userData.lastLogin,
@@ -139,6 +141,20 @@ async function loadUsersForManagement() {
     
     console.log(`✅ ${users.length} registrierte Benutzer geladen (${legacyUsers.length} Legacy-Benutzer ignoriert)`);
     console.log('🔍 User Data Sample:', users.slice(0, 2)); // Debug: Show first 2 users
+    
+    // Debug: Check for phone numbers
+    const usersWithPhone = users.filter(user => user.phone && user.phone.trim() !== '');
+    console.log(`📱 ${usersWithPhone.length} Benutzer mit Handynummer:`, usersWithPhone.map(u => ({ kennung: u.kennung, phone: u.phone })));
+    
+    // Debug: Show all users and their phone data
+    console.log('🔍 Alle Benutzer mit Telefonnummer-Daten:', users.map(u => ({
+      kennung: u.kennung,
+      name: u.name,
+      phone: u.phone,
+      phoneType: typeof u.phone,
+      phoneLength: u.phone ? u.phone.length : 0
+    })));
+    
     renderUsersTable(users);
     
   } catch (error) {
@@ -168,7 +184,12 @@ async function loadUsersForManagement() {
 function renderUsersTable(users) {
   const tableDiv = document.getElementById("usersTable");
   
-  if (users.length === 0) {
+  // Use window.allUsers if no users parameter provided
+  if (!users && window.allUsers) {
+    users = window.allUsers;
+  }
+  
+  if (!users || users.length === 0) {
     tableDiv.innerHTML = '<p>Keine Benutzer gefunden.</p>';
     return;
   }
@@ -184,6 +205,7 @@ function renderUsersTable(users) {
               <th onclick="sortUsersBy('name')">Name</th>
               <th onclick="sortUsersBy('kennung')">FH-Kennung</th>
               <th onclick="sortUsersBy('email')">E-Mail</th>
+              <th onclick="sortUsersBy('phone')">Handynummer</th>
               <th onclick="sortUsersBy('isAdmin')">Admin</th>
               <th onclick="sortUsersBy('entries')">Drucke</th>
               <th onclick="sortUsersBy('totalCost')">Gesamtkosten</th>
@@ -225,6 +247,7 @@ function renderUsersTable(users) {
         <td><span class="cell-value">${user.name}</span></td>
         <td><span class="cell-value">${user.kennung}</span></td>
         <td><span class="cell-value">${email}</span></td>
+        <td><span class="cell-value">${user.phone && user.phone.trim() !== '' ? user.phone : '-'}</span></td>
         <td>${adminCheckbox}</td>
         <td><span class="cell-value">${user.entries.length}</span></td>
         <td><span class="cell-value"><strong>${window.formatCurrency(user.totalCost)}</strong></span></td>
@@ -298,6 +321,11 @@ function renderUsersTable(users) {
           <div class="entry-detail-row">
             <span class="entry-detail-label">E-Mail</span>
             <span class="entry-detail-value">${email}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Handynummer</span>
+            <span class="entry-detail-value">${user.phone && user.phone.trim() !== '' ? user.phone : '-'}</span>
           </div>
           
           <div class="entry-detail-row">
@@ -480,11 +508,7 @@ async function toggleAdminStatus(kennung, isAdmin) {
 function showUserDetails(kennung) {
   const user = window.allUsers.find(u => u.kennung === kennung);
   if (!user) {
-    if (window.toast && typeof window.toast.error === 'function') {
-      window.toast.error('Benutzer nicht gefunden!');
-    } else {
-      alert('Benutzer nicht gefunden!');
-    }
+    window.toast.error('Benutzer nicht gefunden!');
     return;
   }
   
@@ -546,20 +570,12 @@ function showUserDetails(kennung) {
 function sendPaymentReminder(kennung) {
   const user = window.allUsers.find(u => u.kennung === kennung);
   if (!user) {
-    if (window.toast && typeof window.toast.error === 'function') {
-      window.toast.error('Benutzer nicht gefunden!');
-    } else {
-      alert('Benutzer nicht gefunden!');
-    }
+    window.toast.error('Benutzer nicht gefunden!');
     return;
   }
   
   if (user.unpaidAmount <= 0) {
-    if (window.toast && typeof window.toast.info === 'function') {
-      window.toast.info('Dieser Benutzer hat keine offenen Beträge.');
-    } else {
-      alert('Dieser Benutzer hat keine offenen Beträge.');
-    }
+    window.toast.info('Dieser Benutzer hat keine offenen Beträge.');
     return;
   }
   
@@ -631,20 +647,12 @@ Generiert am: ${currentDate}
 function sendUrgentReminder(kennung) {
   const user = window.allUsers.find(u => u.kennung === kennung);
   if (!user) {
-    if (window.toast && typeof window.toast.error === 'function') {
-      window.toast.error('Benutzer nicht gefunden!');
-    } else {
-      alert('Benutzer nicht gefunden!');
-    }
+    window.toast.error('Benutzer nicht gefunden!');
     return;
   }
   
   if (user.unpaidAmount <= 0) {
-    if (window.toast && typeof window.toast.info === 'function') {
-      window.toast.info('Dieser Benutzer hat keine offenen Beträge.');
-    } else {
-      alert('Dieser Benutzer hat keine offenen Beträge.');
-    }
+    window.toast.info('Dieser Benutzer hat keine offenen Beträge.');
     return;
   }
   
@@ -741,7 +749,12 @@ DRINGENDE MAHNUNG - Generiert am: ${currentDate}
 
 async function deleteUser(kennung) {
   if (!window.checkAdminAccess()) return;
-  if (!confirm("Benutzer wirklich löschen? Alle zugehörigen Daten werden entfernt!")) return;
+  
+  // Show confirmation toast instead of browser dialog
+  window.toast.info('Benutzer wird gelöscht...');
+  
+  // Small delay to show the info message
+  await new Promise(resolve => setTimeout(resolve, 500));
   
   try {
     // Alle Einträge des Benutzers abrufen
@@ -763,22 +776,14 @@ async function deleteUser(kennung) {
     
     await batch.commit();
     
-    if (window.toast && typeof window.toast.success === 'function') {
-      window.toast.success('Benutzer und alle zugehörigen Daten wurden gelöscht.');
-    } else {
-      alert('Benutzer und alle zugehörigen Daten wurden gelöscht.');
-    }
+    window.toast.success('Benutzer und alle zugehörigen Daten wurden gelöscht.');
     loadUsersForManagement();
     window.loadAdminStats();
     window.loadAllEntries();
     
   } catch (error) {
     console.error('Fehler beim Löschen des Benutzers:', error);
-    if (window.toast && typeof window.toast.error === 'function') {
-      window.toast.error('Fehler beim Löschen: ' + error.message);
-    } else {
-      alert('Fehler beim Löschen: ' + error.message);
-    }
+    window.toast.error('Fehler beim Löschen: ' + error.message);
   }
 }
 
@@ -789,11 +794,7 @@ async function editUser(kennung) {
   
   const user = window.allUsers.find(u => u.kennung === kennung);
   if (!user) {
-    if (window.toast && typeof window.toast.error === 'function') {
-      window.toast.error('Benutzer nicht gefunden!');
-    } else {
-      alert('Benutzer nicht gefunden!');
-    }
+    window.toast.error('Benutzer nicht gefunden!');
     return;
   }
   
@@ -807,15 +808,12 @@ async function editUser(kennung) {
 async function showEditUserForm(kennung) {
   const user = window.allUsers.find(u => u.kennung === kennung);
   if (!user) {
-    if (window.toast && typeof window.toast.error === 'function') {
-      window.toast.error('Benutzer nicht gefunden!');
-    } else {
-      alert('Benutzer nicht gefunden!');
-    }
+    window.toast.error('Benutzer nicht gefunden!');
     return;
   }
   
   const currentEmail = user.email || `${user.kennung}@fh-muenster.de`;
+  const currentPhone = user.phone || '';
   
   const modalHtml = `
     <div class="modal-header">
@@ -838,6 +836,11 @@ async function showEditUserForm(kennung) {
             <label class="form-label">E-Mail Adresse</label>
             <input type="email" id="editUserEmail" class="form-input" value="${currentEmail}">
           </div>
+          <div class="form-group">
+            <label class="form-label">Handynummer</label>
+            <input type="tel" id="editUserPhone" class="form-input" value="${currentPhone}" placeholder="z.B. 0176 12345678">
+            <small>Handynummer wird für Equipment-Ausleihen benötigt</small>
+          </div>
         </div>
         <div class="card-footer">
           ${ButtonFactory.primary('ÄNDERUNGEN SPEICHERN', `updateUser('${kennung}')`)}
@@ -854,23 +857,16 @@ async function updateUser(oldKennung) {
   const newName = document.getElementById('editUserName').value.trim();
   const newKennung = document.getElementById('editUserKennung').value.trim().toLowerCase();
   const newEmail = document.getElementById('editUserEmail').value.trim();
+  const newPhone = document.getElementById('editUserPhone').value.trim();
   
   if (!newName || !newKennung) {
-    if (window.toast && typeof window.toast.warning === 'function') {
-      window.toast.warning('Name und FH-Kennung sind erforderlich!');
-    } else {
-      alert('Name und FH-Kennung sind erforderlich!');
-    }
+    window.toast.warning('Name und FH-Kennung sind erforderlich!');
     return;
   }
   
   // Prüfen ob neue Kennung bereits existiert (außer bei unveränderter Kennung)
   if (newKennung !== oldKennung && window.allUsers && window.allUsers.find(u => u.kennung === newKennung)) {
-    if (window.toast && typeof window.toast.warning === 'function') {
-      window.toast.warning('Diese FH-Kennung wird bereits verwendet!');
-    } else {
-      alert('Diese FH-Kennung wird bereits verwendet!');
-    }
+    window.toast.warning('Diese FH-Kennung wird bereits verwendet!');
     return;
   }
   
@@ -897,6 +893,7 @@ async function updateUser(oldKennung) {
           name: newName,
           kennung: newKennung,
           email: newEmail,
+          phone: newPhone,
           updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
         });
       });
@@ -907,6 +904,7 @@ async function updateUser(oldKennung) {
         name: newName,
         kennung: newKennung,
         email: newEmail,
+        phone: newPhone,
         createdAt: window.firebase.firestore.FieldValue.serverTimestamp(),
         updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
       });
@@ -927,11 +925,7 @@ async function updateUser(oldKennung) {
     
   } catch (error) {
     console.error('Fehler beim Aktualisieren des Benutzers:', error);
-    if (window.toast && typeof window.toast.error === 'function') {
-      window.toast.error('Fehler beim Speichern: ' + error.message);
-    } else {
-      alert('Fehler beim Speichern: ' + error.message);
-    }
+    window.toast.error('Fehler beim Speichern: ' + error.message);
   }
 }
 
@@ -961,6 +955,11 @@ function showAddUserDialog() {
             <label class="form-label">E-Mail Adresse</label>
             <input type="email" id="newUserEmail" class="form-input" placeholder="wird automatisch ausgefüllt">
             <small class="form-hint">Optional - Standard: kennung@fh-muenster.de</small>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Handynummer</label>
+            <input type="tel" id="newUserPhone" class="form-input" placeholder="z.B. 0176 12345678">
+            <small class="form-hint">Optional - wird für Equipment-Ausleihen benötigt</small>
           </div>
         </div>
         <div class="card-footer">
@@ -1008,23 +1007,16 @@ async function createNewUser() {
   const name = document.getElementById('newUserName').value.trim();
   const kennung = document.getElementById('newUserKennung').value.trim().toLowerCase();
   const email = document.getElementById('newUserEmail').value.trim();
+  const phone = document.getElementById('newUserPhone').value.trim();
   
   if (!name || !kennung) {
-    if (window.toast && typeof window.toast.warning === 'function') {
-      window.toast.warning('Name und FH-Kennung sind erforderlich!');
-    } else {
-      alert('Name und FH-Kennung sind erforderlich!');
-    }
+    window.toast.warning('Name und FH-Kennung sind erforderlich!');
     return;
   }
   
   // Prüfen ob Kennung bereits existiert
   if (window.allUsers && window.allUsers.find(u => u.kennung === kennung)) {
-    if (window.toast && typeof window.toast.warning === 'function') {
-      window.toast.warning('Diese FH-Kennung wird bereits verwendet!');
-    } else {
-      alert('Diese FH-Kennung wird bereits verwendet!');
-    }
+    window.toast.warning('Diese FH-Kennung wird bereits verwendet!');
     return;
   }
   
@@ -1034,16 +1026,13 @@ async function createNewUser() {
       name: name,
       kennung: kennung,
       email: email || `${kennung}@fh-muenster.de`,
+      phone: phone,
       createdAt: window.firebase.firestore.FieldValue.serverTimestamp(),
       updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
     });
     
     console.log('Neuer Benutzer erstellt mit ID:', userRef.id);
-    if (window.toast && typeof window.toast.success === 'function') {
-      window.toast.success('Benutzer erfolgreich hinzugefügt!');
-    } else {
-      alert('Benutzer erfolgreich hinzugefügt!');
-    }
+    window.toast.success('Benutzer erfolgreich hinzugefügt!');
     window.closeModal();
     
     // Nutzer-Liste neu laden
@@ -1051,11 +1040,7 @@ async function createNewUser() {
     
   } catch (error) {
     console.error('Fehler beim Erstellen des Benutzers:', error);
-    if (window.toast && typeof window.toast.error === 'function') {
-      window.toast.error('Fehler beim Erstellen: ' + error.message);
-    } else {
-      alert('Fehler beim Erstellen: ' + error.message);
-    }
+    window.toast.error('Fehler beim Erstellen: ' + error.message);
   }
 }
 
@@ -1069,6 +1054,30 @@ function closeEditUserModal() {
     document.getElementById('userManager').classList.add('active');
     loadUsersForManagement();
   }, 100);
+}
+
+// ==================== HELPER FUNCTIONS ====================
+
+/**
+ * Update user in window.allUsers and refresh table if needed
+ */
+function updateUserInList(kennung, updates) {
+  if (window.allUsers) {
+    const userIndex = window.allUsers.findIndex(user => user.kennung === kennung);
+    if (userIndex !== -1) {
+      // Update existing user
+      window.allUsers[userIndex] = { ...window.allUsers[userIndex], ...updates };
+    } else {
+      // Add new user
+      window.allUsers.push(updates);
+    }
+    
+    // Refresh table if user manager is open
+    const userManager = document.getElementById('userManager');
+    if (userManager && userManager.classList.contains('active')) {
+      renderUsersTable(window.allUsers);
+    }
+  }
 }
 
 // ==================== GLOBAL EXPORTS ====================
@@ -1086,6 +1095,8 @@ window.loadUsersForManagement = loadUsersForManagement;
 window.sortUsersBy = sortUsersBy;
 window.showEditUserForm = showEditUserForm; // Export the function
 window.closeEditUserModal = closeEditUserModal;
+window.updateUserInList = updateUserInList;
+window.searchUsers = searchUsers;
 
 // ==================== USER MANAGEMENT MODULE ====================
 
