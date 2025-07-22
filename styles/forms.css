@@ -87,7 +87,7 @@
   font-family: inherit;
   background: white;
   color: #000000;
-  transition: border-color 0.2s ease;
+  transition: none;
   width: 100%;
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -175,7 +175,7 @@
   justify-content: center;
   align-items: center;
   min-height: 80px;
-  transition: all 0.2s ease;
+  transition: none;
 }
 
 .cost-preview.calculating {

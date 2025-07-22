@@ -33,19 +33,32 @@ body {
   display: block;
 }
 
-/* Global Animations */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Global Animations - DISABLED */
+/* All transitions and animations are disabled system-wide */
+
+/* Disable all transitions globally */
+* {
+  transition: none !important;
+  animation: none !important;
 }
 
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.02); }
-  100% { transform: scale(1); }
+/* Disable specific button transitions */
+.btn, .btn *, button, button * {
+  transition: none !important;
+  animation: none !important;
 }
 
-@keyframes slideIn {
-  from { opacity: 0; transform: translateY(-20px) scale(0.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+/* Disable hover transitions */
+*:hover {
+  transition: none !important;
+}
+
+/* Disable focus transitions */
+*:focus {
+  transition: none !important;
+}
+
+/* Disable active transitions */
+*:active {
+  transition: none !important;
 }

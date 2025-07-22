@@ -55,7 +55,7 @@
 
 .data-table tbody tr {
   border-bottom: 2px solid #000000;
-  transition: background-color 0.2s ease;
+  transition: none;
 }
 
 .data-table tbody tr:hover {
@@ -128,7 +128,7 @@
   text-transform: uppercase;
   letter-spacing: 0.3px; /* Weniger Letter-Spacing */
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -271,7 +271,7 @@
     letter-spacing: 0.5px;
     border-radius: 0;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: none;
   }
   
   .data-table .status-unpaid {
