@@ -131,10 +131,10 @@
 .shadow { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
 .shadow-lg { box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
 
-/* Transition Utilities */
-.transition { transition: all 0.2s ease; }
-.transition-fast { transition: all 0.1s ease; }
-.transition-slow { transition: all 0.3s ease; }
+/* Transition Utilities - DISABLED */
+.transition { transition: none !important; }
+.transition-fast { transition: none !important; }
+.transition-slow { transition: none !important; }
 
 /* Cursor Utilities */
 .cursor-pointer { cursor: pointer; }

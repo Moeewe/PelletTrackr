@@ -339,7 +339,12 @@ async function updateProblemStatus(reportId, newStatus) {
  * Delete problem report
  */
 async function deleteProblemReport(reportId) {
-    if (!confirm('Möchten Sie diese Problem-Meldung wirklich löschen?')) {
+    const confirmed = await window.toast.confirm(
+        'Möchten Sie diese Problem-Meldung wirklich löschen?',
+        'Ja, löschen',
+        'Abbrechen'
+    );
+    if (!confirmed) {
         return;
     }
     
@@ -489,6 +494,9 @@ function renderEquipmentRequests(statusFilter = 'all') {
             <div class="request-header">
                 <div class="request-user">
                     <strong>${request.userName}</strong> (${request.userKennung})
+                    ${request.userEmail ? `<br><small>📧 ${request.userEmail}</small>` : ''}
+                    ${request.userPhone ? `<br><small>📱 ${request.userPhone}</small>` : ''}
+                    ${request.requestedBy && request.requestedBy !== request.userName ? `<br><small>Angefordert von: ${request.requestedBy}</small>` : ''}
                 </div>
                 <div class="request-date">${request.requestedAt ? request.requestedAt.toLocaleDateString() : 'Unbekanntes Datum'}</div>
             </div>
@@ -498,6 +506,7 @@ function renderEquipmentRequests(statusFilter = 'all') {
                 <div class="request-duration"><strong>Dauer:</strong> ${getDurationText(request.duration)}</div>
             </div>
             <div class="request-reason"><strong>Zweck:</strong> ${request.purpose || request.reason || 'Nicht angegeben'}</div>
+            ${request.givenBy ? `<div class="request-given"><strong>Ausgegeben von:</strong> ${request.givenBy}${request.giveNote ? ` - ${request.giveNote}` : ''}</div>` : ''}
             
             ${request.status === 'pending' ? `
                 <div class="request-actions">
@@ -637,6 +646,126 @@ async function updateEquipmentRequestStatus(requestId, newStatus) {
  */
 async function markEquipmentAsGiven(requestId) {
     try {
+        // Load all users first
+        if (typeof loadAllUsers === 'function') {
+            await loadAllUsers();
+        }
+        
+        // Show user selection modal with search
+        const modalContent = `
+            <div class="modal-header">
+                <h3>Equipment an Benutzer ausgeben</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form">
+                    <div class="form-group">
+                        <label class="form-label">Benutzer suchen</label>
+                        <input type="text" id="equipmentGiveUserSearch" class="form-input" placeholder="Name oder FH-Kennung eingeben..." onkeyup="filterEquipmentGiveUsers()">
+                        <div id="equipmentGiveUserResults" class="user-search-results" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; margin-top: 5px; display: none;"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Ausgewählter Benutzer</label>
+                        <input type="text" id="equipmentGiveUserDisplay" class="form-input" placeholder="Benutzer über Suche auswählen..." readonly>
+                        <input type="hidden" id="equipmentGiveUser" value="">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Notiz (optional)</label>
+                        <textarea id="equipmentGiveNote" class="form-textarea" placeholder="Zusätzliche Notizen zur Ausgabe..." rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+                <button class="btn btn-primary" onclick="confirmMarkEquipmentAsGiven('${requestId}')">Equipment ausgeben</button>
+            </div>
+        `;
+        
+        showModalWithContent(modalContent);
+        
+    } catch (error) {
+        console.error('Error showing equipment give modal:', error);
+        showToast('Fehler beim Öffnen des Ausgabe-Dialogs', 'error');
+    }
+}
+
+/* REMOVED: showAdminEquipmentLoan function */
+
+/* REMOVED: filterAdminUsers function */
+
+/* REMOVED: selectAdminUser function */
+
+/* REMOVED: loadAdminEquipmentOptions function */
+
+/* REMOVED: submitAdminEquipmentLoan function */
+
+/**
+ * Filter users for equipment give modal
+ */
+function filterEquipmentGiveUsers() {
+    const searchTerm = document.getElementById('equipmentGiveUserSearch').value.toLowerCase();
+    const resultsDiv = document.getElementById('equipmentGiveUserResults');
+    
+    if (!searchTerm || !window.allUsers) {
+        resultsDiv.style.display = 'none';
+        return;
+    }
+    
+    const filteredUsers = window.allUsers.filter(user => 
+        user.name.toLowerCase().includes(searchTerm) || 
+        user.kennung.toLowerCase().includes(searchTerm)
+    ).slice(0, 10); // Limit to 10 results
+    
+    if (filteredUsers.length === 0) {
+        resultsDiv.innerHTML = '<div class="no-results">Keine Benutzer gefunden</div>';
+        resultsDiv.style.display = 'block';
+        return;
+    }
+    
+    resultsDiv.innerHTML = filteredUsers.map(user => `
+        <div class="user-result-item" onclick="selectEquipmentGiveUser('${user.kennung}', '${user.name}', '${user.email || ''}', '${user.phone || ''}')">
+            <strong>${user.name}</strong> (${user.kennung})
+            ${user.email ? `<br><small>📧 ${user.email}</small>` : ''}
+            ${user.phone ? `<br><small>📱 ${user.phone}</small>` : ''}
+        </div>
+    `).join('');
+    
+    resultsDiv.style.display = 'block';
+}
+
+/**
+ * Select user in equipment give modal
+ */
+function selectEquipmentGiveUser(kennung, name, email, phone) {
+    document.getElementById('equipmentGiveUserSearch').value = '';
+    document.getElementById('equipmentGiveUserDisplay').value = `${name} (${kennung})`;
+    document.getElementById('equipmentGiveUser').value = kennung;
+    document.getElementById('equipmentGiveUserResults').style.display = 'none';
+    
+    // Store selected user data
+    window.selectedEquipmentGiveUser = { kennung, name, email, phone };
+}
+
+/**
+ * Confirm marking equipment as given with selected user
+ */
+async function confirmMarkEquipmentAsGiven(requestId) {
+    try {
+        const selectedUserKennung = document.getElementById('equipmentGiveUser').value;
+        const note = document.getElementById('equipmentGiveNote').value;
+        
+        if (!selectedUserKennung) {
+            showToast('Bitte einen Benutzer auswählen', 'error');
+            return;
+        }
+        
+        // Find selected user
+        const selectedUser = window.allUsers ? window.allUsers.find(user => user.kennung === selectedUserKennung) : null;
+        if (!selectedUser) {
+            showToast('Ausgewählter Benutzer nicht gefunden', 'error');
+            return;
+        }
+        
         // Immediate visual feedback
         const requestElement = document.querySelector(`[onclick*="markEquipmentAsGiven('${requestId}')"]`)?.closest('.request-item');
         if (requestElement) {
@@ -654,18 +783,26 @@ async function markEquipmentAsGiven(requestId) {
         const equipmentId = requestData.equipmentId;
         
         // Debug logging to identify collection mismatch
-        console.log('🔍 markEquipmentAsGiven Debug:', {
+        console.log('🔍 confirmMarkEquipmentAsGiven Debug:', {
             requestId,
             equipmentId,
+            selectedUser,
             requestData,
             willUpdateEquipment: !!equipmentId
         });
         
-        // Update request status
+        // Update request status with new user info
         await window.db.collection('requests').doc(requestId).update({
             status: 'given',
             givenAt: firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            // Update user info if different from original request
+            userName: selectedUser.name,
+            userKennung: selectedUser.kennung,
+            userEmail: selectedUser.email || '',
+            givenBy: window.currentUser?.name || 'Admin',
+            givenByKennung: window.currentUser?.kennung || '',
+            giveNote: note || ''
         });
         
         // Mark equipment as rented
@@ -675,7 +812,8 @@ async function markEquipmentAsGiven(requestId) {
             if (equipmentDoc.exists) {
                 await window.db.collection('equipment').doc(equipmentId).update({
                     status: 'rented',
-                    rentedBy: requestData.userName,
+                    rentedBy: selectedUser.name,
+                    rentedByKennung: selectedUser.kennung,
                     rentedAt: firebase.firestore.FieldValue.serverTimestamp(),
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
@@ -695,7 +833,8 @@ async function markEquipmentAsGiven(requestId) {
             }
         }
         
-        showToast('Equipment als ausgegeben markiert', 'success');
+        closeModal();
+        showToast(`Equipment erfolgreich an ${selectedUser.name} ausgegeben`, 'success');
         
         // Small delay then refresh to ensure new state is visible
         setTimeout(() => {
@@ -706,7 +845,7 @@ async function markEquipmentAsGiven(requestId) {
         }, 500);
         
     } catch (error) {
-        console.error('Error marking equipment as given:', error);
+        console.error('Error confirming equipment as given:', error);
         showToast('Fehler beim Markieren als ausgegeben', 'error');
     }
 }
@@ -769,7 +908,12 @@ async function markEquipmentAsReturned(requestId) {
  * Delete equipment request and restore equipment availability
  */
 async function deleteEquipmentRequest(requestId) {
-    if (!confirm('Möchten Sie diese Equipment-Anfrage wirklich löschen?')) {
+    const confirmed = await window.toast.confirm(
+        'Möchten Sie diese Equipment-Anfrage wirklich löschen?',
+        'Ja, löschen',
+        'Abbrechen'
+    );
+    if (!confirmed) {
         return;
     }
     
@@ -878,8 +1022,12 @@ window.closeEquipmentRequests = closeEquipmentRequests;
 window.loadEquipmentRequests = loadEquipmentRequests;
 window.updateEquipmentRequestStatus = updateEquipmentRequestStatus;
 window.markEquipmentAsGiven = markEquipmentAsGiven;
+window.confirmMarkEquipmentAsGiven = confirmMarkEquipmentAsGiven;
 window.markEquipmentAsReturned = markEquipmentAsReturned;
 window.deleteEquipmentRequest = deleteEquipmentRequest;
 window.clearEquipmentFilter = clearEquipmentFilter;
+window.filterEquipmentGiveUsers = filterEquipmentGiveUsers;
+window.selectEquipmentGiveUser = selectEquipmentGiveUser;
+/* REMOVED: Admin Equipment Loan global exports */
 
 console.log('🚨 Admin Problem Reports Module loaded'); 

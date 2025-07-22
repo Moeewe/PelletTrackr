@@ -820,7 +820,12 @@ async function approveOrderRequest(requestId) {
  * Reject order request
  */
 async function rejectOrderRequest(requestId) {
-    if (!confirm('Möchten Sie diese Anfrage wirklich ablehnen?')) {
+    const confirmed = await window.toast.confirm(
+        'Möchten Sie diese Anfrage wirklich ablehnen?',
+        'Ja, ablehnen',
+        'Abbrechen'
+    );
+    if (!confirmed) {
         return;
     }
     
@@ -856,7 +861,12 @@ async function rejectOrderRequest(requestId) {
  * Delete order request  
  */
 async function deleteOrderRequest(requestId) {
-    if (!confirm('Möchten Sie diese Bestellung wirklich löschen?')) {
+    const confirmed = await window.toast.confirm(
+        'Möchten Sie diese Bestellung wirklich löschen?',
+        'Ja, löschen',
+        'Abbrechen'
+    );
+    if (!confirmed) {
         return;
     }
     

@@ -2,29 +2,39 @@
 // Laden von Materialien, Masterbatches und Druckern aus Firestore
 
 // Materialien laden (direkt aus Firestore)
-async function loadMaterials() {
+async function loadMaterials(printerType = null) {
   const select = document.getElementById("material");
   if (!select) return;
   
   select.innerHTML = '<option value="">Lade Materialien...</option>';
   
-  console.log("🔄 Lade Materialien...");
+  console.log("🔄 Lade Materialien...", printerType ? `(Filter: ${printerType})` : "(alle)");
   
   try {
-    const snapshot = await window.db.collection("materials").get();
+    let query = window.db.collection("materials");
+    
+    // Filtere nach Material-Typ wenn Drucker ausgewählt ist
+    if (printerType) {
+      query = query.where("type", "==", printerType);
+      console.log(`🔍 Filtere Materialien für ${printerType === 'pellet' ? 'Pellet' : 'Filament'}-Drucker`);
+    }
+    
+    const snapshot = await query.get();
     console.log("📊 Materials-Snapshot:", snapshot.size, "Dokumente");
     
     select.innerHTML = '<option value="">Material auswählen... (optional)</option>';
     
     if (snapshot.empty) {
-      console.log("⚠️ Keine Materialien gefunden");
-      select.innerHTML = '<option value="">Keine Materialien verfügbar</option>';
+      console.log("⚠️ Keine passenden Materialien gefunden");
+      select.innerHTML = printerType ? 
+        `<option value="">Keine ${printerType === 'pellet' ? 'Pellet' : 'Filament'}-Materialien verfügbar</option>` :
+        '<option value="">Keine Materialien verfügbar</option>';
       return;
     }
     
     snapshot.forEach(doc => {
       const material = doc.data();
-      console.log("➕ Material:", material.name, "Preis:", material.price);
+      console.log("➕ Material:", material.name, "Typ:", material.type, "Preis:", material.price);
       const option = document.createElement("option");
       option.value = material.name;
       option.textContent = `${material.name} (${material.price.toFixed(2)} ${(material.currency || '€')}/kg)`;
@@ -78,15 +88,50 @@ async function loadMasterbatches() {
 }
 
 // Drucker laden (direkt aus Firestore)
-async function loadPrinters() {
-  const select = document.getElementById("printer");
-  if (!select) return;
-  
-  select.innerHTML = '<option value="">Lade Drucker...</option>';
-  
-  console.log("🔄 Lade Drucker...");
+async function loadFormPrinters() {
+  console.log("🔄 loadPrinters() gestartet - Version 3.0");
   
   try {
+    // Warte bis DOM bereit ist
+    let select = document.getElementById("printer");
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    console.log("🔍 Initiale DOM-Prüfung - select element:", select ? "gefunden" : "nicht gefunden");
+    
+    while (!select && attempts < maxAttempts) {
+      console.log(`⏳ Warte auf printer select element... (${attempts + 1}/${maxAttempts})`);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      select = document.getElementById("printer");
+      attempts++;
+    }
+    
+    if (!select) {
+      console.error("❌ Printer select element nach", maxAttempts, "Versuchen nicht gefunden");
+      console.log("🔍 Verfügbare Elemente mit 'printer' im Namen:");
+      const allElements = document.querySelectorAll('*');
+      allElements.forEach(el => {
+        if (el.id && el.id.includes('printer')) {
+          console.log("  -", el.id, el.tagName);
+        }
+      });
+      return Promise.resolve();
+    }
+    
+    console.log("✅ Printer select element gefunden:", select);
+    console.log("📋 Aktuelle Optionen vor Laden:", select.options.length);
+    
+    select.innerHTML = '<option value="">Lade Drucker...</option>';
+    
+    console.log("🔄 Lade Drucker aus Firebase...");
+    
+    if (!window.db) {
+      console.error("❌ Firebase nicht verfügbar");
+      select.innerHTML = '<option value="">Firebase nicht verfügbar</option>';
+      return Promise.resolve();
+    }
+    
+    console.log("📡 Firebase-Verbindung verfügbar, hole Drucker-Daten...");
     const snapshot = await window.db.collection("printers").get();
     console.log("📊 Printers-Snapshot:", snapshot.size, "Dokumente");
     
@@ -95,24 +140,68 @@ async function loadPrinters() {
     if (snapshot.empty) {
       console.log("⚠️ Keine Drucker gefunden");
       select.innerHTML = '<option value="">Keine Drucker verfügbar</option>';
-      return;
+      return Promise.resolve();
     }
+    
+    console.log("🔄 Erstelle Drucker-Optionen...");
+    let loadedCount = 0;
     
     snapshot.forEach(doc => {
       const printer = doc.data();
-      console.log("➕ Drucker:", printer.name, "Preis/Stunde:", printer.pricePerHour);
+      console.log("➕ Verarbeite Drucker:", printer.name, "Preis/Stunde:", printer.pricePerHour, "Typ:", printer.type);
+      
       const option = document.createElement("option");
       option.value = printer.name;
       option.dataset.pricePerHour = printer.pricePerHour || 0;
+      option.dataset.type = printer.type || '';
       option.textContent = `${printer.name}${printer.pricePerHour ? ` (${printer.pricePerHour.toFixed(2)}€/h)` : ''}`;
+      
+      console.log(`📝 Erstelle Option: "${option.textContent}" (value: "${option.value}", pricePerHour: ${option.dataset.pricePerHour})`);
+      
       select.appendChild(option);
+      loadedCount++;
+      
+      console.log(`✅ Option ${loadedCount} hinzugefügt`);
     });
     
-    console.log("✅ Drucker erfolgreich geladen!");
+    console.log(`✅ ${loadedCount} Drucker erfolgreich geladen!`);
+    
+    // Überprüfe, ob die Optionen tatsächlich hinzugefügt wurden
+    const options = select.querySelectorAll('option');
+    console.log(`🔍 Überprüfung: ${options.length} Optionen im Select gefunden`);
+    
+    // Detaillierte Überprüfung der Optionen
+    for (let i = 0; i < options.length; i++) {
+      const option = options[i];
+      console.log(`  Option ${i}: "${option.textContent}" (value: "${option.value}", pricePerHour: ${option.dataset.pricePerHour})`);
+    }
+    
+    if (options.length <= 1) {
+      console.warn("⚠️ Nur Standard-Option gefunden, Drucker wurden nicht hinzugefügt");
+      console.log("🔍 Debug: Select-InnerHTML:", select.innerHTML);
+    } else {
+      console.log("✅ Drucker-Optionen erfolgreich hinzugefügt!");
+    }
+    
+    // Trigger change event für Kostenvorschau
+    setTimeout(() => {
+      if (typeof window.updateCostPreview === 'function') {
+        window.updateCostPreview();
+      }
+    }, 100);
+    
+    return Promise.resolve();
     
   } catch (e) {
     console.error("❌ Fehler beim Laden der Drucker:", e);
-    select.innerHTML = '<option value="">Fehler beim Laden</option>';
+    console.error("❌ Fehler-Details:", e.message, e.stack);
+    
+    const select = document.getElementById("printer");
+    if (select) {
+      select.innerHTML = '<option value="">Fehler beim Laden</option>';
+    }
+    
+    return Promise.reject(e);
   }
 }
 
@@ -166,17 +255,30 @@ function setupFormEventListeners() {
   const printerSelect = document.getElementById("printer");
   if (printerSelect) {
     printerSelect.addEventListener("change", function() {
-      // Store price in dataset for cost calculation
+      console.log("🖨️ Printer selection changed");
       const selectedOption = this.options[this.selectedIndex];
       if (selectedOption && selectedOption.value) {
         const printerName = selectedOption.value;
-        // Find printer price from printers collection
-        window.db.collection("printers").where("name", "==", printerName).get().then(snapshot => {
-          if (!snapshot.empty) {
-            const printer = snapshot.docs[0].data();
-            this.dataset.pricePerHour = printer.pricePerHour || 0;
-          }
-        });
+        const pricePerHour = selectedOption.dataset.pricePerHour;
+        const printerType = selectedOption.dataset.type;
+        console.log("💰 Selected printer:", printerName, "Price per hour:", pricePerHour, "Type:", printerType);
+        
+        // Store price in dataset for cost calculation
+        this.dataset.pricePerHour = pricePerHour || 0;
+        this.dataset.type = printerType || '';
+        
+        // Filter materials based on printer type
+        if (printerType) {
+          console.log(`🔄 Filtere Materialien für ${printerType === 'pellet' ? 'Pellet' : 'Filament'}-Drucker`);
+          loadMaterials(printerType);
+        } else {
+          console.log("🔄 Lade alle Materialien (kein Drucker-Typ)");
+          loadMaterials();
+        }
+      } else {
+        // No printer selected, load all materials
+        console.log("🔄 Lade alle Materialien (kein Drucker ausgewählt)");
+        loadMaterials();
       }
       if (typeof window.updateCostPreview === 'function') {
         window.updateCostPreview();
@@ -225,20 +327,89 @@ function setupFormEventListeners() {
 
 // Alle Formulardaten laden
 async function loadAllFormData() {
-  await Promise.all([
-    loadMaterials(),
-    loadMasterbatches(),
-    loadPrinters()
-  ]);
+  console.log("🔄 Starte loadAllFormData...");
   
-  // Setup event listeners after data is loaded
-  setupFormEventListeners();
-  
-  // Initial cost preview update
-  if (typeof window.updateCostPreview === 'function') {
-    setTimeout(() => {
-      window.updateCostPreview();
-    }, 500);
+                    try {
+                    // Lade Materialien
+                    console.log("📦 Lade Materialien...");
+                    await loadMaterials(); // Lade alle Materialien initial
+    
+    // Lade Masterbatches
+    console.log("📦 Lade Masterbatches...");
+    await loadMasterbatches();
+    
+    // Lade Drucker
+    console.log("📦 Lade Drucker...");
+    console.log("🔄 Rufe loadPrinters() auf...");
+    
+    // Überprüfe, ob loadFormPrinters existiert
+    if (typeof loadFormPrinters !== 'function') {
+      console.error("❌ loadFormPrinters ist keine Funktion!");
+      console.log("Verfügbare Funktionen:", Object.keys(window).filter(key => key.includes('load')));
+    } else {
+      console.log("✅ loadFormPrinters Funktion gefunden");
+    }
+    
+    // Direkte Überprüfung vor dem Aufruf
+    console.log("🔍 Überprüfe DOM vor loadPrinters...");
+    const printerSelect = document.getElementById("printer");
+    console.log("Printer select gefunden:", !!printerSelect);
+    if (printerSelect) {
+      console.log("Printer select options:", printerSelect.options.length);
+    }
+    
+    try {
+      console.log("🚀 Starte loadPrinters() Aufruf...");
+      const result = await loadFormPrinters();
+      console.log("✅ loadFormPrinters() erfolgreich abgeschlossen:", result);
+      
+      // Überprüfe nach dem Laden
+      console.log("🔍 Überprüfe DOM nach loadPrinters...");
+      const printerSelectAfter = document.getElementById("printer");
+      if (printerSelectAfter) {
+        console.log("Printer select options nach Laden:", printerSelectAfter.options.length);
+        for (let i = 0; i < printerSelectAfter.options.length; i++) {
+          const option = printerSelectAfter.options[i];
+          console.log(`Option ${i}: "${option.textContent}"`);
+        }
+      }
+      
+    } catch (printerError) {
+      console.error("❌ Erster Drucker-Load fehlgeschlagen:", printerError);
+      console.log("🔄 Versuche Wiederholung...");
+      try {
+        await window.retryLoadPrinters(2);
+      } catch (retryError) {
+        console.error("❌ Auch Wiederholung fehlgeschlagen:", retryError);
+      }
+    }
+    
+    console.log("✅ Alle Daten geladen, setup Event Listeners...");
+    
+    // Setup event listeners after data is loaded
+    setupFormEventListeners();
+    
+    // Initial cost preview update
+    if (typeof window.updateCostPreview === 'function') {
+      setTimeout(() => {
+        window.updateCostPreview();
+      }, 500);
+    }
+    
+    console.log("✅ loadAllFormData abgeschlossen");
+    
+  } catch (error) {
+    console.error("❌ Fehler in loadAllFormData:", error);
+    
+    // Fallback: Versuche Drucker einzeln zu laden
+    console.log("🔄 Fallback: Versuche Drucker einzeln zu laden...");
+    try {
+      await loadFormPrinters();
+    } catch (printerError) {
+      console.error("❌ Auch Fallback fehlgeschlagen:", printerError);
+    }
+    
+    throw error;
   }
 }
 
@@ -287,6 +458,7 @@ async function loadMaterialsForManagement() {
             <thead>
               <tr>
                 <th onclick="sortMaterials('name')">Name</th>
+                <th onclick="sortMaterials('type')">Typ</th>
                 <th onclick="sortMaterials('manufacturer')">Hersteller</th>
                 <th onclick="sortMaterials('netPrice')">EK Netto €/kg</th>
                 <th onclick="sortMaterials('grossPrice')">EK Brutto €/kg</th>
@@ -324,6 +496,7 @@ async function loadMaterialsForManagement() {
       containerHtml += `
         <tr id="material-row-${doc.id}">
           <td><span class="cell-value">${material.name}</span></td>
+          <td><span class="cell-value">${material.type === 'pellet' ? 'Pellets' : material.type === 'filament' ? 'Filament' : 'Unbekannt'}</span></td>
           <td><span class="cell-value">${material.manufacturer || 'Unbekannt'}</span></td>
           <td><span class="cell-value">${window.formatCurrency(netPrice)}</span></td>
           <td><span class="cell-value">${window.formatCurrency(grossPrice)}</span></td>
@@ -542,13 +715,14 @@ async function loadMasterbatchesForManagement() {
 
 async function addMaterial() {
   const name = document.getElementById('newMaterialName').value.trim();
+  const type = document.getElementById('newMaterialType').value;
   const manufacturer = document.getElementById('newMaterialManufacturer').value.trim();
   const netPrice = parseFloat(document.getElementById('newMaterialNetPrice').value);
   const taxRate = parseFloat(document.getElementById('newMaterialTaxRate').value) || 19;
   const markup = parseFloat(document.getElementById('newMaterialMarkup').value) || 30;
   
-  if (!name || isNaN(netPrice) || netPrice <= 0) {
-    showToast('Bitte gültigen Namen und EK-Netto-Preis eingeben!', 'warning');
+  if (!name || !type || isNaN(netPrice) || netPrice <= 0) {
+    showToast('Bitte gültigen Namen, Typ und EK-Netto-Preis eingeben!', 'warning');
     return;
   }
   
@@ -558,6 +732,7 @@ async function addMaterial() {
   try {
     await window.db.collection('materials').add({
       name: name,
+      type: type,
       manufacturer: manufacturer || 'Unbekannt',
       netPrice: netPrice,
       taxRate: taxRate,
@@ -569,6 +744,7 @@ async function addMaterial() {
     
     showToast('Material erfolgreich hinzugefügt!', 'success');
     document.getElementById('newMaterialName').value = '';
+    document.getElementById('newMaterialType').value = '';
     document.getElementById('newMaterialManufacturer').value = '';
     document.getElementById('newMaterialNetPrice').value = '';
     document.getElementById('newMaterialTaxRate').value = '19';
@@ -803,9 +979,19 @@ async function showEditMaterialForm(materialId, material) {
               <label class="form-label">Name</label>
               <input type="text" id="editMaterialName" class="form-input" value="${material.name}" required>
             </div>
-            <div class="form-group">
-              <label class="form-label">Hersteller</label>
-              <input type="text" id="editMaterialManufacturer" class="form-input" value="${material.manufacturer || ''}">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Typ</label>
+                <select id="editMaterialType" class="form-select" required>
+                  <option value="">Typ auswählen...</option>
+                  <option value="pellet" ${material.type === 'pellet' ? 'selected' : ''}>Pellets</option>
+                  <option value="filament" ${material.type === 'filament' ? 'selected' : ''}>Filament</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Hersteller</label>
+                <input type="text" id="editMaterialManufacturer" class="form-input" value="${material.manufacturer || ''}">
+              </div>
             </div>
             <div class="form-row">
               <div class="form-group">
@@ -884,13 +1070,14 @@ function closeEditMasterbatchModal() {
 
 async function updateMaterial(materialId) {
   const name = document.getElementById('editMaterialName').value.trim();
+  const type = document.getElementById('editMaterialType').value;
   const manufacturer = document.getElementById('editMaterialManufacturer').value.trim();
   const netPrice = parseFloat(document.getElementById('editMaterialNetPrice').value);
   const taxRate = parseFloat(document.getElementById('editMaterialTaxRate').value) || 19;
   const markup = parseFloat(document.getElementById('editMaterialMarkup').value) || 30;
   
-  if (!name || isNaN(netPrice) || netPrice <= 0) {
-    showToast('Bitte gültigen Namen und EK-Netto-Preis eingeben!', 'warning');
+  if (!name || !type || isNaN(netPrice) || netPrice <= 0) {
+    showToast('Bitte gültigen Namen, Typ und EK-Netto-Preis eingeben!', 'warning');
     return;
   }
   
@@ -900,6 +1087,7 @@ async function updateMaterial(materialId) {
   try {
     await window.db.collection('materials').doc(materialId).update({
       name: name,
+      type: type,
       manufacturer: manufacturer || 'Unbekannt',
       netPrice: netPrice,
       taxRate: taxRate,
@@ -1081,7 +1269,7 @@ window.showEditMasterbatchForm = showEditMasterbatchForm;
 // Loading functions global verfügbar machen
 window.loadMaterials = loadMaterials;
 window.loadMasterbatches = loadMasterbatches;
-window.loadPrinters = loadPrinters;
+window.loadPrinters = loadFormPrinters; // Alias for backward compatibility
 window.loadAllFormData = loadAllFormData;
 window.setupFormEventListeners = setupFormEventListeners;
 window.loadMaterialsForManagement = loadMaterialsForManagement;
@@ -1102,4 +1290,204 @@ window.deleteMaterial = deleteMaterial;
 window.deleteMasterbatch = deleteMasterbatch;
 
 console.log("🏭 Material Loading Module geladen");
+
+// Test-Funktion für manuelles Laden der Drucker
+window.testLoadPrinters = async function() {
+  console.log("🧪 Teste loadPrinters...");
+  try {
+    await loadFormPrinters();
+    console.log("✅ loadPrinters Test erfolgreich");
+  } catch (error) {
+    console.error("❌ loadPrinters Test fehlgeschlagen:", error);
+  }
+};
+
+// Debug-Funktion für manuelle Tests
+window.debugFormLoading = async function() {
+  console.log("🔍 Debug: Form Loading Status");
+  console.log("Firebase verfügbar:", !!window.db);
+  console.log("loadAllFormData verfügbar:", typeof loadAllFormData === 'function');
+  console.log("loadPrinters verfügbar:", typeof loadFormPrinters === 'function');
+  console.log("Printer select element:", document.getElementById("printer"));
+  
+  if (window.db) {
+    try {
+      const snapshot = await window.db.collection("printers").get();
+      console.log("Drucker in DB:", snapshot.size);
+      snapshot.forEach(doc => {
+        console.log("Drucker:", doc.data());
+      });
+    } catch (error) {
+      console.error("Fehler beim DB-Zugriff:", error);
+    }
+  }
+};
+
+// Manuelles Laden der Drucker (für Notfall)
+window.forceLoadPrinters = async function() {
+  console.log("🚨 Force Load Printers...");
+  try {
+    await loadFormPrinters();
+    console.log("✅ Drucker manuell geladen");
+  } catch (error) {
+    console.error("❌ Manuelles Laden fehlgeschlagen:", error);
+  }
+};
+
+// Test-Funktion für Drucker-Daten
+window.testPrinterData = async function() {
+  console.log("🧪 Teste Drucker-Daten...");
+  
+  try {
+    const snapshot = await window.db.collection("printers").get();
+    console.log("📊 Drucker in Datenbank:", snapshot.size);
+    
+    snapshot.forEach(doc => {
+      const printer = doc.data();
+      console.log(`🖨️ ${printer.name}:`, {
+        id: doc.id,
+        name: printer.name,
+        pricePerHour: printer.pricePerHour,
+        status: printer.status
+      });
+    });
+    
+    // Teste Select-Element
+    const select = document.getElementById("printer");
+    if (select) {
+      console.log("📋 Select-Element gefunden:", select.options.length, "Optionen");
+      for (let i = 0; i < select.options.length; i++) {
+        const option = select.options[i];
+        console.log(`Option ${i}: ${option.textContent}, value: ${option.value}, pricePerHour: ${option.dataset.pricePerHour}`);
+      }
+    } else {
+      console.log("❌ Select-Element nicht gefunden");
+    }
+    
+  } catch (error) {
+    console.error("❌ Fehler beim Testen der Drucker-Daten:", error);
+  }
+};
+
+// Direkte Test-Funktion für loadFormPrinters
+window.testLoadPrintersDirect = async function() {
+  console.log("🧪 Direkter Test von loadFormPrinters...");
+  
+  try {
+    // Teste DOM-Element
+    const select = document.getElementById("printer");
+    console.log("1. DOM-Element:", select ? "✅ Gefunden" : "❌ Nicht gefunden");
+    
+    if (select) {
+      console.log("   - Tag:", select.tagName);
+      console.log("   - ID:", select.id);
+      console.log("   - Aktuelle Optionen:", select.options.length);
+    }
+    
+    // Teste Firebase
+    console.log("2. Firebase:", window.db ? "✅ Verfügbar" : "❌ Nicht verfügbar");
+    
+    // Teste Funktion
+    console.log("3. loadFormPrinters Funktion:", typeof loadFormPrinters === 'function' ? "✅ Verfügbar" : "❌ Nicht verfügbar");
+    
+    // Rufe loadFormPrinters direkt auf
+    if (typeof loadFormPrinters === 'function') {
+      console.log("4. Rufe loadFormPrinters() auf...");
+      const result = await loadFormPrinters();
+      console.log("5. Ergebnis:", result);
+      
+      // Überprüfe Ergebnis
+      const selectAfter = document.getElementById("printer");
+      if (selectAfter) {
+        console.log("6. Optionen nach Aufruf:", selectAfter.options.length);
+        for (let i = 0; i < selectAfter.options.length; i++) {
+          const option = selectAfter.options[i];
+          console.log(`   Option ${i}: "${option.textContent}"`);
+        }
+      }
+    }
+    
+  } catch (error) {
+    console.error("❌ Fehler im direkten Test:", error);
+  }
+};
+
+// Diagnose-Funktion für Drucker-Problem
+window.diagnosePrinterProblem = function() {
+  console.log("🔍 Diagnose: Drucker-Auswahl-Problem");
+  
+  // 1. Prüfe DOM-Element
+  const select = document.getElementById("printer");
+  console.log("1. DOM-Element:", select ? "✅ Gefunden" : "❌ Nicht gefunden");
+  
+  if (select) {
+    console.log("   - Tag:", select.tagName);
+    console.log("   - ID:", select.id);
+    console.log("   - Sichtbar:", select.offsetParent !== null);
+    console.log("   - Optionen:", select.options.length);
+    
+    // Detaillierte Optionen-Überprüfung
+    console.log("   - Optionen-Details:");
+    for (let i = 0; i < select.options.length; i++) {
+      const option = select.options[i];
+      console.log(`     ${i}: "${option.textContent}" (value: "${option.value}", pricePerHour: ${option.dataset.pricePerHour})`);
+    }
+  }
+  
+  // 2. Prüfe Firebase
+  console.log("2. Firebase:", window.db ? "✅ Verfügbar" : "❌ Nicht verfügbar");
+  
+  // 3. Prüfe Funktionen
+  console.log("3. Funktionen:");
+      console.log("   - loadFormPrinters:", typeof loadFormPrinters === 'function' ? "✅ Verfügbar" : "❌ Nicht verfügbar");
+  console.log("   - updateCostPreview:", typeof window.updateCostPreview === 'function' ? "✅ Verfügbar" : "❌ Nicht verfügbar");
+  
+  // 4. Prüfe Event Listeners
+  if (select) {
+    const listeners = getEventListeners ? getEventListeners(select) : "Nicht verfügbar";
+    console.log("4. Event Listeners:", listeners);
+  }
+  
+  // 5. Prüfe andere Elemente mit ähnlichen IDs
+  const allElements = document.querySelectorAll('*');
+  const printerElements = [];
+  allElements.forEach(el => {
+    if (el.id && el.id.includes('printer')) {
+      printerElements.push({id: el.id, tag: el.tagName});
+    }
+  });
+  console.log("5. Andere printer-Elemente:", printerElements);
+  
+  return {
+    selectFound: !!select,
+    firebaseAvailable: !!window.db,
+    loadPrintersAvailable: typeof loadPrinters === 'function',
+    updateCostPreviewAvailable: typeof window.updateCostPreview === 'function'
+  };
+};
+
+// Automatische Wiederholung für Drucker-Loading
+window.retryLoadPrinters = async function(maxRetries = 3) {
+  console.log("🔄 Retry Load Printers...");
+  
+  for (let i = 0; i < maxRetries; i++) {
+    console.log(`🔄 Versuch ${i + 1}/${maxRetries}...`);
+    
+    try {
+      await loadFormPrinters();
+      console.log("✅ Drucker erfolgreich geladen!");
+      return true;
+    } catch (error) {
+      console.error(`❌ Versuch ${i + 1} fehlgeschlagen:`, error);
+      
+      if (i < maxRetries - 1) {
+        console.log("⏳ Warte 1 Sekunde vor nächstem Versuch...");
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+  }
+  
+  console.error("❌ Alle Versuche fehlgeschlagen");
+  return false;
+};
 

@@ -15,7 +15,7 @@
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: none;
   padding: 20px;
   box-sizing: border-box;
 }
@@ -31,7 +31,7 @@
   max-width: 420px;
   width: 100%;
   transform: scale(0.95);
-  transition: transform 0.2s ease;
+  transition: none;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
@@ -177,7 +177,7 @@
   align-items: center;
   justify-content: center;
       border-radius: 0;
-  transition: all 0.2s ease;
+  transition: none;
 }
 
 .modal-body {
@@ -407,7 +407,7 @@
   border: 2px solid #000000;
   padding: 20px;
   border-radius: 0;
-  transition: all 0.2s ease;
+  transition: none;
 }
 
 .printer-item:hover {
@@ -512,7 +512,7 @@
   border-radius: 0;
   font-size: 15px;
   background: white;
-  transition: border-color 0.2s ease;
+  transition: none;
   color: #000;
 }
 
@@ -646,6 +646,8 @@
     margin: 0;
     padding: 16px 20px;
     font-size: 16px;
+    transition: none !important;
+    animation: none !important;
   }
   
   /* Mobile Detail Layout Adjustments */
@@ -702,32 +704,38 @@
 }
 
 /* ==================== ANIMATIONS ==================== */
+/* ALL ANIMATIONS DISABLED - No transitions or animations allowed */
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+/* Keyframe animations removed - no animations allowed */
+
+/* ==================== MODAL BUTTON ANIMATIONS DISABLED ==================== */
+
+/* Disable all animations for modal buttons */
+.modal .btn,
+.modal button,
+.modal-footer .btn,
+.modal-actions .btn {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
 }
 
-@keyframes slideIn {
-  from { 
-    transform: translateY(-30px) scale(0.95);
-    opacity: 0;
-  }
-  to { 
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
+.modal .btn:hover,
+.modal button:hover,
+.modal-footer .btn:hover,
+.modal-actions .btn:hover {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
 }
 
-@keyframes slideInMobile {
-  from { 
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  to { 
-    transform: translateY(0);
-    opacity: 1;
-  }
+.modal .btn:active,
+.modal button:active,
+.modal-footer .btn:active,
+.modal-actions .btn:active {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
 }
 
 /* ==================== MODAL Z-INDEX MANAGEMENT ==================== */

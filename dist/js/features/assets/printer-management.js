@@ -191,6 +191,10 @@ function renderPrinterGrid() {
             
             <div class="printer-details">
                 <div class="printer-detail">
+                    <span class="printer-detail-label">Typ:</span>
+                    <span class="printer-detail-value">${printer.type === 'pellet' ? 'Pellet Drucker' : printer.type === 'filament' ? 'Filament Drucker' : 'Nicht angegeben'}</span>
+                </div>
+                <div class="printer-detail">
                     <span class="printer-detail-label">Bauraum:</span>
                     <span class="printer-detail-value">${printer.buildVolume || 'Nicht angegeben'}</span>
                 </div>
@@ -211,14 +215,14 @@ function renderPrinterGrid() {
             </div>
             
             <div class="printer-actions">
+                <button class="btn btn-secondary btn-small" onclick="changePrinterStatus('${printer.id}')">
+                    Status ändern
+                </button>
                 <button class="btn btn-secondary btn-small" onclick="editPrinter('${printer.id}')">
                     Bearbeiten
                 </button>
                 <button class="btn btn-info btn-small" onclick="duplicatePrinter('${printer.id}')">
                     Duplizieren
-                </button>
-                <button class="btn btn-primary btn-small" onclick="changePrinterStatus('${printer.id}')">
-                    Status ändern
                 </button>
                 <button class="btn btn-danger btn-small" onclick="deletePrinter('${printer.id}')">
                     Löschen
@@ -291,6 +295,10 @@ function renderFilteredPrinterGrid(filteredPrinters) {
             
             <div class="printer-details">
                 <div class="printer-detail">
+                    <span class="printer-detail-label">Typ:</span>
+                    <span class="printer-detail-value">${printer.type === 'pellet' ? 'Pellet Drucker' : printer.type === 'filament' ? 'Filament Drucker' : 'Nicht angegeben'}</span>
+                </div>
+                <div class="printer-detail">
                     <span class="printer-detail-label">Bauraum:</span>
                     <span class="printer-detail-value">${printer.buildVolume || 'Nicht angegeben'}</span>
                 </div>
@@ -311,14 +319,14 @@ function renderFilteredPrinterGrid(filteredPrinters) {
             </div>
             
             <div class="printer-actions">
+                <button class="btn btn-secondary btn-small" onclick="changePrinterStatus('${printer.id}')">
+                    Status ändern
+                </button>
                 <button class="btn btn-secondary btn-small" onclick="editPrinter('${printer.id}')">
                     Bearbeiten
                 </button>
                 <button class="btn btn-info btn-small" onclick="duplicatePrinter('${printer.id}')">
                     Duplizieren
-                </button>
-                <button class="btn btn-primary btn-small" onclick="changePrinterStatus('${printer.id}')">
-                    Status ändern
                 </button>
                 <button class="btn btn-danger btn-small" onclick="deletePrinter('${printer.id}')">
                     Löschen
@@ -405,6 +413,15 @@ function showAddPrinterForm() {
                         </div>
                         
                         <div class="form-group">
+                            <label for="printerType">Drucker-Typ *</label>
+                            <select id="printerType" class="form-select" required>
+                                <option value="">Typ auswählen...</option>
+                                <option value="pellet">Pellet Drucker</option>
+                                <option value="filament">Filament Drucker</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
                             <label for="printerMaterials">Materialien</label>
                             <input type="text" id="printerMaterials" class="form-input" placeholder="z.B. PLA, PETg">
                         </div>
@@ -475,6 +492,15 @@ function editPrinter(printerId) {
                         </div>
                         
                         <div class="form-group">
+                            <label for="printerType">Drucker-Typ *</label>
+                            <select id="printerType" class="form-select" required>
+                                <option value="">Typ auswählen...</option>
+                                <option value="pellet" ${printer.type === 'pellet' ? 'selected' : ''}>Pellet Drucker</option>
+                                <option value="filament" ${printer.type === 'filament' ? 'selected' : ''}>Filament Drucker</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
                             <label for="printerMaterials">Materialien</label>
                             <input type="text" id="printerMaterials" class="form-input" placeholder="z.B. PLA, PETg" value="${printer.materials || ''}">
                         </div>
@@ -532,6 +558,7 @@ async function savePrinter(event) {
         model: document.getElementById('printerModel').value.trim(),
         buildVolume: document.getElementById('printerBuildVolume').value.trim(),
         status: document.getElementById('printerStatus').value,
+        type: document.getElementById('printerType').value,
         materials: document.getElementById('printerMaterials').value.trim(),
         pricePerHour: parseFloat(document.getElementById('printerPricePerHour').value) || 0,
         notes: document.getElementById('printerNotes').value.trim(),
@@ -566,7 +593,41 @@ async function savePrinter(event) {
 }
 
 /**
- * Change printer status quickly
+ * Set printer status directly
+ * Requires admin access
+ */
+async function setPrinterStatus(printerId, newStatus) {
+    if (!window.checkAdminAccess()) {
+        return;
+    }
+    
+    const printer = printers.find(p => p.id === printerId);
+    if (!printer) return;
+    
+    const statusLabels = {
+        'available': 'Verfügbar',
+        'printing': 'In Betrieb',
+        'maintenance': 'Wartung',
+        'broken': 'Defekt'
+    };
+    
+    try {
+        await window.db.collection('printers').doc(printerId).update({
+            status: newStatus,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        showToast(`Status auf "${statusLabels[newStatus]}" geändert`, 'success');
+        // Real-time listener will automatically update the UI
+        
+    } catch (error) {
+        console.error('Error updating printer status:', error);
+        showToast('Fehler beim Ändern des Status', 'error');
+    }
+}
+
+/**
+ * Change printer status quickly (legacy function)
  * Requires admin access
  */
 async function changePrinterStatus(printerId) {
@@ -610,7 +671,12 @@ async function deletePrinter(printerId) {
     const printer = printers.find(p => p.id === printerId);
     if (!printer) return;
     
-    if (!confirm(`Möchten Sie den Drucker "${printer.name}" wirklich löschen?`)) {
+    const confirmed = await window.toast.confirm(
+        `Möchten Sie den Drucker "${printer.name}" wirklich löschen?`,
+        'Ja, löschen',
+        'Abbrechen'
+    );
+    if (!confirmed) {
         return;
     }
     
@@ -646,6 +712,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Export functions to global scope
 window.showPrinterManager = showPrinterManager;
 window.closePrinterManager = closePrinterManager;
+window.setPrinterStatus = setPrinterStatus;
 window.showAddPrinterForm = showAddPrinterForm;
 window.editPrinter = editPrinter;
 window.savePrinter = savePrinter;

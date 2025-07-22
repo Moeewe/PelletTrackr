@@ -726,7 +726,12 @@ async function approvePaymentRequest(requestId) {
  * Delete payment request
  */
 async function deletePaymentRequest(requestId) {
-    if (!confirm('Möchten Sie diese Zahlungsanfrage wirklich löschen?')) {
+    const confirmed = await window.toast.confirm(
+        'Möchten Sie diese Zahlungsanfrage wirklich löschen?',
+        'Ja, löschen',
+        'Abbrechen'
+    );
+    if (!confirmed) {
         return;
     }
     

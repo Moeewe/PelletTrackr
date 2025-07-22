@@ -34,7 +34,7 @@
   
   .data-table th,
   .data-table td {
-    white-space: nowrap;
+    white-space: normal;
   }
   
   .data-table th {
@@ -42,7 +42,7 @@
   }
   
   .actions {
-    white-space: nowrap;
+    white-space: normal;
   }
   
   .btn-small {
@@ -425,7 +425,7 @@
     max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
   }
   
   .data-table td[data-label="Datum"],
@@ -434,7 +434,7 @@
   .data-table td[data-label="Name"],
   .data-table td[data-label="Kennung"],
   .data-table td[data-label="Job"] {
-    white-space: nowrap;
+    white-space: normal;
     min-width: 100px;
   }
   
@@ -443,18 +443,18 @@
   .data-table td[data-label="MB Menge"],
   .data-table td[data-label="Kosten"] {
     text-align: right;
-    white-space: nowrap;
+    white-space: normal;
     min-width: 80px;
   }
   
   .data-table td[data-label="Status"] {
     text-align: center;
-    white-space: nowrap;
+    white-space: normal;
     min-width: 80px;
   }
   
   .data-table .actions {
-    white-space: nowrap;
+    white-space: normal;
     min-width: 200px;
   }
 }

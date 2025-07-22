@@ -51,6 +51,11 @@ function checkExistingSession() {
           initializePaymentRequests();
         }
         
+        // Initialize notification badges for user
+        if (typeof initNotificationBadges === 'function') {
+          initNotificationBadges();
+        }
+        
         // Show welcome toast without name
         setTimeout(() => {
           toast.success('Automatisch angemeldet');
@@ -216,6 +221,12 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
         if (typeof initializePaymentRequests === 'function') {
           initializePaymentRequests();
         }
+        
+        // Initialize notification badges for user
+        if (typeof initNotificationBadges === 'function') {
+          initNotificationBadges();
+        }
+        
         initializeUserDashboard();
         // Update admin UI elements
         updateAdminUI();
@@ -245,6 +256,12 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
       if (typeof initializePaymentRequests === 'function') {
         initializePaymentRequests();
       }
+      
+      // Initialize notification badges for user
+      if (typeof initNotificationBadges === 'function') {
+        initNotificationBadges();
+      }
+      
       initializeUserDashboard();
       // Update admin UI elements
       updateAdminUI();
@@ -289,9 +306,11 @@ function loginAsAdmin() {
       const userResult = await findOrCreateUser(kennung.toLowerCase(), name, true);
       
       if (userResult.conflict) {
-        const userChoice = confirm(
+        const userChoice = await toast.confirm(
           `Es existiert bereits ein Benutzer mit der FH-Kennung "${kennung}" aber anderem Namen "${userResult.existingName}".\n\n` +
-          'Möchtest du dich als existierender Benutzer anmelden?'
+          'Möchtest du dich als existierender Benutzer anmelden?',
+          'Ja, anmelden',
+          'Abbrechen'
         );
         
         if (userChoice) {
