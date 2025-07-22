@@ -101,8 +101,9 @@ function setupEquipmentRequestsListener() {
     }
     
     try {
+        // Listen to both equipment and return requests
         equipmentRequestsListener = window.db.collection('requests')
-            .where('type', '==', 'equipment')
+            .where('type', 'in', ['equipment', 'return'])
             .onSnapshot((snapshot) => {
                 equipmentRequests = [];
                 snapshot.forEach((doc) => {
@@ -117,6 +118,14 @@ function setupEquipmentRequestsListener() {
                 });
                 
                 console.log('📋 Live update: Loaded equipment requests:', equipmentRequests.length);
+                console.log('📋 Equipment requests details:', equipmentRequests.map(req => ({
+                    id: req.id,
+                    type: req.type,
+                    status: req.status,
+                    equipmentId: req.equipmentId,
+                    userKennung: req.userKennung,
+                    requestedBy: req.requestedBy
+                })));
                 
                 // Update equipment list to show requests
                 showEquipmentCategory(currentEquipmentCategory);
@@ -142,12 +151,19 @@ function setupEquipmentRequestsListener() {
  */
 async function loadEquipmentRequests() {
     try {
-        const querySnapshot = await window.db.collection('requests')
+        // Load both equipment requests and return requests
+        const equipmentQuerySnapshot = await window.db.collection('requests')
             .where('type', '==', 'equipment')
             .get();
         
+        const returnQuerySnapshot = await window.db.collection('requests')
+            .where('type', '==', 'return')
+            .get();
+        
         equipmentRequests = [];
-        querySnapshot.forEach((doc) => {
+        
+        // Add equipment requests
+        equipmentQuerySnapshot.forEach((doc) => {
             const data = doc.data();
             equipmentRequests.push({
                 id: doc.id,
@@ -158,13 +174,24 @@ async function loadEquipmentRequests() {
             });
         });
         
+        // Add return requests
+        returnQuerySnapshot.forEach((doc) => {
+            const data = doc.data();
+            equipmentRequests.push({
+                id: doc.id,
+                ...data,
+                requestedAt: data.createdAt?.toDate() || data.requestedAt?.toDate()
+            });
+        });
+        
         console.log('📋 Loaded equipment requests:', equipmentRequests.length);
         console.log('📋 Equipment requests sample:', equipmentRequests.slice(0, 3).map(req => ({
             id: req.id,
             equipmentId: req.equipmentId,
             status: req.status,
             type: req.type,
-            userKennung: req.userKennung
+            userKennung: req.userKennung,
+            requestedBy: req.requestedBy
         })));
         
         // Update equipment list to show requests
