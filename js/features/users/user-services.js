@@ -711,7 +711,7 @@ async function submitEquipmentRequest() {
         // Update user data with phone number if not already set
         if (window.currentUser?.kennung && phoneNumber) {
             try {
-                // First check if user exists
+                // First check if user exists by kennung
                 const userDoc = await window.db.collection('users').doc(window.currentUser.kennung).get();
                 
                 if (userDoc.exists) {
@@ -721,35 +721,71 @@ async function submitEquipmentRequest() {
                         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     
+                    console.log('✅ Updated existing user phone number:', window.currentUser.kennung);
+                    
                     // Update window.allUsers if function exists
                     if (typeof updateUserInList === 'function') {
                         updateUserInList(window.currentUser.kennung, { phone: phoneNumber });
                     }
                 } else {
-                    // User doesn't exist - create new user
-                    await window.db.collection('users').doc(window.currentUser.kennung).set({
-                        name: window.currentUser.name,
-                        kennung: window.currentUser.kennung,
-                        email: window.currentUser.email || `${window.currentUser.kennung}@fh-muenster.de`,
-                        phone: phoneNumber,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                    // User doesn't exist by kennung - search for existing user by name or email
+                    console.log('🔍 User not found by kennung, searching for existing user...');
                     
-                    // Update window.allUsers if function exists
-                    if (typeof updateUserInList === 'function') {
-                        updateUserInList(window.currentUser.kennung, {
-                            docId: window.currentUser.kennung,
+                    const existingUserQuery = await window.db.collection('users')
+                        .where('name', '==', window.currentUser.name)
+                        .limit(1)
+                        .get();
+                    
+                    if (!existingUserQuery.empty) {
+                        // Found existing user by name - update with kennung and phone
+                        const existingUserDoc = existingUserQuery.docs[0];
+                        const existingUserData = existingUserDoc.data();
+                        
+                        console.log('✅ Found existing user by name, updating with kennung:', existingUserDoc.id);
+                        
+                        await window.db.collection('users').doc(existingUserDoc.id).update({
+                            kennung: window.currentUser.kennung,
+                            phone: phoneNumber,
+                            email: window.currentUser.email || existingUserData.email || `${window.currentUser.kennung}@fh-muenster.de`,
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        
+                        // Update window.allUsers if function exists
+                        if (typeof updateUserInList === 'function') {
+                            updateUserInList(existingUserDoc.id, {
+                                kennung: window.currentUser.kennung,
+                                phone: phoneNumber,
+                                email: window.currentUser.email || existingUserData.email || `${window.currentUser.kennung}@fh-muenster.de`
+                            });
+                        }
+                    } else {
+                        // No existing user found - create new user
+                        console.log('📝 Creating new user:', window.currentUser.kennung);
+                        
+                        await window.db.collection('users').doc(window.currentUser.kennung).set({
                             name: window.currentUser.name,
                             kennung: window.currentUser.kennung,
                             email: window.currentUser.email || `${window.currentUser.kennung}@fh-muenster.de`,
                             phone: phoneNumber,
-                            isAdmin: false,
-                            entries: [],
-                            totalCost: 0,
-                            paidAmount: 0,
-                            unpaidAmount: 0
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                         });
+                        
+                        // Update window.allUsers if function exists
+                        if (typeof updateUserInList === 'function') {
+                            updateUserInList(window.currentUser.kennung, {
+                                docId: window.currentUser.kennung,
+                                name: window.currentUser.name,
+                                kennung: window.currentUser.kennung,
+                                email: window.currentUser.email || `${window.currentUser.kennung}@fh-muenster.de`,
+                                phone: phoneNumber,
+                                isAdmin: false,
+                                entries: [],
+                                totalCost: 0,
+                                paidAmount: 0,
+                                unpaidAmount: 0
+                            });
+                        }
                     }
                 }
             } catch (error) {
