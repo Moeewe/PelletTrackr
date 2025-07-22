@@ -1,6 +1,7 @@
 /**
  * Equipment Management System
  * Handles lending system for keys, hardware, and books
+ * Version 1.6 - Fixed return confirmation buttons and enhanced debugging
  */
 
 // Equipment Management Module - Extended with Requests Support
@@ -1596,5 +1597,14 @@ window.submitAdminBorrowEquipment = submitAdminBorrowEquipment;
 window.requestEquipmentReturn = requestEquipmentReturn;
 window.confirmEquipmentReturn = confirmEquipmentReturn;
 window.loadAllUsersForEquipment = loadAllUsersForEquipment;
+window.approveEquipmentRequest = approveEquipmentRequest;
+window.rejectEquipmentRequest = rejectEquipmentRequest;
 
-console.log("🔧 Equipment Management Module geladen"); 
+console.log("🔧 Equipment Management Module geladen (v1.6)");
+console.log("🔧 Available functions:", {
+    showEquipmentManager: typeof showEquipmentManager,
+    confirmEquipmentReturn: typeof confirmEquipmentReturn,
+    requestEquipmentReturn: typeof requestEquipmentReturn,
+    approveEquipmentRequest: typeof approveEquipmentRequest,
+    rejectEquipmentRequest: typeof rejectEquipmentRequest
+}); 

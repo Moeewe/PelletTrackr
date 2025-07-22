@@ -1,6 +1,7 @@
 /**
  * User Services System
  * Handles printer status, scheduling, equipment requests, problem reports, and material requests
+ * Version 1.1 - Fixed equipment return cancel functionality and enhanced phone number auto-fill
  */
 
 // Global state for user services
@@ -2598,4 +2599,10 @@ window.autoFillPhoneNumber = autoFillPhoneNumber;
 window.savePhoneNumberToProfile = savePhoneNumberToProfile;
 window.loadPrinterStatus = loadPrinterStatus;
 
-console.log('👥 User Services Module loaded'); 
+console.log('👥 User Services Module loaded (v1.1)');
+console.log('👥 Available functions:', {
+    cancelEquipmentReturn: typeof cancelEquipmentReturn,
+    requestEquipmentReturn: typeof requestEquipmentReturn,
+    autoFillPhoneNumber: typeof autoFillPhoneNumber,
+    savePhoneNumberToProfile: typeof savePhoneNumberToProfile
+}); 
