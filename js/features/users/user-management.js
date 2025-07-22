@@ -1154,6 +1154,7 @@ window.sortUsersBy = sortUsersBy;
 window.showEditUserForm = showEditUserForm; // Export the function
 window.closeEditUserModal = closeEditUserModal;
 window.updateUserInList = updateUserInList;
+window.searchUsers = searchUsers;
 
 // ==================== USER MANAGEMENT MODULE ====================
 
