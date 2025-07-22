@@ -107,6 +107,7 @@
   background: #F44336;
   color: white;
   border: none;
+  transition: none !important;
 }
 
 .btn-danger:hover {

@@ -1057,14 +1057,25 @@ async function requestEquipmentReturn(requestId) {
     }
     
     try {
+        console.log('🔄 Requesting equipment return for requestId:', requestId);
+        
         // First, get the request details to find the equipment
         const requestDoc = await window.db.collection('requests').doc(requestId).get();
         if (!requestDoc.exists) {
+            console.error('❌ Request document not found:', requestId);
             window.toast.error('Ausleih-Anfrage nicht gefunden');
             return;
         }
         
         const requestData = requestDoc.data();
+        console.log('📋 Request data:', requestData);
+        
+        // Validate required fields
+        if (!requestData.equipmentId || !requestData.equipmentName) {
+            console.error('❌ Missing equipment data in request:', requestData);
+            window.toast.error('Equipment-Daten in der Anfrage nicht gefunden');
+            return;
+        }
         
         // Create a return request in the equipmentRequests collection
         const returnRequestData = {
@@ -1080,6 +1091,8 @@ async function requestEquipmentReturn(requestId) {
             createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
         };
         
+        console.log('📝 Creating return request:', returnRequestData);
+        
         await window.db.collection('equipmentRequests').add(returnRequestData);
         
         // Update the original request status
@@ -1088,6 +1101,7 @@ async function requestEquipmentReturn(requestId) {
             returnRequestedAt: window.firebase.firestore.FieldValue.serverTimestamp()
         });
         
+        console.log('✅ Return request created successfully');
         window.toast.success('Rückgabe-Anfrage erfolgreich erstellt');
         
         // Refresh the view if still on the equipment requests modal
@@ -1097,8 +1111,8 @@ async function requestEquipmentReturn(requestId) {
         }
         
     } catch (error) {
-        console.error('Error requesting return:', error);
-        window.toast.error('Fehler beim Senden der Rückgabe-Anfrage');
+        console.error('❌ Error requesting return:', error);
+        window.toast.error('Fehler beim Senden der Rückgabe-Anfrage: ' + error.message);
     }
 }
 
