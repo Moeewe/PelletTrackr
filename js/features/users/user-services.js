@@ -1427,6 +1427,10 @@ function renderMyProblemReports(reports) {
                         <button class="btn btn-danger btn-sm" onclick="deleteUserProblemReport('${report.id}')">
                             Löschen
                         </button>
+                    ` : report.status === 'resolved' || report.status === 'closed' ? `
+                        <button class="btn btn-danger btn-sm" onclick="deleteUserProblemReport('${report.id}')">
+                            Löschen
+                        </button>
                     ` : ''}
                 </div>
             </div>
