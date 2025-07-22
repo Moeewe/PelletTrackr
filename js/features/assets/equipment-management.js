@@ -362,6 +362,8 @@ function renderEquipmentList(equipmentList) {
         name: item.name,
         status: item.status,
         borrowedBy: item.borrowedBy,
+        borrowedByKennung: item.borrowedByKennung,
+        category: item.category,
         requestsCount: (item.requests || []).length
     })));
     
@@ -433,23 +435,19 @@ function renderEquipmentList(equipmentList) {
             
             ${pendingRequest ? `
                 <div class="equipment-request-info">
-                    <strong>Ausleihe angefragt von:</strong> ${pendingRequest.userName || getUserDetails(pendingRequest.userKennung).name} (${pendingRequest.userKennung})
+                    <strong>Ausleihe angefragt von:</strong> ${pendingRequest.userName || pendingRequest.userKennung} (${pendingRequest.userKennung})
                     <br><strong>Zeitraum:</strong> ${pendingRequest.fromDate ? new Date(pendingRequest.fromDate.seconds * 1000).toLocaleDateString() : 'Unbekannt'} - ${pendingRequest.toDate ? new Date(pendingRequest.toDate.seconds * 1000).toLocaleDateString() : 'Unbekannt'}
                     <br><strong>Grund:</strong> ${pendingRequest.reason || 'Kein Grund angegeben'}
                 </div>
             ` : (pendingReturnRequest || anyPendingReturn) ? `
                 <div class="equipment-request-info">
-                    <strong>Rückgabe angefragt von:</strong> ${(pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).requestedByName || getUserDetails((pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).requestedBy).name} (${(pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).requestedBy})
+                    <strong>Rückgabe angefragt von:</strong> ${(pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).requestedByName || (pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).requestedBy} (${(pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).requestedBy})
                     <br><strong>Angefragt am:</strong> ${(pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).createdAt ? new Date((pendingReturnRequest || returnRequests.find(r => r.status === 'pending')).createdAt.seconds * 1000).toLocaleDateString() : 'Unbekannt'}
                 </div>
             ` : (item.status === 'borrowed' || item.borrowedBy) && item.borrowedByKennung ? `
                 <div class="equipment-current-user">
-                    ${(() => {
-                        const userDetails = getUserDetails(item.borrowedByKennung);
-                        return `Ausgeliehen an: <strong>${userDetails.name}</strong> (${userDetails.kennung})<br>
-                        ${userDetails.phone ? `📱 ${userDetails.phone}<br>` : ''}
-                        Seit: ${item.borrowedAt ? new Date(item.borrowedAt.toDate()).toLocaleDateString() : 'Unbekannt'}`;
-                    })()}
+                    Ausgeliehen an: <strong>${item.borrowedBy || item.borrowedByKennung}</strong> (${item.borrowedByKennung || item.borrowedBy})<br>
+                    Seit: ${item.borrowedAt ? new Date(item.borrowedAt.toDate()).toLocaleDateString() : 'Unbekannt'}
                     ${item.requiresDeposit ? `
                         <div class="equipment-deposit-status">
                             Pfand: <span class="${item.depositPaid ? 'deposit-paid' : 'deposit-unpaid'}">
@@ -478,14 +476,14 @@ function renderEquipmentList(equipmentList) {
                             <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
                             <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
                         `;
-                    } else if (item.status === 'available' || (!item.borrowedBy && item.status !== 'borrowed')) {
+                    } else if (item.status === 'available' || (!item.borrowedBy && !item.borrowedByKennung && item.status !== 'borrowed')) {
                         console.log('🔍 Showing available equipment buttons');
                         return `
                             <button class="btn btn-primary" onclick="borrowEquipment('${item.id}')">Ausleihen</button>
                             <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
                             <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
                         `;
-                    } else if (item.status === 'borrowed' || item.borrowedBy) {
+                    } else if (item.status === 'borrowed' || item.borrowedBy || item.borrowedByKennung) {
                         console.log('🔍 Showing borrowed equipment buttons');
                         if (pendingReturnRequest || anyPendingReturn) {
                             return `
@@ -1284,7 +1282,7 @@ window.confirmEquipmentReturn = confirmEquipmentReturn;
 window.setupEquipmentRequestsListener = setupEquipmentRequestsListener;
 window.loadEquipmentRequests = loadEquipmentRequests;
 window.loadAllUsersForEquipment = loadAllUsersForEquipment;
-window.getUserDetails = getUserDetails;
+// getUserDetails function removed - using direct data access instead
 
 /**
  * Approve equipment request and mark equipment as borrowed
