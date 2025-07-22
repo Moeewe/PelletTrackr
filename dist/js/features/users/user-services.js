@@ -211,14 +211,14 @@ async function cyclePrinterStatus(printerId, newStatus) {
         
         // Show success message
         const statusText = getStatusText(newStatus);
-        toast.success(`Drucker-Status auf "${statusText}" gesetzt`);
+        window.toast.success(`Drucker-Status auf "${statusText}" gesetzt`);
         
         // Refresh the modal display
         showPrinterStatus();
         
     } catch (error) {
         console.error('Error updating printer status:', error);
-        toast.error('Fehler beim Ändern des Drucker-Status');
+        window.toast.error('Fehler beim Ändern des Drucker-Status');
     }
 }
 
@@ -410,7 +410,7 @@ async function submitEquipmentRequest() {
     const purpose = document.getElementById('equipmentPurpose').value;
     
     if (!equipmentType || !equipmentName || !duration || !purpose) {
-        toast.error('Bitte alle Felder ausfüllen');
+        window.toast.error('Bitte alle Felder ausfüllen');
         return;
     }
     
@@ -429,7 +429,7 @@ async function submitEquipmentRequest() {
         console.error('❌ Equipment nicht gefunden!');
         console.log('- Suchte nach ID:', equipmentName);
         console.log('- Verfügbare IDs:', availableEquipment.map(eq => eq.id));
-        toast.error('Equipment nicht gefunden - siehe Console für Details');
+        window.toast.error('Equipment nicht gefunden - siehe Console für Details');
         return;
     }
     
@@ -450,12 +450,12 @@ async function submitEquipmentRequest() {
     try {
         await window.db.collection('requests').add(requestData);
         
-        toast.success('Equipment-Anfrage erfolgreich gesendet');
+        window.toast.success('Equipment-Anfrage erfolgreich gesendet');
         closeModal();
         
     } catch (error) {
         console.error('Error submitting equipment request:', error);
-        toast.error('Fehler beim Senden der Equipment-Anfrage');
+        window.toast.error('Fehler beim Senden der Equipment-Anfrage');
     }
 }
 
@@ -470,7 +470,7 @@ async function submitProblemReport() {
     const steps = document.getElementById('problemSteps').value;
     
     if (!type || !device || !description) {
-        toast.error('Bitte alle Pflichtfelder ausfüllen');
+        window.toast.error('Bitte alle Pflichtfelder ausfüllen');
         return;
     }
     
@@ -490,12 +490,12 @@ async function submitProblemReport() {
         
         await window.db.collection('problemReports').add(reportData);
         
-        toast.success('Problem erfolgreich gemeldet');
+        window.toast.success('Problem erfolgreich gemeldet');
         closeModal();
         
     } catch (error) {
         console.error('Error submitting problem report:', error);
-        toast.error('Fehler beim Melden des Problems');
+        window.toast.error('Fehler beim Melden des Problems');
     }
 }
 
@@ -511,7 +511,7 @@ async function submitMaterialWish() {
     const supplier = document.getElementById('materialSupplier').value;
     
     if (!type || !name || !quantity || !reason) {
-        toast.error('Bitte alle Pflichtfelder ausfüllen');
+        window.toast.error('Bitte alle Pflichtfelder ausfüllen');
         return;
     }
     
@@ -534,12 +534,12 @@ async function submitMaterialWish() {
         // Use materialOrders collection like admin orders
         await window.db.collection('materialOrders').add(requestData);
         
-        toast.success('Material-Wunsch erfolgreich eingereicht');
+        window.toast.success('Material-Wunsch erfolgreich eingereicht');
         closeModal();
         
     } catch (error) {
         console.error('Error submitting material wish:', error);
-        toast.error('Fehler beim Einreichen des Material-Wunschs');
+        window.toast.error('Fehler beim Einreichen des Material-Wunschs');
     }
 }
 
@@ -612,7 +612,7 @@ async function submitPrinterProblemReport(printerId, printerName) {
     const problemSteps = document.getElementById('problemSteps').value.trim();
     
     if (!problemType || !problemDescription) {
-        toast.error('Bitte Problem-Typ und Beschreibung ausfüllen');
+        window.toast.error('Bitte Problem-Typ und Beschreibung ausfüllen');
         return;
     }
     
@@ -633,14 +633,14 @@ async function submitPrinterProblemReport(printerId, printerName) {
         
         await window.db.collection('problemReports').add(reportData);
         
-        toast.success(`Problem für Drucker "${printerName}" erfolgreich gemeldet`);
+        window.toast.success(`Problem für Drucker "${printerName}" erfolgreich gemeldet`);
         closeModal();
         
         // Optional: Set printer status to maintenance if severity is high or critical
         if (problemSeverity === 'high' || problemSeverity === 'critical') {
             const confirmMessage = `Das Problem wurde als ${problemSeverity === 'critical' ? 'kritisch' : 'schwerwiegend'} eingestuft. Soll der Drucker automatisch auf "Wartung" gesetzt werden?`;
             
-            const userChoice = await toast.confirm(
+            const userChoice = await window.toast.confirm(
                 confirmMessage,
                 'Status ändern',
                 'Nein, danke'
@@ -653,7 +653,7 @@ async function submitPrinterProblemReport(printerId, printerName) {
         
     } catch (error) {
         console.error('Error submitting problem report:', error);
-        toast.error('Fehler beim Melden des Problems');
+        window.toast.error('Fehler beim Melden des Problems');
     }
 }
 
@@ -905,7 +905,7 @@ async function requestEquipmentReturn(requestId) {
             returnRequestedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
-        toast.success('Rückgabe-Anfrage gesendet');
+        window.toast.success('Rückgabe-Anfrage gesendet');
         // Refresh the view if still on the equipment requests modal
         const equipmentRequestsList = document.getElementById('myEquipmentRequestsList');
         if (equipmentRequestsList) {
@@ -914,7 +914,7 @@ async function requestEquipmentReturn(requestId) {
         
     } catch (error) {
         console.error('Error requesting return:', error);
-        toast.error('Fehler beim Senden der Rückgabe-Anfrage');
+        window.toast.error('Fehler beim Senden der Rückgabe-Anfrage');
     }
 }
 
@@ -1004,11 +1004,11 @@ async function deleteUserEquipmentRequest(requestId) {
             }, 300);
         }
         
-        toast.success('Ausleih-Anfrage gelöscht');
+        window.toast.success('Ausleih-Anfrage gelöscht');
         
     } catch (error) {
         console.error('Error deleting equipment request:', error);
-        toast.error('Fehler beim Löschen der Ausleih-Anfrage');
+        window.toast.error('Fehler beim Löschen der Ausleih-Anfrage');
         
         // Restore element if deletion failed
         if (requestElement) {
@@ -1055,7 +1055,7 @@ async function refreshMyEquipmentRequests() {
         // Check if modal should auto-close (no requests left)
         if (requests.length === 0) {
             setTimeout(() => {
-                toast.info('Alle Ausleihen wurden entfernt');
+                window.toast.info('Alle Ausleihen wurden entfernt');
                 closeModal();
             }, 1000);
         }
@@ -1256,7 +1256,7 @@ async function editProblemReport(reportId) {
     try {
         const doc = await window.db.collection('problemReports').doc(reportId).get();
         if (!doc.exists) {
-            toast.error('Meldung nicht gefunden');
+            window.toast.error('Meldung nicht gefunden');
             return;
         }
         
@@ -1312,7 +1312,7 @@ async function editProblemReport(reportId) {
         
     } catch (error) {
         console.error('Error loading problem report for edit:', error);
-        toast.error('Fehler beim Laden der Meldung');
+        window.toast.error('Fehler beim Laden der Meldung');
     }
 }
 
@@ -1327,7 +1327,7 @@ async function saveProblemReportEdit(reportId) {
     const steps = document.getElementById('editProblemSteps').value;
     
     if (!type || !device || !description) {
-        toast.error('Bitte alle Pflichtfelder ausfüllen');
+        window.toast.error('Bitte alle Pflichtfelder ausfüllen');
         return;
     }
     
@@ -1341,7 +1341,7 @@ async function saveProblemReportEdit(reportId) {
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
-        toast.success('Meldung erfolgreich aktualisiert');
+        window.toast.success('Meldung erfolgreich aktualisiert');
         closeModal();
         // Refresh the view if still on the problem reports modal
         setTimeout(() => {
@@ -1353,7 +1353,7 @@ async function saveProblemReportEdit(reportId) {
         
     } catch (error) {
         console.error('Error updating problem report:', error);
-        toast.error('Fehler beim Aktualisieren der Meldung');
+        window.toast.error('Fehler beim Aktualisieren der Meldung');
     }
 }
 
@@ -1444,11 +1444,11 @@ async function deleteUserProblemReport(reportId) {
             }, 300);
         }
         
-        toast.success('Problem-Meldung gelöscht');
+        window.toast.success('Problem-Meldung gelöscht');
         
     } catch (error) {
         console.error('Error deleting problem report:', error);
-        toast.error('Fehler beim Löschen der Problem-Meldung');
+        window.toast.error('Fehler beim Löschen der Problem-Meldung');
         
         // Restore element if deletion failed
         if (reportElement) {
@@ -1494,7 +1494,7 @@ async function refreshMyProblemReports() {
         // Check if modal should auto-close (no reports left)
         if (reports.length === 0) {
             setTimeout(() => {
-                toast.info('Alle Meldungen wurden entfernt');
+                window.toast.info('Alle Meldungen wurden entfernt');
                 closeModal();
             }, 1000);
         }
@@ -1712,7 +1712,7 @@ async function editMaterialRequest(requestId) {
     try {
         const doc = await window.db.collection('materialRequests').doc(requestId).get();
         if (!doc.exists) {
-            toast.error('Wunsch nicht gefunden');
+            window.toast.error('Wunsch nicht gefunden');
             return;
         }
         
@@ -1765,7 +1765,7 @@ async function editMaterialRequest(requestId) {
         
     } catch (error) {
         console.error('Error loading material request for edit:', error);
-        toast.error('Fehler beim Laden des Wunsches');
+        window.toast.error('Fehler beim Laden des Wunsches');
     }
 }
 
@@ -1781,7 +1781,7 @@ async function saveMaterialRequestEdit(requestId) {
     const supplier = document.getElementById('editMaterialSupplier').value;
     
     if (!type || !name || !quantity || !reason) {
-        toast.error('Bitte alle Pflichtfelder ausfüllen');
+        window.toast.error('Bitte alle Pflichtfelder ausfüllen');
         return;
     }
     
@@ -1796,7 +1796,7 @@ async function saveMaterialRequestEdit(requestId) {
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
-        toast.success('Wunsch erfolgreich aktualisiert');
+        window.toast.success('Wunsch erfolgreich aktualisiert');
         closeModal();
         // Refresh the view if still on the material requests modal
         setTimeout(() => {
@@ -1808,7 +1808,7 @@ async function saveMaterialRequestEdit(requestId) {
         
     } catch (error) {
         console.error('Error updating material request:', error);
-        toast.error('Fehler beim Aktualisieren des Wunsches');
+        window.toast.error('Fehler beim Aktualisieren des Wunsches');
     }
 }
 
@@ -1820,7 +1820,7 @@ async function deleteMaterialRequest(requestId) {
         // Get request details for confirmation message
         const requestDoc = await window.db.collection('materialOrders').doc(requestId).get();
         if (!requestDoc.exists) {
-            toast.error('Material-Wunsch nicht gefunden');
+            window.toast.error('Material-Wunsch nicht gefunden');
             return;
         }
         
@@ -1873,7 +1873,7 @@ async function deleteMaterialRequest(requestId) {
             console.log('✅ Element removed from DOM');
         }
         
-        toast.success('Material-Wunsch gelöscht');
+        window.toast.success('Material-Wunsch gelöscht');
         
         // Check if container is now empty and handle auto-close
         const container = document.getElementById('myMaterialRequestsList');
@@ -1887,14 +1887,14 @@ async function deleteMaterialRequest(requestId) {
                     </div>
                 `;
                 setTimeout(() => {
-                    toast.info('Alle Material-Wünsche wurden entfernt');
+                    window.toast.info('Alle Material-Wünsche wurden entfernt');
                 }, 500);
             }
         }
         
     } catch (error) {
         console.error('Error deleting material request:', error);
-        toast.error('Fehler beim Löschen des Material-Wunschs');
+        window.toast.error('Fehler beim Löschen des Material-Wunschs');
         
         // Restore element if deletion failed
         const requestElement = document.querySelector(`[onclick*="deleteMaterialRequest('${requestId}')"]`)?.closest('.entry-card');
@@ -1942,7 +1942,7 @@ async function refreshMyMaterialRequests() {
         // Check if modal should auto-close (no requests left)
         if (requests.length === 0) {
             setTimeout(() => {
-                toast.info('Alle Material-Wünsche wurden entfernt');
+                window.toast.info('Alle Material-Wünsche wurden entfernt');
                 closeModal();
             }, 1000);
         }

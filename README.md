@@ -1,148 +1,231 @@
-# PelletTrackr - 3D-Druck Abrechnung
+# 🎵 DJ Tools Collection
 
-## 🚀 Quick Start
+Eine Sammlung moderner Web-Apps für DJs und Event-Profis, entwickelt mit Next.js, TypeScript und Firebase.
 
-1. **Clone & Setup**
-   ```bash
-   git clone https://github.com/Moeewe/PelletTrackr.git
-   cd PelletTrackr-Production-Dev
-   ```
+## 📱 Projekte
 
-2. **Configure Firebase**
-   - Update `js/core/firebase-config.js` with your Firebase credentials
-   - Set up Firestore database with required collections
+### 🎵 [Music Wish App](./music-wish-app/)
+**Live-Event Musikwünsche & Voting-System**
 
-3. **Deploy**
-   ```bash
-   ./build.sh && ./deploy.sh
-   ```
+Eine mobile-first Web-App für Live-Events, die es Gästen ermöglicht, Musikwünsche zu äußern und zu voten, während DJs die Warteschlange verwalten können.
 
-4. **Access**
-   - Open `index.html` or deploy to Netlify
-   - Default admin password: `admin123` (change in `config.js`)
+**Features:**
+- Real-time Musikwünsche mit Voting-System
+- DJ-Admin-Panel mit Status-Management
+- Mobile-optimiert für Events
+- Automatisches Ranking nach Votes
 
-## 📋 Overview
-
-Web-based 3D printing tracking and billing system for educational institutions. Manages material usage, printer status, user accounts, and cost calculations with real-time Firebase integration.
-
-## ✨ Features
-
-- **Material Tracking** - Monitor filament usage and costs
-- **Printer Management** - Real-time status monitoring and problem reporting  
-- **User Services** - Account management and payment tracking
-- **Admin Dashboard** - User administration and system oversight
-- **Equipment Management** - Hardware lending system (keys, tools, books)
-- **Mobile Responsive** - Optimized for desktop and mobile devices
-
-## 🛠 Tech Stack
-
-- **Frontend**: Vanilla JavaScript (ES6+), HTML5, CSS3
-- **Backend**: Firebase/Firestore
-- **Deployment**: Netlify
-- **Build**: Custom shell scripts
-
-## 📁 Project Structure
-
-```
-├── js/
-│   ├── core/           # Core functionality (auth, navigation, utils)
-│   ├── features/       # Feature modules (materials, printers, users)
-│   └── ui/             # UI components (modals, buttons, sorting)
-├── styles/             # Modular CSS files
-├── HTML/               # Static pages (impressum, datenschutz)
-├── config.js           # App configuration
-├── build.sh            # Build script
-└── deploy.sh           # Deployment script
-```
-
-## ⚙️ Configuration
-
-### Firebase Setup
-1. Create Firebase project with Firestore database
-2. Update `js/core/firebase-config.js`:
-   ```javascript
-   const firebaseConfig = {
-     apiKey: "your-api-key",
-     authDomain: "your-domain",
-     projectId: "your-project-id",
-     // ... other config
-   };
-   ```
-
-### App Settings
-Modify `config.js` for:
-- Admin password
-- App branding
-- Theme colors
-- Print costs
-
-### Required Firestore Collections
-- `entries` - Print job records
-- `users` - User accounts  
-- `printers` - Printer information
-- `materials` - Material inventory
-- `equipment` - Equipment lending
-- `problemReports` - Issue tracking
-- `paymentRequests` - Payment processing
-
-## 🚀 Deployment
-
-### Local Development
-```bash
-# Build project
-./build.sh
-
-# Open index.html in browser
-open dist/index.html
-```
-
-### Netlify Deployment
-```bash
-# Build and deploy
-./build.sh
-./deploy.sh
-
-# Or use Netlify auto-deploy from GitHub
-```
-
-## 📱 Usage
-
-### User Workflow
-1. **Login** with FH-Kennung
-2. **Add Print Job** with material selection
-3. **Track Costs** and usage history
-4. **Request Materials** when needed
-
-### Admin Workflow  
-1. **Enable Admin Mode** with password
-2. **Manage Users** and permissions
-3. **Monitor Printers** and equipment
-4. **Process Payments** and requests
-
-## 🔧 Development
-
-### Build System
-- `build.sh` - Compiles project to `dist/` folder
-- Copies and minifies all assets
-- Preserves modular structure
-
-### Code Structure
-- **Modular JS** - Feature-based organization
-- **Component CSS** - Scoped styling
-- **Firebase Integration** - Real-time data sync
-- **Mobile-First** - Responsive design
-
-## 📄 License
-
-Educational use - Fachhochschule Project
-
-## 🤝 Contributing
-
-1. Fork repository
-2. Create feature branch
-3. Test changes locally
-4. Submit pull request
+**Tech Stack:** Next.js 15, TypeScript, Tailwind CSS, Firebase Firestore
 
 ---
 
-**Production URL**: https://production-dev--pellettrackr.netlify.app/ 
+### 💒 [DJ Wedding Survey App](./dj-wedding-survey/)
+**Professionelle Hochzeits-Umfragen**
+
+Eine mehrstufige Umfrage-App für DJs, um Hochzeitspaare bei der Planung ihrer perfekten Musik zu unterstützen.
+
+**Features:**
+- 4-stufige Umfrage mit Progress-Tracking
+- Umfassende Fragen zu Musik & Veranstaltung
+- Mobile-optimiert für Hochzeitspaare
+- Automatische Datensammlung für DJs
+
+**Tech Stack:** Next.js 15, TypeScript, Tailwind CSS, Firebase Firestore, React Hook Form
+
+---
+
+## 🚀 Schnellstart
+
+### Voraussetzungen
+- Node.js 18+
+- npm oder yarn
+- Firebase-Projekt
+
+### Installation
+
+1. **Repository klonen**
+```bash
+git clone <repository-url>
+cd dj-tools-collection
+```
+
+2. **Music Wish App starten**
+```bash
+cd music-wish-app
+npm install
+npm run dev
+# Öffne http://localhost:3000
+```
+
+3. **DJ Wedding Survey App starten**
+```bash
+cd dj-wedding-survey
+npm install
+npm run dev
+# Öffne http://localhost:3001 (anderer Port)
+```
+
+## 🔧 Firebase Setup
+
+Beide Apps benötigen ein Firebase-Projekt:
+
+1. **Firebase Console** → Neues Projekt erstellen
+2. **Firestore Database** aktivieren
+3. **Web App** hinzufügen und Konfiguration kopieren
+4. **Firebase-Konfiguration** in `src/app/page.tsx` einfügen:
+
+```typescript
+const firebaseConfig = {
+  apiKey: "your-api-key",
+  authDomain: "your-auth-domain",
+  projectId: "your-project-id",
+  storageBucket: "your-storage-bucket",
+  messagingSenderId: "your-messaging-sender-id",
+  appId: "your-app-id"
+};
+```
+
+## 📊 Datenbank-Strukturen
+
+### Music Wish App
+```typescript
+// Collection: songRequests
+{
+  id: string;
+  title: string;           // Songtitel
+  artist: string;          // Künstler
+  requestedBy: string;     // Name des Wunschenden
+  votes: number;           // Anzahl der Votes
+  timestamp: Date;         // Erstellungszeitpunkt
+  status: 'pending' | 'playing' | 'played' | 'rejected';
+  ipAddress: string;       // IP für Vote-Tracking
+}
+```
+
+### DJ Wedding Survey App
+```typescript
+// Collection: weddingSurveys
+{
+  id: string;
+  coupleName: string;      // Namen des Brautpaares
+  weddingDate: Date;       // Hochzeitsdatum
+  guestCount: number;      // Anzahl der Gäste
+  musicStyle: string[];    // Bevorzugte Musikstile
+  budget: string;          // Budget für DJ-Service
+  contactEmail: string;    // Kontakt-E-Mail
+  submittedAt: Date;       // Einreichungszeitpunkt
+  status: 'new' | 'contacted' | 'booked' | 'cancelled';
+  // ... weitere Felder
+}
+```
+
+## 🎨 Design-System
+
+### Music Wish App
+- **Theme:** Dark Mode mit Purple/Blue Gradient
+- **Style:** Glassmorphism mit backdrop-blur
+- **Target:** Event-Gäste und DJs
+
+### DJ Wedding Survey App
+- **Theme:** Light Mode mit Pink/Rose Gradient
+- **Style:** Elegant und romantisch
+- **Target:** Hochzeitspaare
+
+## 🚀 Deployment
+
+### Netlify (Empfohlen)
+1. **Repository** mit Netlify verbinden
+2. **Build-Command:** `npm run build`
+3. **Publish-Directory:** `out`
+4. **Umgebungsvariablen** konfigurieren
+
+### Vercel
+1. **Repository** mit Vercel verbinden
+2. **Automatisches Deployment** bei Push
+3. **Umgebungsvariablen** konfigurieren
+
+## 📈 Roadmap
+
+### Phase 1: Grundfunktionen ✅
+- [x] Music Wish App mit Real-time Updates
+- [x] DJ Wedding Survey mit Multi-Step Form
+- [x] Mobile-optimiertes Design
+- [x] Firebase Integration
+
+### Phase 2: Admin-Dashboards 🚧
+- [ ] DJ-Login mit Authentifizierung
+- [ ] Umfrage-Übersicht und -Verwaltung
+- [ ] E-Mail-Benachrichtigungen
+- [ ] Export-Funktionen
+
+### Phase 3: White-Label System 📋
+- [ ] Multi-DJ Support
+- [ ] Custom Branding
+- [ ] Domain-Mapping
+- [ ] Analytics Dashboard
+
+### Phase 4: Advanced Features 📋
+- [ ] Mobile Apps (React Native)
+- [ ] Offline-Modus
+- [ ] Multi-Language Support
+- [ ] Payment Integration
+
+## 🛠️ Entwicklung
+
+### Projekt-Struktur
+```
+dj-tools-collection/
+├── music-wish-app/          # Live-Event Musikwünsche
+│   ├── src/
+│   │   └── app/
+│   │       └── page.tsx     # Haupt-App
+│   ├── README.md
+│   └── package.json
+├── dj-wedding-survey/       # Hochzeits-Umfragen
+│   ├── src/
+│   │   └── app/
+│   │       └── page.tsx     # Haupt-App
+│   ├── README.md
+│   └── package.json
+└── README.md               # Diese Datei
+```
+
+### Scripts
+```bash
+# Music Wish App
+cd music-wish-app
+npm run dev          # Entwicklungsserver
+npm run build        # Production Build
+npm run start        # Production Server
+
+# DJ Wedding Survey App
+cd dj-wedding-survey
+npm run dev          # Entwicklungsserver
+npm run build        # Production Build
+npm run start        # Production Server
+```
+
+## 🤝 Beitragen
+
+1. **Fork** das Repository
+2. **Feature-Branch** erstellen
+3. **Änderungen** committen
+4. **Push** zum Branch
+5. **Pull Request** erstellen
+
+## 📄 Lizenz
+
+MIT License - siehe [LICENSE](LICENSE) Datei für Details.
+
+## 🆘 Support
+
+Bei Fragen oder Problemen:
+- **Issues** auf GitHub erstellen
+- **Dokumentation** in den jeweiligen Projekt-READMEs
+- **Entwicklungsteam** kontaktieren
+
+---
+
+**Entwickelt mit ❤️ für die Event- und DJ-Branche**
+
+*Diese Tools sind speziell für DJs und Event-Profis entwickelt, um ihre Arbeitsabläufe zu optimieren und die Kundeninteraktion zu verbessern.* 
