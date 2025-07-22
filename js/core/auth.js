@@ -51,6 +51,11 @@ function checkExistingSession() {
           initializePaymentRequests();
         }
         
+        // Initialize notification badges for user
+        if (typeof initNotificationBadges === 'function') {
+          initNotificationBadges();
+        }
+        
         // Show welcome toast without name
         setTimeout(() => {
           toast.success('Automatisch angemeldet');
@@ -216,6 +221,12 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
         if (typeof initializePaymentRequests === 'function') {
           initializePaymentRequests();
         }
+        
+        // Initialize notification badges for user
+        if (typeof initNotificationBadges === 'function') {
+          initNotificationBadges();
+        }
+        
         initializeUserDashboard();
         // Update admin UI elements
         updateAdminUI();
@@ -245,6 +256,12 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
       if (typeof initializePaymentRequests === 'function') {
         initializePaymentRequests();
       }
+      
+      // Initialize notification badges for user
+      if (typeof initNotificationBadges === 'function') {
+        initNotificationBadges();
+      }
+      
       initializeUserDashboard();
       // Update admin UI elements
       updateAdminUI();

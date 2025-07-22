@@ -209,7 +209,10 @@
                         <div class="service-content">
                             <div class="service-description">Equipment anfragen</div>
                             <div class="service-action">
-                                <button class="btn btn-primary btn-sm" onclick="showMyEquipmentRequests()">Meine Ausleihen</button>
+                                <button class="btn btn-primary btn-sm" onclick="showMyEquipmentRequests()">
+                                    Meine Ausleihen
+                                    <span class="notification-badge" data-badge="user-equipment-requests" style="display: none;">0</span>
+                                </button>
                                 <button class="btn btn-secondary btn-sm" onclick="showEquipmentRequest()">Anfrage stellen</button>
                             </div>
                         </div>
@@ -223,8 +226,14 @@
                         <div class="service-content">
                             <div class="service-description">Defekte melden</div>
                             <div class="service-action">
-                                <button class="btn btn-primary btn-sm" onclick="showMyProblemReports()">Meine Meldungen</button>
-                                <button class="btn btn-secondary btn-sm" onclick="showProblemReport()">Problem melden</button>
+                                <button class="btn btn-primary btn-sm" onclick="showMyProblemReports()">
+                                    Meine Meldungen
+                                    <span class="notification-badge" data-badge="user-problem-reports" style="display: none;">0</span>
+                                </button>
+                                <button class="btn btn-secondary btn-sm" onclick="showProblemReport()">
+                                    Problem melden
+                                    <span class="notification-badge" data-badge="user-problem-reports" style="display: none;">0</span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -237,7 +246,10 @@
                         <div class="service-content">
                             <div class="service-description">Materialwünsche</div>
                             <div class="service-action">
-                                <button class="btn btn-primary btn-sm" onclick="showMyMaterialRequests()">Meine Wünsche</button>
+                                <button class="btn btn-primary btn-sm" onclick="showMyMaterialRequests()">
+                                    Meine Wünsche
+                                    <span class="notification-badge" data-badge="user-material-requests" style="display: none;">0</span>
+                                </button>
                                 <button class="btn btn-secondary btn-sm" onclick="showMaterialRequest()">Wunsch äußern</button>
                             </div>
                         </div>

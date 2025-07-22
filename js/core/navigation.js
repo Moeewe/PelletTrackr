@@ -142,6 +142,11 @@ function initializeUserDashboard() {
   if (typeof initializeUserServices === 'function') {
     initializeUserServices();
   }
+  
+  // Notification badges für User initialisieren
+  if (typeof initNotificationBadges === 'function') {
+    initNotificationBadges();
+  }
 }
 
 function initializeAdminDashboard() {

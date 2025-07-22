@@ -8,7 +8,7 @@ let equipment = [];
 let equipmentListener = null;
 let equipmentRequests = [];
 let equipmentRequestsListener = null;
-let currentEquipmentCategory = 'Hardware';
+let currentEquipmentCategory = 'hardware';
 let filteredEquipment = [];
 
 // Fixed categories - no more dynamic categories
@@ -99,8 +99,8 @@ function showEquipmentManager() {
                     </div>
                     
                     <div class="category-tabs">
-                        <button class="tab-btn active" onclick="showEquipmentCategory('keys')">Schlüssel</button>
-                        <button class="tab-btn" onclick="showEquipmentCategory('hardware')">Hardware</button>
+                        <button class="tab-btn" onclick="showEquipmentCategory('keys')">Schlüssel</button>
+                        <button class="tab-btn active" onclick="showEquipmentCategory('hardware')">Hardware</button>
                         <button class="tab-btn" onclick="showEquipmentCategory('books')">Bücher</button>
                     </div>
                     
@@ -127,6 +127,11 @@ function showEquipmentManager() {
     
     // Update notification badge immediately
     updateEquipmentRequestsBadge();
+    
+    // Show hardware category by default
+    setTimeout(() => {
+        showEquipmentCategory('hardware');
+    }, 100);
 }
 
 /**

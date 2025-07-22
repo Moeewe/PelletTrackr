@@ -15,7 +15,11 @@ let notificationCounts = {
     printerIssues: 0,
     problemReports: 0,
     printerStatusChanges: 0,
-    printerDefectReports: 0
+    printerDefectReports: 0,
+    // User-specific counts
+    userEquipmentRequests: 0,
+    userProblemReports: 0,
+    userMaterialRequests: 0
 };
 
 /**
@@ -28,8 +32,14 @@ function initNotificationBadges() {
         setupEquipmentRequestsBadge();
         setupMaterialOrdersBadge();
         setupPrinterIssuesBadge();
+        
+        // Setup user-specific badges
+        setupUserEquipmentRequestsBadge();
+        setupUserProblemReportsBadge();
+        setupUserMaterialRequestsBadge();
+        
         // setupPaymentRequestsBadge(); // Will be added when payment system is active
-        console.log('✅ Notification badges initialized (problem-reports, equipment-requests, material-orders, printer-issues)');
+        console.log('✅ Notification badges initialized (problem-reports, equipment-requests, material-orders, printer-issues, user-equipment-requests, user-problem-reports, user-material-requests)');
     } catch (error) {
         console.error('❌ Error initializing notification badges:', error);
     }
@@ -133,6 +143,82 @@ function setupPrinterIssuesBadge() {
 }
 
 /**
+ * Setup user equipment requests badge
+ */
+function setupUserEquipmentRequestsBadge() {
+    if (!window.db || !window.currentUser) {
+        setTimeout(setupUserEquipmentRequestsBadge, 500);
+        return;
+    }
+    
+    console.log('🔄 Setting up user equipment requests badge listener...');
+    
+    const listener = window.db.collection('requests')
+        .where('type', '==', 'equipment')
+        .where('kennung', '==', window.currentUser.kennung)
+        .where('status', 'in', ['pending', 'approved', 'given'])
+        .onSnapshot((snapshot) => {
+            notificationCounts.userEquipmentRequests = snapshot.size;
+            console.log(`🔔 User Equipment Requests Badge: ${snapshot.size} requests found for user`);
+            updateBadge('user-equipment-requests', notificationCounts.userEquipmentRequests);
+        }, (error) => {
+            console.error('❌ User equipment requests badge listener error:', error);
+        });
+    
+    notificationListeners.push(listener);
+}
+
+/**
+ * Setup user problem reports badge
+ */
+function setupUserProblemReportsBadge() {
+    if (!window.db || !window.currentUser) {
+        setTimeout(setupUserProblemReportsBadge, 500);
+        return;
+    }
+    
+    console.log('🔄 Setting up user problem reports badge listener...');
+    
+    const listener = window.db.collection('problemReports')
+        .where('kennung', '==', window.currentUser.kennung)
+        .where('status', 'in', ['open', 'in_progress'])
+        .onSnapshot((snapshot) => {
+            notificationCounts.userProblemReports = snapshot.size;
+            console.log(`🔔 User Problem Reports Badge: ${snapshot.size} reports found for user`);
+            updateBadge('user-problem-reports', notificationCounts.userProblemReports);
+        }, (error) => {
+            console.error('❌ User problem reports badge listener error:', error);
+        });
+    
+    notificationListeners.push(listener);
+}
+
+/**
+ * Setup user material requests badge
+ */
+function setupUserMaterialRequestsBadge() {
+    if (!window.db || !window.currentUser) {
+        setTimeout(setupUserMaterialRequestsBadge, 500);
+        return;
+    }
+    
+    console.log('🔄 Setting up user material requests badge listener...');
+    
+    const listener = window.db.collection('materialOrders')
+        .where('kennung', '==', window.currentUser.kennung)
+        .where('status', 'in', ['pending', 'approved'])
+        .onSnapshot((snapshot) => {
+            notificationCounts.userMaterialRequests = snapshot.size;
+            console.log(`🔔 User Material Requests Badge: ${snapshot.size} requests found for user`);
+            updateBadge('user-material-requests', notificationCounts.userMaterialRequests);
+        }, (error) => {
+            console.error('❌ User material requests badge listener error:', error);
+        });
+    
+    notificationListeners.push(listener);
+}
+
+/**
  * Update badge visibility and count
  */
 function updateBadge(badgeId, count) {
@@ -167,7 +253,11 @@ function debugResetAllBadges() {
         printerIssues: 0,
         problemReports: 0,
         printerStatusChanges: 0,
-        printerDefectReports: 0
+        printerDefectReports: 0,
+        // User-specific counts
+        userEquipmentRequests: 0,
+        userProblemReports: 0,
+        userMaterialRequests: 0
     };
     
     // Hide all badges
@@ -176,6 +266,9 @@ function debugResetAllBadges() {
     updateBadge('material-orders', 0);
     updateBadge('equipment-requests', 0);
     updateBadge('printer-issues', 0);
+    updateBadge('user-equipment-requests', 0);
+    updateBadge('user-problem-reports', 0);
+    updateBadge('user-material-requests', 0);
     
     console.log('✅ All badges reset to 0');
 }
