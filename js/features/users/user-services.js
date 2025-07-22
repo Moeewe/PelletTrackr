@@ -406,8 +406,78 @@ async function showEquipmentRequest() {
     
     showModalWithContent(modalContent);
     
+    // Auto-fill phone number if available
+    await autoFillPhoneNumber();
+    
+    // Add event listener to save phone number when changed
+    const phoneInput = document.getElementById('equipmentPhone');
+    if (phoneInput) {
+        phoneInput.addEventListener('blur', async function() {
+            const phoneNumber = this.value.trim();
+            if (phoneNumber && phoneNumber !== window.currentUser?.phone) {
+                await savePhoneNumberToProfile(phoneNumber);
+            }
+        });
+    }
+    
     console.log('✅ Equipment loaded:', availableEquipment.length, 'items');
     console.log('✅ Users loaded:', allUsers.length, 'users');
+}
+
+/**
+ * Auto-fill phone number from user data
+ */
+async function autoFillPhoneNumber() {
+    try {
+        if (!window.currentUser || !window.currentUser.kennung) {
+            console.log('⚠️ No current user found for phone auto-fill');
+            return;
+        }
+        
+        // Find current user in loaded users
+        const currentUserData = allUsers.find(user => user.kennung === window.currentUser.kennung);
+        
+        if (currentUserData && currentUserData.phone) {
+            const phoneInput = document.getElementById('equipmentPhone');
+            if (phoneInput) {
+                phoneInput.value = currentUserData.phone;
+                console.log('✅ Auto-filled phone number:', currentUserData.phone);
+            }
+        } else {
+            console.log('ℹ️ No phone number found for current user');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error auto-filling phone number:', error);
+    }
+}
+
+/**
+ * Save phone number to user profile
+ */
+async function savePhoneNumberToProfile(phoneNumber) {
+    try {
+        if (!window.currentUser || !window.currentUser.kennung) {
+            console.log('⚠️ No current user found for phone save');
+            return;
+        }
+        
+        // Update user document with phone number
+        await window.db.collection('users').doc(window.currentUser.kennung).update({
+            phone: phoneNumber,
+            updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        console.log('✅ Phone number saved to user profile:', phoneNumber);
+        
+        // Update current user object
+        if (window.currentUser) {
+            window.currentUser.phone = phoneNumber;
+        }
+        
+    } catch (error) {
+        console.error('❌ Error saving phone number:', error);
+    }
 }
 
 /**
@@ -2316,6 +2386,8 @@ window.saveMaterialRequestEdit = saveMaterialRequestEdit;
 window.deleteMaterialRequest = deleteMaterialRequest;
 window.loadAllUsers = loadAllUsers;
 window.getUserDisplayText = getUserDisplayText;
+window.autoFillPhoneNumber = autoFillPhoneNumber;
+window.savePhoneNumberToProfile = savePhoneNumberToProfile;
 window.loadPrinterStatus = loadPrinterStatus;
 
 console.log('👥 User Services Module loaded'); 
