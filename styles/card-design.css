@@ -184,6 +184,11 @@
   color: white;
 }
 
+.entry-status-badge.status-return-requested {
+  background: #ffc107;
+  color: #000000;
+}
+
 /* ==================== ENTRY DETAIL ROWS ==================== */
 
 .entry-card-body {

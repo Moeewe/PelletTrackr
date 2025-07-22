@@ -1095,9 +1095,9 @@ function renderMyEquipmentRequests(requests) {
                         </button>
                     ` : ''}
                     ${request.status === 'return_requested' ? `
-                        <span class="btn btn-warning btn-sm" style="cursor: default; opacity: 0.7;">
-                            Rückgabe angefordert
-                        </span>
+                        <button class="btn btn-warning btn-sm" onclick="cancelEquipmentReturn('${request.id}')">
+                            Rückgabe zurückziehen
+                        </button>
                     ` : ''}
                     ${request.status === 'returned' ? `
                         <span class="btn btn-success btn-sm" style="cursor: default; opacity: 0.7;">
@@ -1122,14 +1122,11 @@ function renderMyEquipmentRequests(requests) {
  * Request return of equipment
  */
 async function requestEquipmentReturn(requestId) {
-    const confirmed = await window.toast.confirm(
-        'Möchten Sie die Rückgabe dieses Equipments anfragen?',
-        'Ja, anfragen',
-        'Abbrechen'
-    );
-    if (!confirmed) {
-        return;
-    }
+    // Show confirmation toast instead of browser dialog
+    window.toast.info('Rückgabe-Anfrage wird verarbeitet...');
+    
+    // Small delay to show the info message
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     try {
         console.log('🔄 Requesting equipment return for requestId:', requestId);
@@ -1254,6 +1251,96 @@ async function requestEquipmentReturn(requestId) {
     } catch (error) {
         console.error('❌ Error requesting return:', error);
         window.toast.error('Fehler beim Senden der Rückgabe-Anfrage: ' + error.message);
+    }
+}
+
+/**
+ * Cancel equipment return request (User version)
+ */
+async function cancelEquipmentReturn(requestId) {
+    // Show confirmation toast instead of browser dialog
+    window.toast.info('Rückgabe-Anfrage wird zurückgezogen...');
+    
+    // Small delay to show the info message
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    try {
+        console.log('🔄 Canceling equipment return for requestId:', requestId);
+        
+        // First, get the request details to find the equipment
+        const requestDoc = await window.db.collection('requests').doc(requestId).get();
+        if (!requestDoc.exists) {
+            console.error('❌ Request document not found:', requestId);
+            window.toast.error('Ausleih-Anfrage nicht gefunden');
+            return;
+        }
+        
+        const requestData = requestDoc.data();
+        console.log('📋 Request data:', requestData);
+        
+        let equipmentId = requestData.equipmentId;
+        let equipmentName = requestData.equipmentName;
+        
+        // If equipmentId is missing or invalid, try to find it by name
+        if (!equipmentId || equipmentId === 'undefined' || equipmentId === 'null') {
+            console.log('⚠️ Equipment ID missing or invalid, searching by name...');
+            
+            const equipmentQuery = await window.db.collection('equipment')
+                .where('name', '==', equipmentName)
+                .limit(1)
+                .get();
+            
+            if (!equipmentQuery.empty) {
+                equipmentId = equipmentQuery.docs[0].id;
+                console.log('✅ Found equipment by name:', equipmentId);
+            } else {
+                console.error('❌ Equipment not found by name:', equipmentName);
+                window.toast.error(`Equipment "${equipmentName}" nicht gefunden`);
+                return;
+            }
+        }
+        
+        // Get equipment document
+        const equipmentRef = window.db.collection('equipment').doc(equipmentId);
+        const equipmentDoc = await equipmentRef.get();
+        
+        if (!equipmentDoc.exists) {
+            console.error('❌ Equipment document not found:', equipmentId);
+            window.toast.error('Equipment nicht gefunden');
+            return;
+        }
+        
+        // Remove return request from equipment
+        const equipmentData = equipmentDoc.data();
+        const requests = equipmentData.requests || [];
+        const updatedRequests = requests.filter(req => 
+            !(req.type === 'return' && req.originalRequestId === requestId)
+        );
+        
+        await equipmentRef.update({
+            requests: updatedRequests
+        });
+        
+        console.log('✅ Return request removed from equipment document');
+        
+        // Update the original request status back to borrowed
+        await window.db.collection('requests').doc(requestId).update({
+            status: 'borrowed',
+            returnRequestedAt: window.firebase.firestore.FieldValue.delete()
+        });
+        
+        console.log('✅ Return request canceled successfully');
+        window.toast.success('Rückgabe-Anfrage erfolgreich zurückgezogen');
+        
+        // Refresh the view if still on the equipment requests modal
+        const equipmentRequestsList = document.getElementById('myEquipmentRequestsList');
+        if (equipmentRequestsList) {
+            refreshMyEquipmentRequests();
+        }
+        
+    } catch (error) {
+        console.error('❌ Error canceling return:', error);
+        window.toast.error('Fehler beim Zurückziehen der Rückgabe-Anfrage: ' + error.message);
     }
 }
 
@@ -2426,6 +2513,7 @@ window.reportPrinterProblem = reportPrinterProblem;
 window.submitPrinterProblemReport = submitPrinterProblemReport;
 window.showMyEquipmentRequests = showMyEquipmentRequests;
 window.requestEquipmentReturn = requestEquipmentReturn;
+window.cancelEquipmentReturn = cancelEquipmentReturn;
 window.deleteUserEquipmentRequest = deleteUserEquipmentRequest;
 window.showMyProblemReports = showMyProblemReports;
 window.editProblemReport = editProblemReport;
