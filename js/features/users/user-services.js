@@ -1144,12 +1144,38 @@ async function requestEquipmentReturn(requestId) {
         
         const requestData = requestDoc.data();
         console.log('📋 Request data:', requestData);
+        console.log('🔍 Equipment ID from request:', requestData.equipmentId);
+        console.log('🔍 Equipment Name from request:', requestData.equipmentName);
         
         // Validate required fields
-        if (!requestData.equipmentId || !requestData.equipmentName) {
+        if (!requestData.equipmentId && !requestData.equipmentName) {
             console.error('❌ Missing equipment data in request:', requestData);
             window.toast.error('Equipment-Daten in der Anfrage nicht gefunden');
             return;
+        }
+        
+        // If equipmentId is missing, try to find it by name
+        if (!requestData.equipmentId && requestData.equipmentName) {
+            console.log('⚠️ Equipment ID missing, searching by name...');
+            const equipmentQuery = await window.db.collection('equipment')
+                .where('name', '==', requestData.equipmentName)
+                .limit(1)
+                .get();
+            
+            if (!equipmentQuery.empty) {
+                const foundEquipment = equipmentQuery.docs[0];
+                requestData.equipmentId = foundEquipment.id;
+                console.log('✅ Found equipment ID by name:', foundEquipment.id);
+                
+                // Update the original request with the correct equipment ID
+                await window.db.collection('requests').doc(requestId).update({
+                    equipmentId: foundEquipment.id
+                });
+            } else {
+                console.error('❌ Equipment not found by name:', requestData.equipmentName);
+                window.toast.error('Equipment nicht gefunden');
+                return;
+            }
         }
         
         // Create a return request directly in the equipment document
@@ -1174,16 +1200,39 @@ async function requestEquipmentReturn(requestId) {
         const equipmentDoc = await equipmentRef.get();
         
         if (!equipmentDoc.exists) {
-            throw new Error('Equipment nicht gefunden');
+            console.error('❌ Equipment document not found:', requestData.equipmentId);
+            console.error('❌ Request data:', requestData);
+            
+            // Try to find equipment by name as fallback
+            const equipmentQuery = await window.db.collection('equipment')
+                .where('name', '==', requestData.equipmentName)
+                .limit(1)
+                .get();
+            
+            if (equipmentQuery.empty) {
+                throw new Error(`Equipment nicht gefunden (ID: ${requestData.equipmentId}, Name: ${requestData.equipmentName})`);
+            }
+            
+            // Use the found equipment
+            const foundEquipment = equipmentQuery.docs[0];
+            console.log('✅ Found equipment by name:', foundEquipment.id);
+            
+            const equipmentData = foundEquipment.data();
+            const requests = equipmentData.requests || [];
+            requests.push(returnRequestData);
+            
+            await foundEquipment.ref.update({
+                requests: requests
+            });
+        } else {
+            const equipmentData = equipmentDoc.data();
+            const requests = equipmentData.requests || [];
+            requests.push(returnRequestData);
+            
+            await equipmentRef.update({
+                requests: requests
+            });
         }
-        
-        const equipmentData = equipmentDoc.data();
-        const requests = equipmentData.requests || [];
-        requests.push(returnRequestData);
-        
-        await equipmentRef.update({
-            requests: requests
-        });
         
         // Update the original request status
         await window.db.collection('requests').doc(requestId).update({
