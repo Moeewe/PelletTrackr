@@ -1024,9 +1024,9 @@ function renderMyEquipmentRequests(requests) {
                             Rückgabe anfragen
                         </button>
                     ` : ''}
-                    ${request.status === 'pending' ? `
+                    ${request.status === 'pending' || request.status === 'approved' ? `
                         <button class="btn btn-danger btn-sm" onclick="deleteUserEquipmentRequest('${request.id}')">
-                            Löschen
+                            Anfrage löschen
                         </button>
                     ` : ''}
                 </div>
