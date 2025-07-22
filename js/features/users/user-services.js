@@ -412,10 +412,33 @@ async function showEquipmentRequest() {
     // Add event listener to save phone number when changed
     const phoneInput = document.getElementById('equipmentPhone');
     if (phoneInput) {
+        // Save on blur (when user leaves the field)
         phoneInput.addEventListener('blur', async function() {
             const phoneNumber = this.value.trim();
             if (phoneNumber && phoneNumber !== window.currentUser?.phone) {
                 await savePhoneNumberToProfile(phoneNumber);
+            }
+        });
+        
+        // Also save on Enter key press
+        phoneInput.addEventListener('keypress', async function(event) {
+            if (event.key === 'Enter') {
+                const phoneNumber = this.value.trim();
+                if (phoneNumber && phoneNumber !== window.currentUser?.phone) {
+                    await savePhoneNumberToProfile(phoneNumber);
+                }
+            }
+        });
+        
+        // Save on input change (real-time)
+        phoneInput.addEventListener('input', async function() {
+            const phoneNumber = this.value.trim();
+            if (phoneNumber && phoneNumber !== window.currentUser?.phone) {
+                // Debounce the save operation
+                clearTimeout(this.saveTimeout);
+                this.saveTimeout = setTimeout(async () => {
+                    await savePhoneNumberToProfile(phoneNumber);
+                }, 1000); // Save after 1 second of no typing
             }
         });
     }
@@ -434,18 +457,55 @@ async function autoFillPhoneNumber() {
             return;
         }
         
-        // Find current user in loaded users
-        const currentUserData = allUsers.find(user => user.kennung === window.currentUser.kennung);
-        
-        if (currentUserData && currentUserData.phone) {
-            const phoneInput = document.getElementById('equipmentPhone');
-            if (phoneInput) {
-                phoneInput.value = currentUserData.phone;
-                console.log('✅ Auto-filled phone number:', currentUserData.phone);
-            }
-        } else {
-            console.log('ℹ️ No phone number found for current user');
+        const phoneInput = document.getElementById('equipmentPhone');
+        if (!phoneInput) {
+            console.log('⚠️ Phone input field not found');
+            return;
         }
+        
+        // First try to get from current user object
+        if (window.currentUser.phone) {
+            phoneInput.value = window.currentUser.phone;
+            phoneInput.setAttribute('data-prefilled', 'true');
+            console.log('✅ Auto-filled phone number from current user:', window.currentUser.phone);
+            return;
+        }
+        
+        // Then try to find in loaded users
+        if (typeof allUsers !== 'undefined' && allUsers.length > 0) {
+            const currentUserData = allUsers.find(user => user.kennung === window.currentUser.kennung);
+            
+            if (currentUserData && currentUserData.phone) {
+                phoneInput.value = currentUserData.phone;
+                phoneInput.setAttribute('data-prefilled', 'true');
+                console.log('✅ Auto-filled phone number from allUsers:', currentUserData.phone);
+                
+                // Update current user object
+                window.currentUser.phone = currentUserData.phone;
+                return;
+            }
+        }
+        
+        // If no phone found, try to fetch from database
+        try {
+            const userDoc = await window.db.collection('users').doc(window.currentUser.kennung).get();
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                if (userData.phone) {
+                    phoneInput.value = userData.phone;
+                    phoneInput.setAttribute('data-prefilled', 'true');
+                    console.log('✅ Auto-filled phone number from database:', userData.phone);
+                    
+                    // Update current user object
+                    window.currentUser.phone = userData.phone;
+                    return;
+                }
+            }
+        } catch (dbError) {
+            console.log('ℹ️ Could not fetch phone from database:', dbError.message);
+        }
+        
+        console.log('ℹ️ No phone number found for current user');
         
     } catch (error) {
         console.error('❌ Error auto-filling phone number:', error);
@@ -462,6 +522,12 @@ async function savePhoneNumberToProfile(phoneNumber) {
             return;
         }
         
+        // Don't save if it's the same as current
+        if (window.currentUser.phone === phoneNumber) {
+            console.log('ℹ️ Phone number unchanged, no need to save');
+            return;
+        }
+        
         // Update user document with phone number
         await window.db.collection('users').doc(window.currentUser.kennung).update({
             phone: phoneNumber,
@@ -475,8 +541,14 @@ async function savePhoneNumberToProfile(phoneNumber) {
             window.currentUser.phone = phoneNumber;
         }
         
+        // Show success toast (only for significant changes)
+        if (phoneNumber.length >= 10) {
+            window.toast.success('Telefonnummer gespeichert');
+        }
+        
     } catch (error) {
         console.error('❌ Error saving phone number:', error);
+        window.toast.error('Fehler beim Speichern der Telefonnummer');
     }
 }
 

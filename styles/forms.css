@@ -94,6 +94,25 @@
   appearance: none;
 }
 
+/* Pre-filled input styling */
+.form-input[data-prefilled="true"] {
+  background-color: #f8f9fa;
+  border-color: #28a745;
+  position: relative;
+}
+
+.form-input[data-prefilled="true"]::after {
+  content: "✓ Vorausgefüllt";
+  position: absolute;
+  top: -8px;
+  right: 8px;
+  background: #28a745;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
 /* Custom dropdown arrow */
 .form-select {
   background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill="%23000000" d="M8 10l-4-4h8z"/></svg>');
