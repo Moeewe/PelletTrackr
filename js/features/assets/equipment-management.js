@@ -512,7 +512,6 @@ function renderEquipmentList(equipmentList) {
                         } else {
                             return `
                                 <button class="btn btn-success" onclick="returnEquipment('${item.id}')">Zurückgeben</button>
-                                <button class="btn btn-warning" onclick="requestEquipmentReturn('${item.id}')">Rücknahme anfragen</button>
                                 <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
                                 <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
                                 ${item.requiresDeposit && !item.depositPaid ? `
@@ -1295,7 +1294,7 @@ window.rejectEquipmentRequest = rejectEquipmentRequest;
 window.duplicateEquipment = duplicateEquipment;
 window.deleteEquipment = deleteEquipment;
 window.updateMachineOverview = updateMachineOverview;
-window.requestEquipmentReturn = requestEquipmentReturn;
+// window.requestEquipmentReturn removed - function no longer exists
 window.confirmEquipmentReturn = confirmEquipmentReturn;
 window.setupEquipmentRequestsListener = setupEquipmentRequestsListener;
 window.loadEquipmentRequests = loadEquipmentRequests;
@@ -1441,40 +1440,7 @@ async function duplicateEquipment(equipmentId) {
 /**
  * Request equipment return from user
  */
-async function requestEquipmentReturn(equipmentId) {
-    const equipmentItem = equipment.find(item => item.id === equipmentId);
-    if (!equipmentItem) {
-        safeShowToast('Equipment nicht gefunden', 'error');
-        return;
-    }
-    
-    if (!equipmentItem.borrowedByKennung) {
-        safeShowToast('Kein Benutzer für Rücknahme-Anfrage gefunden', 'error');
-        return;
-    }
-    
-    try {
-        // Create return request in requests collection - only store FH-Kennung
-        const returnRequestData = {
-            equipmentId: equipmentId,
-            equipmentName: equipmentItem.name,
-            equipmentType: equipmentItem.category,
-            userKennung: equipmentItem.borrowedByKennung,
-            requestedBy: window.currentUser?.kennung || 'admin',
-            status: 'pending',
-            type: 'return',
-            createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
-        await window.db.collection('requests').add(returnRequestData);
-        
-        safeShowToast('Rücknahme-Anfrage erfolgreich erstellt', 'success');
-        
-    } catch (error) {
-        console.error('Error requesting equipment return:', error);
-        safeShowToast('Fehler beim Erstellen der Rücknahme-Anfrage', 'error');
-    }
-}
+// requestEquipmentReturn function removed - simplified admin workflow
 
 /**
  * Confirm equipment return request
@@ -1677,7 +1643,7 @@ window.updateMachineOverview = updateMachineOverview;
 window.filterAdminBorrowUsers = filterAdminBorrowUsers;
 window.selectAdminBorrowUser = selectAdminBorrowUser;
 window.submitAdminBorrowEquipment = submitAdminBorrowEquipment;
-window.requestEquipmentReturn = requestEquipmentReturn;
+// window.requestEquipmentReturn removed - function no longer exists
 window.confirmEquipmentReturn = confirmEquipmentReturn;
 window.loadAllUsersForEquipment = loadAllUsersForEquipment;
 window.approveEquipmentRequest = approveEquipmentRequest;
@@ -1715,7 +1681,6 @@ console.log("🔧 Equipment Management Module geladen (v1.9)");
 console.log("🔧 Available functions:", {
     showEquipmentManager: typeof showEquipmentManager,
     confirmEquipmentReturn: typeof confirmEquipmentReturn,
-    requestEquipmentReturn: typeof requestEquipmentReturn,
     approveEquipmentRequest: typeof approveEquipmentRequest,
     rejectEquipmentRequest: typeof rejectEquipmentRequest
 });
