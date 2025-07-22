@@ -833,11 +833,7 @@ async function deleteEquipment(equipmentId) {
     }
     
     // Show confirmation dialog
-    const confirmed = await toast.confirm(
-        `Möchtest du "${equipmentItem.name}" wirklich löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden.`,
-        'Löschen',
-        'Abbrechen'
-    );
+    const confirmed = confirm(`Möchtest du "${equipmentItem.name}" wirklich löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden.`);
     
     if (!confirmed) return;
     
@@ -1172,11 +1168,7 @@ async function submitAdminBorrowEquipment(equipmentId) {
 async function returnEquipment(equipmentId) {
     const equipmentItem = equipment.find(item => item.id === equipmentId);
     
-    const confirmed = await toast.confirm(
-        'Equipment als zurückgegeben markieren?',
-        'Ja, zurückgeben',
-        'Abbrechen'
-    );
+    const confirmed = confirm('Equipment als zurückgegeben markieren?');
     if (!confirmed) return;
     
     try {
@@ -1211,11 +1203,7 @@ async function returnEquipment(equipmentId) {
  * Mark deposit as paid
  */
 async function markDepositAsPaid(equipmentId) {
-    const confirmed = await toast.confirm(
-        'Pfand als bezahlt markieren?',
-        'Ja, markieren',
-        'Abbrechen'
-    );
+    const confirmed = confirm('Pfand als bezahlt markieren?');
     if (!confirmed) return;
     
     try {
@@ -1306,11 +1294,7 @@ window.loadAllUsersForEquipment = loadAllUsersForEquipment;
  */
 async function approveEquipmentRequest(requestId, equipmentId) {
   try {
-        const confirmed = await toast.confirm(
-        'Möchtest du diese Ausleihe-Anfrage genehmigen?',
-        'Ja, genehmigen',
-        'Abbrechen'
-    );
+        const confirmed = confirm('Möchtest du diese Ausleihe-Anfrage genehmigen?');
     if (!confirmed) {
         return;
     }
@@ -1364,11 +1348,7 @@ async function approveEquipmentRequest(requestId, equipmentId) {
  */
 async function rejectEquipmentRequest(requestId, equipmentId) {
   try {
-        const confirmed = await toast.confirm(
-        'Möchtest du diese Ausleihe-Anfrage ablehnen?',
-        'Ja, ablehnen',
-        'Abbrechen'
-    );
+        const confirmed = confirm('Möchtest du diese Ausleihe-Anfrage ablehnen?');
     if (!confirmed) {
         return;
     }
@@ -1452,11 +1432,11 @@ async function confirmEquipmentReturn(equipmentId) {
         return;
     }
     
-    // Show confirmation toast instead of browser dialog
-    safeShowToast('Rückgabe wird bestätigt...', 'info');
-    
-    // Small delay to show the info message
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Show confirmation dialog
+    const confirmed = confirm('Möchtest du die Rückgabe dieses Equipments bestätigen?');
+    if (!confirmed) {
+        return;
+    }
     
     try {
         // Find pending return request in equipmentRequests
