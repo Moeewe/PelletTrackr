@@ -1024,6 +1024,16 @@ function renderMyEquipmentRequests(requests) {
                             Rückgabe anfragen
                         </button>
                     ` : ''}
+                    ${request.status === 'return_requested' ? `
+                        <span class="btn btn-warning btn-sm" style="cursor: default; opacity: 0.7;">
+                            Rückgabe angefordert
+                        </span>
+                    ` : ''}
+                    ${request.status === 'returned' ? `
+                        <span class="btn btn-success btn-sm" style="cursor: default; opacity: 0.7;">
+                            Zurückgegeben
+                        </span>
+                    ` : ''}
                     ${request.status === 'pending' || request.status === 'approved' ? `
                         <button class="btn btn-danger btn-sm" onclick="deleteUserEquipmentRequest('${request.id}')">
                             Anfrage löschen
@@ -1047,12 +1057,39 @@ async function requestEquipmentReturn(requestId) {
     }
     
     try {
+        // First, get the request details to find the equipment
+        const requestDoc = await window.db.collection('requests').doc(requestId).get();
+        if (!requestDoc.exists) {
+            window.toast.error('Ausleih-Anfrage nicht gefunden');
+            return;
+        }
+        
+        const requestData = requestDoc.data();
+        
+        // Create a return request in the equipmentRequests collection
+        const returnRequestData = {
+            equipmentId: requestData.equipmentId,
+            equipmentName: requestData.equipmentName,
+            userKennung: requestData.userKennung,
+            userName: requestData.userName,
+            requestedBy: window.currentUser?.kennung || 'user',
+            requestedByName: window.currentUser?.name || 'Benutzer',
+            status: 'pending',
+            type: 'return_request',
+            originalRequestId: requestId,
+            createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        await window.db.collection('equipmentRequests').add(returnRequestData);
+        
+        // Update the original request status
         await window.db.collection('requests').doc(requestId).update({
             status: 'return_requested',
-            returnRequestedAt: firebase.firestore.FieldValue.serverTimestamp()
+            returnRequestedAt: window.firebase.firestore.FieldValue.serverTimestamp()
         });
         
-        window.toast.success('Rückgabe-Anfrage gesendet');
+        window.toast.success('Rückgabe-Anfrage erfolgreich erstellt');
+        
         // Refresh the view if still on the equipment requests modal
         const equipmentRequestsList = document.getElementById('myEquipmentRequestsList');
         if (equipmentRequestsList) {

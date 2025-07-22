@@ -1315,12 +1315,27 @@ async function confirmEquipmentReturn(equipmentId) {
         
         // Update the return request status
         const returnRequestDoc = returnRequestsSnapshot.docs[0];
+        const returnRequestData = returnRequestDoc.data();
         await returnRequestDoc.ref.update({
             status: 'confirmed',
             confirmedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
             confirmedBy: window.currentUser?.kennung || 'admin',
             confirmedByName: window.currentUser?.name || 'Administrator'
         });
+        
+        // If there's an original request ID, update that too
+        if (returnRequestData.originalRequestId) {
+            try {
+                await window.db.collection('requests').doc(returnRequestData.originalRequestId).update({
+                    status: 'returned',
+                    returnedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+                    returnedBy: window.currentUser?.kennung || 'admin',
+                    returnedByName: window.currentUser?.name || 'Administrator'
+                });
+            } catch (error) {
+                console.warn('Could not update original request:', error);
+            }
+        }
         
         // Update equipment status
         const updateData = {
