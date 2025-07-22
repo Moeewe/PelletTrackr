@@ -145,6 +145,15 @@ async function loadUsersForManagement() {
     const usersWithPhone = users.filter(user => user.phone && user.phone.trim() !== '');
     console.log(`📱 ${usersWithPhone.length} Benutzer mit Handynummer:`, usersWithPhone.map(u => ({ kennung: u.kennung, phone: u.phone })));
     
+    // Debug: Show all users and their phone data
+    console.log('🔍 Alle Benutzer mit Telefonnummer-Daten:', users.map(u => ({
+      kennung: u.kennung,
+      name: u.name,
+      phone: u.phone,
+      phoneType: typeof u.phone,
+      phoneLength: u.phone ? u.phone.length : 0
+    })));
+    
     renderUsersTable(users);
     
   } catch (error) {
@@ -237,7 +246,7 @@ function renderUsersTable(users) {
         <td><span class="cell-value">${user.name}</span></td>
         <td><span class="cell-value">${user.kennung}</span></td>
         <td><span class="cell-value">${email}</span></td>
-        <td><span class="cell-value">${user.phone || '-'}</span></td>
+        <td><span class="cell-value">${user.phone && user.phone.trim() !== '' ? user.phone : '-'}</span></td>
         <td>${adminCheckbox}</td>
         <td><span class="cell-value">${user.entries.length}</span></td>
         <td><span class="cell-value"><strong>${window.formatCurrency(user.totalCost)}</strong></span></td>
@@ -315,7 +324,7 @@ function renderUsersTable(users) {
           
           <div class="entry-detail-row">
             <span class="entry-detail-label">Handynummer</span>
-            <span class="entry-detail-value">${user.phone || '-'}</span>
+            <span class="entry-detail-value">${user.phone && user.phone.trim() !== '' ? user.phone : '-'}</span>
           </div>
           
           <div class="entry-detail-row">
