@@ -64,14 +64,15 @@
 }
 
 .btn-danger {
-  background: white;
-  color: #dc3545;
-  border: 2px solid #dc3545;
+  background: #dc3545;
+  color: white;
+  border: none;
 }
 
 .btn-danger:hover {
-  background: #dc3545;
+  background: #c82333;
   color: white;
+  border: none;
 }
 
 .btn-success {

@@ -94,6 +94,7 @@ async function loadUsersForManagement() {
         name: userData.name,
         kennung: userData.kennung,
         email: userData.email || `${userData.kennung}@fh-muenster.de`,
+        phone: userData.phone || '',
         isAdmin: userData.isAdmin || false,
         createdAt: userData.createdAt,
         lastLogin: userData.lastLogin,
@@ -184,6 +185,7 @@ function renderUsersTable(users) {
               <th onclick="sortUsersBy('name')">Name</th>
               <th onclick="sortUsersBy('kennung')">FH-Kennung</th>
               <th onclick="sortUsersBy('email')">E-Mail</th>
+              <th onclick="sortUsersBy('phone')">Handynummer</th>
               <th onclick="sortUsersBy('isAdmin')">Admin</th>
               <th onclick="sortUsersBy('entries')">Drucke</th>
               <th onclick="sortUsersBy('totalCost')">Gesamtkosten</th>
@@ -225,6 +227,7 @@ function renderUsersTable(users) {
         <td><span class="cell-value">${user.name}</span></td>
         <td><span class="cell-value">${user.kennung}</span></td>
         <td><span class="cell-value">${email}</span></td>
+        <td><span class="cell-value">${user.phone || '-'}</span></td>
         <td>${adminCheckbox}</td>
         <td><span class="cell-value">${user.entries.length}</span></td>
         <td><span class="cell-value"><strong>${window.formatCurrency(user.totalCost)}</strong></span></td>
@@ -298,6 +301,11 @@ function renderUsersTable(users) {
           <div class="entry-detail-row">
             <span class="entry-detail-label">E-Mail</span>
             <span class="entry-detail-value">${email}</span>
+          </div>
+          
+          <div class="entry-detail-row">
+            <span class="entry-detail-label">Handynummer</span>
+            <span class="entry-detail-value">${user.phone || '-'}</span>
           </div>
           
           <div class="entry-detail-row">
@@ -816,6 +824,7 @@ async function showEditUserForm(kennung) {
   }
   
   const currentEmail = user.email || `${user.kennung}@fh-muenster.de`;
+  const currentPhone = user.phone || '';
   
   const modalHtml = `
     <div class="modal-header">
@@ -838,6 +847,11 @@ async function showEditUserForm(kennung) {
             <label class="form-label">E-Mail Adresse</label>
             <input type="email" id="editUserEmail" class="form-input" value="${currentEmail}">
           </div>
+          <div class="form-group">
+            <label class="form-label">Handynummer</label>
+            <input type="tel" id="editUserPhone" class="form-input" value="${currentPhone}" placeholder="z.B. 0176 12345678">
+            <small>Handynummer wird für Equipment-Ausleihen benötigt</small>
+          </div>
         </div>
         <div class="card-footer">
           ${ButtonFactory.primary('ÄNDERUNGEN SPEICHERN', `updateUser('${kennung}')`)}
@@ -854,6 +868,7 @@ async function updateUser(oldKennung) {
   const newName = document.getElementById('editUserName').value.trim();
   const newKennung = document.getElementById('editUserKennung').value.trim().toLowerCase();
   const newEmail = document.getElementById('editUserEmail').value.trim();
+  const newPhone = document.getElementById('editUserPhone').value.trim();
   
   if (!newName || !newKennung) {
     if (window.toast && typeof window.toast.warning === 'function') {
@@ -897,6 +912,7 @@ async function updateUser(oldKennung) {
           name: newName,
           kennung: newKennung,
           email: newEmail,
+          phone: newPhone,
           updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
         });
       });
@@ -907,6 +923,7 @@ async function updateUser(oldKennung) {
         name: newName,
         kennung: newKennung,
         email: newEmail,
+        phone: newPhone,
         createdAt: window.firebase.firestore.FieldValue.serverTimestamp(),
         updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
       });
@@ -962,6 +979,11 @@ function showAddUserDialog() {
             <input type="email" id="newUserEmail" class="form-input" placeholder="wird automatisch ausgefüllt">
             <small class="form-hint">Optional - Standard: kennung@fh-muenster.de</small>
           </div>
+          <div class="form-group">
+            <label class="form-label">Handynummer</label>
+            <input type="tel" id="newUserPhone" class="form-input" placeholder="z.B. 0176 12345678">
+            <small class="form-hint">Optional - wird für Equipment-Ausleihen benötigt</small>
+          </div>
         </div>
         <div class="card-footer">
           <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
@@ -1008,6 +1030,7 @@ async function createNewUser() {
   const name = document.getElementById('newUserName').value.trim();
   const kennung = document.getElementById('newUserKennung').value.trim().toLowerCase();
   const email = document.getElementById('newUserEmail').value.trim();
+  const phone = document.getElementById('newUserPhone').value.trim();
   
   if (!name || !kennung) {
     if (window.toast && typeof window.toast.warning === 'function') {
@@ -1034,6 +1057,7 @@ async function createNewUser() {
       name: name,
       kennung: kennung,
       email: email || `${kennung}@fh-muenster.de`,
+      phone: phone,
       createdAt: window.firebase.firestore.FieldValue.serverTimestamp(),
       updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
     });

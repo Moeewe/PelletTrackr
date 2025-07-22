@@ -1174,14 +1174,6 @@
 .equipment-request-item.highlighted {
     border-left: 4px solid #2196F3;
     background: linear-gradient(90deg, rgba(33, 150, 243, 0.1) 0%, rgba(33, 150, 243, 0.05) 50%, transparent 100%);
-    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.15);
-    animation: highlightPulse 2s ease-in-out;
-}
-
-@keyframes highlightPulse {
-    0% { box-shadow: 0 2px 8px rgba(33, 150, 243, 0.15); }
-    50% { box-shadow: 0 4px 16px rgba(33, 150, 243, 0.25); }
-    100% { box-shadow: 0 2px 8px rgba(33, 150, 243, 0.15); }
 }
 
 .request-header {

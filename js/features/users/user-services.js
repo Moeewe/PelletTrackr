@@ -10,6 +10,9 @@ let userPrinterListener = null;
 // Make userPrinters globally accessible
 window.userPrinters = userPrinters;
 
+// Global variable to store all users
+let allUsers = [];
+
 /**
  * Initialize user services
  */
@@ -126,15 +129,13 @@ function updatePrinterStatusDisplay() {
     });
     
     // Update UI
-    const availableEl = document.getElementById('userPrintersAvailable');
-    const inUseEl = document.getElementById('userPrintersInUse');
-    const maintenanceEl = document.getElementById('userPrintersMaintenance');
-    const brokenEl = document.getElementById('userPrintersBroken');
+    const availableEl = document.getElementById('userAvailableMachines');
+    const inUseEl = document.getElementById('userInUseMachines');
+    const maintenanceEl = document.getElementById('userMaintenanceMachines');
     
     if (availableEl) availableEl.textContent = counts.available;
     if (inUseEl) inUseEl.textContent = counts.in_use;
-    if (maintenanceEl) maintenanceEl.textContent = counts.maintenance;
-    if (brokenEl) brokenEl.textContent = counts.broken;
+    if (maintenanceEl) maintenanceEl.textContent = counts.maintenance + counts.broken; // Combine maintenance and broken
 }
 
 /**
@@ -258,6 +259,11 @@ async function cyclePrinterStatus(printerId, newStatus) {
         // Update the main interface status counts
         updatePrinterStatusDisplay();
         
+        // Also update machine overview for consistency
+        if (typeof updateMachineOverview === 'function') {
+            updateMachineOverview();
+        }
+        
         // Show success message
         const statusText = getStatusText(newStatus);
         window.toast.success(`Drucker-Status auf "${statusText}" gesetzt`);
@@ -333,15 +339,18 @@ async function showEquipmentRequest() {
         </div>
         <div class="modal-body">
             <div style="text-align: center; padding: 40px;">
-                Lade verfügbares Equipment...
+                Lade verfügbares Equipment und Benutzer...
             </div>
         </div>
     `;
     
     showModalWithContent(loadingContent);
     
-    // Load equipment data first
-    await loadEquipmentForRequest();
+    // Load equipment data and users first
+    await Promise.all([
+        loadEquipmentForRequest(),
+        loadAllUsers()
+    ]);
     
     // Now show the actual form
     const modalContent = `
@@ -349,8 +358,13 @@ async function showEquipmentRequest() {
             <h3>Equipment Anfrage</h3>
             <button class="close-btn" onclick="closeModal()">&times;</button>
         </div>
-        <div class="modal-body">
-            <div class="form">
+                    <div class="modal-body">
+                <div class="form">
+                    <div class="form-group">
+                        <label class="form-label">Handynummer (erforderlich)</label>
+                        <input type="tel" id="equipmentPhone" class="form-input" placeholder="z.B. 0176 12345678" required>
+                        <small class="form-help">Ihre Handynummer wird für die Ausleihe benötigt und nur Admins können sie einsehen.</small>
+                    </div>
                 <div class="form-group">
                     <label class="form-label">Equipment-Typ</label>
                     <select id="equipmentType" class="form-select" onchange="updateEquipmentOptions()">
@@ -393,6 +407,7 @@ async function showEquipmentRequest() {
     showModalWithContent(modalContent);
     
     console.log('✅ Equipment loaded:', availableEquipment.length, 'items');
+    console.log('✅ Users loaded:', allUsers.length, 'users');
 }
 
 /**
@@ -457,27 +472,36 @@ async function submitEquipmentRequest() {
     const equipmentName = document.getElementById('equipmentName').value;
     const duration = document.getElementById('equipmentDuration').value;
     const purpose = document.getElementById('equipmentPurpose').value;
+    const phoneNumber = document.getElementById('equipmentPhone').value;
     
-    if (!equipmentType || !equipmentName || !duration || !purpose) {
+    if (!equipmentType || !equipmentName || !duration || !purpose || !phoneNumber) {
         window.toast.error('Bitte alle Felder ausfüllen');
+        return;
+    }
+    
+    // Validate phone number format
+    const phoneRegex = /^(\+49|0)[0-9\s\-\(\)]{10,}$/;
+    if (!phoneRegex.test(phoneNumber)) {
+        window.toast.error('Bitte geben Sie eine gültige Handynummer ein');
         return;
     }
     
     // Debug logging
     console.log('🔍 Equipment Debug:');
+    console.log('- Current User:', window.currentUser?.name);
     console.log('- Equipment Type:', equipmentType);
     console.log('- Equipment Name:', equipmentName);
-    console.log('- Available Equipment:', availableEquipment.length, 'items');
+    console.log('- Available Equipment:', availableEquipment?.length || 0, 'items');
     console.log('- Available Equipment List:', availableEquipment);
     
     // Find equipment by ID (since dropdown uses item.id as value)
-    const selectedEquipment = availableEquipment.find(eq => eq.id === equipmentName);
+    const selectedEquipment = availableEquipment?.find(eq => eq.id === equipmentName);
     console.log('- Selected Equipment:', selectedEquipment);
     
     if (!selectedEquipment) {
         console.error('❌ Equipment nicht gefunden!');
         console.log('- Suchte nach ID:', equipmentName);
-        console.log('- Verfügbare IDs:', availableEquipment.map(eq => eq.id));
+        console.log('- Verfügbare IDs:', availableEquipment?.map(eq => eq.id) || []);
         window.toast.error('Equipment nicht gefunden - siehe Console für Details');
         return;
     }
@@ -493,10 +517,38 @@ async function submitEquipmentRequest() {
         status: 'pending',
         userName: window.currentUser?.name || 'Unbekannter User',
         userKennung: window.currentUser?.kennung || '',
+        userEmail: window.currentUser?.email || '',
+        userPhone: phoneNumber,
+        requestedBy: window.currentUser?.name || 'Unbekannter User',
+        requestedByKennung: window.currentUser?.kennung || '',
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
     
     try {
+        // Update user data with phone number if not already set
+        if (window.currentUser?.kennung) {
+            try {
+                await window.db.collection('users').doc(window.currentUser.kennung).update({
+                    phone: phoneNumber,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } catch (error) {
+                // If document doesn't exist, create it
+                if (error.code === 'not-found') {
+                    await window.db.collection('users').doc(window.currentUser.kennung).set({
+                        name: window.currentUser.name,
+                        kennung: window.currentUser.kennung,
+                        email: window.currentUser.email || `${window.currentUser.kennung}@fh-muenster.de`,
+                        phone: phoneNumber,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } else {
+                    throw error; // Re-throw other errors
+                }
+            }
+        }
+        
         await window.db.collection('requests').add(requestData);
         
         window.toast.success('Equipment-Anfrage erfolgreich gesendet');
@@ -760,8 +812,10 @@ async function loadEquipmentForRequest() {
                 });
             }
         });
+        console.log('✅ Equipment loaded:', availableEquipment.length, 'items');
     } catch (error) {
         console.error('Error loading equipment:', error);
+        availableEquipment = [];
     }
 }
 
@@ -778,7 +832,7 @@ function updateEquipmentOptions() {
     
     console.log('🔄 Updating Equipment Options:');
     console.log('- Selected Type:', selectedType);
-    console.log('- Available Equipment Total:', availableEquipment.length);
+    console.log('- Available Equipment Total:', availableEquipment?.length || 0);
     
     // Clear current options
     equipmentSelect.innerHTML = '';
@@ -790,7 +844,7 @@ function updateEquipmentOptions() {
     }
     
     // Filter equipment by selected category
-    const filteredEquipment = availableEquipment.filter(item => item.category === selectedType);
+    const filteredEquipment = availableEquipment?.filter(item => item.category === selectedType) || [];
     console.log('- Filtered Equipment for category', selectedType + ':', filteredEquipment.length);
     console.log('- Filtered Equipment Items:', filteredEquipment);
     
@@ -924,6 +978,20 @@ function renderMyEquipmentRequests(requests) {
                     <div class="entry-detail-row">
                         <span class="entry-detail-label">Standort</span>
                         <span class="entry-detail-value">${request.equipmentLocation}</span>
+                    </div>
+                    ` : ''}
+                    
+                    ${request.requestedBy && request.requestedBy !== request.userName ? `
+                    <div class="entry-detail-row">
+                        <span class="entry-detail-label">Angefordert von</span>
+                        <span class="entry-detail-value">${request.requestedBy}</span>
+                    </div>
+                    ` : ''}
+                    
+                    ${request.givenBy ? `
+                    <div class="entry-detail-row">
+                        <span class="entry-detail-label">Ausgegeben von</span>
+                        <span class="entry-detail-value">${request.givenBy}${request.giveNote ? ` - ${request.giveNote}` : ''}</span>
                     </div>
                     ` : ''}
                 </div>
@@ -1132,15 +1200,19 @@ async function refreshMyEquipmentRequests() {
  */
 function getEquipmentStatusText(status) {
     const statusMap = {
-        'pending': 'OFFEN',
-        'approved': 'GENEHMIGT', 
-        'given': 'AUSGEGEBEN',
-        'active': 'AKTIV',
-        'return_requested': 'RÜCKGABE ANGEFRAGT',
-        'returned': 'ZURÜCKGEGEBEN',
-        'rejected': 'ABGELEHNT'
+        'pending': 'Offen',
+        'approved': 'Genehmigt', 
+        'given': 'Ausgegeben',
+        'active': 'Aktiv',
+        'return_requested': 'Rückgabe angefragt',
+        'returned': 'Zurückgegeben',
+        'rejected': 'Abgelehnt',
+        'available': 'Verfügbar',
+        'borrowed': 'Ausgeliehen',
+        'maintenance': 'Wartung',
+        'rented': 'Ausgeliehen'
     };
-    return statusMap[status] || status.toUpperCase();
+    return statusMap[status] || status;
 }
 
 /**
@@ -2054,6 +2126,53 @@ function getMaterialPriorityText(priority) {
     return priorityMap[priority] || 'Mittel';
 }
 
+/**
+ * Load all users for equipment requests
+ */
+async function loadAllUsers() {
+    try {
+        console.log('🔄 Loading all users for equipment requests...');
+        const usersSnapshot = await window.db.collection('users').get();
+        
+        allUsers = [];
+        usersSnapshot.forEach(doc => {
+            const userData = doc.data();
+            allUsers.push({
+                id: doc.id,
+                name: userData.name || 'Unbekannter Benutzer',
+                kennung: userData.kennung || '',
+                email: userData.email || '',
+                ...userData
+            });
+        });
+        
+        // Sort by name
+        allUsers.sort((a, b) => a.name.localeCompare(b.name));
+        
+        console.log(`✅ Loaded ${allUsers.length} users for equipment requests`);
+        return allUsers;
+        
+    } catch (error) {
+        console.error('Error loading users:', error);
+        return [];
+    }
+}
+
+/**
+ * Get user display text for dropdown
+ */
+function getUserDisplayText(user) {
+    if (user.kennung && user.name) {
+        return `${user.name} (${user.kennung})`;
+    } else if (user.name) {
+        return user.name;
+    } else if (user.kennung) {
+        return user.kennung;
+    } else {
+        return 'Unbekannter Benutzer';
+    }
+}
+
 // Global functions
 window.initializeUserServices = initializeUserServices;
 window.cleanupUserServices = cleanupUserServices;
@@ -2079,5 +2198,7 @@ window.showMyMaterialRequests = showMyMaterialRequests;
 window.editMaterialRequest = editMaterialRequest;
 window.saveMaterialRequestEdit = saveMaterialRequestEdit;
 window.deleteMaterialRequest = deleteMaterialRequest;
+window.loadAllUsers = loadAllUsers;
+window.getUserDisplayText = getUserDisplayText;
 
 console.log('👥 User Services Module loaded'); 

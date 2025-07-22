@@ -1174,14 +1174,38 @@
 .equipment-request-item.highlighted {
     border-left: 4px solid #2196F3;
     background: linear-gradient(90deg, rgba(33, 150, 243, 0.1) 0%, rgba(33, 150, 243, 0.05) 50%, transparent 100%);
-    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.15);
-    animation: highlightPulse 2s ease-in-out;
 }
 
-@keyframes highlightPulse {
-    0% { box-shadow: 0 2px 8px rgba(33, 150, 243, 0.15); }
-    50% { box-shadow: 0 4px 16px rgba(33, 150, 243, 0.25); }
-    100% { box-shadow: 0 2px 8px rgba(33, 150, 243, 0.15); }
+/* Admin Equipment Loan Styles - REMOVED */
+
+.user-search-results {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 0;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.user-result-item {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.user-result-item:hover {
+    background-color: #f8f8f8;
+}
+
+.user-result-item:last-child {
+    border-bottom: none;
+}
+
+.no-results {
+    padding: 12px;
+    color: #666;
+    text-align: center;
+    font-style: italic;
 }
 
 .request-header {
@@ -2162,8 +2186,6 @@
 .printer-status-controls .printer-status-grid .status-btn:hover {
     background: #f0f0f0 !important;
     color: #000000 !important;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .printer-status-controls .printer-status-grid .status-btn.active {
@@ -2192,8 +2214,7 @@
 }
 
 .printer-status-controls .printer-status-grid .status-btn.active:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    /* No shadow or transform effects */
 }
 
 .printer-status-controls .printer-status-grid .status-btn.disabled {

@@ -327,7 +327,15 @@ function getEquipmentStatusText(status) {
     const statusMap = {
         'available': 'Verfügbar',
         'borrowed': 'Ausgeliehen',
-        'maintenance': 'Wartung'
+        'maintenance': 'Wartung',
+        'rented': 'Ausgeliehen',
+        'pending': 'Offen',
+        'approved': 'Genehmigt',
+        'given': 'Ausgegeben',
+        'active': 'Aktiv',
+        'return_requested': 'Rückgabe angefragt',
+        'returned': 'Zurückgegeben',
+        'rejected': 'Abgelehnt'
     };
     return statusMap[status] || status;
 }
@@ -637,49 +645,234 @@ async function deleteEquipment(equipmentId) {
  * Borrow equipment
  */
 async function borrowEquipment(equipmentId) {
-    const equipmentItem = equipment.find(item => item.id === equipmentId);
-    const userName = prompt('Name des Entleihers:');
-    if (!userName) return;
-    
-    let proceedWithBorrow = true;
-    
-    // Check if deposit is required
-    if (equipmentItem && equipmentItem.requiresDeposit) {
-        const depositConfirm = confirm(`Für dieses Equipment ist ein Pfand von ${equipmentItem.depositAmount}€ erforderlich. Wurde das Pfand bezahlt?`);
-        if (!depositConfirm) {
-            proceedWithBorrow = false;
-        }
-    }
-    
-    if (!proceedWithBorrow) {
-        safeShowToast('Ausleihe abgebrochen. Pfand muss vor der Ausleihe bezahlt werden.', 'warning');
+    // Check if user is admin
+    if (!window.currentUser || !window.currentUser.isAdmin) {
+        safeShowToast('Nur Admins können Equipment direkt ausleihen. Bitte stellen Sie eine Anfrage.', 'warning');
         return;
     }
     
+    const equipmentItem = equipment.find(item => item.id === equipmentId);
+    
+    // Load all users first for admin selection
+    if (typeof loadAllUsers === 'function') {
+        await loadAllUsers();
+    }
+    
+    // Show admin loan modal
+    const modalContent = `
+        <div class="modal-header">
+            <h3>Equipment direkt ausleihen</h3>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form">
+                <div class="form-group">
+                    <label class="form-label">Benutzer suchen</label>
+                    <input type="text" id="adminBorrowUserSearch" class="form-input" placeholder="Name oder FH-Kennung eingeben..." onkeyup="filterAdminBorrowUsers()">
+                    <div id="adminBorrowUserResults" class="user-search-results" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; margin-top: 5px; display: none;"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ausgewählter Benutzer</label>
+                    <input type="text" id="adminBorrowUserDisplay" class="form-input" placeholder="Benutzer über Suche auswählen..." readonly>
+                    <input type="hidden" id="adminBorrowUser" value="">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Handynummer (erforderlich)</label>
+                    <input type="tel" id="adminBorrowUserPhone" class="form-input" placeholder="z.B. 0176 12345678" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Dauer</label>
+                    <select id="adminBorrowDuration" class="form-select">
+                        <option value="1_hour">1 Stunde</option>
+                        <option value="2_hours">2 Stunden</option>
+                        <option value="half_day">Halber Tag</option>
+                        <option value="full_day">Ganzer Tag</option>
+                        <option value="week">1 Woche</option>
+                        <option value="other">Andere</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Zweck</label>
+                    <textarea id="adminBorrowPurpose" class="form-textarea" placeholder="Zweck der Ausleihe..." rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notiz (optional)</label>
+                    <textarea id="adminBorrowNote" class="form-textarea" placeholder="Zusätzliche Notizen..." rows="2"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+            <button class="btn btn-primary" onclick="submitAdminBorrowEquipment('${equipmentId}')">Equipment ausleihen</button>
+        </div>
+    `;
+    
+    showModalWithContent(modalContent);
+}
+
+/**
+ * Filter users for admin borrow modal
+ */
+function filterAdminBorrowUsers() {
+    const searchTerm = document.getElementById('adminBorrowUserSearch').value.toLowerCase();
+    const resultsDiv = document.getElementById('adminBorrowUserResults');
+    
+    if (!searchTerm || !window.allUsers) {
+        resultsDiv.style.display = 'none';
+        return;
+    }
+    
+    const filteredUsers = window.allUsers.filter(user => 
+        user.name.toLowerCase().includes(searchTerm) || 
+        user.kennung.toLowerCase().includes(searchTerm)
+    ).slice(0, 10); // Limit to 10 results
+    
+    if (filteredUsers.length === 0) {
+        resultsDiv.innerHTML = '<div class="no-results">Keine Benutzer gefunden</div>';
+        resultsDiv.style.display = 'block';
+        return;
+    }
+    
+    resultsDiv.innerHTML = filteredUsers.map(user => `
+        <div class="user-result-item" onclick="selectAdminBorrowUser('${user.kennung}', '${user.name}', '${user.email || ''}', '${user.phone || ''}')">
+            <strong>${user.name}</strong> (${user.kennung})
+            ${user.email ? `<br><small>📧 ${user.email}</small>` : ''}
+            ${user.phone ? `<br><small>📱 ${user.phone}</small>` : ''}
+        </div>
+    `).join('');
+    
+    resultsDiv.style.display = 'block';
+}
+
+/**
+ * Select user in admin borrow modal
+ */
+function selectAdminBorrowUser(kennung, name, email, phone) {
+    document.getElementById('adminBorrowUserSearch').value = '';
+    document.getElementById('adminBorrowUserDisplay').value = `${name} (${kennung})`;
+    document.getElementById('adminBorrowUser').value = kennung;
+    document.getElementById('adminBorrowUserPhone').value = phone;
+    document.getElementById('adminBorrowUserResults').style.display = 'none';
+    
+    // Store selected user data
+    window.selectedAdminBorrowUser = { kennung, name, email, phone };
+}
+
+/**
+ * Submit admin equipment borrow
+ */
+async function submitAdminBorrowEquipment(equipmentId) {
+    const selectedUserKennung = document.getElementById('adminBorrowUser').value;
+    const phoneNumber = document.getElementById('adminBorrowUserPhone').value;
+    const duration = document.getElementById('adminBorrowDuration').value;
+    const purpose = document.getElementById('adminBorrowPurpose').value;
+    const note = document.getElementById('adminBorrowNote').value;
+    
+    if (!selectedUserKennung || !phoneNumber || !duration || !purpose) {
+        safeShowToast('Bitte alle Pflichtfelder ausfüllen', 'error');
+        return;
+    }
+    
+    // Validate phone number
+    const phoneRegex = /^(\+49|0)[0-9\s\-\(\)]{10,}$/;
+    if (!phoneRegex.test(phoneNumber)) {
+        safeShowToast('Bitte geben Sie eine gültige Handynummer ein', 'error');
+        return;
+    }
+    
+    const equipmentItem = equipment.find(item => item.id === equipmentId);
+    if (!equipmentItem) {
+        safeShowToast('Equipment nicht gefunden', 'error');
+        return;
+    }
+    
+    // Check if deposit is required
+    if (equipmentItem.requiresDeposit) {
+        const depositConfirm = confirm(`Für dieses Equipment ist ein Pfand von ${equipmentItem.depositAmount}€ erforderlich. Wurde das Pfand bezahlt?`);
+        if (!depositConfirm) {
+            safeShowToast('Ausleihe abgebrochen. Pfand muss vor der Ausleihe bezahlt werden.', 'warning');
+            return;
+        }
+    }
+    
     try {
+        // Find selected user
+        const selectedUser = window.allUsers ? window.allUsers.find(user => user.kennung === selectedUserKennung) : null;
+        if (!selectedUser) {
+            safeShowToast('Ausgewählter Benutzer nicht gefunden', 'error');
+            return;
+        }
+        
+        // Update user phone number - create document if it doesn't exist
+        try {
+            await window.db.collection('users').doc(selectedUserKennung).update({
+                phone: phoneNumber,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        } catch (error) {
+            // If document doesn't exist, create it
+            if (error.code === 'not-found') {
+                await window.db.collection('users').doc(selectedUserKennung).set({
+                    name: selectedUser.name,
+                    kennung: selectedUser.kennung,
+                    email: selectedUser.email || `${selectedUser.kennung}@fh-muenster.de`,
+                    phone: phoneNumber,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } else {
+                throw error; // Re-throw other errors
+            }
+        }
+        
+        // Create loan request with status 'given'
+        const loanData = {
+            type: 'equipment',
+            equipmentId: equipmentId,
+            equipmentType: equipmentItem.category,
+            equipmentName: equipmentItem.name,
+            equipmentLocation: equipmentItem.location,
+            duration: duration,
+            purpose: purpose,
+            status: 'given',
+            userName: selectedUser.name,
+            userKennung: selectedUser.kennung,
+            userEmail: selectedUser.email || '',
+            userPhone: phoneNumber,
+            givenBy: window.currentUser?.name || 'Admin',
+            givenByKennung: window.currentUser?.kennung || '',
+            giveNote: note,
+            givenAt: firebase.firestore.FieldValue.serverTimestamp(),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        await window.db.collection('requests').add(loanData);
+        
+        // Update equipment status
         const updateData = {
-            status: 'borrowed',
-            borrowedBy: userName,
-            borrowedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            status: 'rented',
+            rentedBy: selectedUser.name,
+            rentedByKennung: selectedUser.kennung,
+            rentedAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         
         // If deposit is required, mark it as paid
-        if (equipmentItem && equipmentItem.requiresDeposit) {
+        if (equipmentItem.requiresDeposit) {
             updateData.depositPaid = true;
         }
         
         await window.db.collection('equipment').doc(equipmentId).update(updateData);
         
-        safeShowToast(`Equipment erfolgreich an ${userName} ausgeliehen`, 'success');
-        // Removed manual reload - real-time listener will handle the update
+        safeShowToast(`Equipment erfolgreich an ${selectedUser.name} ausgeliehen`, 'success');
+        closeModal();
         
         // Update machine overview
         updateMachineOverview();
         
     } catch (error) {
-        console.error('Error borrowing equipment:', error);
-        safeShowToast('Fehler beim Ausleihen', 'error');
+        console.error('Error submitting admin equipment borrow:', error);
+        safeShowToast('Fehler beim Ausleihen des Equipment', 'error');
     }
 }
 
@@ -871,6 +1064,9 @@ window.updateEquipment = updateEquipment;
 window.borrowEquipment = borrowEquipment;
 window.returnEquipment = returnEquipment;
 window.markDepositAsPaid = markDepositAsPaid;
+window.filterAdminBorrowUsers = filterAdminBorrowUsers;
+window.selectAdminBorrowUser = selectAdminBorrowUser;
+window.submitAdminBorrowEquipment = submitAdminBorrowEquipment;
 window.updateEquipmentRequestsBadge = updateEquipmentRequestsBadge;
 window.approveEquipmentRequest = approveEquipmentRequest;
 window.rejectEquipmentRequest = rejectEquipmentRequest;
@@ -1016,15 +1212,7 @@ function updateMachineOverview() {
     console.log('🔄 updateMachineOverview called');
     
     // Get printer data from user services (this is the correct data source)
-    if (typeof userPrinters === 'undefined') {
-        console.log('❌ userPrinters variable is undefined');
-        return;
-    }
-    
-    if (!userPrinters) {
-        console.log('❌ userPrinters variable is null');
-        return;
-    }
+    const userPrinters = window.userPrinters || [];
     
     if (userPrinters.length === 0) {
         console.log('❌ userPrinters array is empty');
@@ -1108,5 +1296,30 @@ function updateMachineOverview() {
     
     console.log(`✅ Printer Overview Updated: ${available} available, ${inUse} in use, ${maintenance} maintenance (Wartung + Defekt)`);
 }
+
+// ==================== GLOBAL EXPORTS ====================
+// Funktionen global verfügbar machen
+window.showEquipmentManager = showEquipmentManager;
+window.closeEquipmentManager = closeEquipmentManager;
+window.loadEquipment = loadEquipment;
+window.searchEquipment = searchEquipment;
+window.clearEquipmentSearch = clearEquipmentSearch;
+window.showEquipmentCategory = showEquipmentCategory;
+window.showAddEquipmentForm = showAddEquipmentForm;
+window.toggleDepositAmount = toggleDepositAmount;
+window.closeAddEquipmentForm = closeAddEquipmentForm;
+window.saveEquipment = saveEquipment;
+window.editEquipment = editEquipment;
+window.closeEditEquipmentForm = closeEditEquipmentForm;
+window.updateEquipment = updateEquipment;
+window.deleteEquipment = deleteEquipment;
+window.borrowEquipment = borrowEquipment;
+window.returnEquipment = returnEquipment;
+window.markDepositAsPaid = markDepositAsPaid;
+window.duplicateEquipment = duplicateEquipment;
+window.updateMachineOverview = updateMachineOverview;
+window.filterAdminBorrowUsers = filterAdminBorrowUsers;
+window.selectAdminBorrowUser = selectAdminBorrowUser;
+window.submitAdminBorrowEquipment = submitAdminBorrowEquipment;
 
 console.log("🔧 Equipment Management Module geladen"); 

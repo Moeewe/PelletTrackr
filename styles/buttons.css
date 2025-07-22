@@ -108,12 +108,12 @@
 .btn-danger {
   background: #F44336;
   color: white;
-  border: 2px solid #F44336;
+  border: none;
 }
 
 .btn-danger:hover {
   background: #d32f2f;
-  border-color: #d32f2f;
+  border: none;
 }
 
 /* UNDO/RÜCKGÄNGIG - Neues Grau für Rückgängig-Aktionen */

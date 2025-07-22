@@ -118,9 +118,14 @@ async function loadUserStats() {
 
     // Stats anzeigen
     document.getElementById('userTotalEntries').textContent = totalEntries;
-    document.getElementById('userTotalCost').textContent = formatCurrency(totalCost);
-    document.getElementById('userPaidAmount').textContent = formatCurrency(paidAmount);
-    document.getElementById('userUnpaidAmount').textContent = formatCurrency(unpaidAmount);
+    document.getElementById('userTotalCost').textContent = window.formatCurrency(totalCost);
+    document.getElementById('userPaidAmount').textContent = window.formatCurrency(paidAmount);
+    document.getElementById('userUnpaidAmount').textContent = window.formatCurrency(unpaidAmount);
+
+    // Drucker-Status aktualisieren
+    if (typeof updatePrinterStatusDisplay === 'function') {
+      updatePrinterStatusDisplay();
+    }
 
   } catch (error) {
     console.error('Fehler beim Laden der User-Stats:', error);
@@ -164,8 +169,13 @@ async function loadAdminStats() {
     // Stats anzeigen - alle registrierten Nutzer
     document.getElementById('adminTotalEntries').textContent = totalEntries;
     document.getElementById('adminTotalUsers').textContent = totalRegisteredUsers; // Alle registrierten Nutzer
-    document.getElementById('adminTotalRevenue').textContent = formatCurrency(totalRevenue);
-    document.getElementById('adminPendingAmount').textContent = formatCurrency(pendingAmount);
+    document.getElementById('adminTotalRevenue').textContent = window.formatCurrency(totalRevenue);
+    document.getElementById('adminPendingAmount').textContent = window.formatCurrency(pendingAmount);
+    
+    // Drucker-Status aktualisieren
+    if (typeof updatePrinterStatusDisplay === 'function') {
+      updatePrinterStatusDisplay();
+    }
     
     console.log(`📊 Admin Stats: ${totalRegisteredUsers} registriert, ${activeUsers.size} aktiv, ${totalEntries} Einträge`);
     

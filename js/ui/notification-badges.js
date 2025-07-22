@@ -155,11 +155,11 @@ function setupUserEquipmentRequestsBadge() {
     
     const listener = window.db.collection('requests')
         .where('type', '==', 'equipment')
-        .where('kennung', '==', window.currentUser.kennung)
+        .where('userKennung', '==', window.currentUser.kennung)
         .where('status', 'in', ['pending', 'approved', 'given'])
         .onSnapshot((snapshot) => {
             notificationCounts.userEquipmentRequests = snapshot.size;
-            console.log(`🔔 User Equipment Requests Badge: ${snapshot.size} requests found for user`);
+            console.log(`🔔 User Equipment Requests Badge: ${snapshot.size} requests found for user ${window.currentUser.kennung}`);
             updateBadge('user-equipment-requests', notificationCounts.userEquipmentRequests);
         }, (error) => {
             console.error('❌ User equipment requests badge listener error:', error);
@@ -180,11 +180,11 @@ function setupUserProblemReportsBadge() {
     console.log('🔄 Setting up user problem reports badge listener...');
     
     const listener = window.db.collection('problemReports')
-        .where('kennung', '==', window.currentUser.kennung)
+        .where('reportedByKennung', '==', window.currentUser.kennung)
         .where('status', 'in', ['open', 'in_progress'])
         .onSnapshot((snapshot) => {
             notificationCounts.userProblemReports = snapshot.size;
-            console.log(`🔔 User Problem Reports Badge: ${snapshot.size} reports found for user`);
+            console.log(`🔔 User Problem Reports Badge: ${snapshot.size} reports found for user ${window.currentUser.kennung}`);
             updateBadge('user-problem-reports', notificationCounts.userProblemReports);
         }, (error) => {
             console.error('❌ User problem reports badge listener error:', error);
@@ -205,11 +205,11 @@ function setupUserMaterialRequestsBadge() {
     console.log('🔄 Setting up user material requests badge listener...');
     
     const listener = window.db.collection('materialOrders')
-        .where('kennung', '==', window.currentUser.kennung)
+        .where('userKennung', '==', window.currentUser.kennung)
         .where('status', 'in', ['pending', 'approved'])
         .onSnapshot((snapshot) => {
             notificationCounts.userMaterialRequests = snapshot.size;
-            console.log(`🔔 User Material Requests Badge: ${snapshot.size} requests found for user`);
+            console.log(`🔔 User Material Requests Badge: ${snapshot.size} requests found for user ${window.currentUser.kennung}`);
             updateBadge('user-material-requests', notificationCounts.userMaterialRequests);
         }, (error) => {
             console.error('❌ User material requests badge listener error:', error);
@@ -223,6 +223,7 @@ function setupUserMaterialRequestsBadge() {
  */
 function updateBadge(badgeId, count) {
     const badge = document.querySelector(`[data-badge="${badgeId}"]`);
+    
     if (badge) {
         badge.textContent = count;
         if (count > 0) {
@@ -272,6 +273,75 @@ function debugResetAllBadges() {
     
     console.log('✅ All badges reset to 0');
 }
+
+/**
+ * Debug function to test user badges
+ */
+function debugTestUserBadges() {
+    console.log('🧪 Testing user badges...');
+    console.log('Current user:', window.currentUser);
+    console.log('Database available:', !!window.db);
+    
+    // Test badge elements
+    const userBadges = [
+        'user-equipment-requests',
+        'user-problem-reports', 
+        'user-material-requests'
+    ];
+    
+    userBadges.forEach(badgeId => {
+        const badge = document.querySelector(`[data-badge="${badgeId}"]`);
+        console.log(`Badge ${badgeId}:`, badge);
+    });
+    
+    // Test with dummy data
+    updateBadge('user-equipment-requests', 5);
+    updateBadge('user-problem-reports', 3);
+    updateBadge('user-material-requests', 2);
+}
+
+// Make debug function globally available
+window.debugTestUserBadges = debugTestUserBadges;
+
+/**
+ * Debug function to check database field names
+ */
+async function debugCheckDatabaseFields() {
+    console.log('🔍 Checking database field names...');
+    console.log('Current user:', window.currentUser);
+    
+    try {
+        // Check requests collection
+        const requestsSnapshot = await window.db.collection('requests').limit(1).get();
+        if (!requestsSnapshot.empty) {
+            const requestData = requestsSnapshot.docs[0].data();
+            console.log('Requests collection fields:', Object.keys(requestData));
+            console.log('Sample request data:', requestData);
+        }
+        
+        // Check problemReports collection
+        const problemSnapshot = await window.db.collection('problemReports').limit(1).get();
+        if (!problemSnapshot.empty) {
+            const problemData = problemSnapshot.docs[0].data();
+            console.log('ProblemReports collection fields:', Object.keys(problemData));
+            console.log('Sample problem data:', problemData);
+        }
+        
+        // Check materialOrders collection
+        const materialSnapshot = await window.db.collection('materialOrders').limit(1).get();
+        if (!materialSnapshot.empty) {
+            const materialData = materialSnapshot.docs[0].data();
+            console.log('MaterialOrders collection fields:', Object.keys(materialData));
+            console.log('Sample material data:', materialData);
+        }
+        
+    } catch (error) {
+        console.error('Error checking database fields:', error);
+    }
+}
+
+// Make debug function globally available
+window.debugCheckDatabaseFields = debugCheckDatabaseFields;
 
 /**
  * Debug function to force problem reports badge check
