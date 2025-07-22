@@ -490,15 +490,7 @@ function renderEquipmentList(equipmentList) {
                 </div>
             ` : (item.status === 'borrowed' || item.borrowedBy) && item.borrowedByKennung ? `
                 <div class="equipment-current-user">
-                    Ausgeliehen an: <strong>${item.borrowedBy || item.borrowedByKennung}</strong> (${item.borrowedByKennung || item.borrowedBy})<br>
-                    Seit: ${item.borrowedAt ? new Date(item.borrowedAt.toDate()).toLocaleDateString() : 'Unbekannt'}
-                    ${item.requiresDeposit ? `
-                        <div class="equipment-deposit-status">
-                            Pfand: <span class="${item.depositPaid ? 'deposit-paid' : 'deposit-unpaid'}">
-                                ${item.depositPaid ? 'Bezahlt' : 'Ausstehend'}
-                            </span>
-                        </div>
-                    ` : ''}
+                    ${getBorrowerInfoDisplay(item)}
                 </div>
             ` : ''}
             
@@ -560,6 +552,102 @@ function renderEquipmentList(equipmentList) {
         </div>
         `;
     }).join('');
+}
+
+/**
+ * Get borrower information display with contact details
+ */
+function getBorrowerInfoDisplay(item) {
+    const kennung = item.borrowedByKennung || item.borrowedBy;
+    if (!kennung) return 'Keine Benutzerinformationen verfügbar';
+    
+    // Try to find user in allUsers array first
+    let user = null;
+    if (window.allUsers && Array.isArray(window.allUsers)) {
+        user = window.allUsers.find(u => u.kennung === kennung);
+    }
+    
+    // If not found in allUsers, try to get from user management
+    if (!user && typeof window.getUserDetails === 'function') {
+        user = window.getUserDetails(kennung);
+    }
+    
+    // Format borrowed date
+    const borrowedDate = item.borrowedAt ? 
+        (item.borrowedAt.toDate ? item.borrowedAt.toDate() : new Date(item.borrowedAt)) : 
+        null;
+    
+    const borrowedDateStr = borrowedDate ? 
+        borrowedDate.toLocaleDateString('de-DE', { 
+            day: '2-digit', 
+            month: '2-digit', 
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        }) : 'Unbekannt';
+    
+    // Get loan duration if available
+    let durationInfo = '';
+    if (item.borrowedAt) {
+        const now = new Date();
+        const borrowed = borrowedDate || now;
+        const diffTime = Math.abs(now - borrowed);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) {
+            durationInfo = ` (seit ${diffDays} Tag)`;
+        } else {
+            durationInfo = ` (seit ${diffDays} Tagen)`;
+        }
+    }
+    
+    // Build contact information
+    let contactInfo = '';
+    if (user) {
+        contactInfo = `
+            <div class="borrower-contact-info">
+                <div class="contact-item">
+                    <strong>📧 Email:</strong> <a href="mailto:${user.email || kennung + '@fh-muenster.de'}" class="contact-link">${user.email || kennung + '@fh-muenster.de'}</a>
+                </div>
+                ${user.phone ? `
+                    <div class="contact-item">
+                        <strong>📱 Telefon:</strong> <a href="tel:${user.phone}" class="contact-link">${user.phone}</a>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    } else {
+        // Fallback if user not found
+        contactInfo = `
+            <div class="borrower-contact-info">
+                <div class="contact-item">
+                    <strong>📧 Email:</strong> <a href="mailto:${kennung}@fh-muenster.de" class="contact-link">${kennung}@fh-muenster.de</a>
+                </div>
+                <div class="contact-item">
+                    <em>Telefonnummer nicht verfügbar</em>
+                </div>
+            </div>
+        `;
+    }
+    
+    return `
+        <div class="borrower-info">
+            <div class="borrower-header">
+                <strong>Ausgeliehen an:</strong> ${user ? user.name : kennung} (${kennung})
+            </div>
+            <div class="borrower-details">
+                <strong>Seit:</strong> ${borrowedDateStr}${durationInfo}
+            </div>
+            ${contactInfo}
+            ${item.requiresDeposit ? `
+                <div class="equipment-deposit-status">
+                    <strong>Pfand:</strong> <span class="${item.depositPaid ? 'deposit-paid' : 'deposit-unpaid'}">
+                        ${item.depositPaid ? 'Bezahlt' : 'Ausstehend'}
+                    </span>
+                </div>
+            ` : ''}
+        </div>
+    `;
 }
 
 /**
