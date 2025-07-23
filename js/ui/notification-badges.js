@@ -39,7 +39,7 @@ function initNotificationBadges() {
         setupUserMaterialRequestsBadge();
         
         // setupPaymentRequestsBadge(); // Will be added when payment system is active
-        console.log('✅ Notification badges initialized (problem-reports, equipment-requests, material-orders, printer-issues, user-equipment-requests, user-problem-reports, user-material-requests)');
+        console.log('✅ Notification badges initialized (problem-reports, equipment-requests, material-orders, printer-issues, user-equipment-requests, user-problem-reports, user-material-requests) - v1.1');
     } catch (error) {
         console.error('❌ Error initializing notification badges:', error);
     }
@@ -104,12 +104,24 @@ function setupEquipmentRequestsBadge() {
     
     console.log('🔄 Setting up equipment requests badge listener...');
     
-    const listener = window.db.collection('requests')
-        .where('type', '==', 'equipment')
-        .where('status', '==', 'pending')
+    const listener = window.db.collection('equipment')
         .onSnapshot((snapshot) => {
-            notificationCounts.equipmentRequests = snapshot.size;
-            console.log(`🔔 Equipment Requests Badge: ${snapshot.size} pending requests found`);
+            let totalPendingRequests = 0;
+            
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const pendingRequests = data.pendingRequests || [];
+                
+                // Count pending equipment requests
+                const pendingEquipmentRequests = pendingRequests.filter(req => 
+                    req.status === 'pending' && req.type === 'equipment'
+                );
+                
+                totalPendingRequests += pendingEquipmentRequests.length;
+            });
+            
+            notificationCounts.equipmentRequests = totalPendingRequests;
+            console.log(`🔔 Equipment Requests Badge: ${totalPendingRequests} pending requests found across all equipment`);
             updateBadge('equipment-requests', notificationCounts.equipmentRequests);
         }, (error) => {
             console.error('❌ Equipment requests badge listener error:', error);
@@ -153,13 +165,26 @@ function setupUserEquipmentRequestsBadge() {
     
     console.log('🔄 Setting up user equipment requests badge listener...');
     
-    const listener = window.db.collection('requests')
-        .where('type', '==', 'equipment')
-        .where('userKennung', '==', window.currentUser.kennung)
-        .where('status', 'in', ['pending', 'approved', 'given'])
+    const listener = window.db.collection('equipment')
         .onSnapshot((snapshot) => {
-            notificationCounts.userEquipmentRequests = snapshot.size;
-            console.log(`🔔 User Equipment Requests Badge: ${snapshot.size} requests found for user ${window.currentUser.kennung}`);
+            let totalUserRequests = 0;
+            
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const pendingRequests = data.pendingRequests || [];
+                
+                // Count user's equipment requests
+                const userEquipmentRequests = pendingRequests.filter(req => 
+                    req.userKennung === window.currentUser.kennung && 
+                    ['pending', 'approved', 'given'].includes(req.status) &&
+                    req.type === 'equipment'
+                );
+                
+                totalUserRequests += userEquipmentRequests.length;
+            });
+            
+            notificationCounts.userEquipmentRequests = totalUserRequests;
+            console.log(`🔔 User Equipment Requests Badge: ${totalUserRequests} requests found for user ${window.currentUser.kennung}`);
             updateBadge('user-equipment-requests', notificationCounts.userEquipmentRequests);
         }, (error) => {
             console.error('❌ User equipment requests badge listener error:', error);
@@ -586,4 +611,4 @@ window.updateBadge = updateBadge; // Expose updateBadge globally
 window.debugResetAllBadges = debugResetAllBadges; // Expose debugResetAllBadges globally
 window.debugCheckProblemReportsBadge = debugCheckProblemReportsBadge; // Expose debugCheckProblemReportsBadge globally
 
-console.log('🔔 Notification Badges Module loaded'); 
+console.log('🔔 Notification Badges Module loaded (v1.0.0)'); 

@@ -1199,7 +1199,6 @@
   font-weight: 600;
   color: #2c3e50;
   margin-bottom: 8px;
-  border-bottom: 2px solid #3498db;
   padding-bottom: 4px;
 }
 
@@ -1209,8 +1208,7 @@
   margin-bottom: 12px;
   padding: 8px;
   background: white;
-  border-radius: 4px;
-  border-left: 4px solid #3498db;
+  border-radius: 0;
 }
 
 .borrower-contact-info {

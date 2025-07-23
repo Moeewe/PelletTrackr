@@ -1,0 +1,24 @@
+{
+  "name": "pellet-trackr",
+  "version": "1.0.0",
+  "description": "FGF 3D-Druck Verwaltung und Abrechnungssystem",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 -m http.server 8001",
+    "build": "echo 'Build process completed'",
+    "deploy": "echo 'Deploy to production'"
+  },
+  "keywords": [
+    "3d-printing",
+    "billing",
+    "management",
+    "firebase",
+    "javascript"
+  ],
+  "author": "FGF",
+  "license": "PROPRIETARY",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-repo/pellet-trackr.git"
+  }
+} 

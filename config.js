@@ -7,7 +7,7 @@ const APP_CONFIG = {
   appTitle: "3D-Druck Abrechnung",
   
   // Admin-Sicherheit
-  adminPassword: "admin123", // WICHTIG: Passwort für Produktivumgebung ändern!
+  adminPassword: "fgf2025admin", // WICHTIG: Passwort für Produktivumgebung ändern!
   
   // Stil-Einstellungen
   theme: {

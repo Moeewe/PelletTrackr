@@ -40,6 +40,12 @@ function setupPaymentStatusListener() {
  */
 async function cleanupPendingRequests(entryId) {
     try {
+        // Check if entryId is valid
+        if (!entryId) {
+            console.warn('cleanupPendingRequests called with invalid entryId:', entryId);
+            return;
+        }
+        
         const pendingRequests = await window.db.collection('paymentRequests')
             .where('entryId', '==', entryId)
             .where('status', '==', 'pending')

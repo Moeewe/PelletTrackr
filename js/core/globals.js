@@ -3,7 +3,7 @@
 
 // Globale Variablen
 window.currentUser = { name: '', kennung: '', isAdmin: false };
-window.ADMIN_PASSWORD = 'fgf2024admin'; // In production sollte das in einer sicheren Konfiguration stehen
+window.ADMIN_PASSWORD = 'fgf2025admin'; // In production sollte das in einer sicheren Konfiguration stehen
 
 // Globale Daten für Suche und Sortierung
 window.allUserEntries = [];

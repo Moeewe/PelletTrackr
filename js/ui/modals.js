@@ -54,6 +54,8 @@ function showModal(htmlContent, options = {}) {
   
   // Debug info
   console.log(`📋 Modal opened. Stack depth: ${modalStack.length}`);
+  console.log(`📋 Modal content length: ${htmlContent.length} characters`);
+  console.log(`📋 Modal contains equipmentList: ${htmlContent.includes('equipmentList') ? 'Yes' : 'No'}`);
 }
 
 // Modal mit Content anzeigen (Legacy-Unterstützung)

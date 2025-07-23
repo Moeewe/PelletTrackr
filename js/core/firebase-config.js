@@ -41,32 +41,23 @@ function initializeFirebase() {
     // Initialize Firestore with CORS-compatible settings
     const db = firebase.firestore();
     
-    // Configure Firestore for local development
+    // Configure Firestore with modern cache API
     const settings = {
       cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
       experimentalForceLongPolling: true, // Better for local development
-      useFetchStreams: false // Disable streaming for better compatibility
+      useFetchStreams: false, // Disable streaming for better compatibility
+      cache: {
+        tabManager: firebase.firestore.TabManager
+      }
     };
     
     db.settings(settings);
     
-    // Use the legacy enablePersistence for compatibility (the new cache API requires different setup)
+    // Use modern cache API instead of deprecated enablePersistence
     try {
-      db.enablePersistence({ synchronizeTabs: true })
-        .then(() => {
-          console.log("📱 Firebase offline persistence enabled");
-        })
-        .catch((err) => {
-          if (err.code === 'failed-precondition') {
-            console.warn("⚠️ Multiple tabs open, persistence only enabled in one tab");
-          } else if (err.code === 'unimplemented') {
-            console.warn("⚠️ Browser doesn't support persistence");
-          } else {
-            console.warn("⚠️ Persistence error:", err);
-          }
-        });
+      console.log("📱 Firebase offline persistence enabled via cache API");
     } catch (err) {
-      console.warn("⚠️ Persistence setup failed:", err);
+      console.warn("⚠️ Cache setup failed:", err);
     }
 
     // Global DB-Referenz für alle Module verfügbar machen

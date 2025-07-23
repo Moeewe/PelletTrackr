@@ -180,8 +180,9 @@
 }
 
 .entry-status-badge.status-new {
-  background: #2196F3;
-  color: white;
+  background: transparent;
+  color: #000000;
+  border: 1px solid #e0e0e0;
 }
 
 .entry-status-badge.status-return-requested {
@@ -197,12 +198,11 @@
 }
 
 .entry-detail-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 20px;
-  border-bottom: 1px solid #e0e0e0;
-  min-height: 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    min-height: 50px;
 }
 
 .entry-detail-row:last-child {
@@ -245,12 +245,11 @@
 /* ==================== ENTRY CARD FOOTER (Buttons) ==================== */
 
 .entry-card-footer {
-  padding: 16px 20px;
-  border-top: 1px solid #e0e0e0;
-  background: white;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+    padding: 16px 20px;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .entry-card-footer .btn {
@@ -1086,7 +1085,7 @@
 }
 
 .equipment-status.requested {
-    background: #2196F3;
+    background: #FF9800;
     color: white;
 }
 
@@ -1197,7 +1196,7 @@
 }
 
 .equipment-request-item.given {
-    border-left: 4px solid #2196F3;
+    border-left: 4px solid #FF9800;
 }
 
 .equipment-request-item.returned {
@@ -1210,8 +1209,8 @@
 
 /* Equipment request highlighting */
 .equipment-request-item.highlighted {
-    border-left: 4px solid #2196F3;
-    background: linear-gradient(90deg, rgba(33, 150, 243, 0.1) 0%, rgba(33, 150, 243, 0.05) 50%, transparent 100%);
+    border-left: 4px solid #FF9800;
+    background: linear-gradient(90deg, rgba(255, 152, 0, 0.1) 0%, rgba(255, 152, 0, 0.05) 50%, transparent 100%);
 }
 
 /* Admin Equipment Loan Styles - REMOVED */
@@ -1848,28 +1847,9 @@
     margin-bottom: 10px;
 }
 
-.equipment-current-user {
-    background: #f8f9fa;
-    padding: 10px;
-    border-left: 4px solid #007bff;
-    margin-bottom: 15px;
-    font-size: 14px;
-}
 
-.equipment-deposit-status {
-    margin-top: 5px;
-    font-size: 12px;
-}
 
-.deposit-paid {
-    color: #155724;
-    font-weight: 600;
-}
 
-.deposit-unpaid {
-    color: #721c24;
-    font-weight: 600;
-}
 
 .equipment-actions {
     display: flex;
@@ -1926,7 +1906,6 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 15px;
-    border-bottom: 1px solid #e0e0e0;
     padding-bottom: 10px;
 }
 
@@ -2003,7 +1982,7 @@
 }
 
 .source-badge.source-user {
-    background: #2196F3;
+    background: #FF9800;
     color: white;
 }
 
@@ -2238,7 +2217,7 @@
 }
 
 .printer-status-controls .printer-status-grid .status-btn:nth-child(2).active {
-    background: #2196F3 !important; /* Blau für In Betrieb */
+    background: #FF9800 !important; /* Orange für In Betrieb */
 }
 
 .printer-status-controls .printer-status-grid .status-btn:nth-child(3).active {
@@ -2294,4 +2273,49 @@
 .printer-card .printer-status-grid .status-btn.active:active,
 .printer-card .printer-status-grid .status-btn.active:visited {
     color: #ffffff !important;
+}
+
+/* Equipment borrower info styles */
+.borrower-info {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 0;
+    padding: 15px;
+    margin: 10px 0;
+}
+
+.borrower-header {
+    font-weight: bold;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    color: #333;
+}
+
+.borrower-details {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.borrower-contact-info {
+    margin-top: 10px;
+}
+
+.contact-item {
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.contact-item strong {
+    color: #333;
+    font-weight: 600;
+}
+
+.contact-text {
+    color: #333 !important;
+    text-decoration: none;
+}
+
+.contact-text:hover {
+    color: #333 !important;
+    text-decoration: none;
 }
