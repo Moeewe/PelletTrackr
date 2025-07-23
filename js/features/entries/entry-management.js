@@ -1,5 +1,6 @@
 // ==================== ENTRY MANAGEMENT MODULE ====================
 // CRUD-Operationen für Drucke (Create, Read, Update, Delete)
+// Version: 1.0.1 - Verbesserte Live-Kostenberechnung
 
 // Neuen Druck hinzufügen
 async function addEntry() {
@@ -367,7 +368,9 @@ function clearForm() {
 
 // ==================== COST CALCULATION ====================
 // Update cost preview when form values change
-function updateCostPreview() {
+async function updateCostPreview() {
+  console.log("💰 updateCostPreview wird ausgeführt...");
+  
   const material = document.getElementById("material");
   const materialMenge = document.getElementById("materialMenge");
   const masterbatch = document.getElementById("masterbatch");
@@ -377,43 +380,113 @@ function updateCostPreview() {
   const ownMaterialUsed = document.getElementById("ownMaterialUsed");
   const costPreview = document.getElementById("costPreview");
   
-  if (!costPreview) return;
-  
-  let totalCost = 0;
-  
-  // Calculate material costs
-  if (material && material.value && materialMenge && materialMenge.value) {
-    const materialPrice = parseFloat(material.dataset.price) || 0;
-    const materialAmount = parseFloat(materialMenge.value) || 0;
-    totalCost += materialPrice * materialAmount;
+  if (!costPreview) {
+    console.log("❌ Cost preview element nicht gefunden");
+    return;
   }
   
-  // Calculate masterbatch costs
-  if (masterbatch && masterbatch.value && masterbatchMenge && masterbatchMenge.value) {
-    const masterbatchPrice = parseFloat(masterbatch.dataset.price) || 0;
-    const masterbatchAmount = parseFloat(masterbatchMenge.value) || 0;
-    totalCost += masterbatchPrice * masterbatchAmount;
+  const materialValue = material ? material.value.trim() : '';
+  const materialMengeValue = materialMenge ? materialMenge.value.trim() : '';
+  const masterbatchValue = masterbatch ? masterbatch.value.trim() : '';
+  const masterbatchMengeValue = masterbatchMenge ? masterbatchMenge.value.trim() : '';
+  const printerValue = printer ? printer.value.trim() : '';
+  const printTimeValue = printTime ? printTime.value.trim() : '';
+  const ownMaterialChecked = ownMaterialUsed ? ownMaterialUsed.checked : false;
+  
+  console.log("📊 Eingabewerte:", {
+    material: materialValue,
+    materialMenge: materialMengeValue,
+    masterbatch: masterbatchValue,
+    masterbatchMenge: masterbatchMengeValue,
+    printer: printerValue,
+    printTime: printTimeValue,
+    ownMaterialUsed: ownMaterialChecked
+  });
+  
+  // Prüfe ob mindestens ein Material oder Drucker-Zeit ausgewählt ist
+  const hasMaterial = materialValue && materialMengeValue && 
+    materialValue !== "Material auswählen... (optional)" && 
+    materialValue !== "Material auswählen..." && 
+    materialValue !== "Lade Materialien...";
+  const hasMasterbatch = masterbatchValue && masterbatchMengeValue && 
+    masterbatchValue !== "Masterbatch auswählen... (optional)" && 
+    masterbatchValue !== "Masterbatch auswählen..." && 
+    masterbatchValue !== "Lade Masterbatches...";
+  const hasPrinterTime = printerValue && printTimeValue && 
+    printerValue !== "Drucker auswählen... (optional)" && 
+    printerValue !== "Drucker auswählen..." && 
+    printerValue !== "Lade Drucker...";
+  
+  if (!hasMaterial && !hasMasterbatch && !hasPrinterTime) {
+    console.log("⚠️ Weder Material/Masterbatch noch Drucker-Zeit ausgefüllt");
+    costPreview.textContent = '0,00 €';
+    return;
   }
   
-  // Calculate printer costs ONLY if own material is used
-  if (ownMaterialUsed && ownMaterialUsed.checked) {
-    if (printer && printer.value && printTime && printTime.value) {
+  // Wenn eigenes Material verwendet wird, nur Drucker-Kosten
+  if (ownMaterialChecked && hasPrinterTime) {
+    console.log("💰 Eigenes Material - berechne nur Drucker-Kosten");
+    try {
       const selectedOption = printer.options[printer.selectedIndex];
       const printerPricePerHour = selectedOption ? parseFloat(selectedOption.dataset.pricePerHour) || 0 : 0;
-      const printTimeMinutes = parseInt(printTime.value) || 0;
+      const printTimeMinutes = parseInt(printTimeValue) || 0;
       const printerCost = (printTimeMinutes / 60) * printerPricePerHour;
-      totalCost = printerCost; // Only printer costs, ignore material costs
-      console.log("💰 Eigenes Material - nur Drucker-Kosten:", printerCost, "€ (", printTimeMinutes, "min,", printerPricePerHour, "€/h)");
-    } else {
-      totalCost = 0;
-      console.log("💰 Eigenes Material - aber keine Drucker-Zeit angegeben");
+      
+      console.log("💰 Drucker-Kosten berechnet:", printerCost, "€ (", printTimeMinutes, "min,", printerPricePerHour, "€/h)");
+      costPreview.textContent = printerCost.toFixed(2) + ' €';
+      return;
+    } catch (error) {
+      console.error("❌ Fehler bei Drucker-Kostenberechnung:", error);
+      costPreview.textContent = '0,00 €';
+      return;
     }
-  } else {
-    // Normal calculation: only material costs (printer costs are included in material prices)
-    console.log("💰 Fremdes Material - nur Material-Kosten (Drucker-Kosten in Material-Preisen enthalten)");
   }
   
-  costPreview.textContent = totalCost.toFixed(2) + ' €';
+  // Normale Berechnung (Material + Masterbatch)
+  try {
+    console.log("🔍 Suche Preise in Firestore...");
+    let materialCost = 0;
+    let masterbatchCost = 0;
+    
+    // Material-Kosten berechnen (falls ausgewählt)
+    if (hasMaterial) {
+      const materialSnapshot = await window.db.collection("materials").where("name", "==", materialValue).get();
+      if (!materialSnapshot.empty) {
+        const materialPrice = materialSnapshot.docs[0].data().price;
+        materialCost = parseGermanNumber(materialMengeValue) * materialPrice;
+        console.log("💰 Material-Kosten:", materialCost);
+      }
+    }
+    
+    // Masterbatch-Kosten berechnen (falls ausgewählt)
+    if (hasMasterbatch) {
+      const masterbatchSnapshot = await window.db.collection("masterbatches").where("name", "==", masterbatchValue).get();
+      if (!masterbatchSnapshot.empty) {
+        const masterbatchPrice = masterbatchSnapshot.docs[0].data().price;
+        masterbatchCost = parseGermanNumber(masterbatchMengeValue) * masterbatchPrice;
+        console.log("💰 Masterbatch-Kosten:", masterbatchCost);
+      }
+    }
+    
+    const totalCost = materialCost + masterbatchCost;
+    
+    console.log("🧮 Gesamtberechnung:", {
+      materialCost: materialCost,
+      masterbatchCost: masterbatchCost,
+      totalCost: totalCost
+    });
+    
+    if (!isNaN(totalCost) && totalCost >= 0) {
+      costPreview.textContent = totalCost.toFixed(2) + ' €';
+      console.log("✅ Kostenvorschau aktualisiert:", totalCost.toFixed(2) + ' €');
+    } else {
+      costPreview.textContent = '0,00 €';
+      console.log("⚠️ Ungültige Berechnung");
+    }
+  } catch (error) {
+    console.error("❌ Fehler bei der Kostenberechnung:", error);
+    costPreview.textContent = '0,00 €';
+  }
 }
 
 // ==================== GLOBAL EXPOSURE ====================

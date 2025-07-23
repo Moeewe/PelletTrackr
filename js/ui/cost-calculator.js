@@ -1,14 +1,15 @@
 // ==================== COST CALCULATOR MODULE ====================
 // Kostenberechnung für Drucke
+// Version: 1.0.1 - Verbesserte Live-Kostenberechnung
 
 // Kostenvorschau berechnen
 async function calculateCostPreview() {
-  console.log("💰 Kostenvorschau wird berechnet...");
+  console.log("💰 calculateCostPreview wird aufgerufen...");
   
   // Verwende die neue updateCostPreview Funktion aus entry-management.js
   if (typeof window.updateCostPreview === 'function') {
     console.log("🔄 Verwende updateCostPreview aus entry-management.js");
-    window.updateCostPreview();
+    await window.updateCostPreview();
     return;
   }
   
@@ -149,7 +150,9 @@ async function calculateCostPreview() {
 let costCalculationTimeout = null;
 function throttledCalculateCost() {
   clearTimeout(costCalculationTimeout);
-  costCalculationTimeout = setTimeout(calculateCostPreview, 500);
+  costCalculationTimeout = setTimeout(async () => {
+    await calculateCostPreview();
+  }, 500);
 }
 
 // ==================== GLOBAL EXPOSURE ====================

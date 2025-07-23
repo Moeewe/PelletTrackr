@@ -1,4 +1,5 @@
 // ==================== NAVIGATION MODULE ====================
+// Version: 1.0.1 - Verbesserte Live-Kostenberechnung
 // Screen-Management und Event-Listener Setup
 
 function showScreen(screenId) {
@@ -229,12 +230,18 @@ function setupEventListeners() {
   const masterbatchMenge = document.getElementById("masterbatchMenge");
   const material = document.getElementById("material");
   const masterbatch = document.getElementById("masterbatch");
+  const printer = document.getElementById("printer");
+  const printTime = document.getElementById("printTime");
+  const ownMaterialUsed = document.getElementById("ownMaterialUsed");
   
   console.log("📊 Elemente gefunden:", {
     materialMenge: !!materialMenge,
     masterbatchMenge: !!masterbatchMenge,
     material: !!material,
-    masterbatch: !!masterbatch
+    masterbatch: !!masterbatch,
+    printer: !!printer,
+    printTime: !!printTime,
+    ownMaterialUsed: !!ownMaterialUsed
   });
   
   if (materialMenge) {
@@ -254,6 +261,19 @@ function setupEventListeners() {
   if (masterbatch) {
     masterbatch.addEventListener("change", calculateCostPreview);
     console.log("✅ Masterbatch Change Event Listener gesetzt");
+  }
+  if (printer) {
+    printer.addEventListener("change", calculateCostPreview);
+    console.log("✅ Printer Change Event Listener gesetzt");
+  }
+  if (printTime) {
+    printTime.addEventListener("input", throttledCalculateCost);
+    printTime.addEventListener("keyup", throttledCalculateCost);
+    console.log("✅ Print Time Event Listeners gesetzt");
+  }
+  if (ownMaterialUsed) {
+    ownMaterialUsed.addEventListener("change", calculateCostPreview);
+    console.log("✅ Own Material Used Change Event Listener gesetzt");
   }
   
   // Eingabevalidierung für deutsche Zahlenformate
