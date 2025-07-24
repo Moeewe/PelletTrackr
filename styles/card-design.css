@@ -12,7 +12,7 @@
 
 .entries-section {
   background: white;
-  border: none;
+  border: 2px solid #000000;
   border-radius: 0;
   padding: 32px;
   margin-bottom: 24px;
@@ -198,11 +198,11 @@
 }
 
 .entry-detail-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 14px 20px;
-    min-height: 50px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  min-height: 50px;
 }
 
 .entry-detail-row:last-child {
@@ -245,11 +245,11 @@
 /* ==================== ENTRY CARD FOOTER (Buttons) ==================== */
 
 .entry-card-footer {
-    padding: 16px 20px;
-    background: white;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+  padding: 16px 20px;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .entry-card-footer .btn {
