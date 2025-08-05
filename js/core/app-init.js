@@ -19,7 +19,7 @@ function initializeFirebaseFirst() {
         
         // Initialize Firebase if not already done
         if (firebase.apps.length === 0) {
-            console.log('🔄 Initialisiere Firebase App...');
+            console.log('🔄 Initialisiere Firebase App "FGF-3D-Druck"...');
             firebase.initializeApp({
                 apiKey: "AIzaSyBaaMwmjxyytxHLinmigccF30-1Wl0tzD0",
                 authDomain: "fgf-3d-druck.firebaseapp.com",
@@ -28,21 +28,24 @@ function initializeFirebaseFirst() {
                 storageBucket: "fgf-3d-druck.firebasestorage.app",
                 messagingSenderId: "37190466890",
                 appId: "1:37190466890:web:cfb25f3c2f6bb62006d5b3"
-            });
-            console.log('✅ Firebase App initialisiert');
+            }, "FGF-3D-Druck");
+            console.log('✅ Firebase App "FGF-3D-Druck" initialisiert');
         } else {
             console.log('⚠️ Firebase App bereits initialisiert');
         }
         
-        // Initialize Firestore
-        const db = firebase.firestore();
+        // Get the correct Firebase app instance
+        const firebaseApp = firebase.app("FGF-3D-Druck");
+        
+        // Initialize Firestore with the correct app
+        const db = firebaseApp.firestore();
         window.db = db;
         
-        // Initialize Auth
-        const auth = firebase.auth();
+        // Initialize Auth with the correct app
+        const auth = firebaseApp.auth();
         window.auth = auth;
         
-        console.log('✅ Firebase vollständig initialisiert');
+        console.log('✅ Firebase "FGF-3D-Druck" vollständig initialisiert');
         return true;
         
     } catch (error) {
