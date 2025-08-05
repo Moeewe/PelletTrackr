@@ -46,18 +46,18 @@ async function loginAsUser() {
 async function registerUser() {
     try {
         const name = document.getElementById('regName').value.trim();
-        const kennung = document.getElementById('regKennung').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
         
-        if (!name || !kennung) {
-            safeShowToast('Bitte Name und FH-Kennung eingeben!', 'warning');
+        if (!name || !email) {
+            safeShowToast('Bitte Name und E-Mail-Adresse eingeben!', 'warning');
             return;
         }
         
-        console.log('🆕 Benutzerregistrierung gestartet:', kennung);
+        console.log('🆕 Benutzerregistrierung gestartet:', email);
         
         if (typeof registerNewUser === 'function') {
             try {
-                const result = await registerNewUser(kennung, name);
+                const result = await registerNewUser(name, email);
                 if (result.success) {
                     console.log('✅ Registrierung erfolgreich');
                     safeShowToast('Account erstellt! Bitte bestätigen Sie Ihre E-Mail-Adresse.', 'success');

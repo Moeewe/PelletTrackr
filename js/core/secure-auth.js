@@ -75,6 +75,10 @@ async function secureLoginWithEmail(email, password) {
     try {
         console.log('🔐 Sichere Anmeldung für:', email);
         
+        // Extract username from email
+        const username = extractUsernameFromEmail(email);
+        console.log('👤 Extrahierter Nutzername:', username);
+        
         // Try to sign in with Firebase Auth
         try {
             const userCredential = await window.auth.signInWithEmailAndPassword(email, password);
@@ -89,6 +93,7 @@ async function secureLoginWithEmail(email, password) {
             
             // Update user profile in Firestore
             await updateUserProfile(userCredential.user, {
+                username: username,
                 lastLogin: new Date()
             });
             
@@ -100,7 +105,7 @@ async function secureLoginWithEmail(email, password) {
             }
             
             console.log('✅ E-Mail verifiziert, Login vollständig');
-            return { success: true, user: { ...userCredential.user, isAdmin } };
+            return { success: true, user: { ...userCredential.user, isAdmin, username } };
             
         } catch (loginError) {
             console.log('⚠️ Firebase Auth Login fehlgeschlagen:', loginError.code);
@@ -130,43 +135,39 @@ async function secureLoginWithEmail(email, password) {
     }
 }
 
-// Get user profile from Firestore
-async function getUserProfileFromFirestore(uid) {
+// Extract username from email (everything before @)
+function extractUsernameFromEmail(email) {
     try {
-        if (!window.db) {
-            console.log('⚠️ Firestore nicht verfügbar');
-            return null;
+        if (!email || !email.includes('@')) {
+            console.warn('⚠️ Ungültige E-Mail-Adresse:', email);
+            return 'unknown';
         }
         
-        const doc = await window.db.collection('users').doc(uid).get();
-        
-        if (doc.exists) {
-            console.log('✅ Benutzerprofil in Firestore gefunden:', doc.data());
-            return doc.data();
-        } else {
-            console.log('❌ Benutzerprofil nicht in Firestore gefunden');
-            return null;
-        }
+        const username = email.split('@')[0];
+        console.log('📧 E-Mail:', email, '→ Nutzername:', username);
+        return username.toLowerCase();
         
     } catch (error) {
-        console.error('❌ Fehler beim Laden des Benutzerprofils:', error);
-        return null;
+        console.error('❌ Fehler beim Extrahieren des Nutzernamens:', error);
+        return 'unknown';
     }
 }
 
-// User registration with kennung
-async function registerNewUser(kennung, name) {
+// User registration with name and email
+async function registerNewUser(name, email) {
     try {
-        console.log('🆕 Registriere neuen Benutzer:', kennung);
+        console.log('🆕 Registriere neuen Benutzer:', email);
         
-        if (!isValidFHKennung(kennung)) {
-            throw new Error('Ungültige FH-Kennung');
+        if (!isValidEmail(email)) {
+            throw new Error('Ungültige E-Mail-Adresse');
         }
         
-        const email = `${kennung}@fh-muenster.de`;
-        const password = generateSecurePassword(kennung);
+        // Extract username from email
+        const username = extractUsernameFromEmail(email);
+        const password = generateSecurePassword(username);
         
         console.log('📧 Erstelle Account für:', email);
+        console.log('👤 Nutzername:', username);
         
         // Create new user in Firebase Auth
         const userCredential = await window.auth.createUserWithEmailAndPassword(email, password);
@@ -180,7 +181,8 @@ async function registerNewUser(kennung, name) {
         // Create user profile in Firestore
         await updateUserProfile(userCredential.user, {
             name,
-            kennung: kennung.toLowerCase(),
+            username: username,
+            email: email,
             isAdmin: false,
             emailVerified: false,
             createdAt: new Date()
@@ -284,7 +286,7 @@ async function setAdminClaim(uid) {
     }
 }
 
-// Validate FH-Kennung format
+// Validate FH-Kennung format (for backward compatibility)
 function isValidFHKennung(kennung) {
     if (!kennung || typeof kennung !== 'string') {
         return false;
