@@ -84,12 +84,109 @@ async function loginAsAdmin() {
     }
 }
 
+// Registriere neuen Benutzer
+async function registerUser() {
+    try {
+        const name = document.getElementById('loginName').value.trim();
+        const kennung = document.getElementById('loginKennung').value.trim();
+        
+        if (!name || !kennung) {
+            safeShowToast('Bitte Name und FH-Kennung eingeben!', 'warning');
+            return;
+        }
+        
+        console.log('🆕 Benutzerregistrierung gestartet:', kennung);
+        
+        if (typeof registerNewUser === 'function') {
+            try {
+                const result = await registerNewUser(kennung, name);
+                if (result.success) {
+                    console.log('✅ Registrierung erfolgreich');
+                    safeShowToast('Account erstellt! Bitte bestätigen Sie Ihre E-Mail-Adresse.', 'success');
+                    hideAllSections();
+                }
+            } catch (error) {
+                console.error('❌ Registrierung error:', error);
+                safeShowToast('Fehler bei der Registrierung: ' + error.message, 'error');
+            }
+        } else {
+            safeShowToast('Registrierung nicht verfügbar', 'error');
+        }
+        
+    } catch (error) {
+        console.error('❌ Fehler bei der Registrierung:', error);
+        safeShowToast('Fehler bei der Registrierung', 'error');
+    }
+}
+
+// Passwort zurücksetzen
+async function resetUserPassword() {
+    try {
+        const kennung = document.getElementById('loginKennung').value.trim();
+        
+        if (!kennung) {
+            safeShowToast('Bitte FH-Kennung eingeben!', 'warning');
+            return;
+        }
+        
+        console.log('🔑 Passwort-Reset gestartet:', kennung);
+        
+        if (typeof resetPassword === 'function') {
+            try {
+                await resetPassword(kennung);
+                console.log('✅ Passwort-Reset erfolgreich');
+                safeShowToast('Passwort-Reset E-Mail wurde gesendet.', 'success');
+                hideAllSections();
+            } catch (error) {
+                console.error('❌ Passwort-Reset error:', error);
+                safeShowToast('Fehler beim Passwort-Reset: ' + error.message, 'error');
+            }
+        } else {
+            safeShowToast('Passwort-Reset nicht verfügbar', 'error');
+        }
+        
+    } catch (error) {
+        console.error('❌ Fehler beim Passwort-Reset:', error);
+        safeShowToast('Fehler beim Passwort-Reset', 'error');
+    }
+}
+
 // Admin-Login anzeigen
 function showAdminLogin() {
+    hideAllSections();
     const adminSection = document.getElementById('adminLoginSection');
     if (adminSection) {
         adminSection.style.display = 'block';
     }
+}
+
+// Registrierung anzeigen
+function showRegistration() {
+    hideAllSections();
+    const registrationSection = document.getElementById('registrationSection');
+    if (registrationSection) {
+        registrationSection.style.display = 'block';
+    }
+}
+
+// Passwort-Reset anzeigen
+function showPasswordReset() {
+    hideAllSections();
+    const passwordResetSection = document.getElementById('passwordResetSection');
+    if (passwordResetSection) {
+        passwordResetSection.style.display = 'block';
+    }
+}
+
+// Alle Sektionen verstecken
+function hideAllSections() {
+    const sections = ['adminLoginSection', 'registrationSection', 'passwordResetSection'];
+    sections.forEach(sectionId => {
+        const section = document.getElementById(sectionId);
+        if (section) {
+            section.style.display = 'none';
+        }
+    });
 }
 
 // Session speichern
@@ -140,7 +237,7 @@ async function checkExistingSession() {
         }
         
         return true;
-      
+        
     } catch (error) {
         console.error('❌ Fehler beim Prüfen der Session:', error);
         return false;
@@ -213,11 +310,8 @@ function showLoginScreen() {
         loginForm.reset();
     }
     
-    // Admin-Sektion verstecken
-    const adminSection = document.getElementById('adminLoginSection');
-    if (adminSection) {
-        adminSection.style.display = 'none';
-    }
+    // Alle Sektionen verstecken
+    hideAllSections();
 }
 
 // Legacy-Funktionen (Fallback)
@@ -245,7 +339,11 @@ function safeShowToast(message, type = 'info') {
 // Global exports
 window.loginAsUser = loginAsUser;
 window.loginAsAdmin = loginAsAdmin;
+window.registerUser = registerUser;
+window.resetUserPassword = resetUserPassword;
 window.showAdminLogin = showAdminLogin;
+window.showRegistration = showRegistration;
+window.showPasswordReset = showPasswordReset;
 window.logout = logout;
 window.checkExistingSession = checkExistingSession;
 window.showDashboard = showDashboard;

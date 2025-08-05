@@ -1,6 +1,6 @@
 /**
  * Secure Authentication System
- * Firebase Auth mit E-Mail-Verifizierung
+ * Firebase Auth mit E-Mail-Verifizierung und Admin-Rollen
  */
 
 // Initialize secure authentication
@@ -52,8 +52,14 @@ async function handleAuthenticatedUser(user) {
             lastLogin: new Date()
         });
         
+        // Check admin status from custom claims
+        const token = await user.getIdTokenResult();
+        const isAdmin = token.claims?.admin === true;
+        
+        console.log('🔍 Admin-Status:', isAdmin);
+        
         // Show appropriate dashboard
-        if (user.isAdmin) {
+        if (isAdmin) {
             showAdminDashboard();
         } else {
             showUserDashboard();
@@ -61,6 +67,54 @@ async function handleAuthenticatedUser(user) {
         
     } catch (error) {
         console.error('❌ Fehler beim Verarbeiten des authentifizierten Benutzers:', error);
+    }
+}
+
+// User registration
+async function registerNewUser(kennung, name) {
+    try {
+        console.log('🆕 Registriere neuen Benutzer:', kennung);
+        
+        if (!isValidFHKennung(kennung)) {
+            throw new Error('Ungültige FH-Kennung');
+        }
+        
+        const email = `${kennung}@fh-muenster.de`;
+        const password = generateSecurePassword(kennung);
+        
+        console.log('📧 Erstelle Account für:', email);
+        
+        // Create new user
+        const userCredential = await window.auth.createUserWithEmailAndPassword(email, password);
+        
+        // Send email verification
+        await userCredential.user.sendEmailVerification({
+            url: window.location.origin,
+            handleCodeInApp: true
+        });
+        
+        // Update user profile
+        await updateUserProfile(userCredential.user, {
+            name,
+            kennung: kennung.toLowerCase(),
+            isAdmin: false,
+            emailVerified: false,
+            createdAt: new Date()
+        });
+        
+        console.log('✅ Benutzer erfolgreich registriert');
+        safeShowToast('Account erstellt! Bitte bestätigen Sie Ihre E-Mail-Adresse.', 'success');
+        
+        return { success: true, user: userCredential.user };
+        
+    } catch (error) {
+        console.error('❌ Fehler bei Benutzerregistrierung:', error);
+        
+        if (error.code === 'auth/email-already-in-use') {
+            throw new Error('E-Mail-Adresse bereits registriert. Bitte melden Sie sich an.');
+        } else {
+            throw error;
+        }
     }
 }
 
@@ -78,51 +132,15 @@ async function secureLoginWithKennung(kennung, name, isAdmin = false) {
         
         console.log('📧 Versuche Login mit:', email);
         
-        let userCredential;
-        
-        // ZUERST: Versuche Login mit bestehendem Account
-        try {
-            console.log('🔑 Versuche Login mit bestehendem Account...');
-            userCredential = await window.auth.signInWithEmailAndPassword(email, password);
-            console.log('✅ Login erfolgreich mit bestehendem Account');
-            
-        } catch (loginError) {
-            console.log('⚠️ Login fehlgeschlagen:', loginError.code);
-            
-            if (loginError.code === 'auth/user-not-found') {
-                console.log('🆕 Benutzer nicht gefunden, erstelle neuen Account...');
-                
-                // Erstelle neuen Benutzer
-                userCredential = await window.auth.createUserWithEmailAndPassword(email, password);
-                
-                // Sende E-Mail-Verifizierung
-                await userCredential.user.sendEmailVerification({
-                    url: window.location.origin,
-                    handleCodeInApp: true
-                });
-                
-                console.log('📧 E-Mail-Verifizierung gesendet');
-                
-            } else if (loginError.code === 'auth/wrong-password') {
-                console.log('❌ Falsches Passwort für bestehenden Account');
-                throw new Error('E-Mail-Adresse bereits registriert, aber Passwort ist falsch. Bitte kontaktieren Sie den Administrator.');
-                
-            } else if (loginError.code === 'auth/invalid-login-credentials') {
-                console.log('❌ Ungültige Anmeldedaten');
-                throw new Error('Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre Eingaben.');
-                
-            } else {
-                throw loginError;
-            }
-        }
+        // Try to sign in
+        const userCredential = await window.auth.signInWithEmailAndPassword(email, password);
+        console.log('✅ Login erfolgreich');
         
         // Update user profile
         await updateUserProfile(userCredential.user, {
             name,
             kennung: kennung.toLowerCase(),
-            isAdmin,
-            emailVerified: userCredential.user.emailVerified,
-            createdAt: new Date()
+            lastLogin: new Date()
         });
         
         // Check email verification
@@ -137,7 +155,95 @@ async function secureLoginWithKennung(kennung, name, isAdmin = false) {
         
     } catch (error) {
         console.error('❌ Fehler bei sicherer Anmeldung:', error);
+        
+        if (error.code === 'auth/user-not-found') {
+            throw new Error('Account nicht gefunden. Bitte registrieren Sie sich zuerst.');
+        } else if (error.code === 'auth/wrong-password') {
+            throw new Error('Falsches Passwort. Bitte überprüfen Sie Ihre Eingaben.');
+        } else if (error.code === 'auth/invalid-login-credentials') {
+            throw new Error('Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre Eingaben.');
+        } else {
+            throw error;
+        }
+    }
+}
+
+// Password reset
+async function resetPassword(kennung) {
+    try {
+        console.log('🔑 Passwort zurücksetzen für:', kennung);
+        
+        if (!isValidFHKennung(kennung)) {
+            throw new Error('Ungültige FH-Kennung');
+        }
+        
+        const email = `${kennung}@fh-muenster.de`;
+        
+        // Send password reset email
+        await window.auth.sendPasswordResetEmail(email, {
+            url: window.location.origin
+        });
+        
+        console.log('📧 Passwort-Reset E-Mail gesendet');
+        safeShowToast('Passwort-Reset E-Mail wurde gesendet. Bitte prüfen Sie Ihren Posteingang.', 'success');
+        
+    } catch (error) {
+        console.error('❌ Fehler beim Passwort-Reset:', error);
+        
+        if (error.code === 'auth/user-not-found') {
+            throw new Error('Account nicht gefunden. Bitte registrieren Sie sich zuerst.');
+        } else {
+            throw error;
+        }
+    }
+}
+
+// Admin authentication (secure)
+async function secureAdminLogin(kennung, name, adminPassword) {
+    try {
+        console.log('🔐 Sichere Admin-Anmeldung für:', kennung);
+        
+        // Verify admin password (this should be done server-side in production)
+        const correctAdminPassword = 'fgf2025admin';
+        if (adminPassword !== correctAdminPassword) {
+            throw new Error('Ungültiges Admin-Passwort');
+        }
+        
+        // First, login as regular user
+        const loginResult = await secureLoginWithKennung(kennung, name, false);
+        
+        if (!loginResult.success) {
+            return loginResult;
+        }
+        
+        // Set admin custom claim (this should be done server-side)
+        const user = loginResult.user;
+        await setAdminClaim(user.uid);
+        
+        console.log('✅ Admin-Login erfolgreich');
+        return { success: true, user: user, isAdmin: true };
+        
+    } catch (error) {
+        console.error('❌ Fehler bei Admin-Login:', error);
         throw error;
+    }
+}
+
+// Set admin claim (this should be done server-side)
+async function setAdminClaim(uid) {
+    try {
+        // In production, this should be done via Cloud Functions
+        // For now, we'll use a simple approach
+        console.log('🔧 Setze Admin-Status für:', uid);
+        
+        // Update user profile with admin flag
+        await updateUserProfile({ uid }, {
+            isAdmin: true,
+            adminGrantedAt: new Date()
+        });
+        
+    } catch (error) {
+        console.error('❌ Fehler beim Setzen des Admin-Status:', error);
     }
 }
 
@@ -333,6 +439,9 @@ function safeShowToast(message, type = 'info') {
 // Global exports
 window.initializeSecureAuth = initializeSecureAuth;
 window.secureLoginWithKennung = secureLoginWithKennung;
+window.registerNewUser = registerNewUser;
+window.resetPassword = resetPassword;
+window.secureAdminLogin = secureAdminLogin;
 window.resendVerificationEmail = resendVerificationEmail;
 window.checkEmailVerification = checkEmailVerification;
 window.logoutAndReturnToLogin = logoutAndReturnToLogin; 

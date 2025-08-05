@@ -62,12 +62,32 @@
                     <button type="button" class="btn btn-secondary btn-full" onclick="showAdminLogin()">Als Admin anmelden</button>
                 </div>
                 
+                <div class="form-group">
+                    <button type="button" class="btn btn-link btn-full" onclick="showRegistration()">Neuen Account erstellen</button>
+                </div>
+                
+                <div class="form-group">
+                    <button type="button" class="btn btn-link btn-full" onclick="showPasswordReset()">Passwort vergessen</button>
+                </div>
+                
                 <div id="adminLoginSection" class="admin-login-section" style="display: none;">
                     <div class="form-group">
-                        <input type="password" id="adminPassword" name="adminPassword" placeholder="Admin-Passwort">
+                        <input type="password" id="adminPassword" name="adminPassword" placeholder="Admin-Passwort" required>
                     </div>
                     <div class="form-group">
                         <button type="button" class="btn btn-danger btn-full" onclick="loginAsAdmin()">Admin-Login</button>
+                    </div>
+                </div>
+                
+                <div id="registrationSection" class="registration-section" style="display: none;">
+                    <div class="form-group">
+                        <button type="button" class="btn btn-success btn-full" onclick="registerUser()">Account erstellen</button>
+                    </div>
+                </div>
+                
+                <div id="passwordResetSection" class="password-reset-section" style="display: none;">
+                    <div class="form-group">
+                        <button type="button" class="btn btn-warning btn-full" onclick="resetUserPassword()">Passwort zurücksetzen</button>
                     </div>
                 </div>
             </form>
