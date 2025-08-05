@@ -80,10 +80,11 @@ async function secureLoginWithKennung(kennung, name, isAdmin = false) {
         
         let userCredential;
         
+        // ZUERST: Versuche Login mit bestehendem Account
         try {
-            // Try to sign in existing user
+            console.log('🔑 Versuche Login mit bestehendem Account...');
             userCredential = await window.auth.signInWithEmailAndPassword(email, password);
-            console.log('✅ Login erfolgreich für bestehenden Benutzer');
+            console.log('✅ Login erfolgreich mit bestehendem Account');
             
         } catch (loginError) {
             console.log('⚠️ Login fehlgeschlagen:', loginError.code);
@@ -91,47 +92,34 @@ async function secureLoginWithKennung(kennung, name, isAdmin = false) {
             if (loginError.code === 'auth/user-not-found') {
                 console.log('🆕 Benutzer nicht gefunden, erstelle neuen Account...');
                 
-                // Create new user
+                // Erstelle neuen Benutzer
                 userCredential = await window.auth.createUserWithEmailAndPassword(email, password);
                 
-                // Send email verification
+                // Sende E-Mail-Verifizierung
                 await userCredential.user.sendEmailVerification({
                     url: window.location.origin,
                     handleCodeInApp: true
                 });
                 
                 console.log('📧 E-Mail-Verifizierung gesendet');
+                
+            } else if (loginError.code === 'auth/wrong-password') {
+                console.log('❌ Falsches Passwort für bestehenden Account');
+                throw new Error('E-Mail-Adresse bereits registriert, aber Passwort ist falsch. Bitte kontaktieren Sie den Administrator.');
                 
             } else if (loginError.code === 'auth/invalid-login-credentials') {
                 console.log('🔑 Ungültige Anmeldedaten, erstelle neuen Benutzer...');
                 
-                // Create new user with same credentials
+                // Erstelle neuen Benutzer mit gleichen Credentials
                 userCredential = await window.auth.createUserWithEmailAndPassword(email, password);
                 
-                // Send email verification
+                // Sende E-Mail-Verifizierung
                 await userCredential.user.sendEmailVerification({
                     url: window.location.origin,
                     handleCodeInApp: true
                 });
                 
                 console.log('📧 E-Mail-Verifizierung gesendet');
-                
-            } else if (loginError.code === 'auth/email-already-in-use') {
-                console.log('📧 E-Mail bereits in Verwendung, versuche Login mit bestehendem Account...');
-                
-                // Try to sign in with the existing account
-                try {
-                    userCredential = await window.auth.signInWithEmailAndPassword(email, password);
-                    console.log('✅ Login erfolgreich mit bestehendem Account');
-                } catch (signInError) {
-                    console.log('❌ Login mit bestehendem Account fehlgeschlagen:', signInError.code);
-                    
-                    if (signInError.code === 'auth/wrong-password') {
-                        throw new Error('E-Mail-Adresse bereits registriert, aber Passwort ist falsch. Bitte kontaktieren Sie den Administrator.');
-                    } else {
-                        throw new Error('E-Mail-Adresse bereits registriert. Bitte kontaktieren Sie den Administrator.');
-                    }
-                }
                 
             } else {
                 throw loginError;
