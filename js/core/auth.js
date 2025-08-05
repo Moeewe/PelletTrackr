@@ -4,8 +4,17 @@
 // Login als Benutzer (einfach)
 async function loginAsUser() {
     try {
-        const email = document.getElementById('loginEmail').value.trim();
-        const password = document.getElementById('loginPassword').value.trim();
+        const emailInput = document.getElementById('loginEmail');
+        const passwordInput = document.getElementById('loginPassword');
+        
+        if (!emailInput || !passwordInput) {
+            console.error('❌ Login-Formular nicht gefunden');
+            safeShowToast('Login-Formular nicht verfügbar', 'error');
+            return;
+        }
+        
+        const email = emailInput.value.trim();
+        const password = passwordInput.value.trim();
         
         if (!email || !password) {
             safeShowToast('Bitte E-Mail und Passwort eingeben!', 'warning');
@@ -45,8 +54,17 @@ async function loginAsUser() {
 // Registriere neuen Benutzer
 async function registerUser() {
     try {
-        const name = document.getElementById('regName').value.trim();
-        const email = document.getElementById('regEmail').value.trim();
+        const nameInput = document.getElementById('regName');
+        const emailInput = document.getElementById('regEmail');
+        
+        if (!nameInput || !emailInput) {
+            console.error('❌ Registrierungs-Formular nicht gefunden');
+            safeShowToast('Registrierungs-Formular nicht verfügbar', 'error');
+            return;
+        }
+        
+        const name = nameInput.value.trim();
+        const email = emailInput.value.trim();
         
         if (!name || !email) {
             safeShowToast('Bitte Name und E-Mail-Adresse eingeben!', 'warning');
@@ -80,7 +98,15 @@ async function registerUser() {
 // Passwort zurücksetzen
 async function resetUserPassword() {
     try {
-        const email = document.getElementById('loginEmail').value.trim();
+        const emailInput = document.getElementById('loginEmail');
+        
+        if (!emailInput) {
+            console.error('❌ E-Mail-Feld nicht gefunden');
+            safeShowToast('E-Mail-Feld nicht verfügbar', 'error');
+            return;
+        }
+        
+        const email = emailInput.value.trim();
         
         if (!email) {
             safeShowToast('Bitte E-Mail-Adresse eingeben!', 'warning');
