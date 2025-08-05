@@ -1,66 +1,79 @@
-// ==================== CLIENT-SEITIGE SICHERHEIT ====================
-// Zusätzliche Sicherheitsmaßnahmen für Client-seitige Daten
+// ==================== SICHERHEITSSYSTEM ====================
+// Erweiterte Sicherheitsfunktionen für PelletTrackr
 
 // ===== DATENVERSCHLÜSSELUNG =====
 
-// Einfache Verschlüsselung für sensitive Daten
 class DataEncryption {
   constructor() {
     this.algorithm = 'AES-GCM';
     this.keyLength = 256;
   }
 
-  // Generiere einen sicheren Schlüssel
+  // Generiere sicheren Schlüssel
   async generateKey() {
-    return await window.crypto.subtle.generateKey(
-      {
-        name: this.algorithm,
-        length: this.keyLength
-      },
-      true,
-      ['encrypt', 'decrypt']
-    );
+    try {
+      const key = await crypto.subtle.generateKey(
+        {
+          name: this.algorithm,
+          length: this.keyLength
+        },
+        true,
+        ['encrypt', 'decrypt']
+      );
+      return key;
+    } catch (error) {
+      console.error('❌ Fehler beim Generieren des Schlüssels:', error);
+      throw error;
+    }
   }
 
-  // Verschlüssele sensitive Daten
+  // Verschlüssele Daten
   async encryptData(data, key) {
-    const encoder = new TextEncoder();
-    const encodedData = encoder.encode(JSON.stringify(data));
-    
-    const iv = window.crypto.getRandomValues(new Uint8Array(12));
-    
-    const encryptedData = await window.crypto.subtle.encrypt(
-      {
-        name: this.algorithm,
-        iv: iv
-      },
-      key,
-      encodedData
-    );
-    
-    return {
-      data: Array.from(new Uint8Array(encryptedData)),
-      iv: Array.from(iv)
-    };
+    try {
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const encodedData = new TextEncoder().encode(JSON.stringify(data));
+      
+      const encryptedData = await crypto.subtle.encrypt(
+        {
+          name: this.algorithm,
+          iv: iv
+        },
+        key,
+        encodedData
+      );
+      
+      return {
+        data: Array.from(new Uint8Array(encryptedData)),
+        iv: Array.from(iv)
+      };
+    } catch (error) {
+      console.error('❌ Fehler beim Verschlüsseln:', error);
+      throw error;
+    }
   }
 
-  // Entschlüssele sensitive Daten
+  // Entschlüssele Daten
   async decryptData(encryptedData, key) {
-    const decryptedData = await window.crypto.subtle.decrypt(
-      {
-        name: this.algorithm,
-        iv: new Uint8Array(encryptedData.iv)
-      },
-      key,
-      new Uint8Array(encryptedData.data)
-    );
-    
-    const decoder = new TextDecoder();
-    return JSON.parse(decoder.decode(decryptedData));
+    try {
+      const decryptedData = await crypto.subtle.decrypt(
+        {
+          name: this.algorithm,
+          iv: new Uint8Array(encryptedData.iv)
+        },
+        key,
+        new Uint8Array(encryptedData.data)
+      );
+      
+      const decodedData = new TextDecoder().decode(decryptedData);
+      return JSON.parse(decodedData);
+    } catch (error) {
+      console.error('❌ Fehler beim Entschlüsseln:', error);
+      throw error;
+    }
   }
 }
 
-// ===== SESSION MANAGEMENT =====
+// ===== SESSION-MANAGEMENT =====
 
 class SessionManager {
   constructor() {
@@ -69,7 +82,7 @@ class SessionManager {
     this.setupActivityTracking();
   }
 
-  // Tracke Benutzeraktivität
+  // Aktivität verfolgen
   setupActivityTracking() {
     const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
     events.forEach(event => {
@@ -79,80 +92,99 @@ class SessionManager {
     });
   }
 
-  // Prüfe Session-Timeout
+  // Prüfe Session-Gültigkeit
   isSessionValid() {
-    const timeSinceActivity = Date.now() - this.lastActivity;
-    if (timeSinceActivity > this.sessionTimeout) {
-      this.logout();
-      return false;
-    }
-    return true;
+    const timeSinceLastActivity = Date.now() - this.lastActivity;
+    return timeSinceLastActivity < this.sessionTimeout;
   }
 
-  // Erzwinge Logout bei Timeout
+  // Logout bei Inaktivität
   logout() {
-    if (window.firebase && window.firebase.auth) {
-      window.firebase.auth().signOut();
+    if (typeof window.logout === 'function') {
+      window.logout();
     }
-    window.location.href = '/';
   }
 
-  // Prüfe Session regelmäßig
+  // Session-Monitoring starten
   startSessionMonitoring() {
     setInterval(() => {
       if (!this.isSessionValid()) {
-        console.warn('⚠️ Session timeout - logging out');
+        console.log('⏰ Session abgelaufen, Logout...');
+        this.logout();
       }
     }, 60000); // Prüfe jede Minute
   }
 }
 
-// ===== AUDIT LOGGING =====
+// ===== AUDIT-LOGGING =====
 
 class AuditLogger {
   constructor() {
-    this.logs = [];
-    this.maxLogs = 100;
+    this.enabled = true;
   }
 
   // Logge Sicherheitsereignisse
   logSecurityEvent(event, details = {}) {
-    const logEntry = {
-      event: event,
-      timestamp: new Date().toISOString(),
-      userId: this.getCurrentUserId(),
-      userAgent: navigator.userAgent,
-      url: window.location.href,
-      details: details
-    };
-
-    this.logs.push(logEntry);
+    if (!this.enabled) return;
     
-    // Begrenze Log-Größe
-    if (this.logs.length > this.maxLogs) {
-      this.logs.shift();
+    try {
+      const logEntry = {
+        timestamp: new Date().toISOString(),
+        event: event,
+        details: details,
+        userId: this.getCurrentUserId(),
+        userAgent: navigator.userAgent,
+        url: window.location.href,
+        sessionId: this.getSessionId()
+      };
+      
+      console.log('🔒 Security Event:', logEntry);
+      this.sendToServer(logEntry);
+      
+    } catch (error) {
+      console.warn('⚠️ Fehler beim Logging:', error);
     }
-
-    // Sende an Server (falls verfügbar)
-    this.sendToServer(logEntry);
-    
-    console.log('🔒 Security Event:', logEntry);
   }
 
-  // Hole aktuelle User ID
+  // Hole aktuelle User ID (mit Firebase-Check)
   getCurrentUserId() {
-    if (window.firebase && window.firebase.auth) {
-      const user = window.firebase.auth().currentUser;
-      return user ? user.uid : 'anonymous';
+    try {
+      // Prüfe ob Firebase Auth verfügbar ist
+      if (window.auth && window.auth.currentUser) {
+        return window.auth.currentUser.uid;
+      }
+      
+      // Fallback: Prüfe localStorage
+      const sessionData = localStorage.getItem('pelletTrackrSession');
+      if (sessionData) {
+        const session = JSON.parse(sessionData);
+        return session.uid || 'anonymous';
+      }
+      
+      return 'anonymous';
+    } catch (error) {
+      console.warn('⚠️ Fehler beim Abrufen der User ID:', error);
+      return 'unknown';
     }
-    return 'unknown';
   }
 
-  // Sende Log an Server
+  // Hole Session ID
+  getSessionId() {
+    try {
+      return sessionStorage.getItem('sessionId') || 'unknown';
+    } catch (error) {
+      return 'unknown';
+    }
+  }
+
+  // Sende Log an Server (mit Firebase-Check)
   async sendToServer(logEntry) {
     try {
+      // Prüfe ob Firestore verfügbar ist
       if (window.db) {
         await window.db.collection('auditLogs').add(logEntry);
+      } else {
+        console.log('📝 Audit Log (Firebase nicht verfügbar):', logEntry);
       }
     } catch (error) {
       console.warn('⚠️ Could not send audit log to server:', error);
