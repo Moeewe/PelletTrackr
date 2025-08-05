@@ -1,17 +1,32 @@
+# 🚨 NOTFALL: Firestore-Regeln sofort deployen!
+
+## ⚠️ **KRITISCHER FEHLER:**
+**"Missing or insufficient permissions"** - Die App funktioniert nicht mehr!
+
+## 🔧 **SOFORTIGE LÖSUNG:**
+
+### **SCHRITT 1: Firebase Console öffnen**
+1. Gehen Sie zu [Firebase Console](https://console.firebase.google.com/)
+2. Wählen Sie Ihr Projekt **"FGF-3D-Druck"**
+3. Klicken Sie auf **"Firestore Database"**
+
+### **SCHRITT 2: Regeln ersetzen**
+1. Klicken Sie auf den Tab **"Regeln"**
+2. **Ersetzen Sie** den gesamten Inhalt mit diesen **NOTFALL-REGELN**:
+
+```javascript
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // ===== TEMPORÄRE LEGACY-REGELN =====
-    // Diese Regeln erlauben sofortige Funktionalität
-    // Wird später durch sichere Regeln ersetzt
+    // ===== NOTFALL-REGELN (WENIGER RESTRIKTIV) =====
     
-    // 1. Authentifizierung prüfen (weniger restriktiv)
+    // 1. Authentifizierung prüfen
     function isAuthenticated() {
       return request.auth != null && request.auth.uid != null;
     }
     
-    // 2. Admin-Status prüfen (weniger restriktiv)
+    // 2. Admin-Status prüfen
     function isAdmin() {
       return isAuthenticated() && 
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
@@ -124,3 +139,44 @@ service cloud.firestore {
     }
   }
 }
+```
+
+### **SCHRITT 3: Regeln deployen**
+1. Klicken Sie auf **"Veröffentlichen"**
+2. Warten Sie auf die Bestätigung
+3. **App neu laden** (F5)
+
+## ✅ **Nach dem Deploy sollte funktionieren:**
+- ✅ **App lädt ohne Fehler**
+- ✅ **Login-Interface funktioniert**
+- ✅ **Benutzer-Login** (FH-Kennung + Name)
+- ✅ **Admin-Login** (Passwort: `fgf2025admin`)
+- ✅ **Keine "permission-denied" Fehler**
+
+## 🔍 **Testen:**
+1. **App neu laden** (F5)
+2. **Als Benutzer anmelden** (FH-Kennung: `mw202350`, Name: `Moritz Wesseler`)
+3. **Als Admin anmelden** (Passwort: `fgf2025admin`)
+4. **Daten anzeigen/bearbeiten** testen
+
+## 🚨 **DRINGLICHKEIT:**
+**Die App ist derzeit unbrauchbar!** Bitte deployen Sie die Regeln **SOFORT**!
+
+---
+
+## 📋 **NÄCHSTE SCHRITTE (nach dem Deploy):**
+
+### **1. Firebase Auth aktivieren:**
+- Firebase Console → Authentication → Sign-in method
+- Email/Password aktivieren
+- E-Mail-Templates konfigurieren
+
+### **2. Sichere Authentifizierung testen:**
+- E-Mail-Verifizierung testen
+- Admin-Zugriff testen
+- Session-Management testen
+
+### **3. UI anpassen (optional):**
+- Login-Interface für Firebase Auth anpassen
+- E-Mail-Verifizierung UI hinzufügen
+- Passwort-Reset UI hinzufügen 

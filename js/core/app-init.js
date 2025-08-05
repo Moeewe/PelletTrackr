@@ -20,12 +20,16 @@ async function initializePelletTrackr() {
       throw new Error('Firebase-Initialisierung fehlgeschlagen');
     }
     
-    // 2. Sichere Authentifizierung initialisieren
+    // 2. Sichere Authentifizierung initialisieren (optional)
     if (typeof initializeSecureAuth === 'function') {
-      if (!initializeSecureAuth()) {
-        console.warn('⚠️ Sichere Authentifizierung nicht verfügbar, verwende Legacy-Modus');
-      } else {
-        console.log('🔐 Sichere Authentifizierung initialisiert');
+      try {
+        if (!initializeSecureAuth()) {
+          console.warn('⚠️ Sichere Authentifizierung nicht verfügbar, verwende Legacy-Modus');
+        } else {
+          console.log('🔐 Sichere Authentifizierung initialisiert');
+        }
+      } catch (error) {
+        console.warn('⚠️ Sichere Authentifizierung fehlgeschlagen:', error.message);
       }
     }
     
@@ -52,8 +56,10 @@ async function initializePelletTrackr() {
     
     console.log('✅ PelletTrackr bereit!');
     
-    // 8. Firebase-Verbindung testen
-    testFirebaseConnection();
+    // 8. Firebase-Verbindung testen (optional)
+    setTimeout(() => {
+      testFirebaseConnection();
+    }, 1000);
     
   } catch (error) {
     console.error('❌ App-Initialisierung fehlgeschlagen:', error);
@@ -65,6 +71,12 @@ async function initializePelletTrackr() {
 async function testFirebaseConnection() {
   try {
     console.log('🧪 Teste Firebase-Verbindung...');
+    
+    // Prüfe ob Firebase verfügbar ist
+    if (!window.db) {
+      console.warn('⚠️ Firebase nicht verfügbar');
+      return;
+    }
     
     // Teste Firestore-Verbindung
     const testSnapshot = await window.db.collection('materials').limit(1).get();
@@ -90,7 +102,7 @@ async function testFirebaseConnection() {
 
 // UI-Elemente initialisieren
 function initializeUI() {
-  // Loading-Indicator
+  // Loading-Indicator (sicher prüfen)
   const loadingIndicator = document.getElementById('loadingIndicator');
   if (loadingIndicator) {
     loadingIndicator.style.display = 'none';
@@ -98,12 +110,20 @@ function initializeUI() {
   
   // Toast-Container
   if (typeof initializeToast === 'function') {
-    initializeToast();
+    try {
+      initializeToast();
+    } catch (error) {
+      console.warn('⚠️ Toast-Initialisierung fehlgeschlagen:', error.message);
+    }
   }
   
   // Navigation
   if (typeof initializeNavigation === 'function') {
-    initializeNavigation();
+    try {
+      initializeNavigation();
+    } catch (error) {
+      console.warn('⚠️ Navigation-Initialisierung fehlgeschlagen:', error.message);
+    }
   }
   
   console.log('🎨 UI-Elemente initialisiert');
@@ -116,20 +136,30 @@ function setupEventListeners() {
   if (loginForm) {
     loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      loginAsUser();
+      if (typeof loginAsUser === 'function') {
+        loginAsUser();
+      }
     });
   }
   
   // Admin-Login Handler
   const adminLoginBtn = document.getElementById('adminLoginBtn');
   if (adminLoginBtn) {
-    adminLoginBtn.addEventListener('click', loginAsAdmin);
+    adminLoginBtn.addEventListener('click', () => {
+      if (typeof loginAsAdmin === 'function') {
+        loginAsAdmin();
+      }
+    });
   }
   
   // Logout Handler
   const logoutBtn = document.querySelector('.btn-link[onclick="logout()"]');
   if (logoutBtn) {
-    logoutBtn.addEventListener('click', logout);
+    logoutBtn.addEventListener('click', () => {
+      if (typeof logout === 'function') {
+        logout();
+      }
+    });
   }
   
   console.log('🎧 Event-Listener eingerichtet');
@@ -140,7 +170,7 @@ function showErrorMessage(message) {
   console.error('❌ App-Fehler:', message);
   
   // Toast-Nachricht anzeigen
-  if (typeof toast !== 'undefined') {
+  if (typeof toast !== 'undefined' && toast.error) {
     toast.error(message);
   } else {
     // Fallback: Alert
