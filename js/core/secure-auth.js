@@ -211,7 +211,26 @@ async function registerNewUser(name, email) {
         console.error('❌ Fehler bei Benutzerregistrierung:', error);
         
         if (error.code === 'auth/email-already-in-use') {
-            throw new Error('E-Mail-Adresse bereits registriert. Bitte melden Sie sich an oder verwenden Sie eine andere E-Mail-Adresse.');
+            console.log('📧 E-Mail bereits registriert - schalte zu Login um');
+            safeShowToast('E-Mail bereits registriert. Versuche Login...', 'info');
+            
+            // Try to login with the same credentials
+            try {
+                const password = generateSecurePasswordFromEmail(email);
+                console.log('🔄 Versuche Login mit existierendem Account...');
+                
+                const loginResult = await secureLoginWithEmail(email, password);
+                if (loginResult.success) {
+                    console.log('✅ Login mit existierendem Account erfolgreich');
+                    safeShowToast('Login erfolgreich!', 'success');
+                    return loginResult;
+                } else {
+                    throw new Error('E-Mail-Adresse bereits registriert. Bitte melden Sie sich an oder verwenden Sie eine andere E-Mail-Adresse.');
+                }
+            } catch (loginError) {
+                console.log('❌ Login mit existierendem Account fehlgeschlagen:', loginError);
+                throw new Error('E-Mail-Adresse bereits registriert. Bitte melden Sie sich an oder verwenden Sie eine andere E-Mail-Adresse.');
+            }
         } else if (error.code === 'auth/invalid-email') {
             throw new Error('Ungültige E-Mail-Adresse. Bitte überprüfen Sie das Format.');
         } else if (error.code === 'auth/weak-password') {
