@@ -140,7 +140,7 @@ async function checkExistingSession() {
         }
         
         return true;
-        
+      
     } catch (error) {
         console.error('❌ Fehler beim Prüfen der Session:', error);
         return false;
