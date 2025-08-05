@@ -116,6 +116,23 @@ async function secureLoginWithKennung(kennung, name, isAdmin = false) {
                 
                 console.log('📧 E-Mail-Verifizierung gesendet');
                 
+            } else if (loginError.code === 'auth/email-already-in-use') {
+                console.log('📧 E-Mail bereits in Verwendung, versuche Login mit bestehendem Account...');
+                
+                // Try to sign in with the existing account
+                try {
+                    userCredential = await window.auth.signInWithEmailAndPassword(email, password);
+                    console.log('✅ Login erfolgreich mit bestehendem Account');
+                } catch (signInError) {
+                    console.log('❌ Login mit bestehendem Account fehlgeschlagen:', signInError.code);
+                    
+                    if (signInError.code === 'auth/wrong-password') {
+                        throw new Error('E-Mail-Adresse bereits registriert, aber Passwort ist falsch. Bitte kontaktieren Sie den Administrator.');
+                    } else {
+                        throw new Error('E-Mail-Adresse bereits registriert. Bitte kontaktieren Sie den Administrator.');
+                    }
+                }
+                
             } else {
                 throw loginError;
             }
