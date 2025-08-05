@@ -1,324 +1,313 @@
 // ==================== SICHERE AUTHENTIFIZIERUNG ====================
-// Firebase Authentication mit Rollen-basierter Zugriffskontrolle
+// Firebase Authentication mit E-Mail-Verifizierung
 
-// ===== FIREBASE AUTH CONFIGURATION =====
-
-// Firebase Auth Instanz
 let auth = null;
-let currentUser = null;
+let currentFirebaseUser = null;
 
-// Initialisiere Firebase Auth
+// Firebase Auth initialisieren
 function initializeSecureAuth() {
-  if (typeof firebase !== 'undefined' && firebase.auth) {
-    auth = firebase.auth();
-    console.log('🔐 Sichere Authentifizierung initialisiert');
-    
-    // Auth State Listener
-    auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        console.log('✅ Benutzer authentifiziert:', user.email);
-        await handleAuthenticatedUser(user);
-      } else {
-        console.log('❌ Benutzer abgemeldet');
-        handleUserLogout();
-      }
-    });
-    
-    return true;
-  } else {
-    console.error('❌ Firebase Auth nicht verfügbar');
-    return false;
-  }
-}
-
-// ===== SICHERE LOGIN-FUNKTIONEN =====
-
-// FH-Kennung-basierte Registrierung/Login
-async function secureLoginWithKennung(kennung, name, isAdmin = false) {
-  try {
-    // 1. Validiere FH-Kennung
-    if (!isValidFHKennung(kennung)) {
-      throw new Error('Ungültige FH-Kennung');
-    }
-    
-    // 2. Erstelle Firebase Auth Email
-    const email = `${kennung}@fh-muenster.de`;
-    
-    // 3. Generiere sicheres Passwort basierend auf FH-Kennung
-    const password = generateSecurePassword(kennung);
-    
-    // 4. Versuche Login/Registrierung
-    let userCredential;
-    
     try {
-      // Versuche Login
-      userCredential = await auth.signInWithEmailAndPassword(email, password);
-      console.log('✅ Login erfolgreich');
-    } catch (loginError) {
-      if (loginError.code === 'auth/user-not-found') {
-        // Benutzer existiert nicht - registriere
-        userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        console.log('✅ Registrierung erfolgreich');
+        console.log('🔐 Initialisiere sichere Authentifizierung...');
         
-        // Sende E-Mail-Verifizierung
-        await userCredential.user.sendEmailVerification();
-        console.log('📧 E-Mail-Verifizierung gesendet');
-      } else {
-        throw loginError;
-      }
+        if (typeof firebase === 'undefined') {
+            console.error('❌ Firebase SDK nicht verfügbar');
+            return false;
+        }
+        
+        auth = firebase.auth();
+        
+        // Auth State Listener
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                console.log('✅ Benutzer authentifiziert:', user.email);
+                currentFirebaseUser = user;
+                handleAuthenticatedUser(user);
+            } else {
+                console.log('🔓 Benutzer nicht authentifiziert');
+                currentFirebaseUser = null;
+                handleUserLogout();
+            }
+        });
+        
+        console.log('✅ Sichere Authentifizierung initialisiert');
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Fehler bei Auth-Initialisierung:', error);
+        return false;
     }
-    
-    // 5. Aktualisiere Benutzerdaten in Firestore
-    await updateUserProfile(userCredential.user, {
-      name: name,
-      kennung: kennung.toLowerCase(),
-      isAdmin: isAdmin,
-      emailVerified: userCredential.user.emailVerified
-    });
-    
-    return {
-      success: true,
-      user: userCredential.user,
-      isNewUser: !userCredential.user.emailVerified
-    };
-    
-  } catch (error) {
-    console.error('❌ Login-Fehler:', error);
-    throw error;
-  }
 }
 
-// Admin-Login mit Passwort
-async function secureAdminLogin(kennung, name, adminPassword) {
-  try {
-    // 1. Validiere Admin-Passwort
-    if (adminPassword !== getSecureAdminPassword()) {
-      throw new Error('Ungültiges Admin-Passwort');
+// Sichere Login-Funktion mit E-Mail-Verifizierung
+async function secureLoginWithKennung(kennung, name, isAdmin = false) {
+    try {
+        console.log('🔐 Sichere Anmeldung für:', kennung);
+        
+        // 1. FH-Kennung validieren
+        if (!isValidFHKennung(kennung)) {
+            throw new Error('Ungültige FH-Kennung');
+        }
+        
+        // 2. E-Mail-Adresse erstellen
+        const email = `${kennung}@fh-muenster.de`;
+        const password = generateSecurePassword(kennung);
+        
+        let userCredential;
+        
+        // 3. Versuche Login oder erstelle neuen Benutzer
+        try {
+            userCredential = await auth.signInWithEmailAndPassword(email, password);
+            console.log('✅ Login erfolgreich');
+        } catch (loginError) {
+            if (loginError.code === 'auth/user-not-found') {
+                console.log('🆕 Benutzer nicht gefunden, erstelle neuen Account...');
+                userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                
+                // E-Mail-Verifizierung senden
+                await userCredential.user.sendEmailVerification({
+                    url: window.location.origin,
+                    handleCodeInApp: true
+                });
+                
+                console.log('📧 E-Mail-Verifizierung gesendet');
+            } else {
+                throw loginError;
+            }
+        }
+        
+        // 4. Benutzerprofil in Firestore aktualisieren
+        await updateUserProfile(userCredential.user, {
+            name,
+            kennung: kennung.toLowerCase(),
+            isAdmin,
+            emailVerified: userCredential.user.emailVerified
+        });
+        
+        // 5. Prüfe E-Mail-Verifizierung
+        if (!userCredential.user.emailVerified) {
+            console.log('⚠️ E-Mail noch nicht verifiziert');
+            showEmailVerificationPrompt(userCredential.user);
+            return { success: false, needsVerification: true, user: userCredential.user };
+        }
+        
+        console.log('✅ E-Mail verifiziert, Login vollständig');
+        return { success: true, user: userCredential.user };
+        
+    } catch (error) {
+        console.error('❌ Fehler bei sicherer Anmeldung:', error);
+        throw error;
     }
-    
-    // 2. Führe sicheren Login durch
-    const result = await secureLoginWithKennung(kennung, name, true);
-    
-    // 3. Setze Admin-Status
-    await updateUserProfile(result.user, { isAdmin: true });
-    
-    return result;
-    
-  } catch (error) {
-    console.error('❌ Admin-Login-Fehler:', error);
-    throw error;
-  }
 }
 
-// ===== BENUTZERPROFIL-MANAGEMENT =====
-
-// Aktualisiere Benutzerprofil in Firestore
-async function updateUserProfile(firebaseUser, userData) {
-  try {
-    const userRef = window.db.collection('users').doc(firebaseUser.uid);
-    
-    const profileData = {
-      ...userData,
-      uid: firebaseUser.uid,
-      email: firebaseUser.email,
-      lastLogin: new Date(),
-      updatedAt: new Date()
-    };
-    
-    // Prüfe ob Benutzer existiert
-    const userDoc = await userRef.get();
-    
-    if (userDoc.exists) {
-      // Aktualisiere existierenden Benutzer
-      await userRef.update(profileData);
-      console.log('✏️ Benutzerprofil aktualisiert');
-    } else {
-      // Erstelle neuen Benutzer
-      profileData.createdAt = new Date();
-      await userRef.set(profileData);
-      console.log('➕ Neues Benutzerprofil erstellt');
+// E-Mail-Verifizierung prüfen und UI anzeigen
+function showEmailVerificationPrompt(user) {
+    const modal = document.getElementById('modal');
+    if (modal) {
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>E-Mail-Verifizierung erforderlich</h2>
+                </div>
+                <div class="modal-body">
+                    <div class="verification-message">
+                        <p>📧 Eine E-Mail wurde an <strong>${user.email}</strong> gesendet.</p>
+                        <p>Bitte bestätigen Sie Ihre E-Mail-Adresse, um Zugang zum System zu erhalten.</p>
+                        
+                        <div class="verification-actions">
+                            <button class="btn btn-primary" onclick="resendVerificationEmail()">
+                                E-Mail erneut senden
+                            </button>
+                            <button class="btn btn-secondary" onclick="checkEmailVerification()">
+                                Verifizierung prüfen
+                            </button>
+                            <button class="btn btn-danger" onclick="logoutAndReturnToLogin()">
+                                Abbrechen
+                            </button>
+                        </div>
+                        
+                        <div class="verification-tips">
+                            <h4>Hinweise:</h4>
+                            <ul>
+                                <li>Prüfen Sie Ihren Spam-Ordner</li>
+                                <li>E-Mail-Adresse: ${user.email}</li>
+                                <li>Absender: noreply@fgf-muenster.de</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        modal.classList.add('active');
     }
-    
-    return profileData;
-    
-  } catch (error) {
-    console.error('❌ Fehler beim Aktualisieren des Benutzerprofils:', error);
-    throw error;
-  }
-}
-
-// Hole Benutzerprofil aus Firestore
-async function getUserProfile(uid) {
-  try {
-    const userDoc = await window.db.collection('users').doc(uid).get();
-    
-    if (userDoc.exists) {
-      return userDoc.data();
-    } else {
-      throw new Error('Benutzerprofil nicht gefunden');
-    }
-    
-  } catch (error) {
-    console.error('❌ Fehler beim Laden des Benutzerprofils:', error);
-    throw error;
-  }
-}
-
-// ===== AUTHENTIFIZIERTER BENUTZER HANDLER =====
-
-async function handleAuthenticatedUser(firebaseUser) {
-  try {
-    // 1. Lade Benutzerprofil
-    const userProfile = await getUserProfile(firebaseUser.uid);
-    
-    // 2. Setze globalen Benutzer
-    currentUser = {
-      uid: firebaseUser.uid,
-      email: firebaseUser.email,
-      emailVerified: firebaseUser.emailVerified,
-      ...userProfile
-    };
-    
-    window.currentUser = currentUser;
-    
-    // 3. Prüfe E-Mail-Verifizierung
-    if (!firebaseUser.emailVerified && !userProfile.isAdmin) {
-      showEmailVerificationPrompt();
-      return;
-    }
-    
-    // 4. Zeige entsprechendes Dashboard
-    if (userProfile.isAdmin) {
-      showScreen('adminDashboard');
-      initializeAdminDashboard();
-    } else {
-      showScreen('userDashboard');
-      initializeUserDashboard();
-    }
-    
-    // 5. Update UI
-    updateAdminUI();
-    updateWelcomeMessage();
-    
-    // 6. Initialisiere Features
-    initializeUserFeatures();
-    
-    console.log('✅ Benutzer erfolgreich angemeldet:', currentUser);
-    
-  } catch (error) {
-    console.error('❌ Fehler beim Verarbeiten des authentifizierten Benutzers:', error);
-    await auth.signOut();
-  }
-}
-
-function handleUserLogout() {
-  // 1. Lösche Session
-  localStorage.removeItem('userSession');
-  
-  // 2. Reset globale Variablen
-  currentUser = null;
-  window.currentUser = null;
-  
-  // 3. Zeige Login-Screen
-  showScreen('loginScreen');
-  
-  // 4. Reset UI
-  resetUI();
-  
-  console.log('✅ Benutzer abgemeldet');
-}
-
-// ===== SICHERHEITS-FUNKTIONEN =====
-
-// Validiere FH-Kennung
-function isValidFHKennung(kennung) {
-  const pattern = /^[a-z]{2}[0-9]{4}$/i;
-  return pattern.test(kennung);
-}
-
-// Generiere sicheres Passwort
-function generateSecurePassword(kennung) {
-  // Kombiniere FH-Kennung mit Salt für sicheres Passwort
-  const salt = 'FGF_3D_DRUCK_2025';
-  const combined = kennung.toLowerCase() + salt;
-  
-  // Einfache Hash-Funktion (in Produktion sollte crypto.subtle verwendet werden)
-  let hash = 0;
-  for (let i = 0; i < combined.length; i++) {
-    const char = combined.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  
-  return `FGF_${Math.abs(hash).toString(36)}_${kennung.toLowerCase()}`;
-}
-
-// Hole sicheres Admin-Passwort
-function getSecureAdminPassword() {
-  // In Produktion sollte das aus einer sicheren Quelle kommen
-  return 'fgf2025admin';
-}
-
-// E-Mail-Verifizierung anzeigen
-function showEmailVerificationPrompt() {
-  const modal = document.createElement('div');
-  modal.className = 'modal active';
-  modal.innerHTML = `
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>E-Mail-Verifizierung erforderlich</h2>
-      </div>
-      <div class="modal-body">
-        <p>Bitte überprüfen Sie Ihre E-Mails und bestätigen Sie Ihre E-Mail-Adresse.</p>
-        <p>E-Mail: ${currentUser.email}</p>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-primary" onclick="resendVerificationEmail()">E-Mail erneut senden</button>
-        <button class="btn btn-secondary" onclick="logout()">Abmelden</button>
-      </div>
-    </div>
-  `;
-  
-  document.body.appendChild(modal);
 }
 
 // E-Mail-Verifizierung erneut senden
 async function resendVerificationEmail() {
-  try {
-    await auth.currentUser.sendEmailVerification();
-    toast.success('E-Mail-Verifizierung erneut gesendet');
-  } catch (error) {
-    console.error('❌ Fehler beim Senden der E-Mail-Verifizierung:', error);
-    toast.error('Fehler beim Senden der E-Mail');
-  }
+    try {
+        if (currentFirebaseUser) {
+            await currentFirebaseUser.sendEmailVerification({
+                url: window.location.origin,
+                handleCodeInApp: true
+            });
+            safeShowToast('E-Mail-Verifizierung erneut gesendet', 'success');
+        }
+    } catch (error) {
+        console.error('❌ Fehler beim erneuten Senden:', error);
+        safeShowToast('Fehler beim Senden der E-Mail', 'error');
+    }
 }
 
-// ===== UI-FUNKTIONEN =====
-
-function initializeUserFeatures() {
-  // Initialisiere Features basierend auf Benutzerrolle
-  if (typeof initializePaymentRequests === 'function') {
-    initializePaymentRequests();
-  }
-  
-  if (typeof initNotificationBadges === 'function') {
-    initNotificationBadges();
-  }
-  
-  if (typeof updateUserPrintsLabel === 'function') {
-    updateUserPrintsLabel();
-  }
+// E-Mail-Verifizierung prüfen
+async function checkEmailVerification() {
+    try {
+        if (currentFirebaseUser) {
+            // Token aktualisieren
+            await currentFirebaseUser.reload();
+            
+            if (currentFirebaseUser.emailVerified) {
+                console.log('✅ E-Mail verifiziert!');
+                safeShowToast('E-Mail erfolgreich verifiziert!', 'success');
+                
+                // Modal schließen und Dashboard anzeigen
+                closeModal();
+                showDashboard();
+            } else {
+                safeShowToast('E-Mail noch nicht verifiziert. Bitte prüfen Sie Ihr Postfach.', 'warning');
+            }
+        }
+    } catch (error) {
+        console.error('❌ Fehler beim Prüfen der Verifizierung:', error);
+        safeShowToast('Fehler beim Prüfen der Verifizierung', 'error');
+    }
 }
 
-function resetUI() {
-  // Reset alle UI-Elemente
-  const loginForm = document.getElementById('loginForm');
-  if (loginForm) {
-    loginForm.reset();
-  }
-  
-  // Verstecke Admin-Elemente
-  updateAdminUI();
+// Logout und zurück zum Login
+function logoutAndReturnToLogin() {
+    auth.signOut().then(() => {
+        closeModal();
+        showScreen('loginScreen');
+        safeShowToast('Anmeldung abgebrochen', 'info');
+    });
+}
+
+// Authentifizierten Benutzer verarbeiten
+async function handleAuthenticatedUser(user) {
+    try {
+        console.log('👤 Verarbeite authentifizierten Benutzer:', user.email);
+        
+        // Prüfe E-Mail-Verifizierung
+        if (!user.emailVerified) {
+            console.log('⚠️ E-Mail nicht verifiziert, zeige Verifizierungs-Prompt');
+            showEmailVerificationPrompt(user);
+            return;
+        }
+        
+        // Lade Benutzerprofil
+        const profile = await getUserProfile(user.uid);
+        
+        // Globale Benutzerdaten setzen
+        window.currentUser = {
+            uid: user.uid,
+            email: user.email,
+            emailVerified: user.emailVerified,
+            ...profile
+        };
+        
+        console.log('✅ Benutzer vollständig authentifiziert:', window.currentUser);
+        
+        // Dashboard anzeigen
+        showDashboard();
+        
+    } catch (error) {
+        console.error('❌ Fehler bei Benutzerverarbeitung:', error);
+        safeShowToast('Fehler beim Laden des Benutzerprofils', 'error');
+    }
+}
+
+// Benutzer-Logout verarbeiten
+function handleUserLogout() {
+    console.log('🔓 Benutzer-Logout verarbeitet');
+    
+    // Globale Daten zurücksetzen
+    window.currentUser = null;
+    currentFirebaseUser = null;
+    
+    // Login-Screen anzeigen
+    showScreen('loginScreen');
+}
+
+// Hilfsfunktionen
+function isValidFHKennung(kennung) {
+    return /^[a-z]{2}\d{6}$/.test(kennung.toLowerCase());
+}
+
+function generateSecurePassword(kennung) {
+    // Generiere sicheres Passwort basierend auf FH-Kennung
+    const hash = btoa(kennung + 'PelletTrackr2025').replace(/[^a-zA-Z0-9]/g, '');
+    return hash.substring(0, 12) + '!';
+}
+
+function getSecureAdminPassword() {
+    return 'fgf2025admin';
+}
+
+// Benutzerprofil in Firestore aktualisieren
+async function updateUserProfile(firebaseUser, userData) {
+    try {
+        const userRef = window.db.collection('users').doc(firebaseUser.uid);
+        
+        await userRef.set({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            emailVerified: firebaseUser.emailVerified,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            ...userData
+        }, { merge: true });
+        
+        console.log('✅ Benutzerprofil aktualisiert');
+        
+    } catch (error) {
+        console.error('❌ Fehler beim Aktualisieren des Benutzerprofils:', error);
+        throw error;
+    }
+}
+
+// Benutzerprofil aus Firestore laden
+async function getUserProfile(uid) {
+    try {
+        const doc = await window.db.collection('users').doc(uid).get();
+        
+        if (doc.exists) {
+            return doc.data();
+        } else {
+            console.warn('⚠️ Benutzerprofil nicht gefunden:', uid);
+            return null;
+        }
+        
+    } catch (error) {
+        console.error('❌ Fehler beim Laden des Benutzerprofils:', error);
+        return null;
+    }
+}
+
+// Sichere Admin-Login-Funktion
+async function secureAdminLogin(kennung, name, adminPassword) {
+    try {
+        console.log('🔐 Sichere Admin-Anmeldung für:', kennung);
+        
+        // Admin-Passwort prüfen
+        if (adminPassword !== getSecureAdminPassword()) {
+            throw new Error('Ungültiges Admin-Passwort');
+        }
+        
+        // Normale Login-Funktion mit Admin-Flag
+        return await secureLoginWithKennung(kennung, name, true);
+        
+    } catch (error) {
+        console.error('❌ Fehler bei Admin-Login:', error);
+        throw error;
+    }
 }
 
 // ===== GLOBALE EXPORTS =====
@@ -326,4 +315,6 @@ function resetUI() {
 window.initializeSecureAuth = initializeSecureAuth;
 window.secureLoginWithKennung = secureLoginWithKennung;
 window.secureAdminLogin = secureAdminLogin;
-window.resendVerificationEmail = resendVerificationEmail; 
+window.resendVerificationEmail = resendVerificationEmail;
+window.checkEmailVerification = checkEmailVerification;
+window.logoutAndReturnToLogin = logoutAndReturnToLogin; 
