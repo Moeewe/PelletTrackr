@@ -42,6 +42,8 @@ function setupEquipmentListener() {
     }
     
     try {
+        console.log('🔧 Setting up equipment listener...');
+        
         equipmentListener = window.db.collection('equipment').onSnapshot((snapshot) => {
             equipment = [];
             snapshot.forEach((doc) => {
@@ -55,7 +57,7 @@ function setupEquipmentListener() {
             // Make equipment globally available
             window.equipment = equipment;
             
-            console.log('Live update: Loaded equipment:', equipment.length);
+            console.log('✅ Live update: Loaded equipment:', equipment.length);
             console.log('📋 Equipment data sample:', equipment.slice(0, 3).map(item => ({
                 id: item.id,
                 name: item.name,
@@ -72,7 +74,7 @@ function setupEquipmentListener() {
             const modal = document.getElementById('modal');
             if (modal && modal.classList.contains('active') && currentEquipmentCategory) {
                 console.log('🔄 Equipment data updated, showing category:', currentEquipmentCategory);
-            showEquipmentCategory(currentEquipmentCategory);
+                showEquipmentCategory(currentEquipmentCategory);
             }
             
             // Update machine overview in admin dashboard
@@ -86,11 +88,15 @@ function setupEquipmentListener() {
                 }
             }, 1000);
         }, (error) => {
-            console.error('Error in equipment listener:', error);
+            console.error('❌ Error in equipment listener:', error);
             safeShowToast('Fehler beim Live-Update des Equipments', 'error');
+            
+            // Fallback: Try to load equipment manually
+            console.log('🔄 Attempting manual equipment load as fallback...');
+            loadEquipment();
         });
         
-        console.log("✅ Equipment listener registered");
+        console.log("✅ Equipment listener registered successfully");
     } catch (error) {
         console.error("❌ Failed to setup equipment listener:", error);
         // Fallback to manual loading
@@ -99,29 +105,83 @@ function setupEquipmentListener() {
 }
 
 /**
- * Unified equipment system - no separate requests collection needed
- * All requests are stored directly in equipment documents
+ * Setup real-time listener for equipment requests
  */
 function setupEquipmentRequestsListener() {
-    // This function is now deprecated - all requests are in equipment collection
-    console.log("🔄 Unified system: No separate requests listener needed");
-    return;
+    // Clean up existing listener
+    if (equipmentRequestsListener) {
+        equipmentRequestsListener();
+        equipmentRequestsListener = null;
+    }
+    
+    try {
+        console.log('🔧 Setting up equipment requests listener...');
+        
+        equipmentRequestsListener = window.db.collection('requests')
+            .where('type', '==', 'equipment')
+            .onSnapshot((snapshot) => {
+                equipmentRequests = [];
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    equipmentRequests.push({
+                        id: doc.id,
+                        ...data
+                    });
+                });
+                
+                console.log('✅ Live update: Loaded equipment requests:', equipmentRequests.length);
+                
+                // Update equipment display
+                if (currentEquipmentCategory) {
+                    showEquipmentCategory(currentEquipmentCategory);
+                }
+                
+                // Update badges
+                updateEquipmentRequestsBadge();
+            }, (error) => {
+                console.error('❌ Error in equipment requests listener:', error);
+                safeShowToast('Fehler beim Live-Update der Equipment-Anfragen', 'error');
+            });
+            
+        console.log("✅ Equipment requests listener registered successfully");
+    } catch (error) {
+        console.error("❌ Failed to setup equipment requests listener:", error);
+    }
 }
 
 /**
- * Unified equipment system - load requests from equipment collection
+ * Load equipment requests from Firestore
  */
 async function loadEquipmentRequests() {
     try {
-        // In unified system, requests are stored in equipment documents
-        // No separate loading needed - data comes from equipment listener
-        console.log('🔄 Unified system: Requests loaded from equipment collection');
+        console.log('🔧 Loading equipment requests...');
         
-        // Update notification badge
+        const snapshot = await window.db.collection('requests')
+            .where('type', '==', 'equipment')
+            .get();
+            
+        equipmentRequests = [];
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            equipmentRequests.push({
+                id: doc.id,
+                ...data
+            });
+        });
+        
+        console.log('✅ Loaded equipment requests:', equipmentRequests.length);
+        
+        // Update equipment display
+        if (currentEquipmentCategory) {
+            showEquipmentCategory(currentEquipmentCategory);
+        }
+        
+        // Update badges
         updateEquipmentRequestsBadge();
         
     } catch (error) {
-        console.error('Error in unified equipment system:', error);
+        console.error('❌ Error loading equipment requests:', error);
+        safeShowToast('Fehler beim Laden der Equipment-Anfragen', 'error');
     }
 }
 
@@ -129,120 +189,62 @@ async function loadEquipmentRequests() {
  * Show equipment manager modal
  */
 async function showEquipmentManager() {
-    console.log('🔧 showEquipmentManager called - starting modal creation');
-    const modalContent = `
-        <div class="modal-header">
-            <h3>Equipment verwalten
-                <span id="equipment-requests-badge" class="notification-badge" style="display: none;">0</span>
-            </h3>
-            <button class="close-btn" onclick="closeModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div class="card">
-                <div class="card-body">
-                    <div class="equipment-controls">
-                        <div class="control-row">
-                            <div class="search-container">
-                                <input type="text" id="equipmentSearchInput" placeholder="Equipment durchsuchen..." class="search-input" onkeyup="searchEquipment()">
-                                <button class="search-clear" onclick="clearEquipmentSearch()">×</button>
+    try {
+        console.log('🔧 Opening equipment manager...');
+        
+        // Test equipment data first
+        await testEquipmentData();
+        
+        // Show modal
+        const modal = document.getElementById('modal');
+        if (modal) {
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Equipment-Verwaltung</h2>
+                        <button class="close-btn" onclick="closeEquipmentManager()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="equipment-controls">
+                            <div class="category-tabs">
+                                <button class="category-tab active" onclick="showEquipmentCategory('hardware')">Hardware</button>
+                                <button class="category-tab" onclick="showEquipmentCategory('keys')">Schlüssel</button>
+                                <button class="category-tab" onclick="showEquipmentCategory('books')">Bücher</button>
+                            </div>
+                            <div class="equipment-actions">
+                                <button class="btn btn-primary" onclick="showAddEquipmentForm()">Equipment hinzufügen</button>
+                                <div class="search-box">
+                                    <input type="text" id="equipmentSearch" placeholder="Equipment suchen..." onkeyup="searchEquipment()">
+                                    <button onclick="clearEquipmentSearch()">✕</button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="category-tabs">
-                        <button class="tab-btn" onclick="showEquipmentCategory('keys')">Schlüssel</button>
-                        <button class="tab-btn active" onclick="showEquipmentCategory('hardware')">Hardware</button>
-                        <button class="tab-btn" onclick="showEquipmentCategory('books')">Bücher</button>
-                    </div>
-                    
-                    <div id="equipmentList" class="equipment-container">
-                        <div class="loading">Equipment wird geladen...</div>
+                        <div id="equipmentList" class="equipment-list">
+                            <div class="loading">Lade Equipment...</div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-primary" onclick="showAddEquipmentForm()">Equipment hinzufügen</button>
-            <button class="btn btn-warning" onclick="cleanupEquipmentPendingRequests()" title="Doppelte Anfragen bereinigen">Cleanup</button>
-            <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
-        </div>
-    `;
-    
-    console.log('🔧 Modal content created, length:', modalContent.length);
-    console.log('🔧 Modal content contains equipmentList:', modalContent.includes('equipmentList'));
-    
-    showModalWithContent(modalContent);
-    
-    // Debug: Check if modal was created properly
-    setTimeout(() => {
-        const modal = document.getElementById('modal');
-        const container = document.getElementById('equipmentList');
-        console.log('🔍 Modal creation check:', {
-            modal: modal ? 'Found' : 'Not found',
-            container: container ? 'Found' : 'Not found',
-            modalActive: modal?.classList.contains('active') || false,
-            modalHTML: modal ? modal.innerHTML.substring(0, 200) + '...' : 'No modal'
-        });
-        
-        // If modal exists but container doesn't, let's check what's in the modal
-        if (modal && !container) {
-            console.log('🔍 Modal exists but container not found. Searching for equipmentList...');
-            const allElements = modal.querySelectorAll('*');
-            console.log('🔍 All elements in modal:', Array.from(allElements).map(el => el.id || el.className || el.tagName));
-        }
-    }, 10);
-    
-    // Only setup listener if not already running
-    if (!equipmentListener) {
-        setupEquipmentListener();
-    }
-    setupEquipmentRequestsListener();
-    
-    // Show hardware category by default after requests are loaded
-    // Use a more robust approach to wait for DOM elements
-    const waitForContainer = (maxAttempts = 5) => {
-        let attempts = 0;
-        const checkContainer = () => {
-            attempts++;
-        const container = document.getElementById('equipmentList');
-            const modal = document.getElementById('modal');
-            const modalActive = modal?.classList.contains('active') || false;
+            `;
             
-            console.log(`🔍 Container check attempt ${attempts}/${maxAttempts}:`, {
-                container: container ? 'Found' : 'Not found',
-                modal: modal ? 'Found' : 'Not found',
-                modalActive: modalActive
-            });
+            modal.classList.add('active');
             
-            if (container && modalActive) {
-                console.log('🔍 Container found and modal active, showing hardware category');
+            // Setup listeners
+            setupEquipmentListener();
+            setupEquipmentRequestsListener();
+            
+            // Show default category
             showEquipmentCategory('hardware');
-                return;
-            }
             
-            if (attempts < maxAttempts) {
-                setTimeout(checkContainer, 200); // Increased delay to 200ms
+            console.log('✅ Equipment manager opened successfully');
+            
         } else {
-                console.warn('Equipment container not ready after all attempts - will use retry mechanism in showEquipmentCategory');
-                // Only try if modal is active
-                if (modalActive) {
-                    showEquipmentCategory('hardware'); // This will now use the retry mechanism with limits
-                }
-            }
-        };
+            console.error('❌ Modal element not found');
+            safeShowToast('Fehler beim Öffnen des Equipment-Managers', 'error');
+        }
         
-        // Start checking after a short delay
-        setTimeout(checkContainer, 100);
-    };
-    
-    waitForContainer();
-    
-    // Auto-cleanup duplicate requests on admin access
-    if (window.currentUser?.isAdmin) {
-        setTimeout(() => {
-            console.log('🔧 Auto-cleanup for admin access...');
-            cleanupEquipmentPendingRequests();
-        }, 2000); // Run after 2 seconds to let everything load
+    } catch (error) {
+        console.error('❌ Error opening equipment manager:', error);
+        safeShowToast('Fehler beim Öffnen des Equipment-Managers', 'error');
     }
 }
 
@@ -2389,3 +2391,132 @@ document.addEventListener('DOMContentLoaded', setupEquipmentEventListeners);
 // And try after a delay to catch dynamically loaded content
 setTimeout(setupEquipmentEventListeners, 1000);
 setTimeout(setupEquipmentEventListeners, 2000); 
+
+/**
+ * Test function to check equipment data and create sample data if needed
+ */
+async function testEquipmentData() {
+    try {
+        console.log('🧪 Testing equipment data...');
+        
+        // Check if equipment collection exists and has data
+        const snapshot = await window.db.collection('equipment').limit(1).get();
+        
+        if (snapshot.empty) {
+            console.log('⚠️ Equipment collection is empty, creating sample data...');
+            
+            // Create sample equipment
+            const sampleEquipment = [
+                {
+                    name: 'Test Hardware 1',
+                    category: 'hardware',
+                    status: 'available',
+                    description: 'Test Hardware für Entwicklung',
+                    deposit: 0,
+                    location: 'Raum 101'
+                },
+                {
+                    name: 'Test Schlüssel 1',
+                    category: 'keys',
+                    status: 'available',
+                    description: 'Test Schlüssel für Entwicklung',
+                    deposit: 0,
+                    location: 'Raum 102'
+                },
+                {
+                    name: 'Test Buch 1',
+                    category: 'books',
+                    status: 'available',
+                    description: 'Test Buch für Entwicklung',
+                    deposit: 0,
+                    location: 'Bibliothek'
+                }
+            ];
+            
+            // Add sample equipment to Firestore
+            for (const item of sampleEquipment) {
+                await window.db.collection('equipment').add({
+                    ...item,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                });
+            }
+            
+            console.log('✅ Sample equipment created successfully');
+            safeShowToast('Test-Equipment wurde erstellt', 'success');
+            
+        } else {
+            console.log('✅ Equipment collection has data:', snapshot.size, 'items');
+        }
+        
+        // Reload equipment
+        loadEquipment();
+        
+    } catch (error) {
+        console.error('❌ Error testing equipment data:', error);
+        safeShowToast('Fehler beim Testen der Equipment-Daten', 'error');
+    }
+}
+
+/**
+ * Show equipment manager with better error handling
+ */
+async function showEquipmentManager() {
+    try {
+        console.log('🔧 Opening equipment manager...');
+        
+        // Test equipment data first
+        await testEquipmentData();
+        
+        // Show modal
+        const modal = document.getElementById('modal');
+        if (modal) {
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Equipment-Verwaltung</h2>
+                        <button class="close-btn" onclick="closeEquipmentManager()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="equipment-controls">
+                            <div class="category-tabs">
+                                <button class="category-tab active" onclick="showEquipmentCategory('hardware')">Hardware</button>
+                                <button class="category-tab" onclick="showEquipmentCategory('keys')">Schlüssel</button>
+                                <button class="category-tab" onclick="showEquipmentCategory('books')">Bücher</button>
+                            </div>
+                            <div class="equipment-actions">
+                                <button class="btn btn-primary" onclick="showAddEquipmentForm()">Equipment hinzufügen</button>
+                                <div class="search-box">
+                                    <input type="text" id="equipmentSearch" placeholder="Equipment suchen..." onkeyup="searchEquipment()">
+                                    <button onclick="clearEquipmentSearch()">✕</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="equipmentList" class="equipment-list">
+                            <div class="loading">Lade Equipment...</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.add('active');
+            
+            // Setup listeners
+            setupEquipmentListener();
+            setupEquipmentRequestsListener();
+            
+            // Show default category
+            showEquipmentCategory('hardware');
+            
+            console.log('✅ Equipment manager opened successfully');
+            
+        } else {
+            console.error('❌ Modal element not found');
+            safeShowToast('Fehler beim Öffnen des Equipment-Managers', 'error');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error opening equipment manager:', error);
+        safeShowToast('Fehler beim Öffnen des Equipment-Managers', 'error');
+    }
+}
