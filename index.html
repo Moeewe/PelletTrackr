@@ -38,7 +38,7 @@
                 <div class="slogan">Print Smart. Pay Smart.</div>
             </div>
             
-            <form id="loginForm" class="login-form">
+            <form id="loginForm" class="login-form" onsubmit="event.preventDefault(); loginAsUser();">
                 <div class="form-group">
                     <input type="text" id="loginName" name="loginName" placeholder="Moritz Wesseler" required>
                 </div>
