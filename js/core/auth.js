@@ -254,10 +254,35 @@ function showDashboard() {
         console.log('👑 Admin-Dashboard wird angezeigt');
         if (userDashboard) userDashboard.classList.remove('active');
         if (adminDashboard) adminDashboard.classList.add('active');
+        
+        // Load admin data
+        if (typeof loadAdminStats === 'function') {
+            loadAdminStats();
+        }
+        if (typeof loadAllEntries === 'function') {
+            loadAllEntries();
+        }
+        if (typeof loadAllUsers === 'function') {
+            loadAllUsers();
+        }
     } else {
         console.log('👤 Benutzer-Dashboard wird angezeigt');
         if (userDashboard) userDashboard.classList.add('active');
         if (adminDashboard) adminDashboard.classList.remove('active');
+        
+        // Load user data
+        if (typeof loadUserEntries === 'function') {
+            loadUserEntries();
+        }
+        if (typeof loadUserStats === 'function') {
+            loadUserStats();
+        }
+        if (typeof loadMaterials === 'function') {
+            loadMaterials();
+        }
+        if (typeof loadEquipment === 'function') {
+            loadEquipment();
+        }
     }
     
     // Benutzername anzeigen
