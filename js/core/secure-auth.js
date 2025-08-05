@@ -205,9 +205,18 @@ async function secureAdminLogin(kennung, name, adminPassword) {
         
         // Verify admin password (this should be done server-side in production)
         const correctAdminPassword = 'fgf2025admin';
-        if (adminPassword !== correctAdminPassword) {
-            throw new Error('Ungültiges Admin-Passwort');
+        console.log('🔍 Prüfe Admin-Passwort...');
+        
+        if (!adminPassword) {
+            throw new Error('Admin-Passwort ist erforderlich');
         }
+        
+        if (adminPassword !== correctAdminPassword) {
+            console.log('❌ Falsches Admin-Passwort eingegeben');
+            throw new Error('Ungültiges Admin-Passwort. Bitte überprüfen Sie Ihre Eingabe.');
+        }
+        
+        console.log('✅ Admin-Passwort korrekt');
         
         // First, login as regular user
         const loginResult = await secureLoginWithKennung(kennung, name, false);

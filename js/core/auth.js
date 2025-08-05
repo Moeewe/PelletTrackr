@@ -49,8 +49,13 @@ async function loginAsAdmin() {
         const kennung = document.getElementById('loginKennung').value.trim();
         const adminPassword = document.getElementById('adminPassword').value.trim();
         
-        if (!name || !kennung || !adminPassword) {
-            safeShowToast('Bitte alle Felder ausfüllen!', 'warning');
+        if (!name || !kennung) {
+            safeShowToast('Bitte Name und FH-Kennung eingeben!', 'warning');
+            return;
+        }
+        
+        if (!adminPassword) {
+            safeShowToast('Bitte Admin-Passwort eingeben!', 'warning');
             return;
         }
         
