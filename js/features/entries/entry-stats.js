@@ -91,45 +91,84 @@ function setupAdminEntriesListener() {
   }
 }
 
-// User-Drucke laden (fallback for initial load)
+// Load user entries
 async function loadUserEntries() {
-  // Now this sets up the real-time listener instead of manual loading
-  setupUserEntriesListener();
+    try {
+        if (!window.currentUser || !window.currentUser.username) {
+            console.error('❌ Kein Benutzer angemeldet oder kein Username verfügbar');
+            return;
+        }
+
+        console.log('📊 Loading entries for user:', window.currentUser.username);
+        
+        const snapshot = await window.db.collection('entries')
+            .where("username", "==", window.currentUser.username)
+            .orderBy("timestamp", "desc")
+            .get();
+
+        const entries = [];
+        snapshot.forEach(doc => {
+            entries.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+
+        console.log(`✅ Loaded ${entries.length} entries for user`);
+        renderUserEntries(entries);
+        
+    } catch (error) {
+        console.error('❌ Error loading user entries:', error);
+        if (window.toast && typeof window.toast.error === 'function') {
+            window.toast.error('Fehler beim Laden der Einträge');
+        }
+    }
 }
 
-// User-Statistiken laden
+// Load user statistics
 async function loadUserStats() {
-  try {
-    const snapshot = await window.db.collection("entries")
-      .where("name", "==", window.currentUser.name)
-      .where("kennung", "==", window.currentUser.kennung)
-      .get();
+    try {
+        if (!window.currentUser || !window.currentUser.username) {
+            console.error('❌ Kein Benutzer angemeldet oder kein Username verfügbar');
+            return;
+        }
 
-    const entries = [];
-    snapshot.forEach(doc => {
-      entries.push({ id: doc.id, ...doc.data() });
-    });
+        console.log('📊 Loading stats for user:', window.currentUser.username);
+        
+        const snapshot = await window.db.collection('entries')
+            .where("username", "==", window.currentUser.username)
+            .get();
 
-    const totalEntries = entries.length;
-    const totalCost = entries.reduce((sum, entry) => sum + (entry.totalCost || 0), 0);
-    const paidEntries = entries.filter(entry => entry.paid || entry.isPaid);
-    const paidAmount = paidEntries.reduce((sum, entry) => sum + (entry.totalCost || 0), 0);
-    const unpaidAmount = totalCost - paidAmount;
+        let totalCost = 0;
+        let totalEntries = 0;
+        let paidEntries = 0;
+        let unpaidEntries = 0;
 
-    // Stats anzeigen
-    document.getElementById('userTotalEntries').textContent = totalEntries;
-    document.getElementById('userTotalCost').textContent = window.formatCurrency(totalCost);
-    document.getElementById('userPaidAmount').textContent = window.formatCurrency(paidAmount);
-    document.getElementById('userUnpaidAmount').textContent = window.formatCurrency(unpaidAmount);
+        snapshot.forEach(doc => {
+            const entry = doc.data();
+            totalCost += entry.totalCost || 0;
+            totalEntries++;
+            
+            if (entry.paid || entry.isPaid) {
+                paidEntries++;
+            } else {
+                unpaidEntries++;
+            }
+        });
 
-    // Drucker-Status aktualisieren
-    if (typeof updatePrinterStatusDisplay === 'function') {
-      updatePrinterStatusDisplay();
+        // Update stats display
+        updateUserStatsDisplay({
+            totalEntries,
+            totalCost,
+            paidEntries,
+            unpaidEntries
+        });
+        
+        console.log(`✅ User stats updated: ${totalEntries} entries, €${totalCost.toFixed(2)} total`);
+        
+    } catch (error) {
+        console.error('❌ Error loading user stats:', error);
     }
-
-  } catch (error) {
-    console.error('Fehler beim Laden der User-Stats:', error);
-  }
 }
 
 // Admin-Statistiken laden

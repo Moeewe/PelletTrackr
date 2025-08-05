@@ -93,12 +93,12 @@ function setupUserPaymentRequestsListener() {
     }
     
     try {
-        console.log(`Setting up payment request listener for user: ${window.currentUser.kennung}`);
+        console.log(`Setting up payment request listener for user: ${window.currentUser.username}`);
         
         userPaymentRequestsListener = window.db.collection('paymentRequests')
-            .where('userId', '==', window.currentUser.kennung)
+            .where('userId', '==', window.currentUser.username)
             .onSnapshot((snapshot) => {
-                console.log('Live update: Payment requests changed for user', window.currentUser.kennung);
+                console.log('Live update: Payment requests changed for user', window.currentUser.username);
                 
                 // Update button states for all current entries
                 updateAllPaymentRequestButtons();
@@ -127,7 +127,7 @@ async function updateUserPaymentRequestStatus() {
     
     try {
         const pendingRequests = await window.db.collection('paymentRequests')
-            .where('userId', '==', window.currentUser.kennung)
+            .where('userId', '==', window.currentUser.username)
             .where('status', '==', 'pending')
             .get();
             
@@ -237,7 +237,7 @@ async function requestPayment(entryId) {
         // Create payment request
         const paymentRequest = {
             entryId: entryId,
-            userId: window.currentUser.kennung,
+            userId: window.currentUser.username,
             userName: window.currentUser.name,
             amount: entry.totalCost,
             jobName: entry.jobName || '3D-Druck Auftrag',

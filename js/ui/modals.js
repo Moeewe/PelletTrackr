@@ -308,7 +308,7 @@ async function editUserEntry(entryId) {
     const entry = doc.data();
     
     // Prüfen ob User berechtigt ist (nur eigene Drucke bearbeiten)
-    if (entry.kennung !== window.currentUser.kennung) {
+    if (entry.username !== window.currentUser.username) {
       if (window.toast && typeof window.toast.warning === 'function') {
         window.toast.warning('Du kannst nur deine eigenen Drucke bearbeiten!');
       } else {

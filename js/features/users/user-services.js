@@ -2939,3 +2939,89 @@ console.log('👥 Available functions:', {
     autoFillPhoneNumber: typeof autoFillPhoneNumber,
     savePhoneNumberToProfile: typeof savePhoneNumberToProfile
 }); 
+
+// Update user phone number
+async function updateUserPhoneNumber(phoneNumber) {
+    try {
+        if (!window.currentUser || !window.currentUser.username) {
+            console.error('❌ Kein Benutzer angemeldet oder kein Username verfügbar');
+            return false;
+        }
+
+        console.log('📱 Update phone number for user:', window.currentUser.username);
+
+        // First check if user exists by username
+        const userDoc = await window.db.collection('users').doc(window.currentUser.username).get();
+        
+        if (userDoc.exists) {
+            // Update existing user
+            await window.db.collection('users').doc(window.currentUser.username).update({
+                phone: phoneNumber,
+                updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+            });
+            console.log('✅ Updated existing user phone number:', window.currentUser.username);
+            
+            // Update local user list
+            updateUserInList(window.currentUser.username, { phone: phoneNumber });
+        } else {
+            // User doesn't exist by username - search for existing user by name or email
+            console.log('🔍 User not found by username, searching for existing user...');
+            
+            const existingUserSnapshot = await window.db.collection('users')
+                .where('name', '==', window.currentUser.name)
+                .limit(1)
+                .get();
+            
+            if (!existingUserSnapshot.empty) {
+                // Found existing user by name - update with username and phone
+                const existingUserDoc = existingUserSnapshot.docs[0];
+                const existingUserData = existingUserDoc.data();
+                
+                console.log('✅ Found existing user by name, updating with username:', existingUserDoc.id);
+                
+                await window.db.collection('users').doc(window.currentUser.username).set({
+                    ...existingUserData,
+                    username: window.currentUser.username,
+                    phone: phoneNumber,
+                    email: window.currentUser.email || existingUserData.email || `${window.currentUser.username}@fh-muenster.de`,
+                    updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Delete old document
+                await window.db.collection('users').doc(existingUserDoc.id).delete();
+                
+                console.log('✅ Migrated user to new username system');
+            } else {
+                // Create new user
+                console.log('📝 Creating new user:', window.currentUser.username);
+                
+                await window.db.collection('users').doc(window.currentUser.username).set({
+                    name: window.currentUser.name || '',
+                    username: window.currentUser.username,
+                    email: window.currentUser.email || `${window.currentUser.username}@fh-muenster.de`,
+                    phone: phoneNumber,
+                    isAdmin: false,
+                    createdAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                console.log('✅ Created new user with phone number');
+            }
+            
+            // Update local user list
+            updateUserInList(window.currentUser.username, {
+                docId: window.currentUser.username,
+                name: window.currentUser.name || '',
+                username: window.currentUser.username,
+                email: window.currentUser.email || `${window.currentUser.username}@fh-muenster.de`,
+                phone: phoneNumber
+            });
+        }
+        
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Error updating phone number:', error);
+        return false;
+    }
+} 
