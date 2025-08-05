@@ -74,6 +74,8 @@ async function handleAuthenticatedUser(user) {
 async function secureLoginWithEmail(email, password) {
     try {
         console.log('🔐 Sichere Anmeldung für:', email);
+        console.log('🔑 Verwendetes Passwort:', password);
+        console.log('📧 E-Mail-Format gültig:', isValidEmail(email));
         
         // Extract username from email
         const username = extractUsernameFromEmail(email);
@@ -81,6 +83,7 @@ async function secureLoginWithEmail(email, password) {
         
         // Try to sign in with Firebase Auth
         try {
+            console.log('🔄 Versuche Firebase Auth Login...');
             const userCredential = await window.auth.signInWithEmailAndPassword(email, password);
             console.log('✅ Firebase Auth Login erfolgreich');
             
@@ -110,20 +113,27 @@ async function secureLoginWithEmail(email, password) {
         } catch (loginError) {
             console.log('⚠️ Firebase Auth Login fehlgeschlagen:', loginError.code);
             console.log('🔍 Detaillierter Fehler:', loginError);
+            console.log('📧 Versuchte E-Mail:', email);
+            console.log('🔑 Versuchtes Passwort:', password);
             
             if (loginError.code === 'auth/user-not-found') {
+                console.log('🆕 Account nicht gefunden - Registrierung erforderlich');
                 throw new Error('Account nicht gefunden. Bitte registrieren Sie sich zuerst oder überprüfen Sie Ihre E-Mail-Adresse.');
                 
             } else if (loginError.code === 'auth/wrong-password') {
+                console.log('❌ Falsches Passwort');
                 throw new Error('Falsches Passwort. Bitte überprüfen Sie Ihre Eingaben.');
                 
             } else if (loginError.code === 'auth/invalid-login-credentials') {
+                console.log('❌ Ungültige Anmeldedaten');
                 throw new Error('Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre E-Mail-Adresse und Ihr Passwort.');
                 
             } else if (loginError.code === 'auth/too-many-requests') {
+                console.log('⏰ Zu viele Login-Versuche');
                 throw new Error('Zu viele Login-Versuche. Bitte warten Sie einige Minuten und versuchen Sie es erneut.');
                 
             } else if (loginError.code === 'auth/invalid-email') {
+                console.log('❌ Ungültige E-Mail-Adresse');
                 throw new Error('Ungültige E-Mail-Adresse. Bitte überprüfen Sie das Format.');
                 
             } else {
@@ -167,10 +177,11 @@ async function registerNewUser(name, email) {
         
         // Extract username from email
         const username = extractUsernameFromEmail(email);
-        const password = generateSecurePassword(username);
+        const password = generateSecurePasswordFromEmail(email);
         
         console.log('📧 Erstelle Account für:', email);
         console.log('👤 Nutzername:', username);
+        console.log('🔑 Generiertes Passwort:', password);
         
         // Create new user in Firebase Auth
         const userCredential = await window.auth.createUserWithEmailAndPassword(email, password);
@@ -258,7 +269,9 @@ async function secureAdminLogin(kennung, name, adminPassword) {
         console.log('✅ Admin-Passwort korrekt');
         
         // First, login as regular user
-        const loginResult = await secureLoginWithEmail(`${kennung}@fh-muenster.de`, generateSecurePassword(kennung));
+        const email = `${kennung}@fh-muenster.de`;
+        const password = generateSecurePasswordFromEmail(email);
+        const loginResult = await secureLoginWithEmail(email, password);
         
         if (!loginResult.success) {
             return loginResult;
@@ -316,7 +329,14 @@ function isValidFHKennung(kennung) {
     return kennungPattern.test(cleanKennung);
 }
 
-// Generate secure password from kennung
+// Generate secure password from email (extract username first)
+function generateSecurePasswordFromEmail(email) {
+    const username = extractUsernameFromEmail(email);
+    const cleanUsername = username.trim().toLowerCase();
+    return `FGF_${cleanUsername}_2025!`;
+}
+
+// Generate secure password from kennung (for backward compatibility)
 function generateSecurePassword(kennung) {
     const cleanKennung = kennung.trim().toLowerCase();
     return `FGF_${cleanKennung}_2025!`;
