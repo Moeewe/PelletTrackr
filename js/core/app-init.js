@@ -17,35 +17,42 @@ function initializeFirebaseFirst() {
             return false;
         }
         
+        // Get config from firebase-config.js
+        const config = window.firebaseConfig || {
+            apiKey: "AIzaSyBaaMwmjxyytxHLinmigccF30-1Wl0tzD0",
+            authDomain: "fgf-3d-druck.firebaseapp.com",
+            databaseURL: "https://fgf-3d-druck-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "fgf-3d-druck",
+            storageBucket: "fgf-3d-druck.firebasestorage.app",
+            messagingSenderId: "37190466890",
+            appId: "1:37190466890:web:cfb25f3c2f6bb62006d5b3"
+        };
+        
         // Initialize Firebase if not already done
         if (firebase.apps.length === 0) {
-            console.log('🔄 Initialisiere Firebase App "FGF-3D-Druck"...');
-            firebase.initializeApp({
-                apiKey: "AIzaSyBaaMwmjxyytxHLinmigccF30-1Wl0tzD0",
-                authDomain: "fgf-3d-druck.firebaseapp.com",
-                databaseURL: "https://fgf-3d-druck-default-rtdb.europe-west1.firebasedatabase.app",
-                projectId: "fgf-3d-druck",
-                storageBucket: "fgf-3d-druck.firebasestorage.app",
-                messagingSenderId: "37190466890",
-                appId: "1:37190466890:web:cfb25f3c2f6bb62006d5b3"
-            }, "FGF-3D-Druck");
-            console.log('✅ Firebase App "FGF-3D-Druck" initialisiert');
+            console.log('🔄 Initialisiere Firebase App...');
+            firebase.initializeApp(config);
+            console.log('✅ Firebase App initialisiert');
         } else {
             console.log('⚠️ Firebase App bereits initialisiert');
         }
         
-        // Get the correct Firebase app instance
-        const firebaseApp = firebase.app("FGF-3D-Druck");
+        // Initialize Firestore
+        const db = firebase.firestore();
         
-        // Initialize Firestore with the correct app
-        const db = firebaseApp.firestore();
+        // Cache-Einstellungen (weniger restriktiv für Entwicklung)
+        db.settings({
+            cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
+            merge: true
+        });
+        
         window.db = db;
         
-        // Initialize Auth with the correct app
-        const auth = firebaseApp.auth();
+        // Initialize Auth
+        const auth = firebase.auth();
         window.auth = auth;
         
-        console.log('✅ Firebase "FGF-3D-Druck" vollständig initialisiert');
+        console.log('✅ Firebase vollständig initialisiert');
         return true;
         
     } catch (error) {

@@ -12,49 +12,6 @@ const firebaseConfig = {
     appId: "1:37190466890:web:cfb25f3c2f6bb62006d5b3"
 };
 
-// Firebase initialisieren
-function initializeFirebase() {
-    try {
-        console.log('🔧 Firebase wird initialisiert...');
-        
-        // Prüfe ob Firebase SDK verfügbar ist
-        if (typeof firebase === 'undefined') {
-            console.error('❌ Firebase SDK nicht verfügbar');
-            return false;
-        }
-        
-        // Prüfe ob Firebase bereits initialisiert ist
-        if (firebase.apps.length > 0) {
-            console.log('⚠️ Firebase bereits initialisiert, verwende bestehende Instanz');
-            const db = firebase.firestore();
-            window.db = db;
-            return true;
-        }
-        
-        // Firebase App initialisieren
-        firebase.initializeApp(firebaseConfig);
-        
-        // Firestore initialisieren
-        const db = firebase.firestore();
-        
-        // Cache-Einstellungen (weniger restriktiv für Entwicklung)
-        db.settings({
-            cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
-            merge: true
-        });
-        
-        // Globale Firestore-Instanz verfügbar machen
-        window.db = db;
-        
-        console.log('✅ Firebase erfolgreich initialisiert');
-        return true;
-        
-    } catch (error) {
-        console.error('❌ Firebase-Initialisierung fehlgeschlagen:', error);
-        return false;
-    }
-}
-
 // ===== SICHERHEITSVERBESSERUNGEN =====
 // Diese Funktionen werden später implementiert
 
@@ -85,6 +42,6 @@ function checkDataEncryption() {
 
 // ===== GLOBALE EXPORTS =====
 
-window.initializeFirebase = initializeFirebase;
+window.firebaseConfig = firebaseConfig;
 window.validateSession = validateSession;
 window.logSecurityEvent = logSecurityEvent;
