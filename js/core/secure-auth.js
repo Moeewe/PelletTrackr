@@ -108,18 +108,8 @@ async function secureLoginWithKennung(kennung, name, isAdmin = false) {
                 throw new Error('E-Mail-Adresse bereits registriert, aber Passwort ist falsch. Bitte kontaktieren Sie den Administrator.');
                 
             } else if (loginError.code === 'auth/invalid-login-credentials') {
-                console.log('🔑 Ungültige Anmeldedaten, erstelle neuen Benutzer...');
-                
-                // Erstelle neuen Benutzer mit gleichen Credentials
-                userCredential = await window.auth.createUserWithEmailAndPassword(email, password);
-                
-                // Sende E-Mail-Verifizierung
-                await userCredential.user.sendEmailVerification({
-                    url: window.location.origin,
-                    handleCodeInApp: true
-                });
-                
-                console.log('📧 E-Mail-Verifizierung gesendet');
+                console.log('❌ Ungültige Anmeldedaten');
+                throw new Error('Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre Eingaben.');
                 
             } else {
                 throw loginError;
