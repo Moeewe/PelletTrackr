@@ -17,9 +17,17 @@ function initializeFirebase() {
     try {
         console.log('🔧 Firebase wird initialisiert...');
         
+        // Prüfe ob Firebase SDK verfügbar ist
+        if (typeof firebase === 'undefined') {
+            console.error('❌ Firebase SDK nicht verfügbar');
+            return false;
+        }
+        
         // Prüfe ob Firebase bereits initialisiert ist
         if (firebase.apps.length > 0) {
             console.log('⚠️ Firebase bereits initialisiert, verwende bestehende Instanz');
+            const db = firebase.firestore();
+            window.db = db;
             return true;
         }
         

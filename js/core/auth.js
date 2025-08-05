@@ -93,9 +93,9 @@ async function loginAsAdmin() {
         
         if (!name || !kennung || !adminPassword) {
             safeShowToast('Bitte alle Felder ausfüllen!', 'warning');
-            return;
-        }
-        
+    return;
+  }
+  
         console.log('🔐 Admin-Login gestartet:', kennung);
         
         // Verwende sichere Authentifizierung falls verfügbar
@@ -165,9 +165,9 @@ async function legacyLoginAsAdmin(name, kennung, adminPassword) {
         // Prüfe Admin-Passwort
         if (adminPassword !== window.ADMIN_PASSWORD) {
             safeShowToast('Ungültiges Admin-Passwort!', 'error');
-            return;
-        }
-        
+    return;
+  }
+  
         // Prüfe ob Admin existiert
         const existingUser = await checkExistingKennung(kennung);
         
@@ -183,7 +183,7 @@ async function legacyLoginAsAdmin(name, kennung, adminPassword) {
         
         saveSession(window.currentUser);
         showAdminDashboard();
-        
+      
     } catch (error) {
         console.error('❌ Legacy Admin login error:', error);
         safeShowToast('Fehler bei der Admin-Anmeldung', 'error');
@@ -218,8 +218,8 @@ function logout() {
         window.currentUser = null;
         
         // UI zurücksetzen
-        showScreen('loginScreen');
-        
+  showScreen('loginScreen');
+  
         console.log('✅ Logout erfolgreich');
         
     } catch (error) {
@@ -253,16 +253,16 @@ async function createNewUser(name, kennung, isAdmin = false) {
             kennung: kennung.toLowerCase(),
             isAdmin,
             createdAt: new Date(),
-            updatedAt: new Date()
+        updatedAt: new Date()
         };
         
         const docRef = await window.db.collection('users').add(userData);
         return { id: docRef.id, ...userData };
-        
-    } catch (error) {
+    
+  } catch (error) {
         console.error('❌ Fehler beim Erstellen des Benutzers:', error);
-        throw error;
-    }
+    throw error;
+  }
 }
 
 async function updateExistingUser(userId, updates) {

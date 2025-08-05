@@ -40,15 +40,15 @@
             
             <form id="loginForm" class="login-form">
                 <div class="form-group">
-                    <input type="text" id="loginName" placeholder="Moritz Wesseler" required>
+                    <input type="text" id="loginName" name="loginName" placeholder="Moritz Wesseler" required>
                 </div>
                 <div class="form-group">
-                    <input type="text" id="loginKennung" placeholder="mw202350" required>
+                    <input type="text" id="loginKennung" name="loginKennung" placeholder="mw202350" required>
                 </div>
                 
                 <div class="form-group checkbox-group">
                     <label>
-                        <input type="checkbox" id="rememberMe">
+                        <input type="checkbox" id="rememberMe" name="rememberMe">
                         <span class="checkmark"></span>
                         Daten merken
                     </label>
@@ -64,7 +64,7 @@
                 
                 <div id="adminLoginSection" class="admin-login-section" style="display: none;">
                     <div class="form-group">
-                        <input type="password" id="adminPassword" placeholder="Admin-Passwort" required>
+                        <input type="password" id="adminPassword" name="adminPassword" placeholder="Admin-Passwort" required>
                     </div>
                     <div class="form-group">
                         <button type="button" class="btn btn-danger btn-full" onclick="loginAsAdmin()">Admin-Login</button>
@@ -184,11 +184,9 @@
     <!-- Features -->
     <script src="js/features/entries/entry-management.js?v=1.0.1"></script>
     <script src="js/features/entries/entry-rendering.js?v=1.0.1"></script>
-    <script src="js/features/entries/entry-stats.js?v=1.0.1"></script>
     <script src="js/features/materials/material-loading.js?v=1.0.1"></script>
     <script src="js/features/assets/equipment-management.js?v=1.0.1"></script>
     <script src="js/features/assets/admin-problem-reports.js?v=1.0.1"></script>
-    <script src="js/features/assets/equipment-management.js?v=1.0.1"></script>
     <script src="js/features/payments/payment-requests.js?v=1.0.1"></script>
     <script src="js/features/users/user-management.js?v=1.0.1"></script>
     <script src="js/features/users/user-services.js?v=1.0.1"></script>

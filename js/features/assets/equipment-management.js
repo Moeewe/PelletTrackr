@@ -5,7 +5,7 @@
  */
 
 // Equipment Management Module - Extended with Requests Support
-let equipment = [];
+let equipmentData = [];
 let equipmentListener = null;
 let equipmentRequestsListener = null;
 let currentEquipmentCategory = 'hardware';
@@ -45,20 +45,20 @@ function setupEquipmentListener() {
         console.log('🔧 Setting up equipment listener...');
         
         equipmentListener = window.db.collection('equipment').onSnapshot((snapshot) => {
-            equipment = [];
+            equipmentData = [];
             snapshot.forEach((doc) => {
                 const data = doc.data();
-                equipment.push({
+                equipmentData.push({
                     id: doc.id,
                     ...data
                 });
             });
             
             // Make equipment globally available
-            window.equipment = equipment;
+            window.equipment = equipmentData;
             
-            console.log('✅ Live update: Loaded equipment:', equipment.length);
-            console.log('📋 Equipment data sample:', equipment.slice(0, 3).map(item => ({
+            console.log('✅ Live update: Loaded equipment:', equipmentData.length);
+            console.log('📋 Equipment data sample:', equipmentData.slice(0, 3).map(item => ({
                 id: item.id,
                 name: item.name,
                 status: item.status,
@@ -267,18 +267,18 @@ function closeEquipmentManager() {
 async function loadEquipment() {
     try {
         const querySnapshot = await window.db.collection('equipment').get();
-        equipment = [];
+        equipmentData = [];
         
         querySnapshot.forEach((doc) => {
-            equipment.push({
+            equipmentData.push({
                 id: doc.id,
                 ...doc.data()
             });
         });
         
-        filteredEquipment = equipment;
-        console.log('📋 Loaded equipment:', equipment.length);
-        console.log('📋 Equipment data sample:', equipment.slice(0, 3).map(item => ({
+        filteredEquipment = equipmentData;
+        console.log('📋 Loaded equipment:', equipmentData.length);
+        console.log('📋 Equipment data sample:', equipmentData.slice(0, 3).map(item => ({
             id: item.id,
             name: item.name,
             status: item.status,
@@ -290,12 +290,12 @@ async function loadEquipment() {
         await loadUserDataForEquipment();
         
         // Debug: Show all unique categories in the data
-        const uniqueCategories = [...new Set(equipment.map(item => item.category))];
+        const uniqueCategories = [...new Set(equipmentData.map(item => item.category))];
         console.log('🔍 Available categories in data:', uniqueCategories);
         console.log('🔍 Equipment by category:', uniqueCategories.map(cat => ({
             category: cat,
-            count: equipment.filter(item => item.category === cat).length,
-            items: equipment.filter(item => item.category === cat).map(item => item.name)
+            count: equipmentData.filter(item => item.category === cat).length,
+            items: equipmentData.filter(item => item.category === cat).map(item => item.name)
         })));
         // Only show category if modal is active
         const modal = document.getElementById('modal');
@@ -318,7 +318,7 @@ async function loadEquipment() {
 async function loadUserDataForEquipment() {
     try {
         // Get unique kennungs from borrowed equipment
-        const borrowedEquipment = equipment.filter(item => item.borrowedByKennung);
+        const borrowedEquipment = equipmentData.filter(item => item.borrowedByKennung);
         const uniqueKennungs = [...new Set(borrowedEquipment.map(item => item.borrowedByKennung))];
         
         if (uniqueKennungs.length === 0) {
@@ -435,10 +435,10 @@ function showEquipmentCategory(category, retryCount = 0) {
     }
     
     // Filter equipment by category from all equipment (not just search results)
-    const categoryEquipment = equipment.filter(item => item.category === category);
+    const categoryEquipment = equipmentData.filter(item => item.category === category);
     
     console.log(`🔍 Category filter: looking for category '${category}'`);
-    console.log(`🔍 All equipment categories:`, equipment.map(item => item.category));
+    console.log(`🔍 All equipment categories:`, equipmentData.map(item => item.category));
     console.log(`🔍 Found ${categoryEquipment.length} items for category '${category}':`, categoryEquipment.map(item => item.name));
     
     // Apply search filter if there's a search term
@@ -1102,7 +1102,7 @@ async function saveEquipment() {
  * Edit equipment
  */
 function editEquipment(equipmentId) {
-    const equipmentItem = equipment.find(item => item.id === equipmentId);
+    const equipmentItem = equipmentData.find(item => item.id === equipmentId);
     if (!equipmentItem) {
         safeShowToast('Equipment nicht gefunden', 'error');
         return;
@@ -1241,7 +1241,7 @@ async function updateEquipment(equipmentId) {
  * Delete equipment with confirmation
  */
 async function deleteEquipment(equipmentId) {
-    const equipmentItem = equipment.find(item => item.id === equipmentId);
+    const equipmentItem = equipmentData.find(item => item.id === equipmentId);
     if (!equipmentItem) {
         safeShowToast('Equipment nicht gefunden', 'error');
         return;
@@ -1275,7 +1275,7 @@ async function borrowEquipment(equipmentId) {
         return;
     }
     
-    const equipmentItem = equipment.find(item => item.id === equipmentId);
+    const equipmentItem = equipmentData.find(item => item.id === equipmentId);
     
     // Load all users first for admin selection
     await loadAllUsersForEquipment();
@@ -1500,7 +1500,7 @@ async function submitAdminBorrowEquipment(equipmentId) {
         return;
     }
     
-    const equipmentItem = equipment.find(item => item.id === equipmentId);
+    const equipmentItem = equipmentData.find(item => item.id === equipmentId);
     if (!equipmentItem) {
         safeShowToast('Equipment nicht gefunden', 'error');
         return;
@@ -1637,7 +1637,7 @@ async function submitAdminBorrowEquipment(equipmentId) {
  * Return equipment
  */
 async function returnEquipment(equipmentId) {
-    const equipmentItem = equipment.find(item => item.id === equipmentId);
+    const equipmentItem = equipmentData.find(item => item.id === equipmentId);
     if (!equipmentItem) {
         safeShowToast('Equipment nicht gefunden', 'error');
         return;
@@ -1737,7 +1737,7 @@ function updateEquipmentRequestsBadge() {
     }
     
     // Count pending equipment requests from equipment collection (unified system)
-    const pendingCount = equipment.reduce((count, item) => {
+    const pendingCount = equipmentData.reduce((count, item) => {
         const pendingRequests = item.pendingRequests || [];
         const pendingEquipmentRequests = pendingRequests.filter(req => 
             req.status === 'pending' && req.type === 'equipment'
@@ -1962,7 +1962,7 @@ async function rejectEquipmentRequest(requestId, equipmentId) {
  * Duplicate equipment
  */
 async function duplicateEquipment(equipmentId) {
-    const equipmentItem = equipment.find(item => item.id === equipmentId);
+    const equipmentItem = equipmentData.find(item => item.id === equipmentId);
     if (!equipmentItem) {
         safeShowToast('Equipment nicht gefunden', 'error');
         return;
@@ -2002,7 +2002,7 @@ async function duplicateEquipment(equipmentId) {
  * Confirm equipment return request
  */
 async function confirmEquipmentReturn(equipmentId) {
-    const equipmentItem = equipment.find(item => item.id === equipmentId);
+    const equipmentItem = equipmentData.find(item => item.id === equipmentId);
     if (!equipmentItem) {
         safeShowToast('Equipment nicht gefunden', 'error');
         return;
