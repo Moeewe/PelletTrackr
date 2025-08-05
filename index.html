@@ -40,10 +40,10 @@
             
             <form id="loginForm" class="login-form" onsubmit="event.preventDefault(); loginAsUser();">
                 <div class="form-group">
-                    <input type="text" id="loginName" name="loginName" placeholder="Vorname Nachname" required>
+                    <input type="email" id="loginEmail" name="loginEmail" placeholder="E-Mail-Adresse" required>
                 </div>
                 <div class="form-group">
-                    <input type="text" id="loginKennung" name="loginKennung" placeholder="FH-Kennung" required>
+                    <input type="password" id="loginPassword" name="loginPassword" placeholder="Passwort" required>
                 </div>
                 
                 <div class="form-group checkbox-group">
@@ -59,10 +59,6 @@
                 </div>
                 
                 <div class="form-group">
-                    <button type="button" class="btn btn-secondary btn-full" onclick="showAdminLogin()">Als Admin anmelden</button>
-                </div>
-                
-                <div class="form-group">
                     <button type="button" class="btn btn-link btn-full" onclick="showRegistration()">Neuen Account erstellen</button>
                 </div>
                 
@@ -70,16 +66,13 @@
                     <button type="button" class="btn btn-link btn-full" onclick="showPasswordReset()">Passwort vergessen</button>
                 </div>
                 
-                <div id="adminLoginSection" class="admin-login-section" style="display: none;">
-                    <div class="form-group">
-                        <input type="password" id="adminPassword" name="adminPassword" placeholder="Admin-Passwort">
-                    </div>
-                    <div class="form-group">
-                        <button type="button" class="btn btn-danger btn-full" onclick="loginAsAdmin()">Admin-Login</button>
-                    </div>
-                </div>
-                
                 <div id="registrationSection" class="registration-section" style="display: none;">
+                    <div class="form-group">
+                        <input type="text" id="regName" name="regName" placeholder="Vorname Nachname">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="regKennung" name="regKennung" placeholder="FH-Kennung">
+                    </div>
                     <div class="form-group">
                         <button type="button" class="btn btn-success btn-full" onclick="registerUser()">Account erstellen</button>
                     </div>

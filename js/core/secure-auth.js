@@ -70,7 +70,91 @@ async function handleAuthenticatedUser(user) {
     }
 }
 
-// User registration
+// Secure login with email and password
+async function secureLoginWithEmail(email, password) {
+    try {
+        console.log('🔐 Sichere Anmeldung für:', email);
+        
+        // Try to sign in with Firebase Auth
+        try {
+            const userCredential = await window.auth.signInWithEmailAndPassword(email, password);
+            console.log('✅ Firebase Auth Login erfolgreich');
+            
+            // Get user profile from Firestore
+            const userProfile = await getUserProfileFromFirestore(userCredential.user.uid);
+            
+            // Check if user is admin (automatic detection)
+            const isAdmin = userProfile?.isAdmin || false;
+            console.log('🔍 Admin-Status:', isAdmin);
+            
+            // Update user profile in Firestore
+            await updateUserProfile(userCredential.user, {
+                lastLogin: new Date()
+            });
+            
+            // Check email verification
+            if (!userCredential.user.emailVerified) {
+                console.log('⚠️ E-Mail noch nicht verifiziert');
+                showEmailVerificationPrompt(userCredential.user);
+                return { success: false, needsVerification: true, user: userCredential.user };
+            }
+            
+            console.log('✅ E-Mail verifiziert, Login vollständig');
+            return { success: true, user: { ...userCredential.user, isAdmin } };
+            
+        } catch (loginError) {
+            console.log('⚠️ Firebase Auth Login fehlgeschlagen:', loginError.code);
+            console.log('🔍 Detaillierter Fehler:', loginError);
+            
+            if (loginError.code === 'auth/user-not-found') {
+                throw new Error('Account nicht gefunden. Bitte registrieren Sie sich zuerst.');
+                
+            } else if (loginError.code === 'auth/wrong-password') {
+                throw new Error('Falsches Passwort. Bitte überprüfen Sie Ihre Eingaben.');
+                
+            } else if (loginError.code === 'auth/invalid-login-credentials') {
+                throw new Error('Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre Eingaben.');
+                
+            } else if (loginError.code === 'auth/too-many-requests') {
+                throw new Error('Zu viele Login-Versuche. Bitte warten Sie einige Minuten und versuchen Sie es erneut.');
+                
+            } else {
+                console.error('❌ Unbekannter Firebase Auth Fehler:', loginError);
+                throw new Error('Firebase Auth Fehler: ' + loginError.message);
+            }
+        }
+        
+    } catch (error) {
+        console.error('❌ Fehler bei sicherer Anmeldung:', error);
+        throw error;
+    }
+}
+
+// Get user profile from Firestore
+async function getUserProfileFromFirestore(uid) {
+    try {
+        if (!window.db) {
+            console.log('⚠️ Firestore nicht verfügbar');
+            return null;
+        }
+        
+        const doc = await window.db.collection('users').doc(uid).get();
+        
+        if (doc.exists) {
+            console.log('✅ Benutzerprofil in Firestore gefunden:', doc.data());
+            return doc.data();
+        } else {
+            console.log('❌ Benutzerprofil nicht in Firestore gefunden');
+            return null;
+        }
+        
+    } catch (error) {
+        console.error('❌ Fehler beim Laden des Benutzerprofils:', error);
+        return null;
+    }
+}
+
+// User registration with kennung
 async function registerNewUser(kennung, name) {
     try {
         console.log('🆕 Registriere neuen Benutzer:', kennung);
@@ -84,7 +168,7 @@ async function registerNewUser(kennung, name) {
         
         console.log('📧 Erstelle Account für:', email);
         
-        // Create new user
+        // Create new user in Firebase Auth
         const userCredential = await window.auth.createUserWithEmailAndPassword(email, password);
         
         // Send email verification
@@ -93,7 +177,7 @@ async function registerNewUser(kennung, name) {
             handleCodeInApp: true
         });
         
-        // Update user profile
+        // Create user profile in Firestore
         await updateUserProfile(userCredential.user, {
             name,
             kennung: kennung.toLowerCase(),
@@ -118,122 +202,10 @@ async function registerNewUser(kennung, name) {
     }
 }
 
-// Secure login with FH-Kennung
-async function secureLoginWithKennung(kennung, name, isAdmin = false) {
+// Password reset by email
+async function resetPasswordByEmail(email) {
     try {
-        console.log('🔐 Sichere Anmeldung für:', kennung);
-        
-        if (!isValidFHKennung(kennung)) {
-            throw new Error('Ungültige FH-Kennung');
-        }
-        
-        const email = `${kennung}@fh-muenster.de`;
-        const password = generateSecurePassword(kennung);
-        
-        console.log('📧 Versuche Login mit:', email);
-        console.log('🔑 Generiertes Passwort:', password);
-        
-        // ZUERST: Prüfe ob Benutzer in Firestore existiert
-        console.log('🔍 Prüfe Benutzer in Firestore...');
-        const firestoreUser = await checkUserInFirestore(kennung);
-        
-        if (firestoreUser) {
-            console.log('✅ Benutzer in Firestore gefunden:', firestoreUser);
-        } else {
-            console.log('🆕 Benutzer nicht in Firestore gefunden, erstelle neuen...');
-        }
-        
-        // Try to sign in with Firebase Auth
-        try {
-            const userCredential = await window.auth.signInWithEmailAndPassword(email, password);
-            console.log('✅ Firebase Auth Login erfolgreich');
-            
-            // Update user profile in Firestore
-            await updateUserProfile(userCredential.user, {
-                name,
-                kennung: kennung.toLowerCase(),
-                lastLogin: new Date()
-            });
-            
-            // Check email verification
-            if (!userCredential.user.emailVerified) {
-                console.log('⚠️ E-Mail noch nicht verifiziert');
-                showEmailVerificationPrompt(userCredential.user);
-                return { success: false, needsVerification: true, user: userCredential.user };
-            }
-            
-            console.log('✅ E-Mail verifiziert, Login vollständig');
-            return { success: true, user: userCredential.user };
-            
-        } catch (loginError) {
-            console.log('⚠️ Firebase Auth Login fehlgeschlagen:', loginError.code);
-            console.log('🔍 Detaillierter Fehler:', loginError);
-            
-            if (loginError.code === 'auth/user-not-found') {
-                console.log('🆕 Benutzer nicht in Firebase Auth gefunden, erstelle neuen Account...');
-                
-                try {
-                    // Create new user in Firebase Auth
-                    const userCredential = await window.auth.createUserWithEmailAndPassword(email, password);
-                    console.log('✅ Neuer Firebase Auth Account erstellt');
-                    
-                    // Send email verification
-                    await userCredential.user.sendEmailVerification({
-                        url: window.location.origin,
-                        handleCodeInApp: true
-                    });
-                    
-                    // Create/Update user profile in Firestore
-                    await updateUserProfile(userCredential.user, {
-                        name,
-                        kennung: kennung.toLowerCase(),
-                        isAdmin: false,
-                        emailVerified: false,
-                        createdAt: new Date()
-                    });
-                    
-                    console.log('📧 E-Mail-Verifizierung gesendet');
-                    safeShowToast('Account erstellt! Bitte bestätigen Sie Ihre E-Mail-Adresse.', 'success');
-                    
-                    return { success: false, needsVerification: true, user: userCredential.user };
-                    
-                } catch (createError) {
-                    console.error('❌ Fehler beim Erstellen des Firebase Auth Accounts:', createError);
-                    throw new Error('Fehler beim Erstellen des Accounts: ' + createError.message);
-                }
-                
-            } else if (loginError.code === 'auth/wrong-password') {
-                throw new Error('Falsches Passwort. Bitte überprüfen Sie Ihre Eingaben.');
-                
-            } else if (loginError.code === 'auth/invalid-login-credentials') {
-                console.log('🔍 Ungültige Anmeldedaten - möglicherweise Domain nicht autorisiert');
-                throw new Error('Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre Eingaben oder kontaktieren Sie den Administrator.');
-                
-            } else if (loginError.code === 'auth/too-many-requests') {
-                throw new Error('Zu viele Login-Versuche. Bitte warten Sie einige Minuten und versuchen Sie es erneut.');
-                
-            } else {
-                console.error('❌ Unbekannter Firebase Auth Fehler:', loginError);
-                throw new Error('Firebase Auth Fehler: ' + loginError.message);
-            }
-        }
-        
-    } catch (error) {
-        console.error('❌ Fehler bei sicherer Anmeldung:', error);
-        throw error;
-    }
-}
-
-// Password reset
-async function resetPassword(kennung) {
-    try {
-        console.log('🔑 Passwort zurücksetzen für:', kennung);
-        
-        if (!isValidFHKennung(kennung)) {
-            throw new Error('Ungültige FH-Kennung');
-        }
-        
-        const email = `${kennung}@fh-muenster.de`;
+        console.log('🔑 Passwort zurücksetzen für:', email);
         
         // Send password reset email
         await window.auth.sendPasswordResetEmail(email, {
@@ -275,7 +247,7 @@ async function secureAdminLogin(kennung, name, adminPassword) {
         console.log('✅ Admin-Passwort korrekt');
         
         // First, login as regular user
-        const loginResult = await secureLoginWithKennung(kennung, name, false);
+        const loginResult = await secureLoginWithEmail(`${kennung}@fh-muenster.de`, generateSecurePassword(kennung));
         
         if (!loginResult.success) {
             return loginResult;
@@ -309,34 +281,6 @@ async function setAdminClaim(uid) {
         
     } catch (error) {
         console.error('❌ Fehler beim Setzen des Admin-Status:', error);
-    }
-}
-
-// Check if user exists in Firestore
-async function checkUserInFirestore(kennung) {
-    try {
-        if (!window.db) {
-            console.log('⚠️ Firestore nicht verfügbar');
-            return null;
-        }
-        
-        const snapshot = await window.db.collection('users')
-            .where('kennung', '==', kennung.toLowerCase())
-            .limit(1)
-            .get();
-        
-        if (!snapshot.empty) {
-            const doc = snapshot.docs[0];
-            console.log('✅ Benutzer in Firestore gefunden:', doc.data());
-            return { id: doc.id, ...doc.data() };
-        } else {
-            console.log('❌ Benutzer nicht in Firestore gefunden');
-            return null;
-        }
-        
-    } catch (error) {
-        console.error('❌ Fehler beim Prüfen des Benutzers in Firestore:', error);
-        return null;
     }
 }
 
@@ -531,9 +475,9 @@ function safeShowToast(message, type = 'info') {
 
 // Global exports
 window.initializeSecureAuth = initializeSecureAuth;
-window.secureLoginWithKennung = secureLoginWithKennung;
+window.secureLoginWithEmail = secureLoginWithEmail;
 window.registerNewUser = registerNewUser;
-window.resetPassword = resetPassword;
+window.resetPasswordByEmail = resetPasswordByEmail;
 window.secureAdminLogin = secureAdminLogin;
 window.resendVerificationEmail = resendVerificationEmail;
 window.checkEmailVerification = checkEmailVerification;

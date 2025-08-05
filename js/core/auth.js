@@ -1,22 +1,22 @@
 // ==================== AUTHENTIFIZIERUNG ====================
-// Login/Logout System für PelletTrackr
+// Vereinfachtes Login/Logout System für PelletTrackr
 
-// Login als normaler Benutzer
+// Login als Benutzer (einfach)
 async function loginAsUser() {
     try {
-        const name = document.getElementById('loginName').value.trim();
-        const kennung = document.getElementById('loginKennung').value.trim();
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value.trim();
         
-        if (!name || !kennung) {
-            safeShowToast('Bitte Name und FH-Kennung eingeben!', 'warning');
+        if (!email || !password) {
+            safeShowToast('Bitte E-Mail und Passwort eingeben!', 'warning');
             return;
         }
         
-        console.log('🔐 Benutzer-Login gestartet:', kennung);
+        console.log('🔐 Login gestartet für:', email);
         
-        if (typeof secureLoginWithKennung === 'function') {
+        if (typeof secureLoginWithEmail === 'function') {
             try {
-                const result = await secureLoginWithKennung(kennung, name, false);
+                const result = await secureLoginWithEmail(email, password);
                 if (result.success) {
                     console.log('✅ Login erfolgreich');
                     window.currentUser = result.user;
@@ -33,67 +33,20 @@ async function loginAsUser() {
             }
         } else {
             console.log('⚠️ Verwende Legacy-Login');
-            await legacyLoginAsUser(name, kennung);
+            await legacyLoginAsUser(email, password);
         }
         
     } catch (error) {
-        console.error('❌ Fehler beim Benutzer-Login:', error);
+        console.error('❌ Fehler beim Login:', error);
         safeShowToast('Fehler bei der Anmeldung', 'error');
-    }
-}
-
-// Login als Admin
-async function loginAsAdmin() {
-    try {
-        const name = document.getElementById('loginName').value.trim();
-        const kennung = document.getElementById('loginKennung').value.trim();
-        const adminPassword = document.getElementById('adminPassword').value.trim();
-        
-        if (!name || !kennung) {
-            safeShowToast('Bitte Name und FH-Kennung eingeben!', 'warning');
-            return;
-        }
-        
-        if (!adminPassword) {
-            safeShowToast('Bitte Admin-Passwort eingeben!', 'warning');
-            return;
-        }
-        
-        console.log('🔐 Admin-Login gestartet:', kennung);
-        
-        if (typeof secureAdminLogin === 'function') {
-            try {
-                const result = await secureAdminLogin(kennung, name, adminPassword);
-                if (result.success) {
-                    console.log('✅ Admin-Login erfolgreich');
-                    window.currentUser = result.user;
-                    saveSession(result.user);
-                    showAdminDashboard();
-                } else if (result.needsVerification) {
-                    console.log('📧 E-Mail-Verifizierung erforderlich');
-                } else {
-                    safeShowToast('Admin-Anmeldung fehlgeschlagen', 'error');
-                }
-            } catch (error) {
-                console.error('❌ Admin login error:', error);
-                safeShowToast('Fehler bei der Admin-Anmeldung: ' + error.message, 'error');
-            }
-        } else {
-            console.log('⚠️ Verwende Legacy-Admin-Login');
-            await legacyLoginAsAdmin(name, kennung, adminPassword);
-        }
-        
-    } catch (error) {
-        console.error('❌ Fehler beim Admin-Login:', error);
-        safeShowToast('Fehler bei der Admin-Anmeldung', 'error');
     }
 }
 
 // Registriere neuen Benutzer
 async function registerUser() {
     try {
-        const name = document.getElementById('loginName').value.trim();
-        const kennung = document.getElementById('loginKennung').value.trim();
+        const name = document.getElementById('regName').value.trim();
+        const kennung = document.getElementById('regKennung').value.trim();
         
         if (!name || !kennung) {
             safeShowToast('Bitte Name und FH-Kennung eingeben!', 'warning');
@@ -127,18 +80,18 @@ async function registerUser() {
 // Passwort zurücksetzen
 async function resetUserPassword() {
     try {
-        const kennung = document.getElementById('loginKennung').value.trim();
+        const email = document.getElementById('loginEmail').value.trim();
         
-        if (!kennung) {
-            safeShowToast('Bitte FH-Kennung eingeben!', 'warning');
+        if (!email) {
+            safeShowToast('Bitte E-Mail-Adresse eingeben!', 'warning');
             return;
         }
         
-        console.log('🔑 Passwort-Reset gestartet:', kennung);
+        console.log('🔑 Passwort-Reset gestartet für:', email);
         
-        if (typeof resetPassword === 'function') {
+        if (typeof resetPasswordByEmail === 'function') {
             try {
-                await resetPassword(kennung);
+                await resetPasswordByEmail(email);
                 console.log('✅ Passwort-Reset erfolgreich');
                 safeShowToast('Passwort-Reset E-Mail wurde gesendet.', 'success');
                 hideAllSections();
@@ -153,15 +106,6 @@ async function resetUserPassword() {
     } catch (error) {
         console.error('❌ Fehler beim Passwort-Reset:', error);
         safeShowToast('Fehler beim Passwort-Reset', 'error');
-    }
-}
-
-// Admin-Login anzeigen
-function showAdminLogin() {
-    hideAllSections();
-    const adminSection = document.getElementById('adminLoginSection');
-    if (adminSection) {
-        adminSection.style.display = 'block';
     }
 }
 
@@ -185,7 +129,7 @@ function showPasswordReset() {
 
 // Alle Sektionen verstecken
 function hideAllSections() {
-    const sections = ['adminLoginSection', 'registrationSection', 'passwordResetSection'];
+    const sections = ['registrationSection', 'passwordResetSection'];
     sections.forEach(sectionId => {
         const section = document.getElementById(sectionId);
         if (section) {
@@ -271,20 +215,29 @@ function logout() {
     }
 }
 
-// Dashboard anzeigen
+// Dashboard anzeigen (automatische Admin-Erkennung)
 function showDashboard() {
     const loginScreen = document.getElementById('loginScreen');
     const userDashboard = document.getElementById('userDashboard');
     const adminDashboard = document.getElementById('adminDashboard');
     
     if (loginScreen) loginScreen.classList.remove('active');
-    if (userDashboard) userDashboard.classList.add('active');
-    if (adminDashboard) adminDashboard.classList.remove('active');
+    
+    // Automatische Admin-Erkennung
+    if (window.currentUser && window.currentUser.isAdmin) {
+        console.log('👑 Admin-Dashboard wird angezeigt');
+        if (userDashboard) userDashboard.classList.remove('active');
+        if (adminDashboard) adminDashboard.classList.add('active');
+    } else {
+        console.log('👤 Benutzer-Dashboard wird angezeigt');
+        if (userDashboard) userDashboard.classList.add('active');
+        if (adminDashboard) adminDashboard.classList.remove('active');
+    }
     
     // Benutzername anzeigen
     const userNameElement = document.getElementById('userName');
     if (userNameElement && window.currentUser) {
-        userNameElement.textContent = window.currentUser.name || 'Benutzer';
+        userNameElement.textContent = window.currentUser.name || window.currentUser.displayName || 'Benutzer';
     }
 }
 
@@ -320,14 +273,9 @@ function showLoginScreen() {
 }
 
 // Legacy-Funktionen (Fallback)
-async function legacyLoginAsUser(name, kennung) {
+async function legacyLoginAsUser(email, password) {
     console.log('🔄 Verwende Legacy-Login für Benutzer');
     // Implementierung für Legacy-Login
-}
-
-async function legacyLoginAsAdmin(name, kennung, adminPassword) {
-    console.log('🔄 Verwende Legacy-Login für Admin');
-    // Implementierung für Legacy-Admin-Login
 }
 
 // Safe showToast function
@@ -343,10 +291,8 @@ function safeShowToast(message, type = 'info') {
 
 // Global exports
 window.loginAsUser = loginAsUser;
-window.loginAsAdmin = loginAsAdmin;
 window.registerUser = registerUser;
 window.resetUserPassword = resetUserPassword;
-window.showAdminLogin = showAdminLogin;
 window.showRegistration = showRegistration;
 window.showPasswordReset = showPasswordReset;
 window.logout = logout;
