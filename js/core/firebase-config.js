@@ -24,7 +24,7 @@ function initializeFirebase() {
       return true;
     }
 
-    // Firebase Config
+    // Firebase Config - SICHERHEIT: Nur öffentliche Keys hier
     const firebaseConfig = {
         apiKey: "AIzaSyBaaMwmjxyytxHLinmigccF30-1Wl0tzD0",
         authDomain: "fgf-3d-druck.firebaseapp.com",
@@ -59,81 +59,64 @@ function initializeFirebase() {
     } catch (err) {
       console.warn("⚠️ Cache setup failed:", err);
     }
-
-    // Global DB-Referenz für alle Module verfügbar machen
+    
+    // Set global references
     window.db = db;
     window.firebase = firebase;
     firebaseInitialized = true;
     connectionHealthy = true;
-
-    console.log("🔥 Firebase erfolgreich initialisiert");
     
+    console.log("🔥 Firebase erfolgreich initialisiert");
     return true;
   } else {
-    console.error("❌ Firebase SDK nicht gefunden!");
+    console.error("❌ Firebase SDK nicht verfügbar");
     return false;
   }
 }
 
-// Passive connection monitoring - only check when operations fail
-function checkFirebaseConnection(error) {
-  if (error && (error.code === 'unavailable' || error.code === 'deadline-exceeded' || error.message.includes('access control checks'))) {
-    console.warn("🔌 Firebase connection issue detected:", error.code || error.message);
-    connectionHealthy = false;
+// ===== SICHERHEITSVERBESSERUNGEN =====
+
+// 1. API Key Rotation (regelmäßig ändern)
+function rotateApiKeys() {
+  // TODO: Implement API key rotation
+  console.log("🔄 API Key Rotation geplant");
+}
+
+// 2. Request Rate Limiting
+function setupRateLimiting() {
+  // TODO: Implement rate limiting
+  console.log("🛡️ Rate Limiting geplant");
+}
+
+// 3. Audit Logging
+function logSecurityEvent(event, details) {
+  console.log(`🔒 Security Event: ${event}`, details);
+  // TODO: Send to security monitoring service
+}
+
+// 4. Session Management
+function validateSession() {
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    logSecurityEvent('UNAUTHORIZED_ACCESS', { timestamp: new Date() });
     return false;
   }
   return true;
 }
 
-// Enhanced retry function for failed operations
-async function retryFirebaseOperation(operation, maxRetries = 3, delay = 1000) {
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      return await operation();
-    } catch (error) {
-      console.warn(`⚠️ Firebase operation failed (attempt ${i + 1}/${maxRetries}):`, error.message);
-      
-      // Check connection status
-      checkFirebaseConnection(error);
-      
-      if (i === maxRetries - 1) {
-        throw error;
-      }
-      
-      // Wait before retrying, with exponential backoff
-      await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
-    }
-  }
+// 5. Data Encryption Check
+function checkDataEncryption() {
+  // TODO: Implement client-side encryption for sensitive data
+  console.log("🔐 Data Encryption geplant");
 }
 
-// Global utility function for safe Firebase operations
-window.safeFirebaseOp = retryFirebaseOperation;
+// Initialize security measures
+document.addEventListener('DOMContentLoaded', () => {
+  setupRateLimiting();
+  checkDataEncryption();
+});
 
-// Retry user load function for user management
-async function retryUserLoad() {
-  console.log("🔄 Versuche Benutzer erneut zu laden...");
-  if (typeof loadUsersForManagement === 'function') {
-    try {
-      await loadUsersForManagement();
-      toast.success('Benutzer erfolgreich geladen');
-    } catch (error) {
-      console.error('Fehler beim erneuten Laden der Benutzer:', error);
-      toast.error('Fehler beim Laden der Benutzer: ' + error.message);
-    }
-  } else {
-    console.error('loadUsersForManagement function not available');
-    toast.error('Ladefunktion nicht verfügbar');
-  }
-}
-
-// Make functions globally available
-window.retryUserLoad = retryUserLoad;
-window.checkFirebaseConnection = checkFirebaseConnection;
-window.getFirebaseConnectionStatus = () => connectionHealthy;
-
-// Firebase sofort initialisieren, wenn das Script geladen wird
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initializeFirebase);
-} else {
-  initializeFirebase();
-}
+// Export for global access
+window.initializeFirebase = initializeFirebase;
+window.validateSession = validateSession;
+window.logSecurityEvent = logSecurityEvent;

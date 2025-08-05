@@ -2877,23 +2877,23 @@ function getEquipmentRequestTimeframe(request) {
     }
     
     try {
-        const startDateStr = startDate.toLocaleDateString('de-DE', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
-        const endDateStr = endDate.toLocaleDateString('de-DE', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
-        return `${startDateStr} - ${endDateStr}`;
+    const startDateStr = startDate.toLocaleDateString('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    const endDateStr = endDate.toLocaleDateString('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    return `${startDateStr} - ${endDateStr}`;
     } catch (error) {
         console.error('Error formatting dates:', error);
         return 'Datum nicht verfügbar';

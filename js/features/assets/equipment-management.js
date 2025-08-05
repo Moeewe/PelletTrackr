@@ -72,7 +72,7 @@ function setupEquipmentListener() {
             const modal = document.getElementById('modal');
             if (modal && modal.classList.contains('active') && currentEquipmentCategory) {
                 console.log('🔄 Equipment data updated, showing category:', currentEquipmentCategory);
-                showEquipmentCategory(currentEquipmentCategory);
+            showEquipmentCategory(currentEquipmentCategory);
             }
             
             // Update machine overview in admin dashboard
@@ -204,7 +204,7 @@ async function showEquipmentManager() {
         let attempts = 0;
         const checkContainer = () => {
             attempts++;
-            const container = document.getElementById('equipmentList');
+        const container = document.getElementById('equipmentList');
             const modal = document.getElementById('modal');
             const modalActive = modal?.classList.contains('active') || false;
             
@@ -216,13 +216,13 @@ async function showEquipmentManager() {
             
             if (container && modalActive) {
                 console.log('🔍 Container found and modal active, showing hardware category');
-                showEquipmentCategory('hardware');
+            showEquipmentCategory('hardware');
                 return;
             }
             
             if (attempts < maxAttempts) {
                 setTimeout(checkContainer, 200); // Increased delay to 200ms
-            } else {
+        } else {
                 console.warn('Equipment container not ready after all attempts - will use retry mechanism in showEquipmentCategory');
                 // Only try if modal is active
                 if (modalActive) {
@@ -298,7 +298,7 @@ async function loadEquipment() {
         // Only show category if modal is active
         const modal = document.getElementById('modal');
         if (modal && modal.classList.contains('active')) {
-            showEquipmentCategory(currentEquipmentCategory);
+        showEquipmentCategory(currentEquipmentCategory);
         }
         
         // Update equipment requests badge
@@ -535,9 +535,9 @@ function renderEquipmentList(equipmentList, retryCount = 0) {
                         ${pendingRequest ? 'Angefragt' : (pendingReturnRequest || (returnRequests.some(req => req.status === 'pending'))) ? 'Rückgabe angefragt' : (item.borrowedBy ? 'Ausgeliehen' : getEquipmentStatusText(item.status))}
                     </span>
                     ${item.requiresDeposit ? `
-                                        <span class="equipment-deposit ${item.depositPaid ? 'paid' : 'unpaid'}" title="Pfand ${item.depositPaid ? 'bezahlt' : 'ausstehend'}">
+                        <span class="equipment-deposit ${item.depositPaid ? 'paid' : 'unpaid'}" title="Pfand ${item.depositPaid ? 'bezahlt' : 'ausstehend'}">
                     ${item.depositAmount}€
-                </span>
+                        </span>
                     ` : ''}
                 </div>
             </div>
@@ -923,23 +923,23 @@ function getEquipmentRequestTimeframe(request) {
     }
     
     try {
-        const startDateStr = startDate.toLocaleDateString('de-DE', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
-        const endDateStr = endDate.toLocaleDateString('de-DE', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
-        return `${startDateStr} - ${endDateStr}`;
+    const startDateStr = startDate.toLocaleDateString('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    const endDateStr = endDate.toLocaleDateString('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    return `${startDateStr} - ${endDateStr}`;
     } catch (error) {
         console.error('Error formatting dates:', error);
         return 'Datum nicht verfügbar';

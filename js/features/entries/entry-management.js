@@ -477,7 +477,7 @@ async function updateCostPreview() {
     });
     
     if (!isNaN(totalCost) && totalCost >= 0) {
-      costPreview.textContent = totalCost.toFixed(2) + ' €';
+  costPreview.textContent = totalCost.toFixed(2) + ' €';
       console.log("✅ Kostenvorschau aktualisiert:", totalCost.toFixed(2) + ' €');
     } else {
       costPreview.textContent = '0,00 €';
