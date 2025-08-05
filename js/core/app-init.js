@@ -28,17 +28,17 @@ function initializeFirebaseFirst() {
             appId: "1:37190466890:web:cfb25f3c2f6bb62006d5b3"
         };
         
-        // Initialize Firebase if not already done
-        if (firebase.apps.length === 0) {
-            console.log('🔄 Initialisiere Firebase App...');
-            firebase.initializeApp(config);
-            console.log('✅ Firebase App initialisiert');
-        } else {
-            console.log('⚠️ Firebase App bereits initialisiert');
-        }
+        // Always initialize Firebase - this creates the DEFAULT app
+        console.log('🔄 Initialisiere Firebase DEFAULT App...');
+        firebase.initializeApp(config);
+        console.log('✅ Firebase DEFAULT App initialisiert');
         
-        // Initialize Firestore
-        const db = firebase.firestore();
+        // Get the DEFAULT app instance
+        const firebaseApp = firebase.app();
+        console.log('✅ Firebase App Name:', firebaseApp.name);
+        
+        // Initialize Firestore with the DEFAULT app
+        const db = firebaseApp.firestore();
         
         // Cache-Einstellungen (weniger restriktiv für Entwicklung)
         db.settings({
@@ -48,11 +48,11 @@ function initializeFirebaseFirst() {
         
         window.db = db;
         
-        // Initialize Auth
-        const auth = firebase.auth();
+        // Initialize Auth with the DEFAULT app
+        const auth = firebaseApp.auth();
         window.auth = auth;
         
-        console.log('✅ Firebase vollständig initialisiert');
+        console.log('✅ Firebase DEFAULT App vollständig initialisiert');
         return true;
         
     } catch (error) {
