@@ -131,6 +131,7 @@ async function secureLoginWithKennung(kennung, name, isAdmin = false) {
         const password = generateSecurePassword(kennung);
         
         console.log('📧 Versuche Login mit:', email);
+        console.log('🔑 Generiertes Passwort:', password);
         
         // Try to sign in
         try {
@@ -156,44 +157,54 @@ async function secureLoginWithKennung(kennung, name, isAdmin = false) {
             
         } catch (loginError) {
             console.log('⚠️ Login fehlgeschlagen:', loginError.code);
+            console.log('🔍 Detaillierter Fehler:', loginError);
             
             if (loginError.code === 'auth/user-not-found') {
                 console.log('🆕 Benutzer nicht gefunden, erstelle neuen Account...');
                 
-                // Create new user
-                const userCredential = await window.auth.createUserWithEmailAndPassword(email, password);
-                
-                // Send email verification
-                await userCredential.user.sendEmailVerification({
-                    url: window.location.origin,
-                    handleCodeInApp: true
-                });
-                
-                // Update user profile
-                await updateUserProfile(userCredential.user, {
-                    name,
-                    kennung: kennung.toLowerCase(),
-                    isAdmin: false,
-                    emailVerified: false,
-                    createdAt: new Date()
-                });
-                
-                console.log('📧 E-Mail-Verifizierung gesendet');
-                safeShowToast('Account erstellt! Bitte bestätigen Sie Ihre E-Mail-Adresse.', 'success');
-                
-                return { success: false, needsVerification: true, user: userCredential.user };
+                try {
+                    // Create new user
+                    const userCredential = await window.auth.createUserWithEmailAndPassword(email, password);
+                    console.log('✅ Neuer Account erstellt');
+                    
+                    // Send email verification
+                    await userCredential.user.sendEmailVerification({
+                        url: window.location.origin,
+                        handleCodeInApp: true
+                    });
+                    
+                    // Update user profile
+                    await updateUserProfile(userCredential.user, {
+                        name,
+                        kennung: kennung.toLowerCase(),
+                        isAdmin: false,
+                        emailVerified: false,
+                        createdAt: new Date()
+                    });
+                    
+                    console.log('📧 E-Mail-Verifizierung gesendet');
+                    safeShowToast('Account erstellt! Bitte bestätigen Sie Ihre E-Mail-Adresse.', 'success');
+                    
+                    return { success: false, needsVerification: true, user: userCredential.user };
+                    
+                } catch (createError) {
+                    console.error('❌ Fehler beim Erstellen des Accounts:', createError);
+                    throw new Error('Fehler beim Erstellen des Accounts: ' + createError.message);
+                }
                 
             } else if (loginError.code === 'auth/wrong-password') {
                 throw new Error('Falsches Passwort. Bitte überprüfen Sie Ihre Eingaben.');
                 
             } else if (loginError.code === 'auth/invalid-login-credentials') {
-                throw new Error('Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre Eingaben.');
+                console.log('🔍 Ungültige Anmeldedaten - möglicherweise Domain nicht autorisiert');
+                throw new Error('Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre Eingaben oder kontaktieren Sie den Administrator.');
                 
             } else if (loginError.code === 'auth/too-many-requests') {
                 throw new Error('Zu viele Login-Versuche. Bitte warten Sie einige Minuten und versuchen Sie es erneut.');
                 
             } else {
-                throw loginError;
+                console.error('❌ Unbekannter Firebase Auth Fehler:', loginError);
+                throw new Error('Firebase Auth Fehler: ' + loginError.message);
             }
         }
         
