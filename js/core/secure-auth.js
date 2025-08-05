@@ -112,16 +112,19 @@ async function secureLoginWithEmail(email, password) {
             console.log('🔍 Detaillierter Fehler:', loginError);
             
             if (loginError.code === 'auth/user-not-found') {
-                throw new Error('Account nicht gefunden. Bitte registrieren Sie sich zuerst.');
+                throw new Error('Account nicht gefunden. Bitte registrieren Sie sich zuerst oder überprüfen Sie Ihre E-Mail-Adresse.');
                 
             } else if (loginError.code === 'auth/wrong-password') {
                 throw new Error('Falsches Passwort. Bitte überprüfen Sie Ihre Eingaben.');
                 
             } else if (loginError.code === 'auth/invalid-login-credentials') {
-                throw new Error('Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre Eingaben.');
+                throw new Error('Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre E-Mail-Adresse und Ihr Passwort.');
                 
             } else if (loginError.code === 'auth/too-many-requests') {
                 throw new Error('Zu viele Login-Versuche. Bitte warten Sie einige Minuten und versuchen Sie es erneut.');
+                
+            } else if (loginError.code === 'auth/invalid-email') {
+                throw new Error('Ungültige E-Mail-Adresse. Bitte überprüfen Sie das Format.');
                 
             } else {
                 console.error('❌ Unbekannter Firebase Auth Fehler:', loginError);
@@ -197,9 +200,15 @@ async function registerNewUser(name, email) {
         console.error('❌ Fehler bei Benutzerregistrierung:', error);
         
         if (error.code === 'auth/email-already-in-use') {
-            throw new Error('E-Mail-Adresse bereits registriert. Bitte melden Sie sich an.');
+            throw new Error('E-Mail-Adresse bereits registriert. Bitte melden Sie sich an oder verwenden Sie eine andere E-Mail-Adresse.');
+        } else if (error.code === 'auth/invalid-email') {
+            throw new Error('Ungültige E-Mail-Adresse. Bitte überprüfen Sie das Format.');
+        } else if (error.code === 'auth/weak-password') {
+            throw new Error('Passwort zu schwach. Bitte verwenden Sie ein stärkeres Passwort.');
+        } else if (error.code === 'auth/operation-not-allowed') {
+            throw new Error('Registrierung ist derzeit nicht erlaubt. Bitte kontaktieren Sie den Administrator.');
         } else {
-            throw error;
+            throw new Error('Fehler bei der Registrierung: ' + error.message);
         }
     }
 }
@@ -284,6 +293,12 @@ async function setAdminClaim(uid) {
     } catch (error) {
         console.error('❌ Fehler beim Setzen des Admin-Status:', error);
     }
+}
+
+// Validate email format
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
 }
 
 // Validate FH-Kennung format (for backward compatibility)
