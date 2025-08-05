@@ -133,12 +133,22 @@ async function secureLoginWithKennung(kennung, name, isAdmin = false) {
         console.log('📧 Versuche Login mit:', email);
         console.log('🔑 Generiertes Passwort:', password);
         
-        // Try to sign in
+        // ZUERST: Prüfe ob Benutzer in Firestore existiert
+        console.log('🔍 Prüfe Benutzer in Firestore...');
+        const firestoreUser = await checkUserInFirestore(kennung);
+        
+        if (firestoreUser) {
+            console.log('✅ Benutzer in Firestore gefunden:', firestoreUser);
+        } else {
+            console.log('🆕 Benutzer nicht in Firestore gefunden, erstelle neuen...');
+        }
+        
+        // Try to sign in with Firebase Auth
         try {
             const userCredential = await window.auth.signInWithEmailAndPassword(email, password);
-            console.log('✅ Login erfolgreich');
+            console.log('✅ Firebase Auth Login erfolgreich');
             
-            // Update user profile
+            // Update user profile in Firestore
             await updateUserProfile(userCredential.user, {
                 name,
                 kennung: kennung.toLowerCase(),
@@ -156,16 +166,16 @@ async function secureLoginWithKennung(kennung, name, isAdmin = false) {
             return { success: true, user: userCredential.user };
             
         } catch (loginError) {
-            console.log('⚠️ Login fehlgeschlagen:', loginError.code);
+            console.log('⚠️ Firebase Auth Login fehlgeschlagen:', loginError.code);
             console.log('🔍 Detaillierter Fehler:', loginError);
             
             if (loginError.code === 'auth/user-not-found') {
-                console.log('🆕 Benutzer nicht gefunden, erstelle neuen Account...');
+                console.log('🆕 Benutzer nicht in Firebase Auth gefunden, erstelle neuen Account...');
                 
                 try {
-                    // Create new user
+                    // Create new user in Firebase Auth
                     const userCredential = await window.auth.createUserWithEmailAndPassword(email, password);
-                    console.log('✅ Neuer Account erstellt');
+                    console.log('✅ Neuer Firebase Auth Account erstellt');
                     
                     // Send email verification
                     await userCredential.user.sendEmailVerification({
@@ -173,7 +183,7 @@ async function secureLoginWithKennung(kennung, name, isAdmin = false) {
                         handleCodeInApp: true
                     });
                     
-                    // Update user profile
+                    // Create/Update user profile in Firestore
                     await updateUserProfile(userCredential.user, {
                         name,
                         kennung: kennung.toLowerCase(),
@@ -188,7 +198,7 @@ async function secureLoginWithKennung(kennung, name, isAdmin = false) {
                     return { success: false, needsVerification: true, user: userCredential.user };
                     
                 } catch (createError) {
-                    console.error('❌ Fehler beim Erstellen des Accounts:', createError);
+                    console.error('❌ Fehler beim Erstellen des Firebase Auth Accounts:', createError);
                     throw new Error('Fehler beim Erstellen des Accounts: ' + createError.message);
                 }
                 
@@ -299,6 +309,34 @@ async function setAdminClaim(uid) {
         
     } catch (error) {
         console.error('❌ Fehler beim Setzen des Admin-Status:', error);
+    }
+}
+
+// Check if user exists in Firestore
+async function checkUserInFirestore(kennung) {
+    try {
+        if (!window.db) {
+            console.log('⚠️ Firestore nicht verfügbar');
+            return null;
+        }
+        
+        const snapshot = await window.db.collection('users')
+            .where('kennung', '==', kennung.toLowerCase())
+            .limit(1)
+            .get();
+        
+        if (!snapshot.empty) {
+            const doc = snapshot.docs[0];
+            console.log('✅ Benutzer in Firestore gefunden:', doc.data());
+            return { id: doc.id, ...doc.data() };
+        } else {
+            console.log('❌ Benutzer nicht in Firestore gefunden');
+            return null;
+        }
+        
+    } catch (error) {
+        console.error('❌ Fehler beim Prüfen des Benutzers in Firestore:', error);
+        return null;
     }
 }
 
