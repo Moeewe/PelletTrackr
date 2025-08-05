@@ -189,9 +189,6 @@ logSecurityEvent('DATA_ACCESS', {
 5. **Incident-Report** an FH-IT
 
 #### **Kontakte:**
-- **Firebase Console:** [console.firebase.google.com](https://console.firebase.google.com)
-- **FH-IT Support:** [it@fh-muenster.de](mailto:it@fh-muenster.de)
-- **Entwickler:** [moritz@fh-muenster.de](mailto:moritz@fh-muenster.de)
 
 ---
 

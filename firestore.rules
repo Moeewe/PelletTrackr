@@ -4,153 +4,137 @@ service cloud.firestore {
     
     // ===== GLOBALE SICHERHEITSREGELN =====
     
-    // 1. Request Validation
-    function isValidRequest() {
-      return request.auth != null && 
-             request.auth.uid != null &&
-             request.auth.token.email_verified == true;
+    // 1. Authentifizierung prüfen
+    function isAuthenticated() {
+      return request.auth != null && request.auth.uid != null;
     }
     
-    // 2. Rate Limiting (basic)
-    function isNotRateLimited() {
-      return request.time > resource.data.lastRequest + duration.value(1, 's');
+    // 2. E-Mail-Verifizierung prüfen (außer für Admins)
+    function isEmailVerified() {
+      return request.auth.token.email_verified == true;
     }
     
-    // 3. Data Sanitization
-    function isValidData(data) {
-      return data.keys().hasAll(['createdAt', 'updatedAt']) &&
-             data.createdAt is timestamp &&
-             data.updatedAt is timestamp;
-    }
-    
-    // 4. Admin Check
+    // 3. Admin-Status prüfen
     function isAdmin() {
-      return request.auth != null && 
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
     
-    // 5. User owns data
-    function userOwnsData(userId) {
-      return request.auth != null && request.auth.uid == userId;
+    // 4. Benutzer ist Eigentümer der Daten
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // 5. Benutzer ist Eigentümer oder Admin
+    function isOwnerOrAdmin(userId) {
+      return isOwner(userId) || isAdmin();
     }
     
     // ===== USER MANAGEMENT =====
     match /users/{userId} {
       // Benutzer können nur ihre eigenen Daten lesen/schreiben
-      allow read, write: if isValidRequest() && userOwnsData(userId);
+      allow read, write: if isOwner(userId);
       
       // Admins können alle Benutzerdaten lesen
-      allow read: if isValidRequest() && isAdmin();
+      allow read: if isAdmin();
       
-      // Neue Benutzer können sich registrieren
-      allow create: if isValidRequest() && 
-        request.auth.uid == userId &&
-        request.resource.data.keys().hasAll(['email', 'role', 'createdAt']) &&
-        request.resource.data.role in ['user', 'admin'];
+      // Neue Benutzer können sich registrieren (nur eigene Daten)
+      allow create: if isOwner(userId) && 
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.email == request.auth.token.email;
     }
     
     // ===== ENTRIES (DRUCKE) =====
     match /entries/{entryId} {
       // Benutzer können ihre eigenen Einträge lesen/schreiben
-      allow read, write: if isValidRequest() && 
+      allow read, write: if isAuthenticated() && 
         resource.data.userId == request.auth.uid;
       
       // Admins können alle Einträge lesen/schreiben
-      allow read, write: if isValidRequest() && isAdmin();
+      allow read, write: if isAdmin();
       
-      // Neue Einträge erstellen
-      allow create: if isValidRequest() && 
+      // Neue Einträge erstellen (nur für verifizierte Benutzer oder Admins)
+      allow create: if (isAuthenticated() && 
         request.resource.data.userId == request.auth.uid &&
-        request.resource.data.keys().hasAll(['material', 'quantity', 'createdAt']) &&
-        request.resource.data.quantity > 0;
+        (isEmailVerified() || isAdmin()));
     }
     
     // ===== MATERIALS =====
     match /materials/{materialId} {
       // Alle authentifizierten Benutzer können Materialien lesen
-      allow read: if isValidRequest();
+      allow read: if isAuthenticated();
       
       // Nur Admins können Materialien erstellen/bearbeiten
-      allow write: if isValidRequest() && isAdmin();
-      
-      // Neue Materialien erstellen
-      allow create: if isValidRequest() && isAdmin() &&
-        request.resource.data.keys().hasAll(['name', 'price', 'createdAt']) &&
-        request.resource.data.price > 0;
+      allow write: if isAdmin();
     }
     
     // ===== EQUIPMENT =====
     match /equipment/{equipmentId} {
       // Alle authentifizierten Benutzer können Equipment lesen
-      allow read: if isValidRequest();
+      allow read: if isAuthenticated();
       
       // Nur Admins können Equipment verwalten
-      allow write: if isValidRequest() && isAdmin();
-      
-      // Neue Equipment erstellen
-      allow create: if isValidRequest() && isAdmin() &&
-        request.resource.data.keys().hasAll(['name', 'category', 'createdAt']);
+      allow write: if isAdmin();
     }
     
     // ===== PAYMENTS =====
     match /payments/{paymentId} {
       // Benutzer können ihre eigenen Zahlungen lesen
-      allow read: if isValidRequest() && 
+      allow read: if isAuthenticated() && 
         resource.data.userId == request.auth.uid;
       
       // Admins können alle Zahlungen lesen/schreiben
-      allow read, write: if isValidRequest() && isAdmin();
+      allow read, write: if isAdmin();
       
-      // Neue Zahlungen erstellen
-      allow create: if isValidRequest() && 
+      // Neue Zahlungen erstellen (nur für verifizierte Benutzer oder Admins)
+      allow create: if (isAuthenticated() && 
         request.resource.data.userId == request.auth.uid &&
-        request.resource.data.keys().hasAll(['amount', 'status', 'createdAt']);
+        (isEmailVerified() || isAdmin()));
     }
     
     // ===== PROBLEM REPORTS =====
     match /problemReports/{reportId} {
       // Benutzer können ihre eigenen Berichte erstellen/lesen
-      allow read, write: if isValidRequest() && 
+      allow read, write: if isAuthenticated() && 
         resource.data.userId == request.auth.uid;
       
       // Admins können alle Berichte lesen/schreiben
-      allow read, write: if isValidRequest() && isAdmin();
+      allow read, write: if isAdmin();
       
-      // Neue Berichte erstellen
-      allow create: if isValidRequest() && 
+      // Neue Berichte erstellen (nur für verifizierte Benutzer oder Admins)
+      allow create: if (isAuthenticated() && 
         request.resource.data.userId == request.auth.uid &&
-        request.resource.data.keys().hasAll(['title', 'description', 'createdAt']);
+        (isEmailVerified() || isAdmin()));
     }
     
     // ===== ORDERS =====
     match /orders/{orderId} {
       // Benutzer können ihre eigenen Bestellungen lesen
-      allow read: if isValidRequest() && 
+      allow read: if isAuthenticated() && 
         resource.data.userId == request.auth.uid;
       
       // Admins können alle Bestellungen lesen/schreiben
-      allow read, write: if isValidRequest() && isAdmin();
+      allow read, write: if isAdmin();
       
-      // Neue Bestellungen erstellen
-      allow create: if isValidRequest() && 
+      // Neue Bestellungen erstellen (nur für verifizierte Benutzer oder Admins)
+      allow create: if (isAuthenticated() && 
         request.resource.data.userId == request.auth.uid &&
-        request.resource.data.keys().hasAll(['items', 'total', 'createdAt']);
+        (isEmailVerified() || isAdmin()));
     }
     
     // ===== SYSTEM SETTINGS =====
     match /settings/{settingId} {
       // Nur Admins können Einstellungen lesen/schreiben
-      allow read, write: if isValidRequest() && isAdmin();
+      allow read, write: if isAdmin();
     }
     
     // ===== AUDIT LOGS =====
     match /auditLogs/{logId} {
       // Nur Admins können Audit-Logs lesen
-      allow read: if isValidRequest() && isAdmin();
+      allow read: if isAdmin();
       
-      // System kann Audit-Logs erstellen
-      allow create: if isValidRequest() && 
-        request.resource.data.keys().hasAll(['event', 'userId', 'timestamp']);
+      // System kann Audit-Logs erstellen (für authentifizierte Benutzer)
+      allow create: if isAuthenticated();
     }
   }
 }
