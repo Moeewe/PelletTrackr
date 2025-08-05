@@ -133,38 +133,73 @@ async function secureLoginWithKennung(kennung, name, isAdmin = false) {
         console.log('📧 Versuche Login mit:', email);
         
         // Try to sign in
-        const userCredential = await window.auth.signInWithEmailAndPassword(email, password);
-        console.log('✅ Login erfolgreich');
-        
-        // Update user profile
-        await updateUserProfile(userCredential.user, {
-            name,
-            kennung: kennung.toLowerCase(),
-            lastLogin: new Date()
-        });
-        
-        // Check email verification
-        if (!userCredential.user.emailVerified) {
-            console.log('⚠️ E-Mail noch nicht verifiziert');
-            showEmailVerificationPrompt(userCredential.user);
-            return { success: false, needsVerification: true, user: userCredential.user };
+        try {
+            const userCredential = await window.auth.signInWithEmailAndPassword(email, password);
+            console.log('✅ Login erfolgreich');
+            
+            // Update user profile
+            await updateUserProfile(userCredential.user, {
+                name,
+                kennung: kennung.toLowerCase(),
+                lastLogin: new Date()
+            });
+            
+            // Check email verification
+            if (!userCredential.user.emailVerified) {
+                console.log('⚠️ E-Mail noch nicht verifiziert');
+                showEmailVerificationPrompt(userCredential.user);
+                return { success: false, needsVerification: true, user: userCredential.user };
+            }
+            
+            console.log('✅ E-Mail verifiziert, Login vollständig');
+            return { success: true, user: userCredential.user };
+            
+        } catch (loginError) {
+            console.log('⚠️ Login fehlgeschlagen:', loginError.code);
+            
+            if (loginError.code === 'auth/user-not-found') {
+                console.log('🆕 Benutzer nicht gefunden, erstelle neuen Account...');
+                
+                // Create new user
+                const userCredential = await window.auth.createUserWithEmailAndPassword(email, password);
+                
+                // Send email verification
+                await userCredential.user.sendEmailVerification({
+                    url: window.location.origin,
+                    handleCodeInApp: true
+                });
+                
+                // Update user profile
+                await updateUserProfile(userCredential.user, {
+                    name,
+                    kennung: kennung.toLowerCase(),
+                    isAdmin: false,
+                    emailVerified: false,
+                    createdAt: new Date()
+                });
+                
+                console.log('📧 E-Mail-Verifizierung gesendet');
+                safeShowToast('Account erstellt! Bitte bestätigen Sie Ihre E-Mail-Adresse.', 'success');
+                
+                return { success: false, needsVerification: true, user: userCredential.user };
+                
+            } else if (loginError.code === 'auth/wrong-password') {
+                throw new Error('Falsches Passwort. Bitte überprüfen Sie Ihre Eingaben.');
+                
+            } else if (loginError.code === 'auth/invalid-login-credentials') {
+                throw new Error('Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre Eingaben.');
+                
+            } else if (loginError.code === 'auth/too-many-requests') {
+                throw new Error('Zu viele Login-Versuche. Bitte warten Sie einige Minuten und versuchen Sie es erneut.');
+                
+            } else {
+                throw loginError;
+            }
         }
-        
-        console.log('✅ E-Mail verifiziert, Login vollständig');
-        return { success: true, user: userCredential.user };
         
     } catch (error) {
         console.error('❌ Fehler bei sicherer Anmeldung:', error);
-        
-        if (error.code === 'auth/user-not-found') {
-            throw new Error('Account nicht gefunden. Bitte registrieren Sie sich zuerst.');
-        } else if (error.code === 'auth/wrong-password') {
-            throw new Error('Falsches Passwort. Bitte überprüfen Sie Ihre Eingaben.');
-        } else if (error.code === 'auth/invalid-login-credentials') {
-            throw new Error('Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre Eingaben.');
-        } else {
-            throw error;
-        }
+        throw error;
     }
 }
 
