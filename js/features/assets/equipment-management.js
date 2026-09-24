@@ -5,7 +5,7 @@
  */
 
 // Equipment Management Module - Extended with Requests Support
-let equipmentData = [];
+let equipment = [];
 let equipmentListener = null;
 let equipmentRequestsListener = null;
 let currentEquipmentCategory = 'hardware';
@@ -13,10 +13,21 @@ let filteredEquipment = [];
 let equipmentRequests = []; // Store requests from requests collection
 let allUsers = []; // Cache for user data
 
+function cleanupEquipmentListeners() {
+    if (equipmentListener) equipmentListener();
+    if (equipmentRequestsListener) equipmentRequestsListener();
+    equipmentListener = null;
+    equipmentRequestsListener = null;
+    equipment = [];
+    equipmentRequests = [];
+    allUsers = [];
+    window.equipment = [];
+}
+
 // Fixed categories - no more dynamic categories
 const EQUIPMENT_CATEGORIES = {
     'keys': 'Schlüssel',
-    'hardware': 'Hardware', 
+    'hardware': 'Hardware',
     'books': 'Bücher'
 };
 
@@ -40,46 +51,44 @@ function setupEquipmentListener() {
         equipmentListener();
         equipmentListener = null;
     }
-    
+
     try {
-        console.log('🔧 Setting up equipment listener...');
-        
         equipmentListener = window.db.collection('equipment').onSnapshot((snapshot) => {
-            equipmentData = [];
+            equipment = [];
             snapshot.forEach((doc) => {
                 const data = doc.data();
-                equipmentData.push({
+                equipment.push({
                     id: doc.id,
                     ...data
                 });
             });
-            
+
             // Make equipment globally available
-            window.equipment = equipmentData;
-            
-            console.log('✅ Live update: Loaded equipment:', equipmentData.length);
-            console.log('📋 Equipment data sample:', equipmentData.slice(0, 3).map(item => ({
+            window.equipment = equipment;
+
+            console.log('Live update: Loaded equipment:', equipment.length);
+            console.log('📋 Equipment data sample:', equipment.slice(0, 3).map(item => ({
                 id: item.id,
                 name: item.name,
                 status: item.status,
                 borrowedBy: item.borrowedBy,
                 requestsCount: (item.requests || []).length
             })));
-            
+
             // Load equipment requests and users after equipment is loaded
             loadEquipmentRequests();
             loadAllUsersForEquipment();
-            
+
             // Only show category if modal is active and we have a valid category
             const modal = document.getElementById('modal');
-            if (modal && modal.classList.contains('active') && currentEquipmentCategory) {
+            if (modal && modal.classList.contains('active') && modal.querySelector('#equipmentList') && currentEquipmentCategory) {
                 console.log('🔄 Equipment data updated, showing category:', currentEquipmentCategory);
                 showEquipmentCategory(currentEquipmentCategory);
             }
-            
+
             // Update machine overview in admin dashboard
             updateMachineOverview();
-            
+
             // Also update when admin dashboard is shown
             setTimeout(() => {
                 if (typeof updateMachineOverview === 'function') {
@@ -88,15 +97,11 @@ function setupEquipmentListener() {
                 }
             }, 1000);
         }, (error) => {
-            console.error('❌ Error in equipment listener:', error);
+            console.error('Error in equipment listener:', error);
             safeShowToast('Fehler beim Live-Update des Equipments', 'error');
-            
-            // Fallback: Try to load equipment manually
-            console.log('🔄 Attempting manual equipment load as fallback...');
-            loadEquipment();
         });
-        
-        console.log("✅ Equipment listener registered successfully");
+
+        console.log("✅ Equipment listener registered");
     } catch (error) {
         console.error("❌ Failed to setup equipment listener:", error);
         // Fallback to manual loading
@@ -105,83 +110,29 @@ function setupEquipmentListener() {
 }
 
 /**
- * Setup real-time listener for equipment requests
+ * Unified equipment system - no separate requests collection needed
+ * All requests are stored directly in equipment documents
  */
 function setupEquipmentRequestsListener() {
-    // Clean up existing listener
-    if (equipmentRequestsListener) {
-        equipmentRequestsListener();
-        equipmentRequestsListener = null;
-    }
-    
-    try {
-        console.log('🔧 Setting up equipment requests listener...');
-        
-        equipmentRequestsListener = window.db.collection('requests')
-            .where('type', '==', 'equipment')
-            .onSnapshot((snapshot) => {
-                equipmentRequests = [];
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    equipmentRequests.push({
-                        id: doc.id,
-                        ...data
-                    });
-                });
-                
-                console.log('✅ Live update: Loaded equipment requests:', equipmentRequests.length);
-                
-                // Update equipment display
-                if (currentEquipmentCategory) {
-                    showEquipmentCategory(currentEquipmentCategory);
-                }
-                
-                // Update badges
-                updateEquipmentRequestsBadge();
-            }, (error) => {
-                console.error('❌ Error in equipment requests listener:', error);
-                safeShowToast('Fehler beim Live-Update der Equipment-Anfragen', 'error');
-            });
-            
-        console.log("✅ Equipment requests listener registered successfully");
-    } catch (error) {
-        console.error("❌ Failed to setup equipment requests listener:", error);
-    }
+    // This function is now deprecated - all requests are in equipment collection
+    console.log("🔄 Unified system: No separate requests listener needed");
+    return;
 }
 
 /**
- * Load equipment requests from Firestore
+ * Unified equipment system - load requests from equipment collection
  */
 async function loadEquipmentRequests() {
     try {
-        console.log('🔧 Loading equipment requests...');
-        
-        const snapshot = await window.db.collection('requests')
-            .where('type', '==', 'equipment')
-            .get();
-            
-        equipmentRequests = [];
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            equipmentRequests.push({
-                id: doc.id,
-                ...data
-            });
-        });
-        
-        console.log('✅ Loaded equipment requests:', equipmentRequests.length);
-        
-        // Update equipment display
-        if (currentEquipmentCategory) {
-            showEquipmentCategory(currentEquipmentCategory);
-        }
-        
-        // Update badges
+        // In unified system, requests are stored in equipment documents
+        // No separate loading needed - data comes from equipment listener
+        console.log('🔄 Unified system: Requests loaded from equipment collection');
+
+        // Update notification badge
         updateEquipmentRequestsBadge();
-        
+
     } catch (error) {
-        console.error('❌ Error loading equipment requests:', error);
-        safeShowToast('Fehler beim Laden der Equipment-Anfragen', 'error');
+        console.error('Error in unified equipment system:', error);
     }
 }
 
@@ -189,62 +140,120 @@ async function loadEquipmentRequests() {
  * Show equipment manager modal
  */
 async function showEquipmentManager() {
-    try {
-        console.log('🔧 Opening equipment manager...');
-        
-        // Test equipment data first
-        await testEquipmentData();
-        
-        // Show modal
-        const modal = document.getElementById('modal');
-        if (modal) {
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>Equipment-Verwaltung</h2>
-                        <button class="close-btn" onclick="closeEquipmentManager()">&times;</button>
+    console.log('🔧 showEquipmentManager called - starting modal creation');
+    const modalContent = `
+        <div class="modal-header">
+            <h3>Equipment verwalten
+                <span id="equipment-requests-badge" class="notification-badge" style="display: none;">0</span>
+            </h3>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="card">
+                <div class="card-body">
+                    <div class="equipment-controls">
+                        <div class="control-row">
+                            <div class="search-container">
+                                <input type="text" id="equipmentSearchInput" placeholder="Equipment durchsuchen..." class="search-input" onkeyup="searchEquipment()">
+                                <button class="search-clear" onclick="clearEquipmentSearch()">×</button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="modal-body">
-                        <div class="equipment-controls">
-                            <div class="category-tabs">
-                                <button class="category-tab active" onclick="showEquipmentCategory('hardware')">Hardware</button>
-                                <button class="category-tab" onclick="showEquipmentCategory('keys')">Schlüssel</button>
-                                <button class="category-tab" onclick="showEquipmentCategory('books')">Bücher</button>
-                            </div>
-                            <div class="equipment-actions">
-                                <button class="btn btn-primary" onclick="showAddEquipmentForm()">Equipment hinzufügen</button>
-                                <div class="search-box">
-                                    <input type="text" id="equipmentSearch" placeholder="Equipment suchen..." onkeyup="searchEquipment()">
-                                    <button onclick="clearEquipmentSearch()">✕</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="equipmentList" class="equipment-list">
-                            <div class="loading">Lade Equipment...</div>
-                        </div>
+
+                    <div class="category-tabs">
+                        <button class="tab-btn" onclick="showEquipmentCategory('keys')">Schlüssel</button>
+                        <button class="tab-btn active" onclick="showEquipmentCategory('hardware')">Hardware</button>
+                        <button class="tab-btn" onclick="showEquipmentCategory('books')">Bücher</button>
+                    </div>
+
+                    <div id="equipmentList" class="equipment-container">
+                        <div class="loading">Equipment wird geladen...</div>
                     </div>
                 </div>
-            `;
-            
-            modal.classList.add('active');
-            
-            // Setup listeners
-            setupEquipmentListener();
-            setupEquipmentRequestsListener();
-            
-            // Show default category
-            showEquipmentCategory('hardware');
-            
-            console.log('✅ Equipment manager opened successfully');
-            
-        } else {
-            console.error('❌ Modal element not found');
-            safeShowToast('Fehler beim Öffnen des Equipment-Managers', 'error');
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" onclick="showAddEquipmentForm()">Equipment hinzufügen</button>
+            <button class="btn btn-warning" onclick="cleanupEquipmentPendingRequests()" title="Doppelte Anfragen bereinigen">Cleanup</button>
+            <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
+        </div>
+    `;
+
+    console.log('🔧 Modal content created, length:', modalContent.length);
+    console.log('🔧 Modal content contains equipmentList:', modalContent.includes('equipmentList'));
+
+    showModalWithContent(modalContent);
+
+    // Debug: Check if modal was created properly
+    setTimeout(() => {
+        const modal = document.getElementById('modal');
+        const container = document.getElementById('equipmentList');
+        console.log('🔍 Modal creation check:', {
+            modal: modal ? 'Found' : 'Not found',
+            container: container ? 'Found' : 'Not found',
+            modalActive: modal?.classList.contains('active') || false,
+            modalHTML: modal ? modal.innerHTML.substring(0, 200) + '...' : 'No modal'
+        });
+
+        // If modal exists but container doesn't, let's check what's in the modal
+        if (modal && !container) {
+            console.log('🔍 Modal exists but container not found. Searching for equipmentList...');
+            const allElements = modal.querySelectorAll('*');
+            console.log('🔍 All elements in modal:', Array.from(allElements).map(el => el.id || el.className || el.tagName));
         }
-        
-    } catch (error) {
-        console.error('❌ Error opening equipment manager:', error);
-        safeShowToast('Fehler beim Öffnen des Equipment-Managers', 'error');
+    }, 10);
+
+    // Only setup listener if not already running
+    if (!equipmentListener) {
+        setupEquipmentListener();
+    }
+    setupEquipmentRequestsListener();
+
+    // Show hardware category by default after requests are loaded
+    // Use a more robust approach to wait for DOM elements
+    const waitForContainer = (maxAttempts = 5) => {
+        let attempts = 0;
+        const checkContainer = () => {
+            attempts++;
+            const container = document.getElementById('equipmentList');
+            const modal = document.getElementById('modal');
+            const modalActive = modal?.classList.contains('active') || false;
+
+            console.log(`🔍 Container check attempt ${attempts}/${maxAttempts}:`, {
+                container: container ? 'Found' : 'Not found',
+                modal: modal ? 'Found' : 'Not found',
+                modalActive: modalActive
+            });
+
+            if (container && modalActive) {
+                console.log('🔍 Container found and modal active, showing hardware category');
+                showEquipmentCategory('hardware');
+                return;
+            }
+
+            if (attempts < maxAttempts) {
+                setTimeout(checkContainer, 200); // Increased delay to 200ms
+            } else {
+                console.warn('Equipment container not ready after all attempts - will use retry mechanism in showEquipmentCategory');
+                // Only try if modal is active
+                if (modalActive) {
+                    showEquipmentCategory('hardware'); // This will now use the retry mechanism with limits
+                }
+            }
+        };
+
+        // Start checking after a short delay
+        setTimeout(checkContainer, 100);
+    };
+
+    waitForContainer();
+
+    // Auto-cleanup duplicate requests on admin access
+    if (window.currentUser?.isAdmin) {
+        setTimeout(() => {
+            console.log('🔧 Auto-cleanup for admin access...');
+            cleanupEquipmentPendingRequests();
+        }, 2000); // Run after 2 seconds to let everything load
     }
 }
 
@@ -267,45 +276,45 @@ function closeEquipmentManager() {
 async function loadEquipment() {
     try {
         const querySnapshot = await window.db.collection('equipment').get();
-        equipmentData = [];
-        
+        equipment = [];
+
         querySnapshot.forEach((doc) => {
-            equipmentData.push({
+            equipment.push({
                 id: doc.id,
                 ...doc.data()
             });
         });
-        
-        filteredEquipment = equipmentData;
-        console.log('📋 Loaded equipment:', equipmentData.length);
-        console.log('📋 Equipment data sample:', equipmentData.slice(0, 3).map(item => ({
+
+        filteredEquipment = equipment;
+        console.log('📋 Loaded equipment:', equipment.length);
+        console.log('📋 Equipment data sample:', equipment.slice(0, 3).map(item => ({
             id: item.id,
             name: item.name,
             status: item.status,
             category: item.category,
             borrowedBy: item.borrowedBy
         })));
-        
+
         // Load user data for borrowed equipment
         await loadUserDataForEquipment();
-        
+
         // Debug: Show all unique categories in the data
-        const uniqueCategories = [...new Set(equipmentData.map(item => item.category))];
+        const uniqueCategories = [...new Set(equipment.map(item => item.category))];
         console.log('🔍 Available categories in data:', uniqueCategories);
         console.log('🔍 Equipment by category:', uniqueCategories.map(cat => ({
             category: cat,
-            count: equipmentData.filter(item => item.category === cat).length,
-            items: equipmentData.filter(item => item.category === cat).map(item => item.name)
+            count: equipment.filter(item => item.category === cat).length,
+            items: equipment.filter(item => item.category === cat).map(item => item.name)
         })));
         // Only show category if modal is active
         const modal = document.getElementById('modal');
         if (modal && modal.classList.contains('active')) {
-        showEquipmentCategory(currentEquipmentCategory);
+            showEquipmentCategory(currentEquipmentCategory);
         }
-        
+
         // Update equipment requests badge
         updateEquipmentRequestsBadge();
-        
+
     } catch (error) {
         console.error('Error loading equipment:', error);
         safeShowToast('Fehler beim Laden der Ausrüstung', 'error');
@@ -318,21 +327,21 @@ async function loadEquipment() {
 async function loadUserDataForEquipment() {
     try {
         // Get unique kennungs from borrowed equipment
-        const borrowedEquipment = equipmentData.filter(item => item.borrowedByKennung);
+        const borrowedEquipment = equipment.filter(item => item.borrowedByKennung);
         const uniqueKennungs = [...new Set(borrowedEquipment.map(item => item.borrowedByKennung))];
-        
+
         if (uniqueKennungs.length === 0) {
             console.log('📋 No borrowed equipment found, skipping user data load');
             return;
         }
-        
+
         console.log(`🔍 Loading user data for ${uniqueKennungs.length} borrowed equipment users:`, uniqueKennungs);
-        
+
         // Initialize allUsers array if not exists
         if (!window.allUsers) {
             window.allUsers = [];
         }
-        
+
         // Load user data for each kennung
         for (const kennung of uniqueKennungs) {
             // Check if user already loaded
@@ -341,7 +350,7 @@ async function loadUserDataForEquipment() {
                 console.log(`✅ User ${kennung} already loaded`);
                 continue;
             }
-            
+
             try {
                 const userDoc = await window.db.collection('users').doc(kennung).get();
                 if (userDoc.exists) {
@@ -361,9 +370,9 @@ async function loadUserDataForEquipment() {
                 console.error(`❌ Error loading user data for ${kennung}:`, error);
             }
         }
-        
+
         console.log(`✅ User data loading completed. Total users in cache: ${window.allUsers.length}`);
-        
+
     } catch (error) {
         console.error('❌ Error loading user data for equipment:', error);
     }
@@ -394,22 +403,22 @@ function showEquipmentCategory(category, retryCount = 0) {
         console.warn('showEquipmentCategory called without category');
         return;
     }
-    
+
     currentEquipmentCategory = category;
-    
+
     // Check if modal is ready before proceeding
     const container = document.getElementById('equipmentList');
     const modal = document.getElementById('modal');
     const modalActive = modal?.classList.contains('active') || false;
-    
+
     console.log(`🔍 showEquipmentCategory called for '${category}', retry ${retryCount}, container:`, container ? 'Found' : 'Not found', 'modal:', modal ? 'Found' : 'Not found', 'modalActive:', modalActive);
-    
+
     // If modal is not active, don't retry - just return
     if (!modalActive) {
         console.log(`🔍 Modal not active, skipping category display for '${category}'`);
         return;
     }
-    
+
     if (!container) {
         if (retryCount >= 20) { // Reduced to 20 retries (2 seconds max)
             console.error(`Equipment container not ready for category '${category}' after ${retryCount} retries - giving up`);
@@ -421,26 +430,26 @@ function showEquipmentCategory(category, retryCount = 0) {
         }, 100);
         return;
     }
-    
+
     // Update tab buttons - use correct selector for equipment tabs
     const tabButtons = document.querySelectorAll('.category-tabs .tab-btn');
     tabButtons.forEach(btn => {
         btn.classList.remove('active');
     });
-    
+
     // Set the correct tab as active based on category
     const categoryTab = document.querySelector(`.category-tabs .tab-btn[onclick*="${category}"]`);
     if (categoryTab) {
         categoryTab.classList.add('active');
     }
-    
+
     // Filter equipment by category from all equipment (not just search results)
-    const categoryEquipment = equipmentData.filter(item => item.category === category);
-    
+    const categoryEquipment = equipment.filter(item => item.category === category);
+
     console.log(`🔍 Category filter: looking for category '${category}'`);
-    console.log(`🔍 All equipment categories:`, equipmentData.map(item => item.category));
+    console.log(`🔍 All equipment categories:`, equipment.map(item => item.category));
     console.log(`🔍 Found ${categoryEquipment.length} items for category '${category}':`, categoryEquipment.map(item => item.name));
-    
+
     // Apply search filter if there's a search term
     const searchInput = document.getElementById('equipmentSearchInput');
     if (searchInput && searchInput.value.trim()) {
@@ -456,7 +465,7 @@ function showEquipmentCategory(category, retryCount = 0) {
     } else {
         renderEquipmentList(categoryEquipment);
     }
-    
+
     console.log(`🔍 Switched to category: ${category}, showing ${categoryEquipment.length} items`);
 }
 
@@ -467,7 +476,7 @@ function showEquipmentCategory(category, retryCount = 0) {
  */
 function renderEquipmentList(equipmentList, retryCount = 0) {
     const container = document.getElementById('equipmentList');
-    
+
     // Add null check for container
     if (!container) {
         if (retryCount >= 50) { // Max 5 seconds of retries (50 * 100ms)
@@ -486,7 +495,7 @@ function renderEquipmentList(equipmentList, retryCount = 0) {
         }, 100);
         return;
     }
-    
+
     if (equipmentList.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
@@ -498,7 +507,7 @@ function renderEquipmentList(equipmentList, retryCount = 0) {
         `;
         return;
     }
-    
+
     console.log('🔍 Rendering equipment list with', equipmentList.length, 'items');
     console.log('📋 Equipment list data:', equipmentList.map(item => ({
         id: item.id,
@@ -508,16 +517,16 @@ function renderEquipmentList(equipmentList, retryCount = 0) {
         category: item.category,
         pendingRequestsCount: (item.pendingRequests || []).length
     })));
-    
+
     container.innerHTML = equipmentList.map(item => {
         // Unified system: Get requests directly from equipment document
         const pendingRequests = item.pendingRequests || [];
         const pendingRequest = pendingRequests.find(req => req.status === 'pending' && req.type === 'equipment');
         const pendingReturnRequest = pendingRequests.find(req => req.status === 'pending' && req.type === 'return');
-        
+
         // Define returnRequests for compatibility
         const returnRequests = pendingRequests.filter(req => req.type === 'return');
-        
+
         console.log(`🔍 Equipment ${item.id} (${item.name}):`, {
             status: item.status,
             borrowedByKennung: item.borrowedByKennung,
@@ -527,7 +536,7 @@ function renderEquipmentList(equipmentList, retryCount = 0) {
             returnRequests: returnRequests.length,
             hasPendingReturns: returnRequests.some(req => req.status === 'pending')
         });
-        
+
         return `
         <div class="equipment-item ${item.requiresDeposit ? 'requires-deposit' : ''} ${pendingRequest ? 'has-pending-request' : ''}">
             <div class="equipment-header">
@@ -537,14 +546,14 @@ function renderEquipmentList(equipmentList, retryCount = 0) {
                         ${pendingRequest ? 'Angefragt' : (pendingReturnRequest || (returnRequests.some(req => req.status === 'pending'))) ? 'Rückgabe angefragt' : (item.borrowedBy ? 'Ausgeliehen' : getEquipmentStatusText(item.status))}
                     </span>
                     ${item.requiresDeposit ? `
-                        <span class="equipment-deposit ${item.depositPaid ? 'paid' : 'unpaid'}" title="Pfand ${item.depositPaid ? 'bezahlt' : 'ausstehend'}">
+                                        <span class="equipment-deposit ${item.depositPaid ? 'paid' : 'unpaid'}" title="Pfand ${item.depositPaid ? 'bezahlt' : 'ausstehend'}">
                     ${item.depositAmount}€
-                        </span>
+                </span>
                     ` : ''}
                 </div>
             </div>
             <div class="equipment-info">${item.description || 'Keine Beschreibung'}</div>
-            
+
             ${pendingRequest ? `
                 <div class="equipment-request-info">
                     <strong>Ausleihe angefragt von:</strong> ${pendingRequest.userName || pendingRequest.userKennung || pendingRequest.requestedByName || 'Unbekannter User'} (${pendingRequest.userKennung || pendingRequest.requestedBy || 'Unbekannt'})
@@ -556,8 +565,8 @@ function renderEquipmentList(equipmentList, retryCount = 0) {
                     <strong>Rückgabe angefragt von:</strong> ${pendingReturnRequest ? (pendingReturnRequest.requestedByName || pendingReturnRequest.requestedBy || pendingReturnRequest.userName || 'Unbekannter User') : 'Unbekannter User'} (${pendingReturnRequest ? (pendingReturnRequest.requestedBy || pendingReturnRequest.userKennung || 'Unbekannt') : 'Unbekannt'})
                     <br><strong>Angefragt am:</strong> ${pendingReturnRequest && pendingReturnRequest.createdAt ? (() => {
                         try {
-                            const date = pendingReturnRequest.createdAt.toDate ? 
-                                pendingReturnRequest.createdAt.toDate() : 
+                            const date = pendingReturnRequest.createdAt.toDate ?
+                                pendingReturnRequest.createdAt.toDate() :
                                 new Date(pendingReturnRequest.createdAt);
                             return date.toLocaleDateString('de-DE');
                         } catch (error) {
@@ -571,7 +580,7 @@ function renderEquipmentList(equipmentList, retryCount = 0) {
                     ${getBorrowerInfoDisplay(item)}
                 </div>
             ` : ''}
-            
+
             <div class="equipment-actions">
                 ${(() => {
                     console.log(`🔍 Action buttons debug for ${item.name}:`, {
@@ -580,7 +589,7 @@ function renderEquipmentList(equipmentList, retryCount = 0) {
                         pendingRequest: pendingRequest ? pendingRequest.id : null,
                         pendingReturnRequest: pendingReturnRequest ? pendingReturnRequest.id : null
                     });
-                    
+
                     if (pendingRequest) {
                         console.log('🔍 Showing pending request buttons');
                         const userName = pendingRequest.userName || pendingRequest.userKennung || 'Unbekannter User';
@@ -592,14 +601,14 @@ function renderEquipmentList(equipmentList, retryCount = 0) {
                         `;
                     } else if (item.status === 'available' || (!item.borrowedByKennung && item.status !== 'borrowed')) {
                         console.log('🔍 Showing available equipment buttons');
-                        
+
                         // Check if equipment has pending requests (unified system)
-                        const hasPendingRequests = pendingRequests.some(req => 
+                        const hasPendingRequests = pendingRequests.some(req =>
                             req.status === 'pending' || req.status === 'approved'
                         );
-                        
+
                         if (hasPendingRequests) {
-                            const blockingRequest = pendingRequests.find(req => 
+                            const blockingRequest = pendingRequests.find(req =>
                                 req.status === 'pending' || req.status === 'approved'
                             );
                             const userName = blockingRequest ? (blockingRequest.userName || blockingRequest.userKennung || 'Unbekannter User') : 'Unbekannter User';
@@ -654,18 +663,18 @@ function renderEquipmentList(equipmentList, retryCount = 0) {
 async function getBorrowerInfoDisplayAsync(item) {
     const kennung = item.borrowedByKennung;
     if (!kennung) return 'Keine Benutzerinformationen verfügbar';
-    
+
     // Try to find user in allUsers array first
     let user = null;
     if (window.allUsers && Array.isArray(window.allUsers)) {
         user = window.allUsers.find(u => u.kennung === kennung);
     }
-    
+
     // If not found in allUsers, try to get from user management
     if (!user && typeof window.getUserDetails === 'function') {
         user = window.getUserDetails(kennung);
     }
-    
+
     // If still not found, try to load directly from Firestore
     if (!user && window.db) {
         try {
@@ -687,21 +696,21 @@ async function getBorrowerInfoDisplayAsync(item) {
             console.error(`❌ Error loading user data for ${kennung}:`, error);
         }
     }
-    
+
     // Format borrowed date
-    const borrowedDate = item.borrowedAt ? 
-        (item.borrowedAt.toDate ? item.borrowedAt.toDate() : new Date(item.borrowedAt)) : 
+    const borrowedDate = item.borrowedAt ?
+        (item.borrowedAt.toDate ? item.borrowedAt.toDate() : new Date(item.borrowedAt)) :
         null;
-    
-    const borrowedDateStr = borrowedDate ? 
-        borrowedDate.toLocaleDateString('de-DE', { 
-            day: '2-digit', 
-            month: '2-digit', 
+
+    const borrowedDateStr = borrowedDate ?
+        borrowedDate.toLocaleDateString('de-DE', {
+            day: '2-digit',
+            month: '2-digit',
             year: 'numeric',
             hour: '2-digit',
             minute: '2-digit'
         }) : 'Unbekannt';
-    
+
     // Get loan duration if available
     let durationInfo = '';
     if (item.borrowedAt) {
@@ -709,14 +718,14 @@ async function getBorrowerInfoDisplayAsync(item) {
         const borrowed = borrowedDate || now;
         const diffTime = Math.abs(now - borrowed);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
+
         if (diffDays === 1) {
             durationInfo = ` (seit ${diffDays} Tag)`;
         } else {
             durationInfo = ` (seit ${diffDays} Tagen)`;
         }
     }
-    
+
     // Build contact information
     let contactInfo = '';
     if (user) {
@@ -745,7 +754,7 @@ async function getBorrowerInfoDisplayAsync(item) {
             </div>
         `;
     }
-    
+
     return `
         <div class="borrower-info">
             <div class="borrower-header">
@@ -765,32 +774,32 @@ async function getBorrowerInfoDisplayAsync(item) {
 function getBorrowerInfoDisplay(item) {
     const kennung = item.borrowedByKennung;
     if (!kennung) return 'Keine Benutzerinformationen verfügbar';
-    
+
     // Try to find user in allUsers array first
     let user = null;
     if (window.allUsers && Array.isArray(window.allUsers)) {
         user = window.allUsers.find(u => u.kennung === kennung);
     }
-    
+
     // If not found in allUsers, try to get from user management
     if (!user && typeof window.getUserDetails === 'function') {
         user = window.getUserDetails(kennung);
     }
-    
+
     // Format borrowed date
-    const borrowedDate = item.borrowedAt ? 
-        (item.borrowedAt.toDate ? item.borrowedAt.toDate() : new Date(item.borrowedAt)) : 
+    const borrowedDate = item.borrowedAt ?
+        (item.borrowedAt.toDate ? item.borrowedAt.toDate() : new Date(item.borrowedAt)) :
         null;
-    
-    const borrowedDateStr = borrowedDate ? 
-        borrowedDate.toLocaleDateString('de-DE', { 
-            day: '2-digit', 
-            month: '2-digit', 
+
+    const borrowedDateStr = borrowedDate ?
+        borrowedDate.toLocaleDateString('de-DE', {
+            day: '2-digit',
+            month: '2-digit',
             year: 'numeric',
             hour: '2-digit',
             minute: '2-digit'
         }) : 'Unbekannt';
-    
+
     // Get loan duration if available
     let durationInfo = '';
     if (item.borrowedAt) {
@@ -798,14 +807,14 @@ function getBorrowerInfoDisplay(item) {
         const borrowed = borrowedDate || now;
         const diffTime = Math.abs(now - borrowed);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
+
         if (diffDays === 1) {
             durationInfo = ` (seit ${diffDays} Tag)`;
         } else {
             durationInfo = ` (seit ${diffDays} Tagen)`;
         }
     }
-    
+
     // Build contact information
     let contactInfo = '';
     if (user) {
@@ -838,7 +847,7 @@ function getBorrowerInfoDisplay(item) {
             </div>
         `;
     }
-    
+
     return `
         <div class="borrower-info">
             <div class="borrower-header">
@@ -860,7 +869,7 @@ function getEquipmentRequestTimeframe(request) {
     if (!request || !request.duration) {
         return 'Unbekannt - Unbekannt';
     }
-    
+
     // Get start date (request creation date) with robust parsing
     let startDate;
     try {
@@ -885,7 +894,7 @@ function getEquipmentRequestTimeframe(request) {
             // No createdAt, use current date
             startDate = new Date();
         }
-        
+
         // Validate the date
         if (isNaN(startDate.getTime())) {
             console.warn('Invalid startDate, using current date:', request.createdAt);
@@ -895,10 +904,10 @@ function getEquipmentRequestTimeframe(request) {
         console.error('Error parsing startDate:', error, request.createdAt);
         startDate = new Date();
     }
-    
+
     // Calculate end date based on duration
     const endDate = new Date(startDate);
-    
+
     switch (request.duration) {
         case '1_hour':
             endDate.setHours(endDate.getHours() + 1);
@@ -923,25 +932,25 @@ function getEquipmentRequestTimeframe(request) {
             // Default to 1 day
             endDate.setDate(endDate.getDate() + 1);
     }
-    
+
     try {
-    const startDateStr = startDate.toLocaleDateString('de-DE', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-    
-    const endDateStr = endDate.toLocaleDateString('de-DE', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-    
-    return `${startDateStr} - ${endDateStr}`;
+        const startDateStr = startDate.toLocaleDateString('de-DE', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        const endDateStr = endDate.toLocaleDateString('de-DE', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        return `${startDateStr} - ${endDateStr}`;
     } catch (error) {
         console.error('Error formatting dates:', error);
         return 'Datum nicht verfügbar';
@@ -1020,7 +1029,7 @@ function showAddEquipmentForm() {
             <button type="button" class="btn btn-primary" onclick="saveEquipment()">Equipment hinzufügen</button>
         </div>
     `;
-    
+
     showModalWithContent(modalContent);
 }
 
@@ -1030,7 +1039,7 @@ function showAddEquipmentForm() {
 function toggleDepositAmount() {
     const depositAmount = document.getElementById('depositAmountInput');
     const checkbox = document.querySelector('input[name="requiresDeposit"]');
-    
+
     if (checkbox && depositAmount) {
         if (checkbox.checked) {
             depositAmount.style.display = 'block';
@@ -1057,7 +1066,7 @@ function closeAddEquipmentForm() {
 async function saveEquipment() {
     const form = document.getElementById('addEquipmentForm');
     if (!form) return;
-    
+
     const formData = new FormData(form);
     const equipmentData = {
         name: formData.get('name').trim(),
@@ -1069,7 +1078,7 @@ async function saveEquipment() {
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
-    
+
     if (equipmentData.requiresDeposit) {
         const depositAmount = parseFloat(formData.get('depositAmount'));
         if (isNaN(depositAmount) || depositAmount <= 0) {
@@ -1079,19 +1088,19 @@ async function saveEquipment() {
         equipmentData.depositAmount = depositAmount;
         equipmentData.depositPaid = false;
     }
-    
+
     if (!equipmentData.name || !equipmentData.location) {
         safeShowToast('Name und Standort sind Pflichtfelder', 'error');
         return;
     }
-    
+
     try {
         await window.db.collection('equipment').add(equipmentData);
         safeShowToast('Equipment erfolgreich hinzugefügt', 'success');
-        
+
         // Return to equipment overview instead of closing modal
         showEquipmentManager();
-        
+
     } catch (error) {
         console.error('Error saving equipment:', error);
         safeShowToast('Fehler beim Speichern', 'error');
@@ -1102,12 +1111,12 @@ async function saveEquipment() {
  * Edit equipment
  */
 function editEquipment(equipmentId) {
-    const equipmentItem = equipmentData.find(item => item.id === equipmentId);
+    const equipmentItem = equipment.find(item => item.id === equipmentId);
     if (!equipmentItem) {
         safeShowToast('Equipment nicht gefunden', 'error');
         return;
     }
-    
+
     // Create edit modal content using proper modal structure
     const modalContent = `
         <div class="modal-header">
@@ -1161,15 +1170,15 @@ function editEquipment(equipmentId) {
             </form>
         </div>
     `;
-    
+
     // Use proper modal system for correct z-index and display
     showModalWithContent(modalContent);
-    
+
     // Add deposit toggle functionality after modal is shown
     setTimeout(() => {
         const depositCheckbox = document.getElementById('editEquipmentRequiresDeposit');
         const depositGroup = document.querySelector('.deposit-group');
-        
+
         if (depositCheckbox && depositGroup) {
             depositCheckbox.addEventListener('change', function() {
                 depositGroup.style.display = this.checked ? 'block' : 'none';
@@ -1192,7 +1201,7 @@ function closeEditEquipmentForm() {
 async function updateEquipment(equipmentId) {
     const form = document.getElementById('editEquipmentForm');
     if (!form) return;
-    
+
     // Get form values directly from elements since we're using IDs
     const equipmentData = {
         name: document.getElementById('editEquipmentName').value.trim(),
@@ -1202,7 +1211,7 @@ async function updateEquipment(equipmentId) {
         requiresDeposit: document.getElementById('editEquipmentRequiresDeposit').checked,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
-    
+
     if (equipmentData.requiresDeposit) {
         const depositAmount = parseFloat(document.getElementById('editEquipmentDepositAmount').value);
         if (isNaN(depositAmount) || depositAmount <= 0) {
@@ -1215,22 +1224,22 @@ async function updateEquipment(equipmentId) {
         equipmentData.depositAmount = firebase.firestore.FieldValue.delete();
         equipmentData.depositPaid = firebase.firestore.FieldValue.delete();
     }
-    
+
     if (!equipmentData.name || !equipmentData.category) {
         safeShowToast('Bitte alle Pflichtfelder ausfüllen', 'error');
         return;
     }
-    
+
     try {
         await window.db.collection('equipment').doc(equipmentId).update(equipmentData);
-        
+
         safeShowToast('Equipment erfolgreich aktualisiert', 'success');
         // Return to equipment overview instead of closing modal
         showEquipmentManager();
-        
+
         // Update machine overview
         updateMachineOverview();
-        
+
     } catch (error) {
         console.error('Error updating equipment:', error);
         safeShowToast('Fehler beim Aktualisieren', 'error');
@@ -1241,24 +1250,24 @@ async function updateEquipment(equipmentId) {
  * Delete equipment with confirmation
  */
 async function deleteEquipment(equipmentId) {
-    const equipmentItem = equipmentData.find(item => item.id === equipmentId);
+    const equipmentItem = equipment.find(item => item.id === equipmentId);
     if (!equipmentItem) {
         safeShowToast('Equipment nicht gefunden', 'error');
         return;
     }
-    
+
     // Show confirmation dialog
     const confirmed = await window.toast.confirm(`Möchtest du "${equipmentItem.name}" wirklich löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden.`);
-    
+
     if (!confirmed) return;
-    
+
     try {
         await window.db.collection('equipment').doc(equipmentId).delete();
-        
+
         safeShowToast('Equipment erfolgreich gelöscht', 'success');
         // Return to equipment overview instead of closing modal
         showEquipmentManager();
-        
+
     } catch (error) {
         console.error('Error deleting equipment:', error);
         safeShowToast('Fehler beim Löschen', 'error');
@@ -1274,12 +1283,12 @@ async function borrowEquipment(equipmentId) {
         safeShowToast('Nur Admins können Equipment direkt ausleihen. Bitte stellen Sie eine Anfrage.', 'warning');
         return;
     }
-    
-    const equipmentItem = equipmentData.find(item => item.id === equipmentId);
-    
+
+    const equipmentItem = equipment.find(item => item.id === equipmentId);
+
     // Load all users first for admin selection
     await loadAllUsersForEquipment();
-    
+
     // Show admin loan modal
     const modalContent = `
         <div class="modal-header">
@@ -1328,7 +1337,7 @@ async function borrowEquipment(equipmentId) {
             <button class="btn btn-primary" onclick="submitAdminBorrowEquipment('${equipmentId}')">Equipment ausleihen</button>
         </div>
     `;
-    
+
     showModalWithContent(modalContent);
 }
 
@@ -1338,10 +1347,10 @@ async function borrowEquipment(equipmentId) {
 async function loadAllUsersForEquipment() {
     try {
         console.log('🔄 Loading all users for equipment selection...');
-        
+
         const querySnapshot = await window.db.collection('users').get();
         allUsers = [];
-        
+
         querySnapshot.forEach(doc => {
             const userData = doc.data();
             allUsers.push({
@@ -1353,19 +1362,19 @@ async function loadAllUsersForEquipment() {
                 isAdmin: userData.isAdmin || false
             });
         });
-        
+
         // Also search for users in entries collection (for users who have made entries but might not be in users collection)
         try {
             const entriesSnapshot = await window.db.collection('entries').get();
             const entryUsers = new Set();
-            
+
             entriesSnapshot.forEach(doc => {
                 const entryData = doc.data();
                 if (entryData.userKennung && !allUsers.find(u => u.kennung === entryData.userKennung)) {
                     entryUsers.add(entryData.userKennung);
                 }
             });
-            
+
             // Add entry users to allUsers if they don't exist
             entryUsers.forEach(kennung => {
                 allUsers.push({
@@ -1377,14 +1386,14 @@ async function loadAllUsersForEquipment() {
                     isAdmin: false
                 });
             });
-            
+
             console.log(`📋 Added ${entryUsers.size} users from entries collection`);
         } catch (error) {
             console.error('❌ Error loading users from entries:', error);
         }
-        
+
         console.log(`✅ Loaded ${allUsers.length} users for equipment selection`);
-        
+
     } catch (error) {
         console.error('❌ Error loading users for equipment selection:', error);
         allUsers = [];
@@ -1397,35 +1406,35 @@ async function loadAllUsersForEquipment() {
 function filterAdminBorrowUsers() {
     const searchTerm = document.getElementById('adminBorrowUserSearch').value.toLowerCase().trim();
     const resultsDiv = document.getElementById('adminBorrowUserResults');
-    
+
     console.log('🔍 Filtering users with search term:', searchTerm);
     console.log('�� Available users:', allUsers ? allUsers.length : 0);
-    
+
     if (!searchTerm) {
         resultsDiv.style.display = 'none';
         return;
     }
-    
+
     if (!allUsers || allUsers.length === 0) {
         console.warn('⚠️ No users available for search');
         resultsDiv.innerHTML = '<div class="no-results">Keine Benutzer verfügbar</div>';
         resultsDiv.style.display = 'block';
         return;
     }
-    
+
     // Filter users and remove duplicates based on kennung
     const filteredUsers = allUsers.filter(user => {
         const nameMatch = user.name && user.name.toLowerCase().includes(searchTerm);
         const kennungMatch = user.kennung && user.kennung.toLowerCase().includes(searchTerm);
         const emailMatch = user.email && user.email.toLowerCase().includes(searchTerm);
-        
+
         return nameMatch || kennungMatch || emailMatch;
     });
-    
+
     // Remove duplicates based on kennung (keep the one with most complete data)
     const uniqueUsers = [];
     const seenKennungen = new Set();
-    
+
     filteredUsers.forEach(user => {
         if (!seenKennungen.has(user.kennung)) {
             seenKennungen.add(user.kennung);
@@ -1434,33 +1443,33 @@ function filterAdminBorrowUsers() {
             // If we already have this kennung, replace with more complete data
             const existingIndex = uniqueUsers.findIndex(u => u.kennung === user.kennung);
             const existing = uniqueUsers[existingIndex];
-            
+
             // Keep the user with more complete data (phone, email, etc.)
             const existingScore = (existing.phone ? 1 : 0) + (existing.email ? 1 : 0);
             const newScore = (user.phone ? 1 : 0) + (user.email ? 1 : 0);
-            
+
             if (newScore > existingScore) {
                 uniqueUsers[existingIndex] = user;
             }
         }
     });
-    
+
     const limitedUsers = uniqueUsers.slice(0, 10); // Limit to 10 results
-    
+
     console.log(`🔍 Found ${filteredUsers.length} matching users, ${limitedUsers.length} unique users`);
-    
+
     if (limitedUsers.length === 0) {
         resultsDiv.innerHTML = '<div class="no-results">Keine Benutzer gefunden</div>';
         resultsDiv.style.display = 'block';
         return;
     }
-    
+
     resultsDiv.innerHTML = limitedUsers.map(user => `
         <div class="user-result-item" onclick="selectAdminBorrowUser('${user.kennung}', '${user.name}', '${user.email || ''}', '${user.phone || ''}')">
             <strong>${user.name}</strong> (${user.kennung})
         </div>
     `).join('');
-    
+
     resultsDiv.style.display = 'block';
 }
 
@@ -1473,7 +1482,7 @@ function selectAdminBorrowUser(kennung, name, email, phone) {
     document.getElementById('adminBorrowUser').value = kennung;
     document.getElementById('adminBorrowUserPhone').value = phone;
     document.getElementById('adminBorrowUserResults').style.display = 'none';
-    
+
     // Store selected user data
     window.selectedAdminBorrowUser = { kennung, name, email, phone };
 }
@@ -1487,46 +1496,46 @@ async function submitAdminBorrowEquipment(equipmentId) {
     const duration = document.getElementById('adminBorrowDuration').value;
     const purpose = document.getElementById('adminBorrowPurpose').value;
     const note = document.getElementById('adminBorrowNote').value;
-    
+
     if (!selectedUserKennung || !phoneNumber || !duration || !purpose) {
         safeShowToast('Bitte alle Pflichtfelder ausfüllen', 'error');
         return;
     }
-    
+
     // Validate phone number
     const phoneRegex = /^(\+49|0)[0-9\s\-\(\)]{10,}$/;
     if (!phoneRegex.test(phoneNumber)) {
         safeShowToast('Bitte geben Sie eine gültige Handynummer ein', 'error');
         return;
     }
-    
-    const equipmentItem = equipmentData.find(item => item.id === equipmentId);
+
+    const equipmentItem = equipment.find(item => item.id === equipmentId);
     if (!equipmentItem) {
         safeShowToast('Equipment nicht gefunden', 'error');
         return;
     }
-    
+
     // Check if equipment is already borrowed (unified system)
     if (equipmentItem.status === 'borrowed' || equipmentItem.borrowedByKennung) {
         safeShowToast('Equipment ist bereits ausgeliehen und kann nicht erneut ausgeliehen werden', 'error');
         return;
     }
-    
+
     // Check for pending requests (unified system)
-    const pendingRequests = equipmentItem.pendingRequests?.filter(req => 
+    const pendingRequests = equipmentItem.pendingRequests?.filter(req =>
         req.status === 'pending' || req.status === 'approved'
     ) || [];
-    
+
     if (pendingRequests.length > 0) {
         const requestInfo = pendingRequests.map(req => {
             const userName = req.userName || req.userKennung || 'Unbekannter User';
             return `${userName} (${req.status === 'pending' ? 'Anfrage ausstehend' : 'Anfrage genehmigt'})`;
         }).join(', ');
-        
+
         safeShowToast(`Equipment hat bereits ausstehende Anfragen: ${requestInfo}`, 'error');
         return;
     }
-    
+
     // Check if deposit is required
     if (equipmentItem.requiresDeposit) {
         const depositConfirm = await toast.confirm(
@@ -1539,7 +1548,7 @@ async function submitAdminBorrowEquipment(equipmentId) {
             return;
         }
     }
-    
+
     try {
         // Find selected user from allUsers (which includes users from both users and entries collections)
         const selectedUser = allUsers ? allUsers.find(user => user.kennung === selectedUserKennung) : null;
@@ -1547,13 +1556,13 @@ async function submitAdminBorrowEquipment(equipmentId) {
             safeShowToast('Ausgewählter Benutzer nicht gefunden', 'error');
             return;
         }
-        
+
         console.log('📋 Selected user for admin borrow:', selectedUser);
-        
+
         // Use the existing user data - don't create new user documents
         // The user already exists in the system (either in users collection or entries collection)
         // We just use their existing data for the equipment loan
-        
+
         // Create loan request with status 'given' (unified system)
         const loanRequestId = `admin_loan_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         const currentTimestamp = new Date();
@@ -1577,24 +1586,24 @@ async function submitAdminBorrowEquipment(equipmentId) {
             givenAt: currentTimestamp,
             createdAt: currentTimestamp
         };
-        
+
         // Get equipment document to clean up pending requests (unified system)
         const equipmentRef = window.db.collection('equipment').doc(equipmentId);
         const equipmentDoc = await equipmentRef.get();
-        
+
         if (!equipmentDoc.exists) {
             throw new Error('Equipment nicht gefunden');
         }
-        
+
         const equipmentData = equipmentDoc.data();
         const pendingRequests = equipmentData.pendingRequests || [];
-        
+
         // Remove any approved requests for this equipment (unified system)
         const cleanedRequests = pendingRequests.filter(req => req.status !== 'approved');
-        
+
         // Add the new admin loan request to pendingRequests (unified system)
         cleanedRequests.push(loanData);
-        
+
         // Update equipment status (unified system)
         const updateData = {
             status: 'borrowed',
@@ -1604,16 +1613,16 @@ async function submitAdminBorrowEquipment(equipmentId) {
             pendingRequests: cleanedRequests,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
-        
+
         // If deposit is required, mark it as paid
         if (equipmentItem.requiresDeposit) {
             updateData.depositPaid = true;
         }
-        
+
         await equipmentRef.update(updateData);
-        
+
         safeShowToast(`Equipment erfolgreich an ${selectedUser.name} ausgeliehen`, 'success');
-        
+
         // Refresh user management if it's open
         if (typeof loadUsersForManagement === 'function') {
             // Force reload of user data
@@ -1621,12 +1630,12 @@ async function submitAdminBorrowEquipment(equipmentId) {
                 loadUsersForManagement();
             }, 500); // Small delay to ensure Firestore update is complete
         }
-        
+
         closeModal();
-        
+
         // Update machine overview
         updateMachineOverview();
-        
+
     } catch (error) {
         console.error('Error submitting admin equipment borrow:', error);
         safeShowToast('Fehler beim Ausleihen des Equipment', 'error');
@@ -1637,27 +1646,27 @@ async function submitAdminBorrowEquipment(equipmentId) {
  * Return equipment
  */
 async function returnEquipment(equipmentId) {
-    const equipmentItem = equipmentData.find(item => item.id === equipmentId);
+    const equipmentItem = equipment.find(item => item.id === equipmentId);
     if (!equipmentItem) {
         safeShowToast('Equipment nicht gefunden', 'error');
         return;
     }
-    
+
     const confirmed = await window.toast.confirm('Equipment als zurückgegeben markieren?');
     if (!confirmed) return;
-    
+
     try {
         // Get equipment document to clean up pending requests (unified system)
         const equipmentRef = window.db.collection('equipment').doc(equipmentId);
         const equipmentDoc = await equipmentRef.get();
-        
+
         if (!equipmentDoc.exists) {
             throw new Error('Equipment nicht gefunden');
         }
-        
+
         const equipmentData = equipmentDoc.data();
         const pendingRequests = equipmentData.pendingRequests || [];
-        
+
         // Mark all approved/given requests for this equipment as returned (unified system)
         const updatedRequests = pendingRequests.map(req => {
             if (req.status === 'approved' || req.status === 'given') {
@@ -1669,7 +1678,7 @@ async function returnEquipment(equipmentId) {
             }
             return req;
         });
-        
+
         const updateData = {
             status: 'available',
             borrowedByKennung: firebase.firestore.FieldValue.delete(),
@@ -1680,20 +1689,20 @@ async function returnEquipment(equipmentId) {
             pendingRequests: updatedRequests,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
-        
+
         // Reset deposit status when returning
         if (equipmentItem && equipmentItem.requiresDeposit) {
             updateData.depositPaid = false;
         }
-        
+
         await equipmentRef.update(updateData);
-        
+
         safeShowToast('Equipment erfolgreich zurückgegeben', 'success');
         // Removed manual reload - real-time listener will handle the update
-        
+
         // Update machine overview
         updateMachineOverview();
-        
+
     } catch (error) {
         console.error('Error returning equipment:', error);
         safeShowToast('Fehler bei der Rückgabe', 'error');
@@ -1706,17 +1715,17 @@ async function returnEquipment(equipmentId) {
 async function markDepositAsPaid(equipmentId) {
     const confirmed = await window.toast.confirm('Pfand als bezahlt markieren?');
     if (!confirmed) return;
-    
+
     try {
         await window.db.collection('equipment').doc(equipmentId).update({
             depositPaid: true,
             depositPaidAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        
+
         safeShowToast('Pfand als bezahlt markiert', 'success');
         // Removed manual reload - real-time listener will handle the update
-        
+
     } catch (error) {
         console.error('Error marking deposit as paid:', error);
         safeShowToast('Fehler beim Markieren des Pfands', 'error');
@@ -1735,18 +1744,18 @@ function updateEquipmentRequestsBadge() {
         console.log('⚠️ Equipment requests badge not found');
         return;
     }
-    
+
     // Count pending equipment requests from equipment collection (unified system)
-    const pendingCount = equipmentData.reduce((count, item) => {
+    const pendingCount = equipment.reduce((count, item) => {
         const pendingRequests = item.pendingRequests || [];
-        const pendingEquipmentRequests = pendingRequests.filter(req => 
+        const pendingEquipmentRequests = pendingRequests.filter(req =>
             req.status === 'pending' && req.type === 'equipment'
         );
         return count + pendingEquipmentRequests.length;
     }, 0);
-    
+
     console.log(`🔢 Equipment requests badge: ${pendingCount} pending equipment requests`);
-    
+
     if (pendingCount > 0) {
         badge.textContent = pendingCount;
         badge.style.display = 'inline-block';
@@ -1766,7 +1775,7 @@ function updateEquipmentRequestsBadge() {
 
 // More category management functions removed
 
-// All old category management functions removed 
+// All old category management functions removed
 
 // ==================== GLOBAL EXPORTS ====================
 // Equipment Management-Funktionen global verfügbar machen
@@ -1815,36 +1824,36 @@ async function approveEquipmentRequest(requestId, equipmentId) {
     if (!confirmed) {
         return;
     }
-    
+
     // Ask about deposit payment
     const depositPaid = await window.toast.confirm('Wurde der Pfand bezahlt?', 'Ja', 'Nein');
-    
+
     if (depositPaid === null) {
         // User cancelled
         return;
     }
-    
+
     const loadingId = window.loading ? window.loading.show('Anfrage wird genehmigt...') : null;
-    
+
     // Get equipment document
     const equipmentRef = window.db.collection('equipment').doc(equipmentId);
     const equipmentDoc = await equipmentRef.get();
-    
+
     if (!equipmentDoc.exists) {
       throw new Error('Equipment nicht gefunden');
     }
-    
+
     const equipmentData = equipmentDoc.data();
     const pendingRequests = equipmentData.pendingRequests || [];
-    
+
     // Find the request in pendingRequests array
     const requestIndex = pendingRequests.findIndex(req => req.id === requestId);
     if (requestIndex === -1) {
       throw new Error('Anfrage nicht gefunden');
     }
-    
+
     const requestData = pendingRequests[requestIndex];
-    
+
     // Update request status to given (approved and handed out)
     pendingRequests[requestIndex] = {
       ...requestData,
@@ -1856,7 +1865,7 @@ async function approveEquipmentRequest(requestId, equipmentId) {
       givenAt: new Date().toISOString(),
       depositPaid: depositPaid
     };
-    
+
     // Update equipment: approve request and mark as borrowed
     await equipmentRef.update({
       status: 'borrowed',
@@ -1866,22 +1875,22 @@ async function approveEquipmentRequest(requestId, equipmentId) {
       depositPaid: depositPaid,
       updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
     });
-    
+
     if (loadingId && window.loading) window.loading.hide(loadingId);
-    
+
     if (window.toast) {
       window.toast.success('Ausleihe-Anfrage genehmigt und Equipment ausgegeben');
     } else {
       alert('Ausleihe-Anfrage genehmigt und Equipment ausgegeben');
     }
-    
+
     // Update equipment requests badge
     updateEquipmentRequestsBadge();
-    
+
   } catch (error) {
     console.error('Error approving equipment request:', error);
     if (window.loading) window.loading.hideAll();
-    
+
     if (window.toast) {
       window.toast.error('Fehler beim Genehmigen der Anfrage: ' + error.message);
     } else {
@@ -1899,28 +1908,28 @@ async function rejectEquipmentRequest(requestId, equipmentId) {
     if (!confirmed) {
         return;
     }
-    
+
     const loadingId = window.loading ? window.loading.show('Anfrage wird abgelehnt...') : null;
-    
+
     // Get equipment document
     const equipmentRef = window.db.collection('equipment').doc(equipmentId);
     const equipmentDoc = await equipmentRef.get();
-    
+
     if (!equipmentDoc.exists) {
       throw new Error('Equipment nicht gefunden');
     }
-    
+
     const equipmentData = equipmentDoc.data();
     const pendingRequests = equipmentData.pendingRequests || [];
-    
+
     // Find the request in pendingRequests array
     const requestIndex = pendingRequests.findIndex(req => req.id === requestId);
     if (requestIndex === -1) {
       throw new Error('Anfrage nicht gefunden');
     }
-    
+
     const requestData = pendingRequests[requestIndex];
-    
+
     // Update request status to rejected
     pendingRequests[requestIndex] = {
       ...requestData,
@@ -1928,28 +1937,28 @@ async function rejectEquipmentRequest(requestId, equipmentId) {
       rejectedAt: new Date().toISOString(),
       rejectedBy: window.currentUser?.kennung || 'admin'
     };
-    
+
     // Update equipment: reject request
     await equipmentRef.update({
       pendingRequests: pendingRequests,
       updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
     });
-    
+
     if (loadingId && window.loading) window.loading.hide(loadingId);
-    
+
     if (window.toast) {
       window.toast.success('Ausleihe-Anfrage erfolgreich abgelehnt');
     } else {
       alert('Ausleihe-Anfrage erfolgreich abgelehnt');
     }
-    
+
     // Update equipment requests badge
     updateEquipmentRequestsBadge();
-    
+
   } catch (error) {
     console.error('Error rejecting equipment request:', error);
     if (window.loading) window.loading.hideAll();
-    
+
     if (window.toast) {
       window.toast.error('Fehler beim Ablehnen der Anfrage: ' + error.message);
     } else {
@@ -1962,12 +1971,12 @@ async function rejectEquipmentRequest(requestId, equipmentId) {
  * Duplicate equipment
  */
 async function duplicateEquipment(equipmentId) {
-    const equipmentItem = equipmentData.find(item => item.id === equipmentId);
+    const equipmentItem = equipment.find(item => item.id === equipmentId);
     if (!equipmentItem) {
         safeShowToast('Equipment nicht gefunden', 'error');
         return;
     }
-    
+
     // Create duplicate data
     const duplicateData = {
         name: `${equipmentItem.name} (Kopie)`,
@@ -1979,14 +1988,14 @@ async function duplicateEquipment(equipmentId) {
         status: 'available',
         createdAt: new Date()
     };
-    
+
     try {
         await window.db.collection('equipment').add(duplicateData);
         safeShowToast('Equipment erfolgreich dupliziert', 'success');
-        
+
         // Return to equipment overview instead of closing modal
         showEquipmentManager();
-        
+
     } catch (error) {
         console.error('Error duplicating equipment:', error);
         safeShowToast('Fehler beim Duplizieren', 'error');
@@ -2002,47 +2011,47 @@ async function duplicateEquipment(equipmentId) {
  * Confirm equipment return request
  */
 async function confirmEquipmentReturn(equipmentId) {
-    const equipmentItem = equipmentData.find(item => item.id === equipmentId);
+    const equipmentItem = equipment.find(item => item.id === equipmentId);
     if (!equipmentItem) {
         safeShowToast('Equipment nicht gefunden', 'error');
         return;
     }
-    
+
     // Show confirmation dialog
     const confirmed = await window.toast.confirm('Möchtest du die Rückgabe dieses Equipments bestätigen?');
     if (!confirmed) {
         return;
     }
-    
+
     try {
         // Get equipment document to find pending return request (unified system)
         const equipmentRef = window.db.collection('equipment').doc(equipmentId);
         const equipmentDoc = await equipmentRef.get();
-        
+
         if (!equipmentDoc.exists) {
             safeShowToast('Equipment nicht gefunden', 'error');
             return;
         }
-        
+
         const equipmentData = equipmentDoc.data();
         const pendingRequests = equipmentData.pendingRequests || [];
-        
+
         // Find pending return request in pendingRequests array
-        const returnRequest = pendingRequests.find(req => 
-            req.status === 'pending' && 
+        const returnRequest = pendingRequests.find(req =>
+            req.status === 'pending' &&
             req.type === 'return'
         );
-        
+
         if (!returnRequest) {
             safeShowToast('Keine Rückgabe-Anfrage für dieses Equipment gefunden', 'error');
             return;
         }
-        
+
         console.log('📝 Found return request:', returnRequest);
-        
+
         // Remove the return request from pendingRequests array since it's now confirmed
         const updatedRequests = pendingRequests.filter(req => req.id !== returnRequest.id);
-        
+
         // Also update the original request to mark it as returned
         const finalUpdatedRequests = updatedRequests.map(req => {
             if (req.id === returnRequest.originalRequestId) {
@@ -2056,7 +2065,7 @@ async function confirmEquipmentReturn(equipmentId) {
             }
             return req;
         });
-        
+
         // Update equipment status and pendingRequests
         const updateData = {
             status: 'available',
@@ -2067,19 +2076,19 @@ async function confirmEquipmentReturn(equipmentId) {
             returnedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
         };
-        
+
         // Reset deposit status when returning
         if (equipmentItem.requiresDeposit) {
             updateData.depositPaid = false;
         }
-        
+
         await equipmentRef.update(updateData);
-        
+
         safeShowToast('Rückgabe erfolgreich bestätigt', 'success');
-        
+
         // Update machine overview
         updateMachineOverview();
-        
+
     } catch (error) {
         console.error('Error confirming equipment return:', error);
         safeShowToast('Fehler bei der Bestätigung der Rückgabe', 'error');
@@ -2091,18 +2100,18 @@ async function confirmEquipmentReturn(equipmentId) {
  */
 function updateMachineOverview() {
     console.log('🔄 updateMachineOverview called');
-    
+
     // Get printer data from user services (this is the correct data source)
     const userPrinters = window.userPrinters || [];
-    
+
     if (userPrinters.length === 0) {
         console.log('❌ userPrinters array is empty - trying to load printer data...');
-        
+
         // Try to load printer data if not available
         if (typeof loadPrinterStatus === 'function') {
             loadPrinterStatus();
         }
-        
+
         // Set default values to 0
         const availableElement = document.getElementById('availableMachines');
         const inUseElement = document.getElementById('inUseMachines');
@@ -2110,42 +2119,42 @@ function updateMachineOverview() {
         const userAvailableElement = document.getElementById('userAvailableMachines');
         const userInUseElement = document.getElementById('userInUseMachines');
         const userMaintenanceElement = document.getElementById('userMaintenanceMachines');
-        
+
         if (availableElement) availableElement.textContent = '0';
         if (inUseElement) inUseElement.textContent = '0';
         if (maintenanceElement) maintenanceElement.textContent = '0';
         if (userAvailableElement) userAvailableElement.textContent = '0';
         if (userInUseElement) userInUseElement.textContent = '0';
         if (userMaintenanceElement) userMaintenanceElement.textContent = '0';
-        
+
         return;
     }
-    
+
     console.log('📊 Current userPrinters data:', userPrinters);
-    
+
     const available = userPrinters.filter(printer => printer.status === 'available').length;
     const inUse = userPrinters.filter(printer => printer.status === 'printing' || printer.status === 'in_use').length;
-    const maintenance = userPrinters.filter(printer => 
+    const maintenance = userPrinters.filter(printer =>
         printer.status === 'maintenance' || printer.status === 'broken'
     ).length;
-    
+
     console.log(`📊 Calculated counts: ${available} available, ${inUse} in use, ${maintenance} maintenance`);
-    
+
     // Update admin dashboard elements
     const availableElement = document.getElementById('availableMachines');
     const inUseElement = document.getElementById('inUseMachines');
     const maintenanceElement = document.getElementById('maintenanceMachines');
-    
+
     // Update user dashboard elements
     const userAvailableElement = document.getElementById('userAvailableMachines');
     const userInUseElement = document.getElementById('userInUseMachines');
     const userMaintenanceElement = document.getElementById('userMaintenanceMachines');
-    
+
     console.log('🔍 Found elements:', {
         admin: { available: !!availableElement, inUse: !!inUseElement, maintenance: !!maintenanceElement },
         user: { available: !!userAvailableElement, inUse: !!userInUseElement, maintenance: !!userMaintenanceElement }
     });
-    
+
     // Update admin elements
     if (availableElement) {
         availableElement.textContent = available;
@@ -2154,7 +2163,7 @@ function updateMachineOverview() {
             availableCircle.classList.toggle('empty', available === 0);
         }
     }
-    
+
     if (inUseElement) {
         inUseElement.textContent = inUse;
         const inUseCircle = inUseElement.closest('.status-circle');
@@ -2162,7 +2171,7 @@ function updateMachineOverview() {
             inUseCircle.classList.toggle('empty', inUse === 0);
         }
     }
-    
+
     if (maintenanceElement) {
         maintenanceElement.textContent = maintenance;
         const maintenanceCircle = maintenanceElement.closest('.status-circle');
@@ -2170,7 +2179,7 @@ function updateMachineOverview() {
             maintenanceCircle.classList.toggle('empty', maintenance === 0);
         }
     }
-    
+
     // Update user elements
     if (userAvailableElement) {
         userAvailableElement.textContent = available;
@@ -2179,7 +2188,7 @@ function updateMachineOverview() {
             userAvailableCircle.classList.toggle('empty', available === 0);
         }
     }
-    
+
     if (userInUseElement) {
         userInUseElement.textContent = inUse;
         const userInUseCircle = userInUseElement.closest('.status-circle');
@@ -2187,7 +2196,7 @@ function updateMachineOverview() {
             userInUseCircle.classList.toggle('empty', inUse === 0);
         }
     }
-    
+
     if (userMaintenanceElement) {
         userMaintenanceElement.textContent = maintenance;
         const userMaintenanceCircle = userMaintenanceElement.closest('.status-circle');
@@ -2195,7 +2204,7 @@ function updateMachineOverview() {
             userMaintenanceCircle.classList.toggle('empty', maintenance === 0);
         }
     }
-    
+
     console.log(`✅ Printer Overview Updated: ${available} available, ${inUse} in use, ${maintenance} maintenance (Wartung + Defekt)`);
 }
 
@@ -2272,32 +2281,32 @@ console.log("🔧 Available functions:", {
 async function cleanupEquipmentPendingRequests() {
     try {
         console.log('🧹 Starting pending requests cleanup...');
-        
+
         const equipmentSnapshot = await window.db.collection('equipment').get();
         let cleanedCount = 0;
-        
+
         for (const doc of equipmentSnapshot.docs) {
             const equipmentData = doc.data();
             const pendingRequests = equipmentData.pendingRequests || [];
-            
+
             // Group requests by user and type
             const userRequests = {};
             const requestsToKeep = [];
             let hasChanges = false;
-            
+
             for (const request of pendingRequests) {
                 const key = `${request.userKennung}_${request.type}`;
-                
+
                 if (!userRequests[key]) {
                     userRequests[key] = [];
                 }
                 userRequests[key].push(request);
             }
-            
+
             // For each user-type combination, keep only the most recent pending request
             for (const [key, requests] of Object.entries(userRequests)) {
                 const pendingRequests = requests.filter(req => req.status === 'pending');
-                
+
                 if (pendingRequests.length > 1) {
                     // Sort by creation date and keep only the most recent
                     pendingRequests.sort((a, b) => {
@@ -2305,17 +2314,17 @@ async function cleanupEquipmentPendingRequests() {
                         const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
                         return dateB - dateA;
                     });
-                    
+
                     // Keep only the most recent pending request
                     requestsToKeep.push(pendingRequests[0]);
-                    
+
                     // Mark all others as rejected
                     for (let i = 1; i < pendingRequests.length; i++) {
                         pendingRequests[i].status = 'rejected';
                         pendingRequests[i].rejectionReason = 'Automatisch abgelehnt - doppelte Anfrage';
                         requestsToKeep.push(pendingRequests[i]);
                     }
-                    
+
                     hasChanges = true;
                     cleanedCount += pendingRequests.length - 1;
                 } else {
@@ -2323,25 +2332,25 @@ async function cleanupEquipmentPendingRequests() {
                     requestsToKeep.push(...requests);
                 }
             }
-            
+
             // Update equipment document if changes were made
             if (hasChanges) {
                 await window.db.collection('equipment').doc(doc.id).update({
                     pendingRequests: requestsToKeep,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                
+
                 console.log(`✅ Cleaned up equipment ${equipmentData.name}: ${cleanedCount} duplicate requests removed`);
             }
         }
-        
+
         if (cleanedCount > 0) {
             console.log(`🧹 Cleanup completed: ${cleanedCount} duplicate requests removed`);
             safeShowToast(`Cleanup abgeschlossen: ${cleanedCount} doppelte Anfragen entfernt`, 'success');
         } else {
             console.log('✅ No duplicate requests found');
         }
-        
+
     } catch (error) {
         console.error('❌ Error during pending requests cleanup:', error);
         safeShowToast('Fehler beim Bereinigen der Anfragen', 'error');
@@ -2366,7 +2375,7 @@ function setupEquipmentEventListeners() {
     } else {
         console.log('⚠️ Equipment Manager button not found, will retry...');
     }
-    
+
     // Also handle notification items that might be dynamically created
     document.addEventListener('click', (e) => {
         const notificationItem = e.target.closest('.notification-item[data-action="showEquipmentManager"]');
@@ -2390,133 +2399,4 @@ document.addEventListener('DOMContentLoaded', setupEquipmentEventListeners);
 
 // And try after a delay to catch dynamically loaded content
 setTimeout(setupEquipmentEventListeners, 1000);
-setTimeout(setupEquipmentEventListeners, 2000); 
-
-/**
- * Test function to check equipment data and create sample data if needed
- */
-async function testEquipmentData() {
-    try {
-        console.log('🧪 Testing equipment data...');
-        
-        // Check if equipment collection exists and has data
-        const snapshot = await window.db.collection('equipment').limit(1).get();
-        
-        if (snapshot.empty) {
-            console.log('⚠️ Equipment collection is empty, creating sample data...');
-            
-            // Create sample equipment
-            const sampleEquipment = [
-                {
-                    name: 'Test Hardware 1',
-                    category: 'hardware',
-                    status: 'available',
-                    description: 'Test Hardware für Entwicklung',
-                    deposit: 0,
-                    location: 'Raum 101'
-                },
-                {
-                    name: 'Test Schlüssel 1',
-                    category: 'keys',
-                    status: 'available',
-                    description: 'Test Schlüssel für Entwicklung',
-                    deposit: 0,
-                    location: 'Raum 102'
-                },
-                {
-                    name: 'Test Buch 1',
-                    category: 'books',
-                    status: 'available',
-                    description: 'Test Buch für Entwicklung',
-                    deposit: 0,
-                    location: 'Bibliothek'
-                }
-            ];
-            
-            // Add sample equipment to Firestore
-            for (const item of sampleEquipment) {
-                await window.db.collection('equipment').add({
-                    ...item,
-                    createdAt: new Date(),
-                    updatedAt: new Date()
-                });
-            }
-            
-            console.log('✅ Sample equipment created successfully');
-            safeShowToast('Test-Equipment wurde erstellt', 'success');
-            
-        } else {
-            console.log('✅ Equipment collection has data:', snapshot.size, 'items');
-        }
-        
-        // Reload equipment
-        loadEquipment();
-        
-    } catch (error) {
-        console.error('❌ Error testing equipment data:', error);
-        safeShowToast('Fehler beim Testen der Equipment-Daten', 'error');
-    }
-}
-
-/**
- * Show equipment manager with better error handling
- */
-async function showEquipmentManager() {
-    try {
-        console.log('🔧 Opening equipment manager...');
-        
-        // Test equipment data first
-        await testEquipmentData();
-        
-        // Show modal
-        const modal = document.getElementById('modal');
-        if (modal) {
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>Equipment-Verwaltung</h2>
-                        <button class="close-btn" onclick="closeEquipmentManager()">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="equipment-controls">
-                            <div class="category-tabs">
-                                <button class="category-tab active" onclick="showEquipmentCategory('hardware')">Hardware</button>
-                                <button class="category-tab" onclick="showEquipmentCategory('keys')">Schlüssel</button>
-                                <button class="category-tab" onclick="showEquipmentCategory('books')">Bücher</button>
-                            </div>
-                            <div class="equipment-actions">
-                                <button class="btn btn-primary" onclick="showAddEquipmentForm()">Equipment hinzufügen</button>
-                                <div class="search-box">
-                                    <input type="text" id="equipmentSearch" placeholder="Equipment suchen..." onkeyup="searchEquipment()">
-                                    <button onclick="clearEquipmentSearch()">✕</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="equipmentList" class="equipment-list">
-                            <div class="loading">Lade Equipment...</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            modal.classList.add('active');
-            
-            // Setup listeners
-            setupEquipmentListener();
-            setupEquipmentRequestsListener();
-            
-            // Show default category
-            showEquipmentCategory('hardware');
-            
-            console.log('✅ Equipment manager opened successfully');
-            
-        } else {
-            console.error('❌ Modal element not found');
-            safeShowToast('Fehler beim Öffnen des Equipment-Managers', 'error');
-        }
-        
-    } catch (error) {
-        console.error('❌ Error opening equipment manager:', error);
-        safeShowToast('Fehler beim Öffnen des Equipment-Managers', 'error');
-    }
-}
+setTimeout(setupEquipmentEventListeners, 2000);

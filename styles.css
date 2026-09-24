@@ -1,10 +1,10 @@
 /*
  * ===== MODULAR CSS STRUCTURE =====
  * PelletTrackr Responsive Design System
- * 
+ *
  * Modularisiert am 9. Juli 2025
  * Alle Buttons mit scharfen Kanten (border-radius: 0)
- * 
+ *
  * Module Overview:
  * - base.css:       Reset, Body, Animations
  * - layout.css:     Container, Header, Dashboard
@@ -30,6 +30,10 @@
 @import url('./styles/footer.css');
 @import url('./styles/utilities.css');
 @import url('./styles/toast.css');
+@import url('./styles/knowledge-base.css');
+@import url('./styles/safety-training.css');
+@import url('./styles/ui-polish.css');
+@import url('./styles/dialog-layout.css');
 
 /* ==================== CONFIRMATION DIALOG ==================== */
 .confirmation-overlay {
@@ -145,15 +149,15 @@
         width: 95%;
         margin: 20px;
     }
-    
+
     .confirmation-content {
         padding: 20px;
     }
-    
+
     .confirmation-buttons {
         flex-direction: column;
     }
-    
+
     .confirmation-buttons .btn {
         width: 100%;
         margin: 4px 0;
@@ -321,7 +325,7 @@
     margin-top: 12px;
 }
 
-/* 
+/*
  * OLD STATUS BUTTON STYLES REMOVED - Now handled by card-design.css
  * The new printer status buttons use .printer-card .printer-status-grid .status-btn
  * which provides better specificity and prevents conflicts
@@ -389,17 +393,17 @@
         flex-direction: column;
         gap: 12px;
     }
-    
+
     .printer-status {
         min-width: auto;
         text-align: left;
         width: 100%;
     }
-    
+
     .status-buttons {
         justify-content: flex-start;
     }
-    
+
     /* Status button styles now handled by card-design.css */
 }
 
@@ -713,25 +717,25 @@
         gap: 15px;
         align-items: stretch;
     }
-    
+
     .printer-info {
         text-align: center;
     }
-    
+
     .status-grid {
         width: 100%;
         grid-template-columns: repeat(2, 1fr);
     }
-    
+
     .status-item {
         min-height: 50px;
         padding: 10px;
     }
-    
+
     .status-number {
         font-size: 12px;
     }
-    
+
     .status-label {
         font-size: 11px;
     }
@@ -915,27 +919,27 @@
         flex-direction: column;
         gap: 12px;
     }
-    
+
     .shopping-priority {
         min-width: auto;
         align-self: flex-start;
     }
-    
+
     .shopping-item-header {
         flex-direction: column;
         gap: 8px;
     }
-    
+
     .shopping-item-actions {
         flex-direction: row;
         min-width: auto;
     }
-    
+
     .detail-row {
         flex-direction: column;
         gap: 2px;
     }
-    
+
     .detail-label {
         min-width: auto;
         font-size: 14px;
@@ -1202,20 +1206,20 @@
         align-items: flex-start;
         gap: 10px;
     }
-    
+
     .order-badges {
         flex-wrap: wrap;
     }
-    
+
     .order-card-actions {
         flex-direction: column;
     }
-    
+
     .order-tabs {
         flex-direction: column;
         gap: 2px;
     }
-    
+
     .order-tabs .tab-btn {
         border-radius: 0;
         justify-content: center;

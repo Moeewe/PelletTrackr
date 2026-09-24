@@ -3,27 +3,31 @@
 
 function showUserManager() {
   if (!window.checkAdminAccess()) return;
+  document.getElementById('userManager').style.display = 'flex';
   document.getElementById('userManager').classList.add('active');
+  window.prepareDialog?.(document.getElementById('userManager'));
   loadUsersForManagement();
 }
 
 function closeUserManager() {
   document.getElementById('userManager').classList.remove('active');
+  document.getElementById('userManager').style.display='none';
+  window.restoreDialogFocus?.();
 }
 
 async function loadUsersForManagement() {
   try {
     console.log("🔄 Lade Benutzer für Verwaltung...");
-    
+
     // Check if Firebase is available
     if (!window.db) {
       console.error("❌ Firebase nicht verfügbar beim Laden der Benutzer");
       document.getElementById("usersTable").innerHTML = '<p>Datenbankverbindung nicht verfügbar. Bitte laden Sie die Seite neu.</p>';
       return;
     }
-    
+
     console.log("✅ Firebase verfügbar, starte Benutzerladevorgang...");
-    
+
     // 1. Benutzerinformationen aus users-Sammlung laden (Primärquelle)
     console.log("🔍 Versuche users-Sammlung zu laden...");
     const usersSnapshot = await window.safeFirebaseOp(
@@ -31,17 +35,21 @@ async function loadUsersForManagement() {
       3 // Max 3 retry attempts
     );
     const usersData = new Map();
-    
+
     usersSnapshot.forEach(doc => {
       const userData = doc.data();
-      usersData.set(userData.kennung, {
-        docId: doc.id,
-        ...userData
-      });
+      // Support both old (kennung) and new (email) systems
+      const identifier = userData.email || userData.kennung;
+      if (identifier) {
+        usersData.set(identifier, {
+          docId: doc.id,
+          ...userData
+        });
+      }
     });
-    
+
     console.log(`📊 Users Collection: ${usersData.size} registrierte Benutzer gefunden`);
-    
+
     // 2. Alle Einträge laden, um Statistiken zu berechnen
     console.log("🔍 Versuche entries-Sammlung zu laden...");
     const entriesSnapshot = await window.safeFirebaseOp(
@@ -49,34 +57,38 @@ async function loadUsersForManagement() {
       3 // Max 3 retry attempts
     );
     const entriesData = new Map();
-    
+
     entriesSnapshot.forEach(doc => {
       const entry = doc.data();
-      if (!entriesData.has(entry.kennung)) {
-        entriesData.set(entry.kennung, []);
+      // Support both old (kennung) and new (email) systems
+      const identifier = entry.email || entry.kennung;
+      if (identifier) {
+        if (!entriesData.has(identifier)) {
+          entriesData.set(identifier, []);
+        }
+        entriesData.get(identifier).push({
+          id: doc.id,
+          ...entry
+        });
       }
-      entriesData.get(entry.kennung).push({
-        id: doc.id,
-        ...entry
-      });
     });
-    
+
     console.log(`📊 Entries Collection: ${entriesSnapshot.size} Einträge für ${entriesData.size} verschiedene Benutzer gefunden`);
-    
+
     // 3. Benutzer-Daten zusammenführen - NUR registrierte Benutzer
     const userMap = new Map();
-    
+
     // Nur registrierte Benutzer aus users-Collection verarbeiten
-    usersData.forEach((userData, kennung) => {
-      const entries = entriesData.get(kennung) || [];
-      
+    usersData.forEach((userData, identifier) => {
+      const entries = entriesData.get(identifier) || [];
+
       // Statistiken berechnen
       let totalCost = 0;
       let paidAmount = 0;
       let unpaidAmount = 0;
       let firstEntry = null;
       let lastEntry = null;
-      
+
       entries.forEach(entry => {
         totalCost += entry.totalCost || 0;
         if (entry.paid || entry.isPaid) {
@@ -84,314 +96,113 @@ async function loadUsersForManagement() {
         } else {
           unpaidAmount += entry.totalCost || 0;
         }
-        
+
         const entryDate = entry.timestamp ? (entry.timestamp.toDate ? entry.timestamp.toDate() : new Date(entry.timestamp)) : new Date();
         if (!firstEntry || entryDate < firstEntry) firstEntry = entryDate;
         if (!lastEntry || entryDate > lastEntry) lastEntry = entryDate;
       });
-      
-      userMap.set(kennung, {
+
+      // Support both old and new user structures
+      const userInfo = {
         docId: userData.docId,
-        name: userData.name,
-        kennung: userData.kennung,
-        email: userData.email || `${userData.kennung}@fh-muenster.de`,
+        name: userData.name || userData.displayName || 'Unbekannt',
+        kennung: userData.kennung || userData.email || identifier,
+        email: userData.email || (userData.kennung ? `${userData.kennung}@fh-muenster.de` : ''),
         phone: userData.phone || '',
         isAdmin: userData.isAdmin || false,
         createdAt: userData.createdAt,
         lastLogin: userData.lastLogin,
-        entries: entries,
+        entries: entries, // Add entries array
+        totalEntries: entries.length,
         totalCost: totalCost,
         paidAmount: paidAmount,
         unpaidAmount: unpaidAmount,
         firstEntry: firstEntry,
-        lastEntry: lastEntry
-      });
+        lastEntry: lastEntry,
+        // Support legacy fields
+        legacyKennung: userData.legacyKennung,
+        linkedWithLegacy: userData.linkedWithLegacy || false
+      };
+
+      userMap.set(identifier, userInfo);
     });
-    
-    // 4. Warnung für Legacy-Daten anzeigen, aber nicht zu userMap hinzufügen
-    const legacyUsers = [];
-    entriesData.forEach((entries, kennung) => {
-      if (!userMap.has(kennung)) {
-        legacyUsers.push({
-          kennung: kennung,
-          entriesCount: entries.length,
-          firstEntryName: entries[0]?.name || 'Unbekannt'
-        });
-      }
-    });
-    
-    if (legacyUsers.length > 0) {
-      console.warn(`⚠️ ${legacyUsers.length} Legacy-Benutzer mit Einträgen aber ohne users-Eintrag gefunden:`);
-      legacyUsers.forEach(legacy => {
-        console.warn(`  - ${legacy.kennung} (${legacy.entriesCount} Einträge, Name: ${legacy.firstEntryName})`);
-      });
-    }
-    
-    const users = Array.from(userMap.values());
-    
-    // Nach letztem Login sortieren (neueste zuerst)
-    users.sort((a, b) => {
-      const aDate = a.lastLogin || a.lastEntry || a.createdAt || new Date(0);
-      const bDate = b.lastLogin || b.lastEntry || b.createdAt || new Date(0);
-      return bDate - aDate;
-    });
-    
-    // Global speichern für Suche und Sortierung
-    window.allUsers = users;
-    
-    console.log(`✅ ${users.length} registrierte Benutzer geladen (${legacyUsers.length} Legacy-Benutzer ignoriert)`);
-    console.log('🔍 User Data Sample:', users.slice(0, 2)); // Debug: Show first 2 users
-    
-    // Debug: Check for phone numbers
-    const usersWithPhone = users.filter(user => user.phone && user.phone.trim() !== '');
-    console.log(`📱 ${usersWithPhone.length} Benutzer mit Handynummer:`, usersWithPhone.map(u => ({ kennung: u.kennung, phone: u.phone })));
-    
-    // Debug: Show all users and their phone data
-    console.log('🔍 Alle Benutzer mit Telefonnummer-Daten:', users.map(u => ({
-      kennung: u.kennung,
-      name: u.name,
-      phone: u.phone,
-      phoneType: typeof u.phone,
-      phoneLength: u.phone ? u.phone.length : 0
-    })));
-    
-    renderUsersTable(users);
-    
+
+    // Convert to array and sort by name
+    const usersArray = Array.from(userMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+
+    // Store in global variable
+    window.allUsers = usersArray;
+
+    console.log(`✅ ${usersArray.length} Benutzer erfolgreich geladen`);
+
+    // Render the table
+    searchUsers();
+
   } catch (error) {
     console.error("❌ Fehler beim Laden der Benutzer:", error);
-    let errorMessage = 'Unbekannter Fehler beim Laden der Benutzer.';
-    
-    if (error.code === 'permission-denied') {
-      errorMessage = 'Zugriff auf die Benutzerdaten verweigert. Bitte überprüfen Sie Ihre Berechtigung.';
-    } else if (error.code === 'unavailable') {
-      errorMessage = 'Datenbankverbindung unterbrochen. Bitte versuchen Sie es später erneut.';
-    } else if (error.message.includes('users')) {
-      errorMessage = 'Fehler beim Laden der Benutzer-Sammlung. Möglicherweise existiert die Sammlung noch nicht.';
-    } else if (error.message.includes('entries')) {
-      errorMessage = 'Fehler beim Laden der Einträge-Sammlung.';
-    }
-    
     document.getElementById("usersTable").innerHTML = `
       <div class="error-message">
-        <p><strong>Fehler:</strong> ${errorMessage}</p>
-        <p><strong>Details:</strong> ${error.message}</p>
-        <button class="btn btn-primary" onclick="retryUserLoad()">Erneut versuchen</button>
+        <p>Fehler beim Laden der Benutzerdaten:</p>
+        <p>${error.message}</p>
+        <button class="btn btn-primary" onclick="loadUsersForManagement()">Erneut versuchen</button>
       </div>
     `;
   }
 }
 
-function renderUsersTable(users) {
-  const tableDiv = document.getElementById("usersTable");
-  
-  // Use window.allUsers if no users parameter provided
-  if (!users && window.allUsers) {
-    users = window.allUsers;
-  }
-  
-  if (!users || users.length === 0) {
-    tableDiv.innerHTML = '<p>Keine Benutzer gefunden.</p>';
+// Overview stays compact; contact, billing details and destructive actions expand on demand.
+let visibleManagedUsers = [];
+const userEscape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function managedUserAction(index, action, checked) {
+  const user = visibleManagedUsers[index];
+  if (!window.checkAdminAccess() || !user) return;
+  if (!user.kennung || window.allUsers.filter(u => u.kennung === user.kennung).length !== 1) {
+    window.toast.warning('Dieses Profil benötigt zuerst eine eindeutige Kontozuordnung. Es werden keine Änderungen vorgenommen.');
     return;
   }
-  
-  // Container mit Tabelle UND Cards erstellen
-  let containerHtml = `
-    <div class="entries-container">
-      <!-- Desktop Tabelle -->
-      <div class="data-table">
-        <table>
-          <thead>
-            <tr>
-              <th onclick="sortUsersBy('name')">Name</th>
-              <th onclick="sortUsersBy('kennung')">FH-Kennung</th>
-              <th onclick="sortUsersBy('email')">E-Mail</th>
-              <th onclick="sortUsersBy('phone')">Handynummer</th>
-              <th onclick="sortUsersBy('isAdmin')">Admin</th>
-              <th onclick="sortUsersBy('entries')">Drucke</th>
-              <th onclick="sortUsersBy('totalCost')">Gesamtkosten</th>
-              <th onclick="sortUsersBy('paidAmount')">Bezahlt</th>
-              <th onclick="sortUsersBy('unpaidAmount')">Offen</th>
-              <th onclick="sortUsersBy('status')">Status</th>
-              <th onclick="sortUsersBy('lastEntry')">Letzter Druck</th>
-              <th>Aktionen</th>
-            </tr>
-          </thead>
-          <tbody>
-  `;
-  
-  users.forEach(user => {
-    const lastEntryDate = user.lastEntry ? user.lastEntry.toLocaleDateString('de-DE') : 'Keine Drucke';
-    const email = user.email || `${user.kennung}@fh-muenster.de`;
-    
-    // Admin Checkbox
-    const adminCheckbox = `
-      <label class="admin-checkbox">
-        <input type="checkbox" ${user.isAdmin ? 'checked' : ''} 
-               onchange="toggleAdminStatus('${user.kennung}', this.checked)">
-      </label>
-    `;
-    
-    // Status Badge für Desktop-Tabelle - Nutzer ohne Drucke als "aktiv" markieren
-    let statusBadge;
-    if (user.entries.length === 0) {
-      statusBadge = '<span class="entry-status-badge status-new">NEU</span>';
-    } else if (user.unpaidAmount > 0) {
-      statusBadge = '<span class="entry-status-badge status-unpaid">OFFEN</span>';
-    } else {
-      statusBadge = '<span class="entry-status-badge status-paid">BEZAHLT</span>';
-    }
-    
-    // Tabellen-Zeile für Desktop
-    containerHtml += `
-      <tr>
-        <td><span class="cell-value">${user.name}</span></td>
-        <td><span class="cell-value">${user.kennung}</span></td>
-        <td><span class="cell-value">${email}</span></td>
-        <td><span class="cell-value">${user.phone && user.phone.trim() !== '' ? user.phone : '-'}</span></td>
-        <td>${adminCheckbox}</td>
-        <td><span class="cell-value">${user.entries.length}</span></td>
-        <td><span class="cell-value"><strong>${window.formatCurrency(user.totalCost)}</strong></span></td>
-        <td><span class="cell-value">${window.formatCurrency(user.paidAmount)}</span></td>
-        <td><span class="cell-value">${window.formatCurrency(user.unpaidAmount)}</span></td>
-        <td>${statusBadge}</td>
-        <td><span class="cell-value">${lastEntryDate}</span></td>
-        <td class="actions">
-          <div class="entry-actions">
-            ${ButtonFactory.editUser(user.kennung)}
-            ${user.unpaidAmount > 0 ? ButtonFactory.sendReminder(user.kennung) : ''}
-            ${user.unpaidAmount > 0 ? ButtonFactory.sendUrgentReminder(user.kennung) : ''}
-            ${ButtonFactory.deleteUser(user.kennung)}
-          </div>
-        </td>
-      </tr>
-    `;
-  });
-  
-  containerHtml += `
-          </tbody>
-        </table>
-      </div>
-      
-      <!-- Mobile Cards -->
-      <div class="entry-cards">
-  `;
-
-  // Card-Struktur für Mobile
-  users.forEach(user => {
-    const lastEntryDate = user.lastEntry ? user.lastEntry.toLocaleDateString('de-DE') : 'Keine Drucke';
-    const email = user.email || `${user.kennung}@fh-muenster.de`;
-    
-    // Admin Checkbox für Mobile
-    const adminCheckbox = `
-      <label class="admin-checkbox">
-        <input type="checkbox" ${user.isAdmin ? 'checked' : ''} 
-               onchange="toggleAdminStatus('${user.kennung}', this.checked)">
-
-      </label>
-    `;
-    
-    // Status Badge basierend auf offenen Beträgen und Entry-Status
-    let statusBadgeClass, statusBadgeText;
-    if (user.entries.length === 0) {
-      statusBadgeClass = 'status-new';
-      statusBadgeText = 'NEU';
-    } else if (user.unpaidAmount > 0) {
-      statusBadgeClass = 'status-unpaid';
-      statusBadgeText = 'OFFEN';
-    } else {
-      statusBadgeClass = 'status-paid';
-      statusBadgeText = 'BEZAHLT';
-    }
-    
-    containerHtml += `
-      <div class="entry-card">
-        <!-- Card Header mit User-Name und Status -->
-        <div class="entry-card-header">
-          <h3 class="entry-job-title">${user.name}</h3>
-          <span class="entry-status-badge ${statusBadgeClass}">${statusBadgeText}</span>
-        </div>
-        
-        <!-- Card Body mit Detail-Zeilen -->
-        <div class="entry-card-body">
-          <div class="entry-detail-row">
-            <span class="entry-detail-label">FH-Kennung</span>
-            <span class="entry-detail-value">${user.kennung}</span>
-          </div>
-          
-          <div class="entry-detail-row">
-            <span class="entry-detail-label">E-Mail</span>
-            <span class="entry-detail-value">${email}</span>
-          </div>
-          
-          <div class="entry-detail-row">
-            <span class="entry-detail-label">Handynummer</span>
-            <span class="entry-detail-value">${user.phone && user.phone.trim() !== '' ? user.phone : '-'}</span>
-          </div>
-          
-          <div class="entry-detail-row">
-            <span class="entry-detail-label">Admin</span>
-            <span class="entry-detail-value">${adminCheckbox}</span>
-          </div>
-          
-          <div class="entry-detail-row">
-            <span class="entry-detail-label">Anzahl Drucke</span>
-            <span class="entry-detail-value">${user.entries.length}</span>
-          </div>
-          
-          <div class="entry-detail-row">
-            <span class="entry-detail-label">Gesamtkosten</span>
-            <span class="entry-detail-value cost-value">${window.formatCurrency(user.totalCost)}</span>
-          </div>
-          
-          <div class="entry-detail-row">
-            <span class="entry-detail-label">Bezahlt</span>
-            <span class="entry-detail-value">${window.formatCurrency(user.paidAmount)}</span>
-          </div>
-          
-          <div class="entry-detail-row">
-            <span class="entry-detail-label">Offen</span>
-            <span class="entry-detail-value ${user.unpaidAmount > 0 ? 'cost-value' : ''}">${window.formatCurrency(user.unpaidAmount)}</span>
-          </div>
-          
-          <div class="entry-detail-row">
-            <span class="entry-detail-label">Letzter Druck</span>
-            <span class="entry-detail-value">${lastEntryDate}</span>
-          </div>
-        </div>
-        
-        <!-- Card Footer mit Admin-Buttons -->
-        <div class="entry-card-footer">
-          ${ButtonFactory.editUser(user.kennung)}
-          ${user.unpaidAmount > 0 ? ButtonFactory.sendReminder(user.kennung) : ''}
-          ${user.unpaidAmount > 0 ? ButtonFactory.sendUrgentReminder(user.kennung) : ''}
-          ${ButtonFactory.deleteUser(user.kennung)}
-        </div>
-      </div>
-    `;
-  });
-  
-  containerHtml += `
-      </div>
-    </div>
-  `;
-  
-  tableDiv.innerHTML = containerHtml;
+  const actions = {edit:editUser, remove:deleteUser, reminder:sendPaymentReminder, urgent:sendUrgentReminder, admin:toggleAdminStatus};
+  if (actions[action]) actions[action](user.kennung, checked);
+}
+function renderUsersTable(users) {
+  const tableDiv = document.getElementById('usersTable');
+  visibleManagedUsers = users || window.allUsers || [];
+  const money = value => window.formatCurrency ? window.formatCurrency(Number(value)||0) : (Number(value)||0).toFixed(2)+' €';
+  if (!visibleManagedUsers.length) {
+    tableDiv.innerHTML='<div class="entry-empty-state"><h3>Keine Personen gefunden</h3><p>Bitte die Suche anpassen oder eine Person hinzufügen.</p></div>';
+    return;
+  }
+  tableDiv.innerHTML='<p class="user-list-count">'+visibleManagedUsers.length+' Personen</p><div class="managed-user-list">'+visibleManagedUsers.map((u,i)=>{
+    const count=u.entries?.length||0;
+    const button=(label,action,kind='secondary')=>'<button type="button" class="btn btn-'+kind+'" onclick="managedUserAction('+i+',\''+action+'\')">'+label+'</button>';
+    return '<article class="managed-user"><div class="managed-user-overview"><div class="managed-user-identity"><h3>'+userEscape(u.name||'Name nicht hinterlegt')+'</h3><p>'+userEscape(u.email||u.kennung||'Kontaktdaten fehlen')+'</p><span class="user-role">'+(u.isAdmin?'Administrator':'Nutzer')+'</span></div>'+
+      '<div class="managed-user-balance"><span>'+count+' Aufträge</span><strong>'+money(u.unpaidAmount)+' offen</strong></div>'+
+      '<div>'+button('Bearbeiten','edit')+'</div></div>'+
+      '<details class="managed-user-details"><summary>Kontaktdaten, Abrechnung & Aktionen</summary><dl>'+
+      '<div><dt>FH-Kennung</dt><dd>'+userEscape(u.kennung||'Nicht zugeordnet')+'</dd></div>'+
+      '<div><dt>E-Mail</dt><dd>'+userEscape(u.email||'Nicht hinterlegt')+'</dd></div>'+
+      '<div><dt>Telefon</dt><dd>'+userEscape(u.phone||'Nicht hinterlegt')+'</dd></div>'+
+      '<div><dt>Gesamtkosten</dt><dd>'+money(u.totalCost)+'</dd></div>'+
+      '<div><dt>Bezahlt</dt><dd>'+money(u.paidAmount)+'</dd></div>'+
+      '<div><dt>Letzter Druck</dt><dd>'+userEscape(u.lastEntry?.toLocaleDateString('de-DE')||'Noch kein Druck')+'</dd></div></dl>'+
+      '<label class="managed-user-admin"><input type="checkbox" '+(u.isAdmin?'checked':'')+' onchange="managedUserAction('+i+',\'admin\',this.checked)"> Administratorrechte</label>'+
+      '<div class="safety-actions">'+(u.unpaidAmount>0?button('Zahlungserinnerung','reminder')+button('Dringende Erinnerung','urgent'):'')+button('Nutzer löschen','remove','danger')+'</div></details></article>';
+  }).join('')+'</div>';
 }
 
 // ==================== SORTING & SEARCHING ====================
 
 function sortUsersBy(field) {
   if (!window.allUsers) return;
-  
+
   // Toggle sort direction
   if (!window.userSortState) window.userSortState = {};
   const currentDirection = window.userSortState[field] || 'asc';
   const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
   window.userSortState[field] = newDirection;
-  
+
   const sortedUsers = [...window.allUsers].sort((a, b) => {
     let aVal, bVal;
-    
+
     switch(field) {
       case 'name':
         aVal = a.name.toLowerCase();
@@ -410,8 +221,8 @@ function sortUsersBy(field) {
         bVal = b.isAdmin ? 1 : 0;
         break;
       case 'entries':
-        aVal = a.entries.length;
-        bVal = b.entries.length;
+        aVal = (a.entries || []).length;
+        bVal = (b.entries || []).length;
         break;
       case 'totalCost':
         aVal = a.totalCost;
@@ -432,14 +243,14 @@ function sortUsersBy(field) {
       default:
         return 0;
     }
-    
+
     if (newDirection === 'asc') {
       return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
     } else {
       return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
     }
   });
-  
+
   renderUsersTable(sortedUsers);
 }
 
@@ -452,14 +263,22 @@ function searchUsers() {
     const email = user.email || `${user.kennung || ''}@fh-muenster.de`;
     const userName = user.name || '';
     const userKennung = user.kennung || '';
-    
+
     return userName.toLowerCase().includes(searchTerm) ||
            userKennung.toLowerCase().includes(searchTerm) ||
            email.toLowerCase().includes(searchTerm);
   });
 
+  const [sort,direction] = (document.getElementById('userManagerSortSelect')?.value || 'name-asc').split('-');
+  const field = {revenue:'totalCost',entries:'entries'}[sort] || sort;
+  filteredUsers.sort((a,b)=>{
+    const av=field==='entries'?(a.entries||[]).length:a[field]??'';
+    const bv=field==='entries'?(b.entries||[]).length:b[field]??'';
+    return (typeof av==='number' ? av-bv : String(av).localeCompare(String(bv),'de'))*(direction==='desc'?-1:1);
+  });
   renderUsersTable(filteredUsers);
 }
+function sortUsers() { searchUsers(); }
 
 // ==================== ADMIN STATUS TOGGLE ====================
 
@@ -473,28 +292,28 @@ async function toggleAdminStatus(kennung, isAdmin) {
       toast.error('Benutzer nicht gefunden');
       return;
     }
-    
+
     // Update in database
     await window.db.collection('users').doc(user.docId).update({
       isAdmin: isAdmin,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    
+
     // Update local data
     user.isAdmin = isAdmin;
-    
+
     // Update checkbox label
     const checkboxLabel = document.querySelector(`input[onchange*="'${kennung}'"]`).nextElementSibling;
     if (checkboxLabel) {
       checkboxLabel.textContent = isAdmin ? 'Admin' : 'User';
     }
-    
+
     toast.success(`${user.name} ${isAdmin ? 'als Admin' : 'als User'} markiert`);
-    
+
   } catch (error) {
     console.error('Error toggling admin status:', error);
     toast.error('Fehler beim Aktualisieren des Admin-Status');
-    
+
     // Revert checkbox state on error
     const checkbox = document.querySelector(`input[onchange*="'${kennung}'"]`);
     if (checkbox) {
@@ -511,7 +330,7 @@ function showUserDetails(kennung) {
     window.toast.error('Benutzer nicht gefunden!');
     return;
   }
-  
+
   const modalHtml = `
     <div class="modal-header">
       <h2>${user.name}</h2>
@@ -524,46 +343,46 @@ function showUserDetails(kennung) {
             <span class="detail-label">FH-KENNUNG</span>
             <span class="detail-value">${user.kennung}</span>
           </div>
-          
+
           <div class="detail-row">
-            <span class="detail-label">ERSTER DRUCK</span>
+            <span class="detail-label">ERSTER AUFTRAG</span>
             <span class="detail-value">${user.firstEntry.toLocaleDateString('de-DE')}</span>
           </div>
-          
+
           <div class="detail-row">
-            <span class="detail-label">LETZTER DRUCK</span>
-            <span class="detail-value">${user.lastEntry.toLocaleDateString('de-DE')}</span>
+            <span class="detail-label">LETZTER AUFTRAG</span>
+            <span class="detail-value">${user.lastEntry ? user.lastEntry.toLocaleDateString('de-DE') : 'Keine Aufträge'}</span>
           </div>
-          
+
           <div class="detail-row">
-            <span class="detail-label">ANZAHL DRUCKE</span>
-            <span class="detail-value">${user.entries.length}</span>
+            <span class="detail-label">ANZAHL AUFTRÄGE</span>
+            <span class="detail-value">${(user.entries || []).length}</span>
           </div>
-          
+
           <div class="detail-row highlight-total">
             <span class="detail-label">GESAMTKOSTEN:</span>
-            <span class="detail-value">${window.formatCurrency(user.totalCost)}</span>
+            <span class="detail-value">${window.formatCurrency ? window.formatCurrency(user.totalCost) : (user.totalCost || 0).toFixed(2)}</span>
           </div>
-          
+
           <div class="detail-row">
             <span class="detail-label">BEZAHLT</span>
-            <span class="detail-value">${window.formatCurrency(user.paidAmount)}</span>
+            <span class="detail-value">${window.formatCurrency ? window.formatCurrency(user.paidAmount) : (user.paidAmount || 0).toFixed(2)}</span>
           </div>
-          
+
           <div class="detail-row">
             <span class="detail-label">OFFEN</span>
-            <span class="detail-value">${window.formatCurrency(user.unpaidAmount)}</span>
+            <span class="detail-value">${window.formatCurrency ? window.formatCurrency(user.unpaidAmount) : (user.unpaidAmount || 0).toFixed(2)}</span>
           </div>
         </div>
         <div class="card-footer">
           <div class="button-group">
-            ${ButtonFactory.closeModal()}
+            ${ButtonFactory.closeModal ? ButtonFactory.closeModal() : '<button class="btn btn-secondary" onclick="closeUserManager()">Schließen</button>'}
           </div>
         </div>
       </div>
     </div>
   `;
-  
+
   window.showModalWithContent(modalHtml);
 }
 
@@ -573,16 +392,16 @@ function sendPaymentReminder(kennung) {
     window.toast.error('Benutzer nicht gefunden!');
     return;
   }
-  
+
   if (user.unpaidAmount <= 0) {
     window.toast.info('Dieser Benutzer hat keine offenen Beträge.');
     return;
   }
-  
+
   const subject = encodeURIComponent(`Zahlungserinnerung - FGF 3D-Druck Service | ${user.name}`);
-  const openEntries = user.entries.filter(e => !(e.paid || e.isPaid));
+  const openEntries = (user.entries || []).filter(e => !(e.paid || e.isPaid));
   const currentDate = new Date().toLocaleDateString('de-DE');
-  
+
   // Professionelle E-Mail Vorlage im Zahlungsnachweis-Stil
   const body = encodeURIComponent(`Sehr geehrte/r ${user.name},
 
@@ -603,31 +422,31 @@ ${openEntries.map((entry, index) => {
   const jobName = entry.jobName || '3D-Druck Auftrag';
   const material = entry.material || 'Material';
   const amount = entry.materialMenge ? `${entry.materialMenge.toFixed(2)} kg` : 'N/A';
-  
+
   return `${index + 1}. ${jobName}
    Datum: ${date}
    Material: ${material} (${amount})
-   Betrag: ${window.formatCurrency(entry.totalCost)}`;
+   Betrag: ${window.formatCurrency ? window.formatCurrency(entry.totalCost) : (entry.totalCost || 0).toFixed(2)}`;
 }).join('\n\n')}
 
 ─────────────────────────────────────────────────────────
 ZUSAMMENFASSUNG
 ─────────────────────────────────────────────────────────
 
-Anzahl offener Drucke: ${openEntries.length}
-Bereits bezahlt: ${window.formatCurrency(user.paidAmount)}
+Anzahl offener Aufträge: ${openEntries.length}
+Bereits bezahlt: ${window.formatCurrency ? window.formatCurrency(user.paidAmount) : (user.paidAmount || 0).toFixed(2)}
 
-GESAMTBETRAG OFFEN: ${window.formatCurrency(user.unpaidAmount)}
+GESAMTBETRAG OFFEN: ${window.formatCurrency ? window.formatCurrency(user.unpaidAmount) : (user.unpaidAmount || 0).toFixed(2)}
 
 ═════════════════════════════════════════════════════════
 ZAHLUNGSHINWEIS
 ═════════════════════════════════════════════════════════
 
-Bitte überweisen Sie den offenen Betrag zeitnah. Bei Fragen 
-oder Zahlungsschwierigkeiten wenden Sie sich gerne an das 
+Bitte überweisen Sie den offenen Betrag zeitnah. Bei Fragen
+oder Zahlungsschwierigkeiten wenden Sie sich gerne an das
 FGF Team.
 
-Nach erfolgter Zahlung erhalten Sie automatisch einen 
+Nach erfolgter Zahlung erhalten Sie automatisch einen
 Zahlungsnachweis über das PelletTrackr System.
 
 ─────────────────────────────────────────────────────────
@@ -638,7 +457,7 @@ Fachhochschule Münster
 Diese E-Mail wurde automatisch generiert von PelletTrackr
 Generiert am: ${currentDate}
 ═════════════════════════════════════════════════════════`);
-  
+
   const email = user.email || `${user.kennung}@fh-muenster.de`;
   const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
   window.open(mailtoLink, '_blank');
@@ -650,23 +469,23 @@ function sendUrgentReminder(kennung) {
     window.toast.error('Benutzer nicht gefunden!');
     return;
   }
-  
+
   if (user.unpaidAmount <= 0) {
     window.toast.info('Dieser Benutzer hat keine offenen Beträge.');
     return;
   }
-  
+
   const subject = encodeURIComponent(`DRINGENDE MAHNUNG - FGF 3D-Druck Service | ${user.name}`);
-  const openEntries = user.entries.filter(e => !(e.paid || e.isPaid));
+  const openEntries = (user.entries || []).filter(e => !(e.paid || e.isPaid));
   const currentDate = new Date().toLocaleDateString('de-DE');
   const oldestEntry = openEntries.reduce((oldest, entry) => {
     const entryDate = entry.timestamp ? entry.timestamp.toDate() : new Date();
     const oldestDate = oldest.timestamp ? oldest.timestamp.toDate() : new Date();
     return entryDate < oldestDate ? entry : oldest;
   }, openEntries[0]);
-  
+
   const daysSinceOldest = oldestEntry ? Math.floor((new Date() - (oldestEntry.timestamp ? oldestEntry.timestamp.toDate() : new Date())) / (1000 * 60 * 60 * 24)) : 0;
-  
+
   // Dringende Mahnung mit professionellem Ton
   const body = encodeURIComponent(`Sehr geehrte/r ${user.name},
 
@@ -696,21 +515,21 @@ ${openEntries.map((entry, index) => {
   const material = entry.material || 'Material';
   const amount = entry.materialMenge ? `${entry.materialMenge.toFixed(2)} kg` : 'N/A';
   const daysOld = entry.timestamp ? Math.floor((new Date() - entry.timestamp.toDate()) / (1000 * 60 * 60 * 24)) : 0;
-  
+
   return `${index + 1}. ${jobName} (${daysOld} Tage alt)
    Datum: ${date}
    Material: ${material} (${amount})
-   Betrag: ${window.formatCurrency(entry.totalCost)}`;
+   Betrag: ${window.formatCurrency ? window.formatCurrency(entry.totalCost) : (entry.totalCost || 0).toFixed(2)}`;
 }).join('\n\n')}
 
 ─────────────────────────────────────────────────────────
 FINANZIELLE ZUSAMMENFASSUNG
 ─────────────────────────────────────────────────────────
 
-Bereits bezahlt: ${window.formatCurrency(user.paidAmount)}
-Anzahl offener Drucke: ${openEntries.length}
+Bereits bezahlt: ${window.formatCurrency ? window.formatCurrency(user.paidAmount) : (user.paidAmount || 0).toFixed(2)}
+Anzahl offener Aufträge: ${openEntries.length}
 
-GESAMTBETRAG ÜBERFÄLLIG: ${window.formatCurrency(user.unpaidAmount)}
+GESAMTBETRAG ÜBERFÄLLIG: ${window.formatCurrency ? window.formatCurrency(user.unpaidAmount) : (user.unpaidAmount || 0).toFixed(2)}
 
 ═════════════════════════════════════════════════════════
 SOFORTIGE ZAHLUNG ERFORDERLICH
@@ -718,7 +537,7 @@ SOFORTIGE ZAHLUNG ERFORDERLICH
 
 Bitte begleichen Sie den überfälligen Betrag umgehend.
 
-Bei weiterer Zahlungsverzögerung können folgende 
+Bei weiterer Zahlungsverzögerung können folgende
 Maßnahmen eingeleitet werden:
 • Sperrung des 3D-Druck Services
 • Weiterleitung an die Verwaltung
@@ -733,7 +552,7 @@ Zahlungshinweis:
 DRINGENDER KONTAKT
 ─────────────────────────────────────────────────────────
 
-Bei Zahlungsschwierigkeiten oder Fragen kontaktieren Sie 
+Bei Zahlungsschwierigkeiten oder Fragen kontaktieren Sie
 umgehend das FGF Team zur Klärung der Situation.
 
 FGF 3D-Druck Service Team
@@ -741,46 +560,165 @@ Fachhochschule Münster
 
 DRINGENDE MAHNUNG - Generiert am: ${currentDate}
 ═════════════════════════════════════════════════════════`);
-  
+
   const email = user.email || `${user.kennung}@fh-muenster.de`;
   const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
   window.open(mailtoLink, '_blank');
 }
 
-async function deleteUser(kennung) {
+async function deleteUser(userId) {
   if (!window.checkAdminAccess()) return;
-  
+
   // Show confirmation toast instead of browser dialog
   window.toast.info('Benutzer wird gelöscht...');
-  
+
   // Small delay to show the info message
   await new Promise(resolve => setTimeout(resolve, 500));
-  
+
   try {
-    // Alle Einträge des Benutzers abrufen
-    const entriesSnapshot = await window.db.collection('entries').where('kennung', '==', kennung).get();
-    
+    console.log(`🗑️ Lösche Benutzer mit ID: ${userId}`);
+    console.log('🔍 Verfügbare Benutzer:', window.allUsers ? window.allUsers.length : 'undefined');
+
+    // Find user by ID (could be kennung, email, or docId)
+    let user = null;
+
+    if (window.allUsers && window.allUsers.length > 0) {
+      user = window.allUsers.find(u =>
+        u.kennung === userId ||
+        u.email === userId ||
+        u.docId === userId
+      );
+    }
+
+    if (!user) {
+      console.warn('⚠️ Benutzer nicht in allUsers gefunden, versuche direkte Datenbankabfrage...');
+
+      // Try to find user directly in database
+      try {
+        const userSnapshot = await window.db.collection('users').where('kennung', '==', userId).get();
+        if (!userSnapshot.empty) {
+          const userDoc = userSnapshot.docs[0];
+          user = {
+            docId: userDoc.id,
+            ...userDoc.data()
+          };
+        } else {
+          // Try by email
+          const emailSnapshot = await window.db.collection('users').where('email', '==', userId).get();
+          if (!emailSnapshot.empty) {
+            const userDoc = emailSnapshot.docs[0];
+            user = {
+              docId: userDoc.id,
+              ...userDoc.data()
+            };
+          }
+        }
+      } catch (error) {
+        console.error('❌ Fehler bei direkter Benutzer-Suche:', error);
+      }
+    }
+
+    if (!user) {
+      window.toast.error('Benutzer nicht gefunden!');
+      return;
+    }
+
+    // Get user identifier (prefer email, fallback to kennung)
+    const userIdentifier = user.email || user.kennung;
+
+    if (!userIdentifier) {
+      window.toast.error('Benutzer-ID nicht gefunden!');
+      return;
+    }
+
+    console.log(`🗑️ Lösche Benutzer: ${userIdentifier} (DocID: ${user.docId})`);
+
+    // Alle Einträge des Benutzers abrufen (support both kennung and email)
+    const entriesQuery = await window.db.collection('entries')
+      .where('kennung', '==', userIdentifier)
+      .get();
+
+    // Also check for entries with email
+    const entriesQueryEmail = await window.db.collection('entries')
+      .where('email', '==', userIdentifier)
+      .get();
+
+    // Combine both query results
+    const allEntries = new Set();
+    entriesQuery.forEach(doc => allEntries.add(doc));
+    entriesQueryEmail.forEach(doc => allEntries.add(doc));
+
+    console.log(`📊 ${allEntries.size} Einträge gefunden für Benutzer ${userIdentifier}`);
+
     // Batch-Delete für alle Einträge
     const batch = window.db.batch();
-    entriesSnapshot.forEach(doc => {
+    allEntries.forEach(doc => {
       batch.delete(doc.ref);
     });
-    
-    // Benutzer-Dokument löschen
-    const userSnapshot = await window.db.collection('users').where('kennung', '==', kennung).get();
-    if (!userSnapshot.empty) {
-      userSnapshot.forEach(doc => {
-        batch.delete(doc.ref);
-      });
+
+    // Benutzer-Dokument löschen (support both old and new structure)
+    let userDeleted = false;
+
+    // Try to delete by docId first (new system)
+    if (user.docId) {
+      try {
+        const userRef = window.db.collection('users').doc(user.docId);
+        const userDoc = await userRef.get();
+        if (userDoc.exists) {
+          batch.delete(userRef);
+          userDeleted = true;
+          console.log(`✅ User deleted by docId: ${user.docId}`);
+        }
+      } catch (error) {
+        console.warn('Could not delete by docId:', error);
+      }
     }
-    
+
+    // Fallback: Try to delete by kennung (old system)
+    if (!userDeleted) {
+      const userSnapshot = await window.db.collection('users').where('kennung', '==', userIdentifier).get();
+      if (!userSnapshot.empty) {
+        userSnapshot.forEach(doc => {
+          batch.delete(doc.ref);
+        });
+        userDeleted = true;
+        console.log(`✅ User deleted by kennung: ${userIdentifier}`);
+      }
+    }
+
+    // Fallback: Try to delete by email (new system)
+    if (!userDeleted) {
+      const userSnapshot = await window.db.collection('users').where('email', '==', userIdentifier).get();
+      if (!userSnapshot.empty) {
+        userSnapshot.forEach(doc => {
+          batch.delete(doc.ref);
+        });
+        userDeleted = true;
+        console.log(`✅ User deleted by email: ${userIdentifier}`);
+      }
+    }
+
+    if (!userDeleted) {
+      window.toast.warning('Benutzer-Dokument nicht gefunden, aber Einträge wurden gelöscht.');
+    }
+
     await batch.commit();
-    
+
     window.toast.success('Benutzer und alle zugehörigen Daten wurden gelöscht.');
-    loadUsersForManagement();
-    window.loadAdminStats();
-    window.loadAllEntries();
-    
+
+    // Reload users list
+    await loadUsersForManagement();
+
+    // Refresh admin stats if available
+    if (typeof window.loadAdminStats === 'function') {
+      window.loadAdminStats();
+    }
+
+    // Refresh all entries if available
+    if (typeof window.loadAllEntries === 'function') {
+      window.loadAllEntries();
+    }
+
   } catch (error) {
     console.error('Fehler beim Löschen des Benutzers:', error);
     window.toast.error('Fehler beim Löschen: ' + error.message);
@@ -791,16 +729,16 @@ async function deleteUser(kennung) {
 
 async function editUser(kennung) {
   if (!window.checkAdminAccess()) return;
-  
+
   const user = window.allUsers.find(u => u.kennung === kennung);
   if (!user) {
     window.toast.error('Benutzer nicht gefunden!');
     return;
   }
-  
+
   // Erst das User-Manager-Modal schließen (wie bei Material/Masterbatch)
-  document.getElementById('userManager').classList.remove('active');
-  
+  // The shared dialog helper records the return path to the user overview.
+
   // Direkt das Edit-Modal öffnen
   showEditUserForm(kennung);
 }
@@ -811,10 +749,10 @@ async function showEditUserForm(kennung) {
     window.toast.error('Benutzer nicht gefunden!');
     return;
   }
-  
+
   const currentEmail = user.email || `${user.kennung}@fh-muenster.de`;
   const currentPhone = user.phone || '';
-  
+
   const modalHtml = `
     <div class="modal-header">
       <h2>${user.name} - Bearbeiten</h2>
@@ -843,13 +781,15 @@ async function showEditUserForm(kennung) {
           </div>
         </div>
         <div class="card-footer">
-          ${ButtonFactory.primary('ÄNDERUNGEN SPEICHERN', `updateUser('${kennung}')`)}
-          <button class="btn btn-secondary" onclick="closeEditUserModal()">Abbrechen</button>
+          <div class="button-group">
+            ${ButtonFactory.primary ? ButtonFactory.primary('ÄNDERUNGEN SPEICHERN', `updateUser('${kennung}')`) : '<button class="btn btn-primary" onclick="updateUser(\'' + kennung + '\')">ÄNDERUNGEN SPEICHERN</button>'}
+            <button class="btn btn-secondary" onclick="closeEditUserModal()">Abbrechen</button>
+          </div>
         </div>
       </div>
     </div>
   `;
-  
+
   window.showModal(modalHtml);
 }
 
@@ -858,21 +798,21 @@ async function updateUser(oldKennung) {
   const newKennung = document.getElementById('editUserKennung').value.trim().toLowerCase();
   const newEmail = document.getElementById('editUserEmail').value.trim();
   const newPhone = document.getElementById('editUserPhone').value.trim();
-  
+
   if (!newName || !newKennung) {
     window.toast.warning('Name und FH-Kennung sind erforderlich!');
     return;
   }
-  
+
   // Prüfen ob neue Kennung bereits existiert (außer bei unveränderter Kennung)
   if (newKennung !== oldKennung && window.allUsers && window.allUsers.find(u => u.kennung === newKennung)) {
     window.toast.warning('Diese FH-Kennung wird bereits verwendet!');
     return;
   }
-  
+
   try {
     const batch = window.db.batch();
-    
+
     // 1. Alle Einträge mit der alten Kennung aktualisieren
     const entriesSnapshot = await window.db.collection('entries').where('kennung', '==', oldKennung).get();
     entriesSnapshot.forEach(doc => {
@@ -882,10 +822,10 @@ async function updateUser(oldKennung) {
         updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
       });
     });
-    
+
     // 2. User-Dokument aktualisieren oder erstellen
     const userSnapshot = await window.db.collection('users').where('kennung', '==', oldKennung).get();
-    
+
     if (!userSnapshot.empty) {
       // Bestehendes User-Dokument aktualisieren
       userSnapshot.forEach(doc => {
@@ -909,20 +849,20 @@ async function updateUser(oldKennung) {
         updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
       });
     }
-    
+
     await batch.commit();
-    
+
     if (window.toast && typeof window.toast.success === 'function') {
       window.toast.success('Benutzer erfolgreich aktualisiert!');
     } else {
       alert('Benutzer erfolgreich aktualisiert!');
     }
     closeEditUserModal(); // Verwende die spezielle Close-Funktion
-    
+
     // Admin Dashboard aktualisieren falls verfügbar
     if (window.loadAdminStats) window.loadAdminStats();
     if (window.loadAllEntries) window.loadAllEntries();
-    
+
   } catch (error) {
     console.error('Fehler beim Aktualisieren des Benutzers:', error);
     window.toast.error('Fehler beim Speichern: ' + error.message);
@@ -933,7 +873,7 @@ async function updateUser(oldKennung) {
 
 function showAddUserDialog() {
   if (!window.checkAdminAccess()) return;
-  
+
   const modalHtml = `
     <div class="modal-header">
       <h3>Neuen Benutzer hinzufügen</h3>
@@ -963,28 +903,30 @@ function showAddUserDialog() {
           </div>
         </div>
         <div class="card-footer">
-          <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
-          <button class="btn btn-primary" onclick="createNewUser()">Benutzer hinzufügen</button>
+          <div class="button-group">
+            <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+            <button class="btn btn-primary" onclick="createNewUser()">Benutzer hinzufügen</button>
+          </div>
         </div>
       </div>
     </div>
   `;
-  
+
   showModalWithContent(modalHtml);
-  
+
   // Email Auto-Generation nach Modal-Rendering aktivieren
   setTimeout(() => {
     const kennungInput = document.getElementById('newUserKennung');
     const emailInput = document.getElementById('newUserEmail');
     const validationDiv = document.getElementById('kennungValidation');
-    
+
     if (kennungInput && emailInput) {
       // Auto-generierung bei Eingabe
       kennungInput.addEventListener('input', function() {
         const kennung = this.value.trim().toLowerCase();
         if (kennung) {
           emailInput.value = `${kennung}@fh-muenster.de`;
-          
+
           // Prüfen ob Kennung bereits existiert
           if (window.allUsers && window.allUsers.find(u => u.kennung === kennung)) {
             validationDiv.style.color = '#ff0000';
@@ -1008,18 +950,18 @@ async function createNewUser() {
   const kennung = document.getElementById('newUserKennung').value.trim().toLowerCase();
   const email = document.getElementById('newUserEmail').value.trim();
   const phone = document.getElementById('newUserPhone').value.trim();
-  
+
   if (!name || !kennung) {
     window.toast.warning('Name und FH-Kennung sind erforderlich!');
     return;
   }
-  
+
   // Prüfen ob Kennung bereits existiert
   if (window.allUsers && window.allUsers.find(u => u.kennung === kennung)) {
     window.toast.warning('Diese FH-Kennung wird bereits verwendet!');
     return;
   }
-  
+
   try {
     // User-Dokument erstellen
     const userRef = await window.db.collection('users').add({
@@ -1030,14 +972,14 @@ async function createNewUser() {
       createdAt: window.firebase.firestore.FieldValue.serverTimestamp(),
       updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
     });
-    
+
     console.log('Neuer Benutzer erstellt mit ID:', userRef.id);
     window.toast.success('Benutzer erfolgreich hinzugefügt!');
     window.closeModal();
-    
+
     // Nutzer-Liste neu laden
     loadUsersForManagement();
-    
+
   } catch (error) {
     console.error('Fehler beim Erstellen des Benutzers:', error);
     window.toast.error('Fehler beim Erstellen: ' + error.message);
@@ -1051,8 +993,7 @@ function closeEditUserModal() {
   window.closeModal();
   // Nach dem Schließen des Edit-Modals, User-Manager wieder öffnen
   setTimeout(() => {
-    document.getElementById('userManager').classList.add('active');
-    loadUsersForManagement();
+    showUserManager();
   }, 100);
 }
 
@@ -1071,7 +1012,7 @@ function updateUserInList(kennung, updates) {
       // Add new user
       window.allUsers.push(updates);
     }
-    
+
     // Refresh table if user manager is open
     const userManager = document.getElementById('userManager');
     if (userManager && userManager.classList.contains('active')) {

@@ -32,12 +32,12 @@ function initNotificationBadges() {
         setupEquipmentRequestsBadge();
         setupMaterialOrdersBadge();
         setupPrinterIssuesBadge();
-        
+
         // Setup user-specific badges
         setupUserEquipmentRequestsBadge();
         setupUserProblemReportsBadge();
         setupUserMaterialRequestsBadge();
-        
+
         // setupPaymentRequestsBadge(); // Will be added when payment system is active
         console.log('✅ Notification badges initialized (problem-reports, equipment-requests, material-orders, printer-issues, user-equipment-requests, user-problem-reports, user-material-requests) - v1.1');
     } catch (error) {
@@ -53,9 +53,9 @@ function setupMaterialOrdersBadge() {
         setTimeout(setupMaterialOrdersBadge, 500);
         return;
     }
-    
+
     console.log('🔄 Setting up material orders badge listener...');
-    
+
     const listener = window.db.collection('materialOrders')
         .where('status', '==', 'pending')
         .onSnapshot((snapshot) => {
@@ -65,7 +65,7 @@ function setupMaterialOrdersBadge() {
         }, (error) => {
             console.error('❌ Material orders badge listener error:', error);
         });
-    
+
     notificationListeners.push(listener);
 }
 
@@ -77,9 +77,9 @@ function setupProblemReportsBadge() {
         setTimeout(setupProblemReportsBadge, 500);
         return;
     }
-    
+
     console.log('🔄 Setting up problem reports badge listener...');
-    
+
     const listener = window.db.collection('problemReports')
         .where('status', '==', 'open')
         .onSnapshot((snapshot) => {
@@ -89,7 +89,7 @@ function setupProblemReportsBadge() {
         }, (error) => {
             console.error('❌ Problem reports badge listener error:', error);
         });
-    
+
     notificationListeners.push(listener);
 }
 
@@ -101,32 +101,32 @@ function setupEquipmentRequestsBadge() {
         setTimeout(setupEquipmentRequestsBadge, 500);
         return;
     }
-    
+
     console.log('🔄 Setting up equipment requests badge listener...');
-    
+
     const listener = window.db.collection('equipment')
         .onSnapshot((snapshot) => {
             let totalPendingRequests = 0;
-            
+
             snapshot.forEach((doc) => {
                 const data = doc.data();
                 const pendingRequests = data.pendingRequests || [];
-                
+
                 // Count pending equipment requests
-                const pendingEquipmentRequests = pendingRequests.filter(req => 
+                const pendingEquipmentRequests = pendingRequests.filter(req =>
                     req.status === 'pending' && req.type === 'equipment'
                 );
-                
+
                 totalPendingRequests += pendingEquipmentRequests.length;
             });
-            
+
             notificationCounts.equipmentRequests = totalPendingRequests;
             console.log(`🔔 Equipment Requests Badge: ${totalPendingRequests} pending requests found across all equipment`);
             updateBadge('equipment-requests', notificationCounts.equipmentRequests);
         }, (error) => {
             console.error('❌ Equipment requests badge listener error:', error);
         });
-    
+
     notificationListeners.push(listener);
 }
 
@@ -138,9 +138,9 @@ function setupPrinterIssuesBadge() {
         setTimeout(setupPrinterIssuesBadge, 500);
         return;
     }
-    
+
     console.log('🔄 Setting up printer issues badge listener...');
-    
+
     const listener = window.db.collection('printers')
         .where('status', 'in', ['broken', 'maintenance'])
         .onSnapshot((snapshot) => {
@@ -150,7 +150,7 @@ function setupPrinterIssuesBadge() {
         }, (error) => {
             console.error('❌ Printer issues badge listener error:', error);
         });
-    
+
     notificationListeners.push(listener);
 }
 
@@ -162,34 +162,41 @@ function setupUserEquipmentRequestsBadge() {
         setTimeout(setupUserEquipmentRequestsBadge, 500);
         return;
     }
-    
+
     console.log('🔄 Setting up user equipment requests badge listener...');
-    
+
+    // Get user identifier (kennung or email)
+    const userIdentifier = window.currentUser.kennung || window.currentUser.email;
+    if (!userIdentifier) {
+        console.warn('⚠️ No user identifier available for equipment requests badge');
+        return;
+    }
+
     const listener = window.db.collection('equipment')
         .onSnapshot((snapshot) => {
             let totalUserRequests = 0;
-            
+
             snapshot.forEach((doc) => {
                 const data = doc.data();
                 const pendingRequests = data.pendingRequests || [];
-                
-                // Count user's equipment requests
-                const userEquipmentRequests = pendingRequests.filter(req => 
-                    req.userKennung === window.currentUser.kennung && 
+
+                // Count user's equipment requests (check both kennung and email)
+                const userEquipmentRequests = pendingRequests.filter(req =>
+                    (req.userKennung === userIdentifier || req.userEmail === userIdentifier) &&
                     ['pending', 'approved', 'given'].includes(req.status) &&
                     req.type === 'equipment'
                 );
-                
+
                 totalUserRequests += userEquipmentRequests.length;
             });
-            
+
             notificationCounts.userEquipmentRequests = totalUserRequests;
-            console.log(`🔔 User Equipment Requests Badge: ${totalUserRequests} requests found for user ${window.currentUser.kennung}`);
+            console.log(`🔔 User Equipment Requests Badge: ${totalUserRequests} requests found for user ${userIdentifier}`);
             updateBadge('user-equipment-requests', notificationCounts.userEquipmentRequests);
         }, (error) => {
             console.error('❌ User equipment requests badge listener error:', error);
         });
-    
+
     notificationListeners.push(listener);
 }
 
@@ -201,20 +208,27 @@ function setupUserProblemReportsBadge() {
         setTimeout(setupUserProblemReportsBadge, 500);
         return;
     }
-    
+
     console.log('🔄 Setting up user problem reports badge listener...');
-    
+
+    // Get user identifier (kennung or email)
+    const userIdentifier = window.currentUser.kennung || window.currentUser.email;
+    if (!userIdentifier) {
+        console.warn('⚠️ No user identifier available for problem reports badge');
+        return;
+    }
+
     const listener = window.db.collection('problemReports')
-        .where('reportedByKennung', '==', window.currentUser.kennung)
+        .where('reportedByKennung', '==', userIdentifier)
         .where('status', 'in', ['open', 'in_progress'])
         .onSnapshot((snapshot) => {
             notificationCounts.userProblemReports = snapshot.size;
-            console.log(`🔔 User Problem Reports Badge: ${snapshot.size} reports found for user ${window.currentUser.kennung}`);
+            console.log(`🔔 User Problem Reports Badge: ${snapshot.size} reports found for user ${userIdentifier}`);
             updateBadge('user-problem-reports', notificationCounts.userProblemReports);
         }, (error) => {
             console.error('❌ User problem reports badge listener error:', error);
         });
-    
+
     notificationListeners.push(listener);
 }
 
@@ -226,20 +240,27 @@ function setupUserMaterialRequestsBadge() {
         setTimeout(setupUserMaterialRequestsBadge, 500);
         return;
     }
-    
+
     console.log('🔄 Setting up user material requests badge listener...');
-    
+
+    // Get user identifier (kennung or email)
+    const userIdentifier = window.currentUser.kennung || window.currentUser.email;
+    if (!userIdentifier) {
+        console.warn('⚠️ No user identifier available for material requests badge');
+        return;
+    }
+
     const listener = window.db.collection('materialOrders')
-        .where('userKennung', '==', window.currentUser.kennung)
+        .where('userKennung', '==', userIdentifier)
         .where('status', 'in', ['pending', 'approved'])
         .onSnapshot((snapshot) => {
             notificationCounts.userMaterialRequests = snapshot.size;
-            console.log(`🔔 User Material Requests Badge: ${snapshot.size} requests found for user ${window.currentUser.kennung}`);
+            console.log(`🔔 User Material Requests Badge: ${snapshot.size} requests found for user ${userIdentifier}`);
             updateBadge('user-material-requests', notificationCounts.userMaterialRequests);
         }, (error) => {
             console.error('❌ User material requests badge listener error:', error);
         });
-    
+
     notificationListeners.push(listener);
 }
 
@@ -248,7 +269,7 @@ function setupUserMaterialRequestsBadge() {
  */
 function updateBadge(badgeId, count) {
     const badge = document.querySelector(`[data-badge="${badgeId}"]`);
-    
+
     if (badge) {
         badge.textContent = count;
         if (count > 0) {
@@ -268,7 +289,7 @@ function updateBadge(badgeId, count) {
  */
 function debugResetAllBadges() {
     console.log('🧹 Manual badge reset requested...');
-    
+
     // Reset all notification counts
     notificationCounts = {
         paymentRequests: 0,
@@ -285,7 +306,7 @@ function debugResetAllBadges() {
         userProblemReports: 0,
         userMaterialRequests: 0
     };
-    
+
     // Hide all badges
     updateBadge('problem-reports', 0);
     updateBadge('payment-requests', 0);
@@ -295,7 +316,7 @@ function debugResetAllBadges() {
     updateBadge('user-equipment-requests', 0);
     updateBadge('user-problem-reports', 0);
     updateBadge('user-material-requests', 0);
-    
+
     console.log('✅ All badges reset to 0');
 }
 
@@ -306,19 +327,19 @@ function debugTestUserBadges() {
     console.log('🧪 Testing user badges...');
     console.log('Current user:', window.currentUser);
     console.log('Database available:', !!window.db);
-    
+
     // Test badge elements
     const userBadges = [
         'user-equipment-requests',
-        'user-problem-reports', 
+        'user-problem-reports',
         'user-material-requests'
     ];
-    
+
     userBadges.forEach(badgeId => {
         const badge = document.querySelector(`[data-badge="${badgeId}"]`);
         console.log(`Badge ${badgeId}:`, badge);
     });
-    
+
     // Test with dummy data
     updateBadge('user-equipment-requests', 5);
     updateBadge('user-problem-reports', 3);
@@ -334,7 +355,7 @@ window.debugTestUserBadges = debugTestUserBadges;
 async function debugCheckDatabaseFields() {
     console.log('🔍 Checking database field names...');
     console.log('Current user:', window.currentUser);
-    
+
     try {
         // Check requests collection
         const requestsSnapshot = await window.db.collection('requests').limit(1).get();
@@ -343,7 +364,7 @@ async function debugCheckDatabaseFields() {
             console.log('Requests collection fields:', Object.keys(requestData));
             console.log('Sample request data:', requestData);
         }
-        
+
         // Check problemReports collection
         const problemSnapshot = await window.db.collection('problemReports').limit(1).get();
         if (!problemSnapshot.empty) {
@@ -351,7 +372,7 @@ async function debugCheckDatabaseFields() {
             console.log('ProblemReports collection fields:', Object.keys(problemData));
             console.log('Sample problem data:', problemData);
         }
-        
+
         // Check materialOrders collection
         const materialSnapshot = await window.db.collection('materialOrders').limit(1).get();
         if (!materialSnapshot.empty) {
@@ -359,7 +380,7 @@ async function debugCheckDatabaseFields() {
             console.log('MaterialOrders collection fields:', Object.keys(materialData));
             console.log('Sample material data:', materialData);
         }
-        
+
     } catch (error) {
         console.error('Error checking database fields:', error);
     }
@@ -373,12 +394,12 @@ window.debugCheckDatabaseFields = debugCheckDatabaseFields;
  */
 function debugCheckProblemReportsBadge() {
     console.log('🔍 Debug: Checking problem reports badge...');
-    
+
     if (!window.db) {
         console.log('❌ Database not available');
         return;
     }
-    
+
     window.db.collection('problemReports')
         .where('status', '==', 'open')
         .get()
@@ -417,7 +438,7 @@ function cleanupNotificationBadges() {
  */
 function showAdminNotificationOverview() {
     const totalCount = getTotalNotificationCount();
-    
+
     const modalContent = `
         <div class="modal-header">
             <h3>Benachrichtigungen (${totalCount})</h3>
@@ -435,7 +456,7 @@ function showAdminNotificationOverview() {
                         <div class="notification-badge">${notificationCounts.problemReports}</div>
                     </div>
                 ` : ''}
-                
+
                 ${notificationCounts.equipmentRequests > 0 ? `
                     <div class="notification-item" data-action="showEquipmentManager">
                         <div class="notification-icon">📦</div>
@@ -446,7 +467,7 @@ function showAdminNotificationOverview() {
                         <div class="notification-badge">${notificationCounts.equipmentRequests}</div>
                     </div>
                 ` : ''}
-                
+
                 ${notificationCounts.materialRequests > 0 ? `
                     <div class="notification-item" onclick="showMaterialRequests()">
                         <div class="notification-icon">🧱</div>
@@ -457,7 +478,7 @@ function showAdminNotificationOverview() {
                         <div class="notification-badge">${notificationCounts.materialRequests}</div>
                     </div>
                 ` : ''}
-                
+
                 ${notificationCounts.brokenPrinters > 0 ? `
                     <div class="notification-item" onclick="showPrinterManager()">
                         <div class="notification-icon">🖨️</div>
@@ -468,7 +489,7 @@ function showAdminNotificationOverview() {
                         <div class="notification-badge">${notificationCounts.brokenPrinters}</div>
                     </div>
                 ` : ''}
-                
+
                 ${totalCount === 0 ? `
                     <div class="no-notifications">
                         <div class="no-notifications-icon">✅</div>
@@ -482,7 +503,7 @@ function showAdminNotificationOverview() {
             <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
         </div>
     `;
-    
+
     showModalWithContent(modalContent);
 }
 
@@ -491,7 +512,7 @@ function showAdminNotificationOverview() {
  */
 function showMaterialRequests() {
     if (!window.db) return;
-    
+
     window.db.collection('materialRequests')
         .where('status', '==', 'pending')
         .orderBy('createdAt', 'desc')
@@ -504,7 +525,7 @@ function showMaterialRequests() {
                     ...doc.data()
                 });
             });
-            
+
             const modalContent = `
                 <div class="modal-header">
                     <h3>Material-Wünsche (${requests.length})</h3>
@@ -541,7 +562,7 @@ function showMaterialRequests() {
                     <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
                 </div>
             `;
-            
+
             showModalWithContent(modalContent);
         });
 }
@@ -556,12 +577,12 @@ async function processMaterialRequest(requestId, status) {
             processedAt: firebase.firestore.FieldValue.serverTimestamp(),
             processedBy: window.currentUser.name
         });
-        
+
         toast.success(status === 'approved' ? 'Material-Wunsch genehmigt' : 'Material-Wunsch abgelehnt');
-        
+
         // Refresh the modal
         showMaterialRequests();
-        
+
     } catch (error) {
         console.error('Error processing material request:', error);
         toast.error('Fehler beim Bearbeiten der Anfrage');
@@ -578,12 +599,12 @@ async function processScheduleRequest(requestId, status) {
             processedAt: firebase.firestore.FieldValue.serverTimestamp(),
             processedBy: window.currentUser.name
         });
-        
+
         toast.success(status === 'approved' ? 'Terminanfrage genehmigt' : 'Terminanfrage abgelehnt');
-        
+
         // Refresh the modal
         showScheduleRequests();
-        
+
     } catch (error) {
         console.error('Error processing schedule request:', error);
         toast.error('Fehler beim Bearbeiten der Terminanfrage');
@@ -611,4 +632,4 @@ window.updateBadge = updateBadge; // Expose updateBadge globally
 window.debugResetAllBadges = debugResetAllBadges; // Expose debugResetAllBadges globally
 window.debugCheckProblemReportsBadge = debugCheckProblemReportsBadge; // Expose debugCheckProblemReportsBadge globally
 
-console.log('🔔 Notification Badges Module loaded (v1.0.0)'); 
+console.log('🔔 Notification Badges Module loaded (v1.0.0)');

@@ -1,0 +1,23 @@
+.safety-manager { line-height: 1.5; }
+.safety-profile-details summary { cursor: pointer; font-weight: 600; padding: 4px 0; }
+.safety-profile-hint { color: #555; font-size: .9rem; margin: 12px 0; }
+.safety-profile-details .safety-grid { grid-template-columns: 1fr; gap: 0; }
+.safety-profile-details .safety-card { border: 0; border-top: 1px solid #ddd; padding: 12px 0; }
+.safety-profile-details .safety-card h3 { font-size: 1rem; }
+.safety-profile-details .safety-badge { padding: 2px 7px; font-size: .85rem; }
+.modal-header.safety-header { flex-wrap: wrap; gap: 16px; }
+.modal-header.safety-header h2 { flex: 1 1 260px; min-width: 0; overflow-wrap: anywhere; }
+.modal-header.safety-header .btn { flex-shrink: 0; }
+.safety-manager label { display: block; margin: 12px 0; font-weight: 600; }
+.safety-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 14px; margin: 16px 0; }
+.safety-card { border: 2px solid #000; padding: 18px; background: #fff; overflow-wrap: anywhere; }
+.safety-card h3, .safety-card h4 { margin: 0 0 8px; }
+.safety-card p { margin: 8px 0; }
+.safety-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+.safety-badge { display: inline-block; padding: 4px 10px; border: 1px solid currentColor; font-weight: 700; }
+.safety-active { color: #245b27; background: #e7f4e8; }
+.safety-revoked { color: #8c2513; background: #ffebe7; }
+.safety-missing { color: #555; background: #f1f1f1; }
+.safety-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 12px; }
+.safety-manager .form-select, .safety-manager .form-input { width: 100%; margin-top: 6px; }
+@media (max-width: 600px) { .safety-actions .btn { width: 100%; } }

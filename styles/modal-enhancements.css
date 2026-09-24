@@ -66,11 +66,11 @@
   .modal .detail-label {
     font-size: 13px;
   }
-  
+
   .modal .detail-value {
     font-size: 13px;
   }
-  
+
   .modal .form-label {
     font-size: 14px;
   }
@@ -127,7 +127,7 @@
     top: 0;
     z-index: 10;
   }
-  
+
   .modal .modal-footer {
     position: sticky;
     bottom: 0;
@@ -158,10 +158,362 @@
     gap: 10px;
     width: 100%;
   }
-  
+
   .data-table td[data-label="Aktionen"] .action-group .btn {
     width: 100%;
     padding: 12px 16px;
     font-size: 14px;
   }
+}
+
+/* Benutzerprofil Modal Styles */
+.profile-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.profile-section {
+    background: #f8f9fa;
+    border-radius: 0;
+    padding: 1.5rem;
+    border: 1px solid #e0e0e0;
+}
+
+.profile-section h3 {
+    margin: 0 0 1rem 0;
+    color: #495057;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 0.5rem;
+}
+
+.profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.profile-form .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.profile-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.profile-form .form-label {
+    font-weight: 500;
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+.profile-form .form-input {
+    padding: 0.75rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 0;
+    font-size: 0.9rem;
+    transition: border-color 0.2s ease;
+}
+
+.profile-form .form-input:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.form-actions {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e0e0e0;
+}
+
+.account-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 500;
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+.info-value {
+    color: #6c757d;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Responsive Design für Profile Modal */
+@media (max-width: 768px) {
+    .profile-form .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .info-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+
+    .profile-section {
+        padding: 1rem;
+    }
+}
+
+/* Welcome Message Clickable */
+.welcome-message {
+    cursor: pointer;
+    transition: color 0.2s ease;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+}
+
+.welcome-message:hover {
+    color: #007bff;
+    text-decoration-color: #007bff;
+}
+
+/* Modal Large für Profile */
+.modal-large {
+    max-width: 600px;
+    width: 90%;
+}
+
+/* Loading States für Profile Forms */
+.profile-form.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.profile-form.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Migration Tool Styles */
+.migration-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.migration-section {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    border: 1px solid #e9ecef;
+}
+
+.migration-section h3 {
+    margin: 0 0 1rem 0;
+    color: #495057;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 0.5rem;
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.status-item {
+    background: white;
+    padding: 1rem;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.status-label {
+    font-weight: 500;
+    color: #495057;
+}
+
+.status-value {
+    font-weight: 600;
+    color: #007bff;
+    font-size: 1.1rem;
+}
+
+.migration-actions, .duplicate-actions, .export-actions {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.results-list, .duplicates-list {
+    margin-top: 1rem;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.result-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: 4px;
+    background: white;
+    border: 1px solid #dee2e6;
+}
+
+.result-item.success {
+    border-left: 4px solid #28a745;
+}
+
+.result-item.error {
+    border-left: 4px solid #dc3545;
+}
+
+.result-status {
+    font-size: 1.2rem;
+}
+
+.result-message {
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.duplicate-group {
+    background: white;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.duplicate-group h4 {
+    margin: 0 0 0.5rem 0;
+    color: #dc3545;
+    font-size: 1rem;
+}
+
+.duplicate-users {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.duplicate-user {
+    background: #f8f9fa;
+    padding: 0.5rem;
+    border-radius: 4px;
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+}
+
+.duplicate-user span {
+    color: #6c757d;
+}
+
+.no-duplicates {
+    color: #28a745;
+    font-style: italic;
+    text-align: center;
+    padding: 1rem;
+}
+
+.migration-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.migration-form .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.migration-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.migration-form .form-label {
+    font-weight: 500;
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+.migration-form .form-input {
+    padding: 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    transition: border-color 0.2s ease;
+}
+
+.migration-form .form-input:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+/* Responsive Design für Migration Tool */
+@media (max-width: 768px) {
+    .status-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .migration-form .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .duplicate-user {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .migration-actions, .duplicate-actions, .export-actions {
+        flex-direction: column;
+    }
+
+    .migration-section {
+        padding: 1rem;
+    }
 }

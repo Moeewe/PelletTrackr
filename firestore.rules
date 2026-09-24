@@ -1,126 +1,187 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // ===== TEMPORÄRE LEGACY-REGELN =====
-    // Diese Regeln erlauben sofortige Funktionalität
-    // Wird später durch sichere Regeln ersetzt
-    
-    // 1. Authentifizierung prüfen (weniger restriktiv)
-    function isAuthenticated() {
-      return request.auth != null && request.auth.uid != null;
-    }
-    
-    // 2. Admin-Status prüfen (weniger restriktiv)
+    function signedIn() { return request.auth != null; }
     function isAdmin() {
-      return isAuthenticated() && 
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
-    
-    // 3. Benutzer ist Eigentümer der Daten
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+
+    function billingGroup() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('billingGroup', 'standard');
     }
-    
-    // ===== USER MANAGEMENT =====
+    function tariff(d) {
+      let id = d.machineCollection + '__' + d.machineId;
+      let policy = /databases/$(database)/documents/billingPolicies/$(id);
+      let machine = d.machineId == '' ? {} : get(/databases/$(database)/documents/$(d.machineCollection)/$(d.machineId)).data;
+      return d.machineId != '' && exists(policy)
+        ? get(policy).data.rates.get(billingGroup(), get(policy).data.rates.standard)
+        : {'mode':'legacy', 'rateCents':int(machine.get('pricePerHour', 0) * 100 + 0.5), 'materialRule':'workshop'};
+    }
+    function machineCharge(d, t) {
+      return t.mode == 'free' || (t.mode == 'legacy' && !d.ownMaterialUsed) ? 0
+        : t.mode == 'flat' ? t.rateCents
+        : int(d.printTime * t.rateCents / (t.mode == 'minute' ? 1 : 60) + 0.5);
+    }
+    function validMaterial(d, t) {
+      return d.materialId == '' ? d.materialMenge == 0 && d.materialPrice == 0 && d.materialCents == 0
+        : t.materialRule == 'workshop' && !d.ownMaterialUsed
+          && d.materialMenge is number && d.materialMenge > 0
+          && d.materialPrice == get(/databases/$(database)/documents/materials/$(d.materialId)).data.price
+          && d.materialPrice >= 0 && d.materialCents == int(d.materialMenge * d.materialPrice * 100 + 0.50000001);
+    }
+    function validAdditive(d, t) {
+      return d.masterbatchId == '' ? d.masterbatchMenge == 0 && d.masterbatchPrice == 0 && d.additiveCents == 0
+        : t.materialRule == 'workshop' && !(t.mode == 'legacy' && d.ownMaterialUsed)
+          && d.masterbatchMenge is number && d.masterbatchMenge > 0
+          && d.masterbatchPrice == get(/databases/$(database)/documents/masterbatches/$(d.masterbatchId)).data.price
+          && d.masterbatchPrice >= 0 && d.additiveCents == int(d.masterbatchMenge * d.masterbatchPrice * 100 + 0.50000001);
+    }
+    function validBilledEntry() {
+      let d = request.resource.data;
+      let t = tariff(d);
+      let policy = /databases/$(database)/documents/billingPolicies/$(d.machineCollection + '__' + d.machineId);
+      return d.billingVersion == 1 && d.userId == request.auth.uid && d.billingGroup == billingGroup()
+        && d.tariffSnapshot == t && d.ownMaterialUsed is bool
+        && d.machineCollection in ['', 'printers', 'equipment', 'machines']
+        && (d.machineId != '' || (d.machineCollection == '' && (d.materialId != '' || d.masterbatchId != '')))
+        && (d.machineId == '' || exists(/databases/$(database)/documents/$(d.machineCollection)/$(d.machineId)))
+        && d.policyRevision == (d.machineId != '' && exists(policy) ? get(policy).data.revision : 0)
+        && d.printTime is number && d.printTime >= 0
+        && (d.machineId == '' || t.mode in ['flat', 'free'] || d.printTime > 0)
+        && d.machineCents == machineCharge(d, t) && validMaterial(d,t) && validAdditive(d,t)
+        && d.totalCents == d.machineCents + d.materialCents + d.additiveCents
+        && d.printerCost == d.machineCents / 100.0 && d.materialCost == d.materialCents / 100.0
+        && d.masterbatchCost == d.additiveCents / 100.0 && d.totalCost == d.totalCents / 100.0
+        && d.paid == false && d.timestamp == request.time;
+    }
+    function validRate(r) {
+      return r.keys().hasOnly(['mode','rateCents','materialRule'])
+        && r.mode in ['legacy','free','flat','minute','hour']
+        && r.rateCents is int && r.rateCents >= 0 && r.rateCents <= 10000000
+        && r.materialRule in ['workshop','none'];
+    }
+    match /billingPolicies/{policyId} {
+      allow read: if signedIn();
+      allow create, update: if isAdmin()
+        && request.resource.data.machineCollection in ['printers','equipment','machines']
+        && policyId == request.resource.data.machineCollection + '__' + request.resource.data.machineId
+        && exists(/databases/$(database)/documents/$(request.resource.data.machineCollection)/$(request.resource.data.machineId))
+        && request.resource.data.rates.keys().hasOnly(['standard','students','staff','external'])
+        && validRate(request.resource.data.rates.standard)
+        && validRate(request.resource.data.rates.get('students',request.resource.data.rates.standard))
+        && validRate(request.resource.data.rates.get('staff',request.resource.data.rates.standard))
+        && validRate(request.resource.data.rates.get('external',request.resource.data.rates.standard))
+        && request.resource.data.updatedBy == request.auth.uid && request.resource.data.updatedAt == request.time
+        && request.resource.data.revision == (resource == null ? 1 : resource.data.revision + 1);
+      allow delete: if false;
+    }
+
+    match /safetyTrainings/{trainingId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
+      function validTraining() {
+        let d = request.resource.data;
+        return d.userId is string && d.machineId is string
+          && d.machineCollection in ['printers', 'equipment', 'machines', 'safetyTrainingTypes']
+          && d.status in ['active', 'revoked']
+          && d.trainingDate is string && d.trainingDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && d.instructor is string && d.instructor.size() > 0 && d.instructor.size() <= 160
+          && d.note is string && d.note.size() <= 2000
+          && d.updatedBy == request.auth.uid && d.updatedAt == request.time
+          && getAfter(/databases/$(database)/documents/safetyTrainings/$(trainingId)/history/$(string(d.revision))).data.after == d;
+      }
+      allow create: if isAdmin() && validTraining()
+        && request.resource.data.revision == 1
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && exists(/databases/$(database)/documents/users/$(request.resource.data.userId))
+        && exists(/databases/$(database)/documents/$(request.resource.data.machineCollection)/$(request.resource.data.machineId));
+      allow update: if isAdmin() && validTraining()
+        && request.resource.data.revision == resource.data.get('revision', 0) + 1
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.machineId == resource.data.machineId
+        && request.resource.data.machineCollection == resource.data.machineCollection
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if false;
+      match /history/{revisionId} {
+        allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
+        allow create: if isAdmin()
+          && request.resource.data.by == request.auth.uid
+          && request.resource.data.at == request.time
+          && revisionId == string(request.resource.data.revision)
+          && request.resource.data.after == getAfter(/databases/$(database)/documents/safetyTrainings/$(trainingId)).data
+          && request.resource.data.userId == request.resource.data.after.userId
+          && ((!exists(/databases/$(database)/documents/safetyTrainings/$(trainingId))
+              && request.resource.data.before == null && request.resource.data.revision == 1)
+            || (exists(/databases/$(database)/documents/safetyTrainings/$(trainingId))
+              && request.resource.data.before == get(/databases/$(database)/documents/safetyTrainings/$(trainingId)).data
+              && request.resource.data.revision == get(/databases/$(database)/documents/safetyTrainings/$(trainingId)).data.get('revision', 0) + 1));
+        allow update, delete: if false;
+      }
+    }
+    match /safetyTrainingTypes/{typeId} {
+      allow read: if signedIn();
+      allow create: if isAdmin() && request.resource.data.name is string
+        && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 160;
+      allow update, delete: if false;
+    }
+
     match /users/{userId} {
-      // Benutzer können nur ihre eigenen Daten lesen/schreiben
-      allow read, write: if isOwner(userId);
-      
-      // Admins können alle Benutzerdaten lesen
-      allow read: if isAdmin();
-      
-      // Neue Benutzer können sich registrieren (nur eigene Daten)
-      allow create: if isOwner(userId);
+      allow read: if isAdmin() || (signedIn() && userId == request.auth.uid);
+      allow create: if isAdmin() || (signedIn() && userId == request.auth.uid && request.resource.data.isAdmin == false
+        && request.resource.data.get('billingGroup', 'standard') == 'standard');
+      allow update: if isAdmin() || (signedIn() && userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'firstName', 'lastName', 'phone', 'email', 'username', 'lastLogin', 'updatedAt', 'emailVerified']));
+      allow delete: if isAdmin();
     }
-    
-    // ===== ENTRIES (DRUCKE) =====
+
     match /entries/{entryId} {
-      // Benutzer können ihre eigenen Einträge lesen/schreiben
-      allow read, write: if isAuthenticated() && 
-        resource.data.userId == request.auth.uid;
-      
-      // Admins können alle Einträge lesen/schreiben
-      allow read, write: if isAdmin();
-      
-      // Neue Einträge erstellen
-      allow create: if isAuthenticated() && 
-        request.resource.data.userId == request.auth.uid;
+      allow read: if signedIn();
+      allow create: if signedIn() && validBilledEntry();
+      allow update, delete: if isAdmin();
     }
-    
-    // ===== MATERIALS =====
-    match /materials/{materialId} {
-      // Alle authentifizierten Benutzer können Materialien lesen
-      allow read: if isAuthenticated();
-      
-      // Nur Admins können Materialien erstellen/bearbeiten
+
+    match /materials/{documentId} {
+      allow read: if signedIn();
       allow write: if isAdmin();
     }
-    
-    // ===== EQUIPMENT =====
-    match /equipment/{equipmentId} {
-      // Alle authentifizierten Benutzer können Equipment lesen
-      allow read: if isAuthenticated();
-      
-      // Nur Admins können Equipment verwalten
+    match /masterbatches/{documentId} {
+      allow read: if signedIn();
       allow write: if isAdmin();
     }
-    
-    // ===== PAYMENTS =====
-    match /payments/{paymentId} {
-      // Benutzer können ihre eigenen Zahlungen lesen
-      allow read: if isAuthenticated() && 
-        resource.data.userId == request.auth.uid;
-      
-      // Admins können alle Zahlungen lesen/schreiben
-      allow read, write: if isAdmin();
-      
-      // Neue Zahlungen erstellen
-      allow create: if isAuthenticated() && 
-        request.resource.data.userId == request.auth.uid;
+    match /printers/{documentId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
     }
-    
-    // ===== PROBLEM REPORTS =====
-    match /problemReports/{reportId} {
-      // Benutzer können ihre eigenen Berichte erstellen/lesen
-      allow read, write: if isAuthenticated() && 
-        resource.data.userId == request.auth.uid;
-      
-      // Admins können alle Berichte lesen/schreiben
-      allow read, write: if isAdmin();
-      
-      // Neue Berichte erstellen
-      allow create: if isAuthenticated() && 
-        request.resource.data.userId == request.auth.uid;
+    match /machines/{documentId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
     }
-    
-    // ===== ORDERS =====
-    match /orders/{orderId} {
-      // Benutzer können ihre eigenen Bestellungen lesen
-      allow read: if isAuthenticated() && 
-        resource.data.userId == request.auth.uid;
-      
-      // Admins können alle Bestellungen lesen/schreiben
-      allow read, write: if isAdmin();
-      
-      // Neue Bestellungen erstellen
-      allow create: if isAuthenticated() && 
-        request.resource.data.userId == request.auth.uid;
+    match /knowledgeArticles/{articleId} {
+      allow read: if signedIn();
+      allow create, update: if isAdmin()
+        && request.resource.data.title is string && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 180
+        && request.resource.data.body is string && request.resource.data.body.size() > 0
+        && request.resource.data.body.size() <= 20000;
+      allow delete: if isAdmin();
     }
-    
-    // ===== SYSTEM SETTINGS =====
-    match /settings/{settingId} {
-      // Nur Admins können Einstellungen lesen/schreiben
-      allow read, write: if isAdmin();
+
+    // Bestehende Anfrage-Workflows benötigen Lese- und Schreibzugriff für
+    // angemeldete Nutzer; administrative Aktionen bleiben zusätzlich im Client geschützt.
+    match /paymentRequests/{documentId} { allow read, write: if signedIn(); }
+    match /materialOrders/{documentId} { allow read, write: if signedIn(); }
+    match /equipment/{documentId} {
+      allow read: if signedIn();
+      allow create: if isAdmin();
+      allow update: if isAdmin() || (signedIn()
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['requiresSafetyTraining']));
+      allow delete: if isAdmin();
     }
-    
-    // ===== AUDIT LOGS =====
-    match /auditLogs/{logId} {
-      // Nur Admins können Audit-Logs lesen
-      allow read: if isAdmin();
-      
-      // System kann Audit-Logs erstellen (für authentifizierte Benutzer)
-      allow create: if isAuthenticated();
-    }
+    match /problemReports/{documentId} { allow read, write: if signedIn(); }
+
+    match /{document=**} { allow read, write: if false; }
   }
 }

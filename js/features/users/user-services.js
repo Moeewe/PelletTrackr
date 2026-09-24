@@ -7,6 +7,8 @@
 // Global state for user services
 let userPrinters = [];
 let userPrinterListener = null;
+let userProductionMachines = [];
+let userProductionMachineListener = null;
 let userEquipmentListener = null;
 
 // Make userPrinters globally accessible
@@ -20,16 +22,17 @@ let userServicesAllUsers = [];
  */
 function initializeUserServices() {
     console.log('🔧 Initializing user services...');
-    
+
     // Setup printer status listener
     setupUserPrinterListener();
-    
+    setupProductionMachineStatusListener();
+
     // Setup equipment listener for real-time updates
     setupUserEquipmentListener();
-    
+
     // Load initial data
     loadPrinterStatus();
-    
+
     console.log('✅ User services initialized');
 }
 
@@ -41,13 +44,13 @@ function setupUserEquipmentListener() {
         setTimeout(setupUserEquipmentListener, 500);
         return;
     }
-    
+
     // Clean up existing listener
     if (userEquipmentListener) {
         userEquipmentListener();
         userEquipmentListener = null;
     }
-    
+
     try {
         userEquipmentListener = window.db.collection('equipment').onSnapshot((snapshot) => {
             // Check if user equipment requests modal is open
@@ -57,7 +60,7 @@ function setupUserEquipmentListener() {
                 refreshMyEquipmentRequests();
             }
         });
-        
+
         console.log('✅ User equipment listener registered');
     } catch (error) {
         console.error('❌ Failed to setup user equipment listener:', error);
@@ -72,13 +75,13 @@ function setupUserPrinterListener() {
         setTimeout(setupUserPrinterListener, 500);
         return;
     }
-    
+
     // Clean up existing listener
     if (userPrinterListener) {
         userPrinterListener();
         userPrinterListener = null;
     }
-    
+
     try {
         userPrinterListener = window.db.collection('printers').onSnapshot((snapshot) => {
             userPrinters = [];
@@ -88,12 +91,12 @@ function setupUserPrinterListener() {
                     ...doc.data()
                 });
             });
-            
+
             // Update global reference
             window.userPrinters = userPrinters;
-            
+
             updatePrinterStatusDisplay();
-            
+
             // Update machine overview in admin dashboard
             if (typeof window.waitForUpdateMachineOverview === 'function') {
                 window.waitForUpdateMachineOverview(() => updateMachineOverview());
@@ -101,11 +104,22 @@ function setupUserPrinterListener() {
                 updateMachineOverview();
             }
         });
-        
+
         console.log('✅ User printer listener registered');
     } catch (error) {
         console.error('❌ Failed to setup user printer listener:', error);
     }
+}
+
+// Production machines (laser/CNC/other) share the availability overview,
+// while the legacy printer controls continue to write only to /printers.
+function setupProductionMachineStatusListener() {
+    if (!window.db) { setTimeout(setupProductionMachineStatusListener, 500); return; }
+    if (userProductionMachineListener) userProductionMachineListener();
+    userProductionMachineListener = window.db.collection('machines').onSnapshot(snapshot => {
+        userProductionMachines = snapshot.docs.map(doc => ({id:doc.id,...doc.data()})).filter(machine => machine.active !== false);
+        updatePrinterStatusDisplay();
+    }, error => console.warn('Produktionsmaschinen-Status konnte nicht live geladen werden:', error));
 }
 
 /**
@@ -113,7 +127,7 @@ function setupUserPrinterListener() {
  */
 function loadPrinterStatus() {
     if (!window.db) return;
-    
+
     window.db.collection('printers').get().then((snapshot) => {
         userPrinters = [];
         snapshot.forEach((doc) => {
@@ -122,12 +136,12 @@ function loadPrinterStatus() {
                 ...doc.data()
             });
         });
-        
+
         // Update global reference
         window.userPrinters = userPrinters;
-        
+
         updatePrinterStatusDisplay();
-        
+
         // Update machine overview in admin dashboard
         if (typeof window.waitForUpdateMachineOverview === 'function') {
             window.waitForUpdateMachineOverview(() => updateMachineOverview());
@@ -149,8 +163,8 @@ function updatePrinterStatusDisplay() {
         maintenance: 0,
         broken: 0
     };
-    
-    userPrinters.forEach(printer => {
+
+    [...userPrinters,...userProductionMachines].forEach(printer => {
         switch (printer.status) {
             case 'available':
                 counts.available++;
@@ -167,12 +181,12 @@ function updatePrinterStatusDisplay() {
                 break;
         }
     });
-    
+
     // Update UI
     const availableEl = document.getElementById('userAvailableMachines');
     const inUseEl = document.getElementById('userInUseMachines');
     const maintenanceEl = document.getElementById('userMaintenanceMachines');
-    
+
     if (availableEl) availableEl.textContent = counts.available;
     if (inUseEl) inUseEl.textContent = counts.in_use;
     if (maintenanceEl) maintenanceEl.textContent = counts.maintenance + counts.broken; // Combine maintenance and broken
@@ -186,36 +200,46 @@ function showPrinterStatus() {
 
     const modalContent = `
         <div class="modal-header">
-            <h3>Drucker Status</h3>
+            <h3>Fertigungsmaschinen – Verfügbarkeit</h3>
             <button class="close-btn" onclick="closeModal()">&times;</button>
         </div>
         <div class="modal-body">
             <div class="printer-list">
-                ${userPrinters.map(printer => {
+                ${[...userPrinters.map(machine=>({...machine,isProductionMachine:false})),...userProductionMachines.map(machine=>({...machine,isProductionMachine:true}))].map(printer => {
                     const isAdmin = window.currentUser?.isAdmin || false;
-                    
+                    const isProductionMachine = printer.isProductionMachine;
+                    const statusLabels={available:'Verfügbar',printing:'In Betrieb',in_use:'In Betrieb',maintenance:'Wartung',broken:'Defekt'};
+                    if (isProductionMachine) return `
+                        <div class="printer-item">
+                            <div class="printer-info"><h4 class="printer-name">${printer.name}</h4>
+                                <p class="printer-location">${printer.model || ''}${printer.jobTypes?.length ? ' · '+printer.jobTypes.join(' / ') : ''}</p>
+                            </div><div class="printer-status-controls"><span class="entry-status-badge ${printer.status==='available'?'status-paid':'status-unpaid'}">${statusLabels[printer.status]||'Status unbekannt'}</span>
+                                ${isAdmin?'<button class="btn btn-secondary" onclick="MachineManager.open()">Maschinen verwalten</button>':''}
+                            </div>
+                        </div>`;
+
                     return `
                         <div class="printer-item">
                             <div class="printer-info">
                                 <h4 class="printer-name">${printer.name}</h4>
                                 <p class="printer-location">${printer.location || ''}</p>
-                                ${printer.description && printer.description !== 'undefined' && printer.description !== 'Keine Beschreibung' ? `<p class="printer-description">${printer.description}</p>` : ''}
+                            ${printer.description && printer.description !== 'undefined' && printer.description !== 'Keine Beschreibung' ? `<p class="printer-description">${printer.description}</p>` : ''}
                             </div>
                             <div class="printer-status-controls">
                                 <div class="printer-status-grid">
-                                    <button class="status-btn ${printer.status === 'available' ? 'active' : ''}" 
+                                    <button class="status-btn ${printer.status === 'available' ? 'active' : ''}"
                                             onclick="handleUserStatusChange('${printer.id}', 'available')">
                                         Verfügbar
                                     </button>
-                                    <button class="status-btn ${printer.status === 'printing' ? 'active' : ''}" 
+                                    <button class="status-btn ${printer.status === 'printing' ? 'active' : ''}"
                                             onclick="handleUserStatusChange('${printer.id}', 'printing')">
                                         In Betrieb
                                     </button>
-                                    <button class="status-btn ${printer.status === 'maintenance' ? 'active' : ''} ${!isAdmin ? 'disabled' : ''}" 
+                                    <button class="status-btn ${printer.status === 'maintenance' ? 'active' : ''} ${!isAdmin ? 'disabled' : ''}"
                                             onclick="${isAdmin ? `handleUserStatusChange('${printer.id}', 'maintenance')` : ''}">
                                         Wartung
                                     </button>
-                                    <button class="status-btn ${printer.status === 'broken' ? 'active' : ''} ${!isAdmin ? 'disabled' : ''}" 
+                                    <button class="status-btn ${printer.status === 'broken' ? 'active' : ''} ${!isAdmin ? 'disabled' : ''}"
                                             onclick="${isAdmin ? `handleUserStatusChange('${printer.id}', 'broken')` : ''}">
                                         Defekt
                                     </button>
@@ -233,7 +257,7 @@ function showPrinterStatus() {
             <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
         </div>
     `;
-    
+
     showModalWithContent(modalContent);
 }
 
@@ -243,31 +267,31 @@ function showPrinterStatus() {
 async function handleUserStatusChange(printerId, newStatus) {
     const isAdmin = window.currentUser?.isAdmin || false;
     const printer = userPrinters.find(p => p.id === printerId);
-    
+
     if (!printer) {
         window.toast.error('Drucker nicht gefunden');
         return;
     }
-    
+
     // Check permissions for setting maintenance/broken
     if ((newStatus === 'maintenance' || newStatus === 'broken') && !isAdmin) {
         window.toast.error('Nur Administratoren können den Status auf "Wartung" oder "Defekt" setzen');
         return;
     }
-    
+
     // Special handling for "broken" status
     if (newStatus === 'broken') {
         // Close current modal
         closeModal();
-        
+
         // Show problem report dialog immediately
         setTimeout(() => {
             reportPrinterProblem(printerId, printer.name);
         }, 100);
-        
+
         return;
     }
-    
+
     // For other statuses, proceed normally
     await cyclePrinterStatus(printerId, newStatus);
 }
@@ -279,7 +303,7 @@ async function handleUserStatusChange(printerId, newStatus) {
 async function cyclePrinterStatus(printerId, newStatus) {
     // Allow all users to change printer status for now
     // This can be restricted later if needed
-    
+
     try {
         await window.db.collection('printers').doc(printerId).update({
             status: newStatus,
@@ -287,7 +311,7 @@ async function cyclePrinterStatus(printerId, newStatus) {
             lastStatusChangeBy: window.currentUser?.name || 'Unbekannt',
             lastStatusChangeAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        
+
         // Update local data
         const printerIndex = userPrinters.findIndex(p => p.id === printerId);
         if (printerIndex !== -1) {
@@ -295,24 +319,24 @@ async function cyclePrinterStatus(printerId, newStatus) {
             // Update global reference
             window.userPrinters = userPrinters;
         }
-        
+
         // Update the main interface status counts
         updatePrinterStatusDisplay();
-        
+
         // Also update machine overview for consistency
         if (typeof window.waitForUpdateMachineOverview === 'function') {
             window.waitForUpdateMachineOverview(() => updateMachineOverview());
         } else if (typeof updateMachineOverview === 'function') {
             updateMachineOverview();
         }
-        
+
         // Show success message
         const statusText = getStatusText(newStatus);
         window.toast.success(`Drucker-Status auf "${statusText}" gesetzt`);
-        
+
         // Refresh the modal display
         showPrinterStatus();
-        
+
     } catch (error) {
         console.error('Error updating printer status:', error);
         window.toast.error('Fehler beim Ändern des Drucker-Status');
@@ -365,7 +389,7 @@ function showMaterialRequest() {
                                 <button class="btn btn-primary" onclick="submitMaterialWish()">Wunsch senden</button>
         </div>
     `;
-    
+
     showModalWithContent(modalContent);
 }
 
@@ -385,15 +409,15 @@ async function showEquipmentRequest() {
             </div>
         </div>
     `;
-    
+
     showModalWithContent(loadingContent);
-    
+
     // Load equipment data and users first
     await Promise.all([
         loadEquipmentForRequest(),
         loadAllUsers()
     ]);
-    
+
     // Now show the actual form
     const modalContent = `
         <div class="modal-header">
@@ -445,12 +469,12 @@ async function showEquipmentRequest() {
             <button class="btn btn-primary" onclick="submitEquipmentRequest()">Anfrage stellen</button>
         </div>
     `;
-    
+
     showModalWithContent(modalContent);
-    
+
     // Auto-fill phone number if available
     await autoFillPhoneNumber();
-    
+
     // Add event listener to save phone number when changed
     const phoneInput = document.getElementById('equipmentPhone');
     if (phoneInput) {
@@ -461,7 +485,7 @@ async function showEquipmentRequest() {
                 await savePhoneNumberToProfile(phoneNumber);
             }
         });
-        
+
         // Also save on Enter key press
         phoneInput.addEventListener('keypress', async function(event) {
             if (event.key === 'Enter') {
@@ -471,7 +495,7 @@ async function showEquipmentRequest() {
                 }
             }
         });
-        
+
         // Save on input change (real-time)
         phoneInput.addEventListener('input', async function() {
             const phoneNumber = this.value.trim();
@@ -484,7 +508,7 @@ async function showEquipmentRequest() {
             }
         });
     }
-    
+
     console.log('✅ Equipment loaded:', availableEquipment.length, 'items');
             console.log('✅ Users loaded:', userServicesAllUsers.length, 'users');
 }
@@ -498,13 +522,13 @@ async function autoFillPhoneNumber() {
             console.log('⚠️ No current user found for phone auto-fill');
             return;
         }
-        
+
         const phoneInput = document.getElementById('equipmentPhone');
         if (!phoneInput) {
             console.log('⚠️ Phone input field not found');
             return;
         }
-        
+
         // First try to get from current user object
         if (window.currentUser.phone) {
             phoneInput.value = window.currentUser.phone;
@@ -512,22 +536,22 @@ async function autoFillPhoneNumber() {
             console.log('✅ Auto-filled phone number from current user:', window.currentUser.phone);
             return;
         }
-        
+
         // Then try to find in loaded users
         if (typeof userServicesAllUsers !== 'undefined' && userServicesAllUsers.length > 0) {
             const currentUserData = userServicesAllUsers.find(user => user.kennung === window.currentUser.kennung);
-            
+
             if (currentUserData && currentUserData.phone) {
                 phoneInput.value = currentUserData.phone;
                 phoneInput.setAttribute('data-prefilled', 'true');
                 console.log('✅ Auto-filled phone number from userServicesAllUsers:', currentUserData.phone);
-                
+
                 // Update current user object
                 window.currentUser.phone = currentUserData.phone;
                 return;
             }
         }
-        
+
         // If no phone found, try to fetch from database
         try {
             const userDoc = await window.db.collection('users').doc(window.currentUser.kennung).get();
@@ -537,7 +561,7 @@ async function autoFillPhoneNumber() {
                     phoneInput.value = userData.phone;
                     phoneInput.setAttribute('data-prefilled', 'true');
                     console.log('✅ Auto-filled phone number from database:', userData.phone);
-                    
+
                     // Update current user object
                     window.currentUser.phone = userData.phone;
                     return;
@@ -546,9 +570,9 @@ async function autoFillPhoneNumber() {
         } catch (dbError) {
             console.log('ℹ️ Could not fetch phone from database:', dbError.message);
         }
-        
+
         console.log('ℹ️ No phone number found for current user');
-        
+
     } catch (error) {
         console.error('❌ Error auto-filling phone number:', error);
     }
@@ -563,31 +587,31 @@ async function savePhoneNumberToProfile(phoneNumber) {
             console.log('⚠️ No current user found for phone save');
             return;
         }
-        
+
         // Don't save if it's the same as current
         if (window.currentUser.phone === phoneNumber) {
             console.log('ℹ️ Phone number unchanged, no need to save');
             return;
         }
-        
+
         // Update user document with phone number
         await window.db.collection('users').doc(window.currentUser.kennung).update({
             phone: phoneNumber,
             updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
         });
-        
+
         console.log('✅ Phone number saved to user profile:', phoneNumber);
-        
+
         // Update current user object
         if (window.currentUser) {
             window.currentUser.phone = phoneNumber;
         }
-        
+
         // Show success toast (only for significant changes)
         if (phoneNumber.length >= 10) {
             window.toast.success('Telefonnummer gespeichert');
         }
-        
+
     } catch (error) {
         console.error('❌ Error saving phone number:', error);
         window.toast.error('Fehler beim Speichern der Telefonnummer');
@@ -644,7 +668,7 @@ function showProblemReport() {
             <button class="btn btn-primary" onclick="submitProblemReport()">Problem melden</button>
         </div>
     `;
-    
+
     showModalWithContent(modalContent);
 }
 
@@ -657,19 +681,19 @@ async function submitEquipmentRequest() {
     const duration = document.getElementById('equipmentDuration').value;
     const purpose = document.getElementById('equipmentPurpose').value;
     const phoneNumber = document.getElementById('equipmentPhone').value;
-    
+
     if (!equipmentType || !equipmentName || !duration || !purpose || !phoneNumber) {
         window.toast.error('Bitte alle Felder ausfüllen');
         return;
     }
-    
+
     // Validate phone number format
     const phoneRegex = /^(\+49|0)[0-9\s\-\(\)]{10,}$/;
     if (!phoneRegex.test(phoneNumber)) {
         window.toast.error('Bitte geben Sie eine gültige Handynummer ein');
         return;
     }
-    
+
     // Debug logging
     console.log('🔍 Equipment Debug:');
     console.log('- Current User:', window.currentUser?.name);
@@ -677,11 +701,11 @@ async function submitEquipmentRequest() {
     console.log('- Equipment Name:', equipmentName);
     console.log('- Available Equipment:', availableEquipment?.length || 0, 'items');
     console.log('- Available Equipment List:', availableEquipment);
-    
+
     // Find equipment by ID (since dropdown uses item.id as value)
     const selectedEquipment = availableEquipment?.find(eq => eq.id === equipmentName);
     console.log('- Selected Equipment:', selectedEquipment);
-    
+
     if (!selectedEquipment) {
         console.error('❌ Equipment nicht gefunden!');
         console.log('- Suchte nach ID:', equipmentName);
@@ -689,45 +713,45 @@ async function submitEquipmentRequest() {
         window.toast.error('Equipment nicht gefunden - siehe Console für Details');
         return;
     }
-    
+
     // Check if equipment is already borrowed (unified system)
     if (selectedEquipment.status === 'borrowed' || selectedEquipment.borrowedByKennung) {
         window.toast.error('Equipment ist bereits ausgeliehen und kann nicht angefragt werden');
         return;
     }
-    
+
     // Check if equipment has any pending requests (unified system)
-    const allPendingRequests = selectedEquipment.pendingRequests?.filter(req => 
+    const allPendingRequests = selectedEquipment.pendingRequests?.filter(req =>
         req.status === 'pending' && req.type === 'equipment'
     ) || [];
-    
+
     // Check if user already has a pending request for this equipment
-    const existingUserRequest = allPendingRequests.find(req => 
+    const existingUserRequest = allPendingRequests.find(req =>
         req.userKennung === window.currentUser?.kennung
     );
-    
+
     if (existingUserRequest) {
         window.toast.error(`Sie haben bereits eine ausstehende Anfrage für ${selectedEquipment.name}`);
         return;
     }
-    
+
     // Check if equipment has pending requests from other users
     if (allPendingRequests.length > 0) {
-        const otherUserRequests = allPendingRequests.filter(req => 
+        const otherUserRequests = allPendingRequests.filter(req =>
             req.userKennung !== window.currentUser?.kennung
         );
-        
+
         if (otherUserRequests.length > 0) {
             const requestInfo = otherUserRequests.map(req => {
                 const userName = req.userName || req.userKennung || 'Unbekannter User';
                 return `${userName}`;
             }).join(', ');
-            
+
             window.toast.error(`Equipment hat bereits ausstehende Anfragen von anderen Benutzern: ${requestInfo}`);
             return;
         }
     }
-    
+
     const requestData = {
         id: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         type: 'equipment',
@@ -742,23 +766,23 @@ async function submitEquipmentRequest() {
         userName: window.currentUser?.name || '',
         createdAt: new Date().toISOString()
     };
-    
+
     try {
         // Update user data with phone number if not already set
         if (window.currentUser?.kennung && phoneNumber) {
             try {
                 // First check if user exists by kennung
                 const userDoc = await window.db.collection('users').doc(window.currentUser.kennung).get();
-                
+
                 if (userDoc.exists) {
                     // User exists - just update phone number
                     await window.db.collection('users').doc(window.currentUser.kennung).update({
                         phone: phoneNumber,
                         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
-                    
+
                     console.log('✅ Updated existing user phone number:', window.currentUser.kennung);
-                    
+
                     // Update window.allUsers if function exists
                     if (typeof updateUserInList === 'function') {
                         updateUserInList(window.currentUser.kennung, { phone: phoneNumber });
@@ -766,26 +790,26 @@ async function submitEquipmentRequest() {
                 } else {
                     // User doesn't exist by kennung - search for existing user by name or email
                     console.log('🔍 User not found by kennung, searching for existing user...');
-                    
+
                     const existingUserQuery = await window.db.collection('users')
                         .where('name', '==', window.currentUser.name)
                         .limit(1)
                         .get();
-                    
+
                     if (!existingUserQuery.empty) {
                         // Found existing user by name - update with kennung and phone
                         const existingUserDoc = existingUserQuery.docs[0];
                         const existingUserData = existingUserDoc.data();
-                        
+
                         console.log('✅ Found existing user by name, updating with kennung:', existingUserDoc.id);
-                        
+
                         await window.db.collection('users').doc(existingUserDoc.id).update({
                             kennung: window.currentUser.kennung,
                             phone: phoneNumber,
                             email: window.currentUser.email || existingUserData.email || `${window.currentUser.kennung}@fh-muenster.de`,
                             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                         });
-                        
+
                         // Update window.allUsers if function exists
                         if (typeof updateUserInList === 'function') {
                             updateUserInList(existingUserDoc.id, {
@@ -797,7 +821,7 @@ async function submitEquipmentRequest() {
                     } else {
                         // No existing user found - create new user
                         console.log('📝 Creating new user:', window.currentUser.kennung);
-                        
+
                         await window.db.collection('users').doc(window.currentUser.kennung).set({
                             name: window.currentUser.name,
                             kennung: window.currentUser.kennung,
@@ -806,7 +830,7 @@ async function submitEquipmentRequest() {
                             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                         });
-                        
+
                         // Update window.allUsers if function exists
                         if (typeof updateUserInList === 'function') {
                             updateUserInList(window.currentUser.kennung, {
@@ -829,33 +853,33 @@ async function submitEquipmentRequest() {
                 // Don't throw error - continue with equipment request
             }
         }
-        
+
         // Add request to equipment document (unified system)
         const equipmentRef = window.db.collection('equipment').doc(selectedEquipment.id);
         const equipmentDoc = await equipmentRef.get();
-        
+
         if (!equipmentDoc.exists) {
             throw new Error('Equipment nicht gefunden');
         }
-        
+
         const equipmentData = equipmentDoc.data();
         const pendingRequests = equipmentData.pendingRequests || [];
         pendingRequests.push(requestData);
-        
+
         await equipmentRef.update({
             pendingRequests: pendingRequests,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        
+
         window.toast.success('Equipment-Anfrage erfolgreich gesendet');
-        
+
         // Update equipment requests badge if function exists
         if (typeof window.updateEquipmentRequestsBadge === 'function') {
             window.updateEquipmentRequestsBadge();
         }
-        
+
         closeModal();
-        
+
     } catch (error) {
         console.error('Error submitting equipment request:', error);
         window.toast.error('Fehler beim Senden der Equipment-Anfrage');
@@ -871,12 +895,12 @@ async function submitProblemReport() {
     const priority = document.getElementById('problemPriority').value;
     const description = document.getElementById('problemDescription').value;
     const steps = document.getElementById('problemSteps').value;
-    
+
     if (!type || !device || !description) {
         window.toast.error('Bitte alle Pflichtfelder ausfüllen');
         return;
     }
-    
+
     try {
         const reportData = {
             type,
@@ -890,12 +914,12 @@ async function submitProblemReport() {
             reportedAt: firebase.firestore.FieldValue.serverTimestamp(),
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
-        
+
         await window.db.collection('problemReports').add(reportData);
-        
+
         window.toast.success('Problem erfolgreich gemeldet');
         closeModal();
-        
+
     } catch (error) {
         console.error('Error submitting problem report:', error);
         window.toast.error('Fehler beim Melden des Problems');
@@ -912,12 +936,12 @@ async function submitMaterialWish() {
     const priority = document.getElementById('materialPriority').value;
     const reason = document.getElementById('materialReason').value;
     const supplier = document.getElementById('materialSupplier').value;
-    
+
     if (!type || !name || !quantity || !reason) {
         window.toast.error('Bitte alle Pflichtfelder ausfüllen');
         return;
     }
-    
+
     try {
         const requestData = {
             type: 'request',
@@ -933,13 +957,13 @@ async function submitMaterialWish() {
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
-        
+
         // Use materialOrders collection like admin orders
         await window.db.collection('materialOrders').add(requestData);
-        
+
         window.toast.success('Material-Wunsch erfolgreich eingereicht');
         closeModal();
-        
+
     } catch (error) {
         console.error('Error submitting material wish:', error);
         window.toast.error('Fehler beim Einreichen des Material-Wunschs');
@@ -961,7 +985,7 @@ function reportPrinterProblem(printerId, printerName) {
                     <h4>Drucker: ${printerName}</h4>
                     <p style="color: #666; margin-bottom: 20px;">Melden Sie ein Problem mit diesem Drucker</p>
                 </div>
-                
+
                 <div class="form-group">
                     <label class="form-label">Problem-Typ</label>
                     <select id="problemType" class="form-select">
@@ -974,7 +998,7 @@ function reportPrinterProblem(printerId, printerName) {
                         <option value="other">Sonstiges</option>
                     </select>
                 </div>
-                
+
                 <div class="form-group">
                     <label class="form-label">Schweregrad</label>
                     <select id="problemSeverity" class="form-select">
@@ -984,12 +1008,12 @@ function reportPrinterProblem(printerId, printerName) {
                         <option value="critical">Kritisch - Sicherheitsrisiko oder Schäden</option>
                     </select>
                 </div>
-                
+
                 <div class="form-group">
                     <label class="form-label">Problem-Beschreibung</label>
                     <textarea id="problemDescription" class="form-textarea" placeholder="Beschreiben Sie das Problem so detailliert wie möglich..." rows="4"></textarea>
                 </div>
-                
+
                 <div class="form-group">
                     <label class="form-label">Schritte zur Reproduktion (optional)</label>
                     <textarea id="problemSteps" class="form-textarea" placeholder="Wie kann das Problem reproduziert werden?" rows="3"></textarea>
@@ -1001,7 +1025,7 @@ function reportPrinterProblem(printerId, printerName) {
             <button class="btn btn-primary" onclick="submitPrinterProblemReport('${printerId}', '${printerName}')">Problem melden</button>
         </div>
     `;
-    
+
     showModalWithContent(modalContent);
 }
 
@@ -1013,12 +1037,12 @@ async function submitPrinterProblemReport(printerId, printerName) {
     const problemSeverity = document.getElementById('problemSeverity').value;
     const problemDescription = document.getElementById('problemDescription').value.trim();
     const problemSteps = document.getElementById('problemSteps').value.trim();
-    
+
     if (!problemType || !problemDescription) {
         window.toast.error('Bitte Problem-Typ und Beschreibung ausfüllen');
         return;
     }
-    
+
     try {
         const reportData = {
             printerId: printerId,
@@ -1033,9 +1057,9 @@ async function submitPrinterProblemReport(printerId, printerName) {
             reportedAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
-        
+
         await window.db.collection('problemReports').add(reportData);
-        
+
         // Automatically set printer status to "broken" when problem is reported
         try {
             await window.db.collection('printers').doc(printerId).update({
@@ -1044,24 +1068,24 @@ async function submitPrinterProblemReport(printerId, printerName) {
                 lastStatusChangeBy: window.currentUser?.name || 'Unbekannt',
                 lastStatusChangeAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            
+
             // Update local data
             const printerIndex = userPrinters.findIndex(p => p.id === printerId);
             if (printerIndex !== -1) {
                 userPrinters[printerIndex].status = 'broken';
                 window.userPrinters = userPrinters;
             }
-            
+
             // Update the main interface status counts
             updatePrinterStatusDisplay();
-            
+
         } catch (error) {
             console.error('Error updating printer status to broken:', error);
         }
-        
+
                 window.toast.success(`Problem für Drucker "${printerName}" erfolgreich gemeldet und Status auf "Defekt" gesetzt`);
         closeModal();
-        
+
     } catch (error) {
         console.error('Error submitting problem report:', error);
         window.toast.error('Fehler beim Melden des Problems');
@@ -1089,7 +1113,7 @@ function cleanupUserServices() {
         userPrinterListener();
         userPrinterListener = null;
     }
-    
+
     if (userEquipmentListener) {
         userEquipmentListener();
         userEquipmentListener = null;
@@ -1103,7 +1127,7 @@ let availableEquipment = [];
 
 async function loadEquipmentForRequest() {
     if (!window.db) return;
-    
+
     try {
         // Use global equipment data if available (from equipment listener)
         if (window.equipment && Array.isArray(window.equipment)) {
@@ -1146,38 +1170,38 @@ async function loadEquipmentForRequest() {
 function updateEquipmentOptions() {
     const typeSelect = document.getElementById('equipmentType');
     const equipmentSelect = document.getElementById('equipmentName');
-    
+
     if (!typeSelect || !equipmentSelect) return;
-    
+
     const selectedType = typeSelect.value;
-    
+
     console.log('🔄 Updating Equipment Options:');
     console.log('- Selected Type:', selectedType);
     console.log('- Available Equipment Total:', availableEquipment?.length || 0);
-    
+
     // Clear current options
     equipmentSelect.innerHTML = '';
-    
+
     if (!selectedType) {
         equipmentSelect.innerHTML = '<option value="">Zuerst Equipment-Typ auswählen...</option>';
         equipmentSelect.disabled = true;
         return;
     }
-    
+
     // Filter equipment by selected category
     const filteredEquipment = availableEquipment?.filter(item => item.category === selectedType) || [];
     console.log('- Filtered Equipment for category', selectedType + ':', filteredEquipment.length);
     console.log('- Filtered Equipment Items:', filteredEquipment);
-    
+
     if (filteredEquipment.length === 0) {
         equipmentSelect.innerHTML = '<option value="">Kein Equipment in dieser Kategorie verfügbar</option>';
         equipmentSelect.disabled = true;
         return;
     }
-    
+
     // Add default option
     equipmentSelect.innerHTML = '<option value="">Equipment auswählen...</option>';
-    
+
     // Add equipment options
     filteredEquipment.forEach(item => {
         const option = document.createElement('option');
@@ -1185,7 +1209,7 @@ function updateEquipmentOptions() {
         option.textContent = `${item.name} (${item.location})`;
         equipmentSelect.appendChild(option);
     });
-    
+
     equipmentSelect.disabled = false;
 }
 
@@ -1207,25 +1231,25 @@ async function showMyEquipmentRequests() {
             <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
         </div>
     `;
-    
+
     showModalWithContent(modalContent);
-    
+
     try {
         // Load all equipment and extract user's requests (unified system)
         const equipmentSnapshot = await window.db.collection('equipment').get();
         const requests = [];
-        
+
         equipmentSnapshot.forEach(doc => {
             const equipmentData = doc.data();
             const pendingRequests = equipmentData.pendingRequests || [];
-            
+
             // Filter requests for current user, excluding returned equipment
-            const userRequests = pendingRequests.filter(req => 
-                req.userKennung === window.currentUser.kennung && 
+            const userRequests = pendingRequests.filter(req =>
+                req.userKennung === window.currentUser.kennung &&
                 req.type === 'equipment' &&
                 req.status !== 'returned' // Exclude returned equipment
             );
-            
+
             // Add equipment info to each request
             userRequests.forEach(request => {
                 requests.push({
@@ -1239,16 +1263,16 @@ async function showMyEquipmentRequests() {
                 });
             });
         });
-        
+
         // Sort locally by creation date (newest first)
         requests.sort((a, b) => {
             if (!a.createdAt) return 1;
             if (!b.createdAt) return -1;
             return b.createdAt - a.createdAt;
         });
-        
+
         renderMyEquipmentRequests(requests);
-        
+
     } catch (error) {
         console.error('Error loading equipment requests:', error);
         document.getElementById('myEquipmentRequestsList').innerHTML = `
@@ -1264,7 +1288,7 @@ async function showMyEquipmentRequests() {
  */
 function renderMyEquipmentRequests(requests) {
     const container = document.getElementById('myEquipmentRequestsList');
-    
+
     if (requests.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
@@ -1273,61 +1297,61 @@ function renderMyEquipmentRequests(requests) {
         `;
         return;
     }
-    
+
     let html = '<div class="entry-cards">';
-    
+
     requests.forEach(request => {
         const date = formatRequestDate(request.createdAt);
         const statusText = getEquipmentStatusText(request.status);
         const statusClass = getEquipmentStatusClass(request.status);
-        
+
         html += `
             <div class="entry-card">
                 <div class="entry-card-header">
                     <h3 class="entry-job-title">${request.equipmentName}</h3>
                     <span class="entry-status-badge ${statusClass}">${statusText}</span>
                 </div>
-                
+
                 <div class="entry-card-body">
                     <div class="entry-detail-row">
                         <span class="entry-detail-label">Datum</span>
                         <span class="entry-detail-value">${date}</span>
                     </div>
-                    
+
                     <div class="entry-detail-row">
                         <span class="entry-detail-label">Typ</span>
                         <span class="entry-detail-value">${request.equipmentType}</span>
                     </div>
-                    
+
                     <div class="entry-detail-row">
                         <span class="entry-detail-label">Dauer</span>
                         <span class="entry-detail-value">${getEquipmentDurationText(request.duration)}</span>
                     </div>
-                    
+
                     <div class="entry-detail-row">
                         <span class="entry-detail-label">Zeitraum</span>
                         <span class="entry-detail-value">${getEquipmentRequestTimeframe(request)}</span>
                     </div>
-                    
+
                     <div class="entry-detail-row">
                         <span class="entry-detail-label">Zweck</span>
                         <span class="entry-detail-value">${request.purpose}</span>
                     </div>
-                    
+
                     ${request.equipmentLocation ? `
                     <div class="entry-detail-row">
                         <span class="entry-detail-label">Standort</span>
                         <span class="entry-detail-value">${request.equipmentLocation}</span>
                     </div>
                     ` : ''}
-                    
+
                     ${request.requestedBy && request.requestedBy !== request.userName ? `
                     <div class="entry-detail-row">
                         <span class="entry-detail-label">Angefordert von</span>
                         <span class="entry-detail-value">${request.requestedBy}</span>
                     </div>
                     ` : ''}
-                    
+
                     ${request.givenBy ? `
                     <div class="entry-detail-row">
                         <span class="entry-detail-label">Ausgegeben von</span>
@@ -1335,7 +1359,7 @@ function renderMyEquipmentRequests(requests) {
                     </div>
                     ` : ''}
                 </div>
-                
+
                 <div class="entry-card-footer">
                     ${request.status === 'given' || request.status === 'active' || request.status === 'borrowed' ? `
                         <button class="btn btn-primary btn-sm" onclick="requestEquipmentReturn('${request.id}')">
@@ -1367,7 +1391,7 @@ function renderMyEquipmentRequests(requests) {
             </div>
         `;
     });
-    
+
     html += '</div>';
     container.innerHTML = html;
 }
@@ -1378,24 +1402,24 @@ function renderMyEquipmentRequests(requests) {
 async function requestEquipmentReturn(requestId) {
     // Show confirmation toast instead of browser dialog
     window.toast.info('Rückgabe-Anfrage wird verarbeitet...');
-    
+
     // Small delay to show the info message
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
     try {
         console.log('🔄 Requesting equipment return for requestId:', requestId);
-        
+
         // Find equipment document containing this request (unified system)
         const equipmentSnapshot = await window.db.collection('equipment').get();
         let equipmentId = null;
         let equipmentDocData = null;
         let originalRequest = null;
-        
+
         for (const doc of equipmentSnapshot.docs) {
             const data = doc.data();
             const pendingRequests = data.pendingRequests || [];
             const request = pendingRequests.find(req => req.id === requestId);
-            
+
             if (request) {
                 equipmentId = doc.id;
                 equipmentDocData = data;
@@ -1403,24 +1427,24 @@ async function requestEquipmentReturn(requestId) {
                 break;
             }
         }
-        
+
         if (!equipmentId || !originalRequest) {
             console.error('❌ Request not found in equipment documents:', requestId);
             window.toast.error('Ausleih-Anfrage nicht gefunden');
             return;
         }
-        
+
         console.log('📋 Original request data:', originalRequest);
         console.log('🔍 Equipment ID:', equipmentId);
         console.log('🔍 Equipment Name:', equipmentDocData.name);
-        
+
         // Check if equipment is actually borrowed by this user
         if (equipmentDocData.status !== 'borrowed' || equipmentDocData.borrowedByKennung !== window.currentUser?.kennung) {
             console.error('❌ Equipment not borrowed by current user');
             window.toast.error('Equipment ist nicht von Ihnen ausgeliehen');
             return;
         }
-        
+
         // Create a return request
         const returnRequestData = {
             id: `return_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -1435,20 +1459,20 @@ async function requestEquipmentReturn(requestId) {
             originalRequestId: requestId,
             createdAt: new Date().toISOString()
         };
-        
+
         console.log('📝 Creating return request:', returnRequestData);
-        
+
         // Add return request to equipment's pendingRequests array (unified system)
         const pendingRequests = equipmentDocData.pendingRequests || [];
         pendingRequests.push(returnRequestData);
-        
+
         await window.db.collection('equipment').doc(equipmentId).update({
             pendingRequests: pendingRequests,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        
+
         console.log('✅ Return request added to equipment document');
-        
+
         // Update the original request status in the same array
         const updatedRequests = pendingRequests.map(req => {
             if (req.id === requestId) {
@@ -1460,21 +1484,21 @@ async function requestEquipmentReturn(requestId) {
             }
             return req;
         });
-        
+
         await window.db.collection('equipment').doc(equipmentId).update({
             pendingRequests: updatedRequests,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        
+
         console.log('✅ Return request created successfully');
         window.toast.success('Rückgabe-Anfrage erfolgreich erstellt');
-        
+
         // Refresh the view if still on the equipment requests modal
         const equipmentRequestsList = document.getElementById('myEquipmentRequestsList');
         if (equipmentRequestsList) {
             refreshMyEquipmentRequests();
         }
-        
+
     } catch (error) {
         console.error('❌ Error requesting return:', error);
         window.toast.error('Fehler beim Senden der Rückgabe-Anfrage: ' + error.message);
@@ -1487,47 +1511,47 @@ async function requestEquipmentReturn(requestId) {
 async function cancelEquipmentReturn(requestId) {
     // Show confirmation toast instead of browser dialog
     window.toast.info('Rückgabe-Anfrage wird zurückgezogen...');
-    
+
     // Small delay to show the info message
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
     try {
         console.log('🔄 Canceling equipment return for requestId:', requestId);
-        
+
         // Find equipment document containing this request (unified system)
         const equipmentSnapshot = await window.db.collection('equipment').get();
         let equipmentId = null;
         let equipmentDocData = null;
         let originalRequest = null;
         let returnRequest = null;
-        
+
         for (const doc of equipmentSnapshot.docs) {
             const data = doc.data();
             const pendingRequests = data.pendingRequests || [];
-            
+
             // Find the original request that has return_requested status
             const originalReq = pendingRequests.find(req => req.id === requestId && req.status === 'return_requested');
             if (originalReq) {
                 equipmentId = doc.id;
                 equipmentDocData = data;
                 originalRequest = originalReq;
-                
+
                 // Find the corresponding return request
                 returnRequest = pendingRequests.find(req => req.originalRequestId === requestId && req.type === 'return');
                 break;
             }
         }
-        
+
         if (!equipmentId || !originalRequest) {
             console.error('❌ Return request not found in equipment documents:', requestId);
             window.toast.error('Rückgabe-Anfrage nicht gefunden');
             return;
         }
-        
+
         console.log('📋 Original request data:', originalRequest);
         console.log('📋 Return request data:', returnRequest);
         console.log('🔍 Equipment ID:', equipmentId);
-        
+
         // Remove return request and update original request status
         const pendingRequests = equipmentDocData.pendingRequests || [];
         const updatedRequests = pendingRequests.map(req => {
@@ -1544,18 +1568,18 @@ async function cancelEquipmentReturn(requestId) {
             }
             return req;
         }).filter(req => req !== null); // Remove null entries
-        
+
         await window.db.collection('equipment').doc(equipmentId).update({
             pendingRequests: updatedRequests,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        
+
         console.log('✅ Return request canceled successfully');
         window.toast.success('Rückgabe-Anfrage erfolgreich zurückgezogen');
-        
+
         // Small delay to ensure database updates are processed
         await new Promise(resolve => setTimeout(resolve, 300));
-        
+
         // Immediately refresh the view to show the "Rückgabe anfragen" button
         const equipmentRequestsList = document.getElementById('myEquipmentRequestsList');
         if (equipmentRequestsList) {
@@ -1565,7 +1589,7 @@ async function cancelEquipmentReturn(requestId) {
         } else {
             console.log('⚠️ Equipment requests list container not found, cannot refresh view');
         }
-        
+
     } catch (error) {
         console.error('❌ Error canceling return:', error);
         window.toast.error('Fehler beim Zurückziehen der Rückgabe-Anfrage: ' + error.message);
@@ -1578,18 +1602,18 @@ async function cancelEquipmentReturn(requestId) {
 async function deleteUserEquipmentRequest(requestId) {
     try {
         console.log(`🗑️ User Delete Equipment Request: ${requestId}`);
-        
+
         // Find equipment document containing this request (unified system)
         const equipmentSnapshot = await window.db.collection('equipment').get();
         let equipmentId = null;
         let equipmentData = null;
         let originalRequest = null;
-        
+
         for (const doc of equipmentSnapshot.docs) {
             const data = doc.data();
             const pendingRequests = data.pendingRequests || [];
             const request = pendingRequests.find(req => req.id === requestId);
-            
+
             if (request) {
                 equipmentId = doc.id;
                 equipmentData = data;
@@ -1597,26 +1621,26 @@ async function deleteUserEquipmentRequest(requestId) {
                 break;
             }
         }
-        
+
         if (!equipmentId || !originalRequest) {
             throw new Error('Equipment-Anfrage nicht gefunden');
         }
-        
+
         // Check if request can be deleted (pending or rejected requests)
         if (originalRequest.status !== 'pending' && originalRequest.status !== 'rejected') {
             window.toast.error('Nur ausstehende oder abgelehnte Anfragen können gelöscht werden');
             return;
         }
-        
+
         // Show confirmation toast
         window.toast.info('Ausleih-Anfrage wird gelöscht...');
-        
+
         // Small delay to show the info message
         await new Promise(resolve => setTimeout(resolve, 500));
-        
+
         // More robust element selection for user equipment requests
         let requestElement = null;
-        
+
         // Strategy 1: Find by exact onclick match in myEquipmentRequestsList container
         const container = document.getElementById('myEquipmentRequestsList');
         if (container) {
@@ -1626,7 +1650,7 @@ async function deleteUserEquipmentRequest(requestId) {
                 console.log('✅ Found element via exact onclick match');
             }
         }
-        
+
         // Strategy 2: Find by partial onclick match
         if (!requestElement && container) {
             const allCards = container.querySelectorAll('.entry-card');
@@ -1639,7 +1663,7 @@ async function deleteUserEquipmentRequest(requestId) {
                 }
             }
         }
-        
+
         // Strategy 3: Find by content match as backup
         if (!requestElement && container) {
             const allCards = container.querySelectorAll('.entry-card');
@@ -1651,10 +1675,10 @@ async function deleteUserEquipmentRequest(requestId) {
                 }
             }
         }
-        
+
         console.log('- Target container:', container ? 'FOUND' : 'NOT FOUND');
         console.log('- Target element:', requestElement ? 'FOUND' : 'NOT FOUND');
-        
+
         // Make element transparent immediately
         if (requestElement) {
             requestElement.style.opacity = '0.3';
@@ -1662,25 +1686,25 @@ async function deleteUserEquipmentRequest(requestId) {
             requestElement.style.transition = 'opacity 0.3s ease';
             console.log('✅ Element made transparent');
         }
-        
+
         // Remove request from equipment's pendingRequests array
         const pendingRequests = equipmentData.pendingRequests || [];
         const updatedRequests = pendingRequests.filter(req => req.id !== requestId);
-        
+
         await window.db.collection('equipment').doc(equipmentId).update({
             pendingRequests: updatedRequests,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        
+
         console.log('✅ Deleted from equipment document');
-        
+
         // Remove element from DOM immediately
         if (requestElement) {
             requestElement.style.opacity = '0';
             setTimeout(() => {
                 requestElement.remove();
                 console.log('✅ Element removed from DOM');
-                
+
                 // Check if container is now empty
                 if (container) {
                     const remainingCards = container.querySelectorAll('.entry-card');
@@ -1695,13 +1719,13 @@ async function deleteUserEquipmentRequest(requestId) {
                 }
             }, 300);
         }
-        
+
         window.toast.success('Ausleih-Anfrage gelöscht');
-        
+
     } catch (error) {
         console.error('Error deleting equipment request:', error);
         window.toast.error('Fehler beim Löschen der Ausleih-Anfrage');
-        
+
         // Restore element if deletion failed
         if (requestElement) {
             requestElement.style.opacity = '1';
@@ -1716,25 +1740,25 @@ async function deleteUserEquipmentRequest(requestId) {
 async function refreshMyEquipmentRequests() {
     const container = document.getElementById('myEquipmentRequestsList');
     if (!container) return;
-    
+
     try {
         container.innerHTML = 'Lade Ausleihen...';
-        
+
         // Load all equipment and extract user's requests (unified system)
         const equipmentSnapshot = await window.db.collection('equipment').get();
         const requests = [];
-        
+
         equipmentSnapshot.forEach(doc => {
             const equipmentData = doc.data();
             const pendingRequests = equipmentData.pendingRequests || [];
-            
+
             // Filter requests for current user, excluding returned equipment
-            const userRequests = pendingRequests.filter(req => 
-                req.userKennung === window.currentUser.kennung && 
+            const userRequests = pendingRequests.filter(req =>
+                req.userKennung === window.currentUser.kennung &&
                 req.type === 'equipment' &&
                 req.status !== 'returned' // Exclude returned equipment
             );
-            
+
             // Add equipment info to each request
             userRequests.forEach(request => {
                 requests.push({
@@ -1748,16 +1772,16 @@ async function refreshMyEquipmentRequests() {
                 });
             });
         });
-        
+
         // Sort locally by creation date (newest first)
         requests.sort((a, b) => {
             if (!a.createdAt) return 1;
             if (!b.createdAt) return -1;
             return b.createdAt - a.createdAt;
         });
-        
+
         renderMyEquipmentRequests(requests);
-        
+
         // Check if modal should auto-close (no requests left)
         if (requests.length === 0) {
             setTimeout(() => {
@@ -1765,7 +1789,7 @@ async function refreshMyEquipmentRequests() {
                 closeModal();
             }, 1000);
         }
-        
+
     } catch (error) {
         console.error('Error refreshing equipment requests:', error);
         container.innerHTML = `
@@ -1782,7 +1806,7 @@ async function refreshMyEquipmentRequests() {
 function getEquipmentStatusText(status) {
     const statusMap = {
         'pending': 'Offen',
-        'approved': 'Genehmigt', 
+        'approved': 'Genehmigt',
         'given': 'Ausgegeben',
         'active': 'Aktiv',
         'return_requested': 'Rückgabe angefragt',
@@ -1845,14 +1869,14 @@ async function showMyProblemReports() {
             <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
         </div>
     `;
-    
+
     showModalWithContent(modalContent);
-    
+
     try {
         const snapshot = await window.db.collection('problemReports')
             .where('reportedByKennung', '==', window.currentUser.kennung)
             .get();
-        
+
         const reports = [];
         snapshot.forEach(doc => {
             const data = doc.data();
@@ -1862,16 +1886,16 @@ async function showMyProblemReports() {
                 createdAt: data.createdAt?.toDate() || data.reportedAt?.toDate()
             });
         });
-        
+
         // Sort locally by creation date (newest first)
         reports.sort((a, b) => {
             if (!a.createdAt) return 1;
             if (!b.createdAt) return -1;
             return b.createdAt - a.createdAt;
         });
-        
+
         renderMyProblemReports(reports);
-        
+
     } catch (error) {
         console.error('Error loading problem reports:', error);
         document.getElementById('myProblemReportsList').innerHTML = `
@@ -1887,7 +1911,7 @@ async function showMyProblemReports() {
  */
 function renderMyProblemReports(reports) {
     const container = document.getElementById('myProblemReportsList');
-    
+
     if (reports.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
@@ -1896,43 +1920,43 @@ function renderMyProblemReports(reports) {
         `;
         return;
     }
-    
+
     let html = '<div class="entry-cards">';
-    
+
     reports.forEach(report => {
         const date = report.createdAt ? report.createdAt.toLocaleDateString('de-DE') : 'Unbekannt';
         const statusText = getProblemStatusText(report.status);
         const statusClass = getProblemStatusClass(report.status);
         const priorityText = getProblemPriorityText(report.priority || report.severity);
-        
+
         html += `
             <div class="entry-card">
                 <div class="entry-card-header">
                     <h3 class="entry-job-title">${report.device || 'Problem-Meldung'}</h3>
                     <span class="entry-status-badge ${statusClass}">${statusText}</span>
                 </div>
-                
+
                 <div class="entry-card-body">
                     <div class="entry-detail-row">
                         <span class="entry-detail-label">Datum</span>
                         <span class="entry-detail-value">${date}</span>
                     </div>
-                    
+
                     <div class="entry-detail-row">
                         <span class="entry-detail-label">Typ</span>
                         <span class="entry-detail-value">${getProblemTypeText(report.type)}</span>
                     </div>
-                    
+
                     <div class="entry-detail-row">
                         <span class="entry-detail-label">Priorität</span>
                         <span class="entry-detail-value">${priorityText}</span>
                     </div>
-                    
+
                     <div class="entry-detail-row">
                         <span class="entry-detail-label">Beschreibung</span>
                         <span class="entry-detail-value">${report.description}</span>
                     </div>
-                    
+
                     ${report.steps ? `
                     <div class="entry-detail-row">
                         <span class="entry-detail-label">Schritte</span>
@@ -1940,7 +1964,7 @@ function renderMyProblemReports(reports) {
                     </div>
                     ` : ''}
                 </div>
-                
+
                 <div class="entry-card-footer">
                     ${report.status === 'open' ? `
                         <button class="btn btn-secondary btn-sm" onclick="editProblemReport('${report.id}')">
@@ -1958,7 +1982,7 @@ function renderMyProblemReports(reports) {
             </div>
         `;
     });
-    
+
     html += '</div>';
     container.innerHTML = html;
 }
@@ -1973,9 +1997,9 @@ async function editProblemReport(reportId) {
             window.toast.error('Meldung nicht gefunden');
             return;
         }
-        
+
         const report = doc.data();
-        
+
         const modalContent = `
             <div class="modal-header">
                 <h3>Meldung bearbeiten</h3>
@@ -2021,9 +2045,9 @@ async function editProblemReport(reportId) {
                 <button class="btn btn-primary" onclick="saveProblemReportEdit('${reportId}')">Speichern</button>
             </div>
         `;
-        
+
         showModalWithContent(modalContent);
-        
+
     } catch (error) {
         console.error('Error loading problem report for edit:', error);
         window.toast.error('Fehler beim Laden der Meldung');
@@ -2039,12 +2063,12 @@ async function saveProblemReportEdit(reportId) {
     const priority = document.getElementById('editProblemPriority').value;
     const description = document.getElementById('editProblemDescription').value;
     const steps = document.getElementById('editProblemSteps').value;
-    
+
     if (!type || !device || !description) {
         toast.error('Bitte alle Pflichtfelder ausfüllen');
         return;
     }
-    
+
     try {
         await window.db.collection('problemReports').doc(reportId).update({
             type,
@@ -2054,7 +2078,7 @@ async function saveProblemReportEdit(reportId) {
             steps,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        
+
         window.toast.success('Meldung erfolgreich aktualisiert');
         closeModal();
         // Refresh the view if still on the view if still on the problem reports modal
@@ -2064,7 +2088,7 @@ async function saveProblemReportEdit(reportId) {
                 refreshMyProblemReports();
             }
         }, 100);
-        
+
     } catch (error) {
         console.error('Error updating problem report:', error);
         window.toast.error('Fehler beim Aktualisieren der Meldung');
@@ -2077,16 +2101,16 @@ async function saveProblemReportEdit(reportId) {
 async function deleteUserProblemReport(reportId) {
     // Show confirmation toast instead of browser dialog
     window.toast.info('Problem-Meldung wird gelöscht...');
-    
+
     // Small delay to show the info message
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
     try {
         console.log(`🗑️ User Delete Problem Report: ${reportId}`);
-        
+
         // More robust element selection for user problem reports
         let reportElement = null;
-        
+
         // Strategy 1: Find by exact onclick match in myProblemReportsList container
         const container = document.getElementById('myProblemReportsList');
         if (container) {
@@ -2096,7 +2120,7 @@ async function deleteUserProblemReport(reportId) {
                 console.log('✅ Found element via exact onclick match');
             }
         }
-        
+
         // Strategy 2: Find by partial onclick match
         if (!reportElement && container) {
             const allCards = container.querySelectorAll('.entry-card');
@@ -2109,7 +2133,7 @@ async function deleteUserProblemReport(reportId) {
                 }
             }
         }
-        
+
         // Strategy 3: Find by data attribute (backup method)
         if (!reportElement && container) {
             const allCards = container.querySelectorAll('.entry-card');
@@ -2122,10 +2146,10 @@ async function deleteUserProblemReport(reportId) {
                 }
             }
         }
-        
+
         console.log('- Target container:', container ? 'FOUND' : 'NOT FOUND');
         console.log('- Target element:', reportElement ? 'FOUND' : 'NOT FOUND');
-        
+
         // Make element transparent immediately
         if (reportElement) {
             reportElement.style.opacity = '0.3';
@@ -2133,18 +2157,18 @@ async function deleteUserProblemReport(reportId) {
             reportElement.style.transition = 'opacity 0.3s ease';
             console.log('✅ Element made transparent');
         }
-        
+
         // Delete from database
         await window.db.collection('problemReports').doc(reportId).delete();
         console.log('✅ Deleted from database');
-        
+
         // Remove element from DOM immediately
         if (reportElement) {
             reportElement.style.opacity = '0';
             setTimeout(() => {
                 reportElement.remove();
                 console.log('✅ Element removed from DOM');
-                
+
                 // Check if container is now empty
                 if (container) {
                     const remainingCards = container.querySelectorAll('.entry-card');
@@ -2159,13 +2183,13 @@ async function deleteUserProblemReport(reportId) {
                 }
             }, 300);
         }
-        
+
         window.toast.success('Problem-Meldung gelöscht');
-        
+
     } catch (error) {
         console.error('Error deleting problem report:', error);
         window.toast.error('Fehler beim Löschen der Problem-Meldung');
-        
+
         // Restore element if deletion failed
         if (reportElement) {
             reportElement.style.opacity = '1';
@@ -2180,14 +2204,14 @@ async function deleteUserProblemReport(reportId) {
 async function refreshMyProblemReports() {
     const container = document.getElementById('myProblemReportsList');
     if (!container) return;
-    
+
     try {
         container.innerHTML = 'Lade Meldungen...';
-        
+
         const snapshot = await window.db.collection('problemReports')
             .where('reportedByKennung', '==', window.currentUser.kennung)
             .get();
-        
+
         const reports = [];
         snapshot.forEach(doc => {
             const data = doc.data();
@@ -2197,16 +2221,16 @@ async function refreshMyProblemReports() {
                 createdAt: data.createdAt?.toDate() || data.reportedAt?.toDate()
             });
         });
-        
+
         // Sort locally by creation date (newest first)
         reports.sort((a, b) => {
             if (!a.createdAt) return 1;
             if (!b.createdAt) return -1;
             return b.createdAt - a.createdAt;
         });
-        
+
         renderMyProblemReports(reports);
-        
+
         // Check if modal should auto-close (no reports left)
         if (reports.length === 0) {
             setTimeout(() => {
@@ -2214,7 +2238,7 @@ async function refreshMyProblemReports() {
                 closeModal();
             }, 1000);
         }
-        
+
     } catch (error) {
         console.error('Error refreshing problem reports:', error);
         container.innerHTML = `
@@ -2297,15 +2321,15 @@ async function showMyMaterialRequests() {
             <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
         </div>
     `;
-    
+
     showModalWithContent(modalContent);
-    
+
     try {
         const snapshot = await window.db.collection('materialOrders')
             .where('source', '==', 'user')
             .where('userKennung', '==', window.currentUser.kennung)
             .get();
-        
+
         const requests = [];
         snapshot.forEach(doc => {
             const data = doc.data();
@@ -2315,16 +2339,16 @@ async function showMyMaterialRequests() {
                 createdAt: data.createdAt?.toDate()
             });
         });
-        
+
         // Sort locally by creation date (newest first)
         requests.sort((a, b) => {
             if (!a.createdAt) return 1;
             if (!b.createdAt) return -1;
             return b.createdAt - a.createdAt;
         });
-        
+
         renderMyMaterialRequests(requests);
-        
+
     } catch (error) {
         console.error('Error loading material requests:', error);
         document.getElementById('myMaterialRequestsList').innerHTML = `
@@ -2340,7 +2364,7 @@ async function showMyMaterialRequests() {
  */
 function renderMyMaterialRequests(requests) {
     const container = document.getElementById('myMaterialRequestsList');
-    
+
     if (requests.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
@@ -2349,48 +2373,48 @@ function renderMyMaterialRequests(requests) {
         `;
         return;
     }
-    
+
     let html = '<div class="entry-cards">';
-    
+
     requests.forEach(request => {
         const date = request.createdAt ? request.createdAt.toLocaleDateString('de-DE') : 'Unbekannt';
         const statusText = getMaterialRequestStatusText(request.status);
         const statusClass = getMaterialRequestStatusClass(request.status);
         const priorityText = getMaterialPriorityText(request.priority);
-        
+
         html += `
             <div class="entry-card">
                 <div class="entry-card-header">
                     <h3 class="entry-job-title">${request.materialName || request.name || 'Material-Wunsch'}</h3>
                     <span class="entry-status-badge ${statusClass}">${statusText}</span>
                 </div>
-                
+
                 <div class="entry-card-body">
                     <div class="entry-detail-row">
                         <span class="entry-detail-label">Datum</span>
                         <span class="entry-detail-value">${date}</span>
                     </div>
-                    
+
                     <div class="entry-detail-row">
                         <span class="entry-detail-label">Material</span>
                         <span class="entry-detail-value">${request.materialName || 'Nicht angegeben'}</span>
                     </div>
-                    
+
                     <div class="entry-detail-row">
                         <span class="entry-detail-label">Menge</span>
                         <span class="entry-detail-value">${request.quantity || 'Nicht angegeben'}</span>
                     </div>
-                    
+
                     <div class="entry-detail-row">
                         <span class="entry-detail-label">Priorität</span>
                         <span class="entry-detail-value">${priorityText}</span>
                     </div>
-                    
+
                     <div class="entry-detail-row">
                         <span class="entry-detail-label">Begründung</span>
                         <span class="entry-detail-value">${request.reason}</span>
                     </div>
-                    
+
                     ${request.manufacturer ? `
                     <div class="entry-detail-row">
                         <span class="entry-detail-label">Hersteller</span>
@@ -2398,7 +2422,7 @@ function renderMyMaterialRequests(requests) {
                     </div>
                     ` : ''}
                 </div>
-                
+
                 <div class="entry-card-footer">
                     ${request.status === 'pending' ? `
                         <button class="btn btn-secondary btn-sm" onclick="editMaterialRequest('${request.id}')">
@@ -2420,7 +2444,7 @@ function renderMyMaterialRequests(requests) {
             </div>
         `;
     });
-    
+
     html += '</div>';
     container.innerHTML = html;
 }
@@ -2435,9 +2459,9 @@ async function editMaterialRequest(requestId) {
             window.toast.error('Wunsch nicht gefunden');
             return;
         }
-        
+
         const request = doc.data();
-        
+
         const modalContent = `
             <div class="modal-header">
                 <h3>Wunsch bearbeiten</h3>
@@ -2480,9 +2504,9 @@ async function editMaterialRequest(requestId) {
                 <button class="btn btn-primary" onclick="saveMaterialRequestEdit('${requestId}')">Speichern</button>
             </div>
         `;
-        
+
         showModalWithContent(modalContent);
-        
+
     } catch (error) {
         console.error('Error loading material request for edit:', error);
         window.toast.error('Fehler beim Laden des Wunsches');
@@ -2499,12 +2523,12 @@ async function saveMaterialRequestEdit(requestId) {
     const priority = document.getElementById('editMaterialPriority').value;
     const reason = document.getElementById('editMaterialReason').value;
     const supplier = document.getElementById('editMaterialSupplier').value;
-    
+
     if (!type || !name || !quantity || !reason) {
         window.toast.error('Bitte alle Pflichtfelder ausfüllen');
         return;
     }
-    
+
     try {
         await window.db.collection('materialOrders').doc(requestId).update({
             type,
@@ -2515,7 +2539,7 @@ async function saveMaterialRequestEdit(requestId) {
             manufacturer: supplier, // Use manufacturer to match submitMaterialWish
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        
+
         window.toast.success('Wunsch erfolgreich aktualisiert');
         closeModal();
         // Refresh the view if still on the material requests modal
@@ -2525,7 +2549,7 @@ async function saveMaterialRequestEdit(requestId) {
                 refreshMyMaterialRequests();
             }
         }, 100);
-        
+
     } catch (error) {
         console.error('Error updating material request:', error);
         window.toast.error('Fehler beim Aktualisieren des Wunsches');
@@ -2543,28 +2567,28 @@ async function deleteMaterialRequest(requestId) {
             window.toast.error('Material-Wunsch nicht gefunden');
             return;
         }
-        
+
         const requestData = requestDoc.data();
         const isApproved = requestData.status === 'approved';
-        
+
         // Show confirmation toast instead of browser dialog
-        const confirmMessage = isApproved 
-            ? 'Genehmigter Material-Wunsch wird gelöscht...' 
+        const confirmMessage = isApproved
+            ? 'Genehmigter Material-Wunsch wird gelöscht...'
             : 'Material-Wunsch wird gelöscht...';
-            
+
         window.toast.info(confirmMessage);
-        
+
         // Small delay to show the info message
         await new Promise(resolve => setTimeout(resolve, 500));
-        
+
         // First remove from display immediately with multiple selector strategies
         let requestElement = document.querySelector(`[onclick*="deleteMaterialRequest('${requestId}')"]`)?.closest('.entry-card');
-        
+
         // Fallback selector strategies
         if (!requestElement) {
             requestElement = document.querySelector(`[onclick="deleteMaterialRequest('${requestId}')"]`)?.closest('.entry-card');
         }
-        
+
         // Additional fallback: find all entry cards and match by data or content
         if (!requestElement) {
             const allCards = document.querySelectorAll('.entry-card');
@@ -2576,26 +2600,26 @@ async function deleteMaterialRequest(requestId) {
                 }
             }
         }
-        
+
         // Debug logging
         console.log(`🗑️ Delete Material Request: ${requestId}`, requestElement ? 'Element found' : 'Element NOT found');
-        
+
         if (requestElement) {
             requestElement.style.opacity = '0.5';
             requestElement.style.pointerEvents = 'none';
             console.log('✅ Element made transparent');
         }
-        
+
         await window.db.collection('materialOrders').doc(requestId).delete();
-        
+
         // Immediately remove element from DOM after successful deletion
         if (requestElement) {
             requestElement.remove();
             console.log('✅ Element removed from DOM');
         }
-        
+
         window.toast.success('Material-Wunsch gelöscht');
-        
+
         // Check if container is now empty and handle auto-close
         const container = document.getElementById('myMaterialRequestsList');
         if (container) {
@@ -2612,11 +2636,11 @@ async function deleteMaterialRequest(requestId) {
                 }, 500);
             }
         }
-        
+
     } catch (error) {
         console.error('Error deleting material request:', error);
         window.toast.error('Fehler beim Löschen des Material-Wunschs');
-        
+
         // Restore element if deletion failed
         const requestElement = document.querySelector(`[onclick*="deleteMaterialRequest('${requestId}')"]`)?.closest('.entry-card');
         if (requestElement) {
@@ -2632,15 +2656,15 @@ async function deleteMaterialRequest(requestId) {
 async function refreshMyMaterialRequests() {
     const container = document.getElementById('myMaterialRequestsList');
     if (!container) return;
-    
+
     try {
         container.innerHTML = 'Lade Wünsche...';
-        
+
         const snapshot = await window.db.collection('materialOrders')
             .where('source', '==', 'user')
             .where('userKennung', '==', window.currentUser.kennung)
             .get();
-        
+
         const requests = [];
         snapshot.forEach(doc => {
             const data = doc.data();
@@ -2650,16 +2674,16 @@ async function refreshMyMaterialRequests() {
                 createdAt: data.createdAt?.toDate()
             });
         });
-        
+
         // Sort locally by creation date (newest first)
         requests.sort((a, b) => {
             if (!a.createdAt) return 1;
             if (!b.createdAt) return -1;
             return b.createdAt - a.createdAt;
         });
-        
+
         renderMyMaterialRequests(requests);
-        
+
         // Check if modal should auto-close (no requests left)
         if (requests.length === 0) {
             setTimeout(() => {
@@ -2667,7 +2691,7 @@ async function refreshMyMaterialRequests() {
                 closeModal();
             }, 1000);
         }
-        
+
     } catch (error) {
         console.error('Error refreshing material requests:', error);
         container.innerHTML = `
@@ -2725,7 +2749,7 @@ async function loadAllUsers() {
     try {
         console.log('🔄 Loading all users for equipment requests...');
         const usersSnapshot = await window.db.collection('users').get();
-        
+
         userServicesAllUsers = [];
         usersSnapshot.forEach(doc => {
             const userData = doc.data();
@@ -2737,13 +2761,13 @@ async function loadAllUsers() {
                 ...userData
             });
         });
-        
+
         // Sort by name
         userServicesAllUsers.sort((a, b) => a.name.localeCompare(b.name));
-        
+
         console.log(`✅ Loaded ${userServicesAllUsers.length} users for equipment requests`);
         return userServicesAllUsers;
-        
+
     } catch (error) {
         console.error('Error loading users:', error);
         return [];
@@ -2772,7 +2796,7 @@ function formatRequestDate(createdAt) {
     if (!createdAt) {
         return 'Unbekannt';
     }
-    
+
     let date;
     try {
         if (createdAt.toDate && typeof createdAt.toDate === 'function') {
@@ -2791,13 +2815,13 @@ function formatRequestDate(createdAt) {
             // Fallback to current date
             date = new Date();
         }
-        
+
         // Validate the date
         if (isNaN(date.getTime())) {
             console.warn('Invalid date, using current date:', createdAt);
             date = new Date();
         }
-        
+
         return date.toLocaleDateString('de-DE');
     } catch (error) {
         console.error('Error parsing date:', error, createdAt);
@@ -2812,7 +2836,7 @@ function getEquipmentRequestTimeframe(request) {
     if (!request || !request.duration) {
         return 'Unbekannt - Unbekannt';
     }
-    
+
     // Get start date (request creation date) with robust parsing
     let startDate;
     try {
@@ -2837,7 +2861,7 @@ function getEquipmentRequestTimeframe(request) {
             // No createdAt, use current date
             startDate = new Date();
         }
-        
+
         // Validate the date
         if (isNaN(startDate.getTime())) {
             console.warn('Invalid startDate, using current date:', request.createdAt);
@@ -2847,10 +2871,10 @@ function getEquipmentRequestTimeframe(request) {
         console.error('Error parsing startDate:', error, request.createdAt);
         startDate = new Date();
     }
-    
+
     // Calculate end date based on duration
     const endDate = new Date(startDate);
-    
+
     switch (request.duration) {
         case '1_hour':
             endDate.setHours(endDate.getHours() + 1);
@@ -2875,25 +2899,25 @@ function getEquipmentRequestTimeframe(request) {
             // Default to 1 day
             endDate.setDate(endDate.getDate() + 1);
     }
-    
+
     try {
-    const startDateStr = startDate.toLocaleDateString('de-DE', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-    
-    const endDateStr = endDate.toLocaleDateString('de-DE', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-    
-    return `${startDateStr} - ${endDateStr}`;
+        const startDateStr = startDate.toLocaleDateString('de-DE', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        const endDateStr = endDate.toLocaleDateString('de-DE', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        return `${startDateStr} - ${endDateStr}`;
     } catch (error) {
         console.error('Error formatting dates:', error);
         return 'Datum nicht verfügbar';
@@ -2938,90 +2962,4 @@ console.log('👥 Available functions:', {
     requestEquipmentReturn: typeof requestEquipmentReturn,
     autoFillPhoneNumber: typeof autoFillPhoneNumber,
     savePhoneNumberToProfile: typeof savePhoneNumberToProfile
-}); 
-
-// Update user phone number
-async function updateUserPhoneNumber(phoneNumber) {
-    try {
-        if (!window.currentUser || !window.currentUser.username) {
-            console.error('❌ Kein Benutzer angemeldet oder kein Username verfügbar');
-            return false;
-        }
-
-        console.log('📱 Update phone number for user:', window.currentUser.username);
-
-        // First check if user exists by username
-        const userDoc = await window.db.collection('users').doc(window.currentUser.username).get();
-        
-        if (userDoc.exists) {
-            // Update existing user
-            await window.db.collection('users').doc(window.currentUser.username).update({
-                phone: phoneNumber,
-                updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
-            });
-            console.log('✅ Updated existing user phone number:', window.currentUser.username);
-            
-            // Update local user list
-            updateUserInList(window.currentUser.username, { phone: phoneNumber });
-        } else {
-            // User doesn't exist by username - search for existing user by name or email
-            console.log('🔍 User not found by username, searching for existing user...');
-            
-            const existingUserSnapshot = await window.db.collection('users')
-                .where('name', '==', window.currentUser.name)
-                .limit(1)
-                .get();
-            
-            if (!existingUserSnapshot.empty) {
-                // Found existing user by name - update with username and phone
-                const existingUserDoc = existingUserSnapshot.docs[0];
-                const existingUserData = existingUserDoc.data();
-                
-                console.log('✅ Found existing user by name, updating with username:', existingUserDoc.id);
-                
-                await window.db.collection('users').doc(window.currentUser.username).set({
-                    ...existingUserData,
-                    username: window.currentUser.username,
-                    phone: phoneNumber,
-                    email: window.currentUser.email || existingUserData.email || `${window.currentUser.username}@fh-muenster.de`,
-                    updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                // Delete old document
-                await window.db.collection('users').doc(existingUserDoc.id).delete();
-                
-                console.log('✅ Migrated user to new username system');
-            } else {
-                // Create new user
-                console.log('📝 Creating new user:', window.currentUser.username);
-                
-                await window.db.collection('users').doc(window.currentUser.username).set({
-                    name: window.currentUser.name || '',
-                    username: window.currentUser.username,
-                    email: window.currentUser.email || `${window.currentUser.username}@fh-muenster.de`,
-                    phone: phoneNumber,
-                    isAdmin: false,
-                    createdAt: window.firebase.firestore.FieldValue.serverTimestamp(),
-                    updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                console.log('✅ Created new user with phone number');
-            }
-            
-            // Update local user list
-            updateUserInList(window.currentUser.username, {
-                docId: window.currentUser.username,
-                name: window.currentUser.name || '',
-                username: window.currentUser.username,
-                email: window.currentUser.email || `${window.currentUser.username}@fh-muenster.de`,
-                phone: phoneNumber
-            });
-        }
-        
-        return true;
-        
-    } catch (error) {
-        console.error('❌ Error updating phone number:', error);
-        return false;
-    }
-} 
+});

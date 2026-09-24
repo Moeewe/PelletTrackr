@@ -5,9 +5,9 @@
 .material-table .actions .btn,
 .masterbatch-table .actions .btn {
   min-width: 70px !important; /* Noch kompaktere Buttons */
-  min-height: 32px !important; /* Kleinere Höhe */
+  min-height: 36px !important;
   padding: 6px 10px !important; /* Weniger Padding */
-  font-size: 11px !important; /* Kleinere Schrift */
+  font-size: 13px !important;
   letter-spacing: 0.2px !important; /* Weniger Letter-Spacing */
 }
 
@@ -202,18 +202,18 @@
     overflow: visible;
     margin-bottom: 16px;
   }
-  
+
   .data-table table {
     border-collapse: separate;
     border-spacing: 0 16px;
     width: 100%;
     min-width: auto; /* Überschreibt die Desktop min-width */
   }
-  
+
   .data-table thead {
     display: none;
   }
-  
+
   .data-table tbody tr {
     display: block;
     background: white;
@@ -224,11 +224,11 @@
     position: relative;
     box-shadow: none;
   }
-  
+
   .data-table tbody tr:hover {
     background: #f8f8f8;
   }
-  
+
   /* Card Header - Job Name groß und fett */
   .data-table td[data-label="Job"] {
     display: block;
@@ -240,11 +240,11 @@
     border: none;
     line-height: 1.2;
   }
-  
+
   .data-table td[data-label="Job"]:before {
     display: none;
   }
-  
+
   /* Status Button - oben rechts */
   .data-table td[data-label="Status"] {
     position: absolute;
@@ -254,11 +254,11 @@
     margin: 0;
     border: none;
   }
-  
+
   .data-table td[data-label="Status"]:before {
     display: none;
   }
-  
+
   .data-table .status-paid,
   .data-table .status-unpaid {
     background: #28a745;
@@ -273,17 +273,17 @@
     cursor: pointer;
     transition: none;
   }
-  
+
   .data-table .status-unpaid {
     background: #FFC107;
     color: white;
   }
-  
+
   .data-table .status-paid:hover,
   .data-table .status-unpaid:hover {
     box-shadow: 2px 2px 0 #000000;
   }
-  
+
   /* Kosten - groß und fett unten */
   .data-table td[data-label="Kosten"] {
     display: block;
@@ -296,7 +296,7 @@
     border-bottom: 2px solid #f0f0f0;
     text-align: center;
   }
-  
+
   .data-table td[data-label="Kosten"]:before {
     display: block;
     font-size: 12px;
@@ -307,7 +307,7 @@
     margin-bottom: 8px;
     content: "Kosten:";
   }
-  
+
   /* Notizen - vollständig anzeigen, mehrzeilig */
   .data-table td[data-label="Notizen"] {
     display: block;
@@ -324,7 +324,7 @@
     max-height: none;
     overflow: visible;
   }
-  
+
   .data-table td[data-label="Notizen"]:before {
     display: block;
     font-size: 12px;
@@ -335,18 +335,18 @@
     margin-bottom: 8px;
     content: "� Notizen:";
   }
-  
+
   .data-table td[data-label="Notizen"]:empty {
     display: block;
     content: "Keine Notizen";
     color: #666666;
     font-style: italic;
   }
-  
+
   .data-table td[data-label="Notizen"]:empty:before {
     content: "📋 Notizen: ";
   }
-  
+
   /* Notiz bearbeiten Button - besseres Icon und Design */
   .data-table .btn-edit-note {
     background: transparent;
@@ -359,17 +359,17 @@
     transition: all 0.2s ease;
     border-radius: 0;
   }
-  
+
   .data-table .btn-edit-note:hover {
     background: #f0f0f0;
     border-color: #000000;
   }
-  
+
   .data-table .btn-edit-note:before {
     content: "📝";
     margin-right: 4px;
   }
-  
+
   /* Details in kompakter Form */
   .data-table td[data-label="Datum"],
   .data-table td[data-label="Material"],
@@ -389,7 +389,7 @@
     vertical-align: top;
     box-sizing: border-box;
   }
-  
+
   .data-table td[data-label="Datum"]:before,
   .data-table td[data-label="Material"]:before,
   .data-table td[data-label="Menge"]:before,
@@ -406,7 +406,7 @@
     letter-spacing: 0.5px;
     margin-bottom: 4px;
   }
-  
+
   .data-table td[data-label="Datum"]:before { content: "Datum"; }
   .data-table td[data-label="Material"]:before { content: "Material"; }
   .data-table td[data-label="Menge"]:before { content: "Menge"; }
@@ -415,7 +415,7 @@
   .data-table td[data-label="MB Menge"]:before { content: "MB Menge"; }
   .data-table td[data-label="Name"]:before { content: "Name"; }
   .data-table td[data-label="Kennung"]:before { content: "Kennung"; }
-  
+
   /* Action Buttons - unten */
   .data-table td[data-label="Aktionen"] {
     display: block;
@@ -423,11 +423,11 @@
     padding: 16px 0 0 0;
     border-top: 2px solid #f0f0f0;
   }
-  
+
   .data-table td[data-label="Aktionen"]:before {
     display: none;
   }
-  
+
   .data-table .actions {
     display: flex;
     flex-direction: column; /* Stack buttons vertically on mobile */
@@ -435,7 +435,7 @@
     justify-content: flex-start;
     width: 100%;
   }
-  
+
   .data-table .actions .btn {
     flex: 1;
     min-width: 120px;
@@ -456,7 +456,7 @@
     justify-content: center;
     text-align: center;
   }
-  
+
   .data-table .actions .btn:hover {
     background: #000000;
     color: white;
@@ -782,7 +782,7 @@
     flex-wrap: nowrap;
     flex-direction: row;
   }
-  
+
   .data-table td.actions .actions .btn {
     flex: none;
     margin: 0;
@@ -795,7 +795,7 @@
     flex-direction: column;
     gap: 4px;
   }
-  
+
   .data-table td.actions .actions .btn {
     width: 100%;
     text-align: center;
@@ -815,7 +815,7 @@
     flex-direction: row;
     padding: 8px 12px;
   }
-  
+
   .data-table td.actions .btn {
     flex: none;
     margin: 0;
@@ -823,7 +823,7 @@
     font-size: 11px;
     white-space: normal;
   }
-  
+
   .data-table td.actions .btn-small {
     padding: 4px 8px;
     font-size: 10px;
@@ -838,7 +838,7 @@
     gap: 4px;
     padding: 8px 12px;
   }
-  
+
   .data-table td.actions .btn {
     width: 100%;
     text-align: center;
@@ -1269,27 +1269,27 @@
     padding: 12px;
     margin: 6px 0;
   }
-  
+
   .borrower-header {
     font-size: 14px;
   }
-  
+
   .borrower-details {
     font-size: 13px;
     padding: 6px;
   }
-  
+
   .contact-item {
     flex-direction: column;
     align-items: flex-start;
     margin: 8px 0;
   }
-  
+
   .contact-item strong {
     min-width: auto;
     margin-bottom: 4px;
   }
-  
+
   .contact-link {
     margin-left: 0;
     margin-top: 2px;

@@ -3,28 +3,50 @@
 
 // Modal Stack für Navigation zwischen Modals
 let modalStack = [];
+let dialogOpener = null;
+function prepareDialog(modal) {
+  if (!modal) return;
+  if (!document.activeElement?.closest('.modal') && document.activeElement!==document.body) dialogOpener = document.activeElement;
+  modal.setAttribute('role','dialog');
+  modal.setAttribute('aria-modal','true');
+  const heading = modal.querySelector('h2,h3');
+  if (heading) modal.setAttribute('aria-label',heading.textContent);
+  modal.querySelectorAll('.close-btn').forEach(button=>button.setAttribute('aria-label','Schließen'));
+  document.body.style.overflow='hidden';
+  requestAnimationFrame(()=>{
+    const focusable=modal.querySelector('.modal-body input:not([type="hidden"]),.modal-body select') || modal.querySelector('button,summary');
+    focusable?.focus({preventScroll:true});
+  });
+}
+function restoreDialogFocus() {
+  document.body.style.overflow='';
+  if (dialogOpener?.isConnected) dialogOpener.focus({preventScroll:true});
+}
+window.prepareDialog=prepareDialog;
+window.restoreDialogFocus=restoreDialogFocus;
 
 // Modal anzeigen mit korrekter Struktur
 function showModal(htmlContent, options = {}) {
   const { pushToStack = true, clearStack = false } = options;
-  
+
   // Bei clearStack alle vorherigen Modals vergessen
   if (clearStack) {
     modalStack = [];
   }
-  
+
   // Aktuelles Modal zum Stack hinzufügen (falls vorhanden)
   const modal = document.getElementById('modal');
-  if (pushToStack && modal && modal.classList.contains('active') && modal.innerHTML.trim()) {
+  const fromUsers = document.getElementById('userManager')?.classList.contains('active');
+  if (!clearStack && pushToStack && modal && modal.classList.contains('active') && modal.innerHTML.trim()) {
     modalStack.push({
       content: modal.innerHTML,
       timestamp: Date.now()
     });
   }
-  
+
   // Erst alle anderen Modals schließen (aber Stack beibehalten)
   closeModalInternal();
-  
+
   // Close any other open modals that might conflict
   const existingModals = document.querySelectorAll('.modal.active');
   existingModals.forEach(modalEl => {
@@ -33,7 +55,7 @@ function showModal(htmlContent, options = {}) {
       modalEl.style.display = 'none';
     }
   });
-  
+
   // Prüfen ob Content bereits modal-content Wrapper hat
   if (htmlContent.includes('<div class="modal-content">')) {
     modal.innerHTML = htmlContent;
@@ -41,17 +63,27 @@ function showModal(htmlContent, options = {}) {
     // Content in modal-content Wrapper einbetten
     modal.innerHTML = `<div class="modal-content">${htmlContent}</div>`;
   }
-  
+
   modal.style.display = 'flex';
-  
+  const header=modal.querySelector('.modal-header');
+  header?.querySelectorAll('.dialog-back').forEach(button=>button.remove());
+  if (header && (fromUsers || modalStack.length)) {
+    const back=document.createElement('button');
+    back.type='button';back.className='btn btn-secondary dialog-back';
+    back.textContent=fromUsers?'Zur Nutzerübersicht':'Zurück';
+    back.onclick=fromUsers?()=>{closeModal();showUserManager();}:goBackModal;
+    header.prepend(back);
+  }
+
   // Kurze Verzögerung für bessere Animation
   setTimeout(() => {
     modal.classList.add('active');
+    prepareDialog(modal);
   }, 10);
-  
+
   // Prevent body scrolling when modal is open
   document.body.style.overflow = 'hidden';
-  
+
   // Debug info
   console.log(`📋 Modal opened. Stack depth: ${modalStack.length}`);
   console.log(`📋 Modal content length: ${htmlContent.length} characters`);
@@ -70,10 +102,10 @@ function goBackModal() {
     closeModal();
     return;
   }
-  
+
   const previousModal = modalStack.pop();
   console.log(`📋 Going back to previous modal. Stack depth: ${modalStack.length}`);
-  
+
   // Vorheriges Modal anzeigen ohne es zum Stack hinzuzufügen
   showModal(previousModal.content, { pushToStack: false });
 }
@@ -98,11 +130,12 @@ function closeModal() {
     // Restore body scrolling
     document.body.style.overflow = '';
   }
-  
+
   // Stack leeren
   modalStack = [];
+  restoreDialogFocus();
   console.log('📋 Modal closed completely, stack cleared');
-  
+
   // Also close any other potentially open modals
   const otherModals = document.querySelectorAll('.modal.active');
   otherModals.forEach(otherModal => {
@@ -126,7 +159,17 @@ function cancelModal() {
 
 // ESC-Taste Support für Modals
 document.addEventListener('keydown', function(event) {
+  const dialogs=[...document.querySelectorAll('.modal')].filter(el=>getComputedStyle(el).display!=='none');
+  const active=dialogs[dialogs.length-1];
+  if (event.key==='Tab' && active) {
+    const items=[...active.querySelectorAll('button,input,select,textarea,a[href],summary,[tabindex="0"]')].filter(el=>!el.disabled && el.getClientRects().length);
+    const first=items[0],last=items[items.length-1];
+    if(event.shiftKey && (document.activeElement===first || !active.contains(document.activeElement))) {event.preventDefault();last?.focus();}
+    else if(!event.shiftKey && (document.activeElement===last || !active.contains(document.activeElement))) {event.preventDefault();first?.focus();}
+  }
   if (event.key === 'Escape') {
+    if(active?.id==='userManager'){closeUserManager();return;}
+    if(active?.id==='userProfileModal'){closeUserProfileModal();return;}
     const modal = document.getElementById('modal');
     if (modal && modal.classList.contains('active')) {
       cancelModal(); // Verwende intelligente Cancel-Funktion
@@ -146,7 +189,7 @@ document.addEventListener('click', function(event) {
 function createModalButton(text, action, type = 'secondary') {
   const hasHistory = modalStack.length > 0;
   const buttonText = hasHistory && text === 'Abbrechen' ? 'Zurück' : text;
-  
+
   return `<button class="btn btn-${type}" onclick="${action}">${buttonText}</button>`;
 }
 
@@ -165,10 +208,10 @@ window.smartCloseModal = function() {
 // Event Delegation für intelligente Abbrechen/Zurück Buttons
 document.addEventListener('click', function(event) {
   // Abbrechen Buttons automatisch intelligent machen
-  if (event.target.matches('button.btn-secondary') && 
-      (event.target.textContent.includes('Abbrechen') || 
+  if (event.target.matches('button.btn-secondary') &&
+      (event.target.textContent.includes('Abbrechen') ||
        event.target.textContent.includes('abbrechen'))) {
-    
+
     const onClick = event.target.getAttribute('onclick');
     if (onClick === 'closeModal()') {
       event.preventDefault();
@@ -176,11 +219,11 @@ document.addEventListener('click', function(event) {
       return false;
     }
   }
-  
+
   // X-Button (close-btn) intelligent machen
-  if (event.target.matches('button.close-btn') || 
+  if (event.target.matches('button.close-btn') ||
       event.target.matches('.close-btn')) {
-    
+
     const onClick = event.target.getAttribute('onclick');
     if (onClick === 'closeModal()') {
       event.preventDefault();
@@ -211,7 +254,7 @@ async function viewEntryDetails(entryId) {
       }
       return;
     }
-    
+
     const entry = doc.data();
     const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
     const time = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleTimeString('de-DE') : 'Unbekannt';
@@ -219,11 +262,11 @@ async function viewEntryDetails(entryId) {
     const status = isPaid ? 'Bezahlt' : 'Offen';
     const jobName = entry.jobName || "3D-Druck Auftrag";
     const jobNotes = entry.jobNotes || "Keine Notizen";
-    
+
     const modalHtml = `
       <div class="modal-header">
         <h2>${jobName}</h2>
-        ${isPaid ? 
+        ${isPaid ?
           '<div class="status-badge paid">BEZAHLT</div>' :
           '<div class="status-badge unpaid">OFFEN</div>'
         }
@@ -236,33 +279,33 @@ async function viewEntryDetails(entryId) {
               <span class="detail-label">DATUM</span>
               <span class="detail-value">${date}</span>
             </div>
-            
+
             <div class="detail-row">
               <span class="detail-label">MATERIAL</span>
               <span class="detail-value">${entry.material}</span>
             </div>
-            
+
             <div class="detail-row">
               <span class="detail-label">MENGE</span>
               <span class="detail-value">${(entry.materialMenge || 0).toFixed(2)} kg</span>
             </div>
-            
+
             <div class="detail-row">
               <span class="detail-label">MASTERBATCH</span>
               <span class="detail-value">${entry.masterbatch}</span>
             </div>
-            
+
             <div class="detail-row">
               <span class="detail-label">MB MENGE</span>
               <span class="detail-value">${(entry.masterbatchMenge || 0).toFixed(2)} g</span>
             </div>
-            
+
             <div class="detail-row highlight-total">
               <span class="detail-label">KOSTEN:</span>
               <span class="detail-value">${window.formatCurrency(entry.totalCost)}</span>
             </div>
-            
-            ${jobNotes && jobNotes !== "Keine Notizen" ? 
+
+            ${jobNotes && jobNotes !== "Keine Notizen" ?
               `<div class="detail-row notes-row">
                 <span class="detail-label">♦ NOTIZEN:</span>
                 <span class="detail-value">${jobNotes}</span>
@@ -278,9 +321,9 @@ async function viewEntryDetails(entryId) {
         </div>
       </div>
     `;
-    
+
     showModalWithContent(modalHtml);
-    
+
   } catch (error) {
     console.error("Fehler beim Laden der Druck-Details:", error);
     if (window.toast && typeof window.toast.error === 'function') {
@@ -304,19 +347,19 @@ async function editUserEntry(entryId) {
       }
       return;
     }
-    
+
     const entry = doc.data();
-    
-    // Prüfen ob User berechtigt ist (nur eigene Drucke bearbeiten)
-    if (entry.username !== window.currentUser.username) {
+
+    // Prüfen ob User berechtigt ist (nur eigene Aufträge bearbeiten)
+    if (entry.kennung !== window.currentUser.kennung) {
       if (window.toast && typeof window.toast.warning === 'function') {
-        window.toast.warning('Du kannst nur deine eigenen Drucke bearbeiten!');
+        window.toast.warning('Du kannst nur deine eigenen Aufträge bearbeiten!');
       } else {
-        alert('Du kannst nur deine eigenen Drucke bearbeiten!');
+        alert('Du kannst nur deine eigenen Aufträge bearbeiten!');
       }
       return;
     }
-    
+
     // Prüfen ob Eintrag bereits bezahlt wurde
     if (entry.paid || entry.isPaid) {
       if (window.toast && typeof window.toast.warning === 'function') {
@@ -326,10 +369,10 @@ async function editUserEntry(entryId) {
       }
       return;
     }
-    
+
     const jobName = entry.jobName || "3D-Druck Auftrag";
     const jobNotes = entry.jobNotes || "";
-    
+
     const modalHtml = `
       <div class="modal-header">
         <h2>${jobName}</h2>
@@ -343,12 +386,12 @@ async function editUserEntry(entryId) {
                 <label class="form-label">Job-Name</label>
                 <input type="text" id="editUserJobName" class="form-input" value="${jobName}" required>
               </div>
-              
+
               <div class="form-group">
                 <label class="form-label">Notizen (optional)</label>
                 <textarea id="editUserJobNotes" class="form-textarea" rows="4" placeholder="Optionale Notizen zu diesem Druck...">${jobNotes}</textarea>
               </div>
-              
+
               <div class="detail-row" style="margin-top: 24px; padding: 16px; background: #f8f9fa; border: 1px solid #dee2e6; color: #666; font-size: 14px; line-height: 1.5;">
                 <strong>Hinweis:</strong> Als Benutzer kannst du nur Job-Name und Notizen bearbeiten. Material-Mengen können nur von Admins geändert werden.
               </div>
@@ -363,9 +406,9 @@ async function editUserEntry(entryId) {
         </div>
       </div>
     `;
-    
+
     showModal(modalHtml);
-    
+
   } catch (error) {
     console.error("Fehler beim Laden des Eintrags:", error);
     if (window.toast && typeof window.toast.error === 'function') {
@@ -379,7 +422,7 @@ async function editUserEntry(entryId) {
 async function saveUserEntryChanges(entryId) {
   const jobName = document.getElementById('editUserJobName').value.trim();
   const jobNotes = document.getElementById('editUserJobNotes').value.trim();
-  
+
   if (!jobName) {
     if (window.toast && typeof window.toast.warning === 'function') {
       window.toast.warning('Job-Name darf nicht leer sein!');
@@ -388,24 +431,24 @@ async function saveUserEntryChanges(entryId) {
     }
     return;
   }
-  
+
   try {
     await window.db.collection('entries').doc(entryId).update({
       jobName: jobName,
       jobNotes: jobNotes,
       updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
     });
-    
+
     if (window.toast && typeof window.toast.success === 'function') {
       window.toast.success('Eintrag erfolgreich aktualisiert!');
     } else {
       alert('Eintrag erfolgreich aktualisiert!');
     }
     closeModal();
-    
+
     // User Dashboard aktualisieren
     window.loadUserEntries();
-    
+
   } catch (error) {
     console.error('Fehler beim Aktualisieren des Eintrags:', error);
     if (window.toast && typeof window.toast.error === 'function') {
@@ -418,7 +461,7 @@ async function saveUserEntryChanges(entryId) {
 
 async function editEntry(entryId) {
   if (!window.checkAdminAccess()) return;
-  
+
   try {
     const doc = await window.db.collection('entries').doc(entryId).get();
     if (!doc.exists) {
@@ -429,11 +472,11 @@ async function editEntry(entryId) {
       }
       return;
     }
-    
+
     const entry = doc.data();
     const jobName = entry.jobName || "3D-Druck Auftrag";
     const jobNotes = entry.jobNotes || "";
-    
+
     const modalHtml = `
       <div class="modal-header">
         <h2>${jobName} (Admin)</h2>
@@ -447,7 +490,7 @@ async function editEntry(entryId) {
                 <label class="form-label">Job-Name</label>
                 <input type="text" id="editJobName" class="form-input" value="${jobName}" required>
               </div>
-              
+
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label">Material-Menge (kg)</label>
@@ -458,12 +501,12 @@ async function editEntry(entryId) {
                   <input type="number" id="editMasterbatchMenge" class="form-input" value="${(entry.masterbatchMenge || 0).toFixed(2)}" step="0.01" min="0" required>
                 </div>
               </div>
-              
+
               <div class="form-group">
                 <label class="form-label">Notizen (optional)</label>
                 <textarea id="editJobNotes" class="form-textarea" rows="4" placeholder="Optionale Notizen zu diesem Druck...">${jobNotes}</textarea>
               </div>
-              
+
               <div class="detail-row highlight-yellow" style="margin-top: 24px;">
                 <strong>Admin-Berechtigung:</strong> Du kannst alle Felder dieses Eintrags bearbeiten. Kosten werden automatisch neu berechnet.
               </div>
@@ -478,9 +521,9 @@ async function editEntry(entryId) {
         </div>
       </div>
     `;
-    
+
     showModal(modalHtml);
-    
+
   } catch (error) {
     console.error("Fehler beim Laden des Eintrags:", error);
     if (window.toast && typeof window.toast.error === 'function') {
@@ -496,7 +539,7 @@ async function saveEntryChanges(entryId) {
   const materialMenge = parseFloat(document.getElementById('editMaterialMenge').value);
   const masterbatchMenge = parseFloat(document.getElementById('editMasterbatchMenge').value);
   const jobNotes = document.getElementById('editJobNotes').value.trim();
-  
+
   if (!jobName) {
     if (window.toast && typeof window.toast.warning === 'function') {
       window.toast.warning('Job-Name darf nicht leer sein!');
@@ -505,7 +548,7 @@ async function saveEntryChanges(entryId) {
     }
     return;
   }
-  
+
   if (isNaN(materialMenge) || materialMenge < 0) {
     if (window.toast && typeof window.toast.warning === 'function') {
       window.toast.warning('Bitte gültige Material-Menge eingeben!');
@@ -514,7 +557,7 @@ async function saveEntryChanges(entryId) {
     }
     return;
   }
-  
+
   if (isNaN(masterbatchMenge) || masterbatchMenge < 0) {
     if (window.toast && typeof window.toast.warning === 'function') {
       window.toast.warning('Bitte gültige Masterbatch-Menge eingeben!');
@@ -523,42 +566,42 @@ async function saveEntryChanges(entryId) {
     }
     return;
   }
-  
+
   try {
     // Aktuellen Eintrag laden
     const doc = await window.db.collection('entries').doc(entryId).get();
     const entry = doc.data();
-    
+
     // Neue Kosten berechnen
     let materialCost = 0;
     let masterbatchCost = 0;
-    
+
     // Material-Preis ermitteln
     if (entry.material && materialMenge > 0) {
       const materialSnapshot = await window.db.collection('materials')
         .where('name', '==', entry.material)
         .get();
-      
+
       if (!materialSnapshot.empty) {
         const materialData = materialSnapshot.docs[0].data();
         materialCost = materialMenge * (materialData.price || 0);
       }
     }
-    
+
     // Masterbatch-Preis ermitteln
     if (entry.masterbatch && masterbatchMenge > 0) {
       const masterbatchSnapshot = await window.db.collection('masterbatches')
         .where('name', '==', entry.masterbatch)
         .get();
-      
+
       if (!masterbatchSnapshot.empty) {
         const masterbatchData = masterbatchSnapshot.docs[0].data();
         masterbatchCost = masterbatchMenge * (masterbatchData.price || 0);
       }
     }
-    
+
     const totalCost = materialCost + masterbatchCost;
-    
+
     // Eintrag aktualisieren
     await window.db.collection('entries').doc(entryId).update({
       jobName: jobName,
@@ -570,18 +613,18 @@ async function saveEntryChanges(entryId) {
       totalCost: totalCost,
       updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
     });
-    
+
     if (window.toast && typeof window.toast.success === 'function') {
       window.toast.success('Eintrag erfolgreich aktualisiert!');
     } else {
       alert('Eintrag erfolgreich aktualisiert!');
     }
     closeModal();
-    
+
     // Admin Dashboard aktualisieren
     window.loadAdminStats();
     window.loadAllEntries();
-    
+
   } catch (error) {
     console.error('Fehler beim Aktualisieren des Eintrags:', error);
     if (window.toast && typeof window.toast.error === 'function') {
@@ -594,22 +637,22 @@ async function saveEntryChanges(entryId) {
 
 async function editNote(entryId, currentNote) {
   const newNote = prompt('Notiz bearbeiten:', currentNote || '');
-  
+
   if (newNote === null) return; // Benutzer hat abgebrochen
-  
+
   try {
     await window.db.collection('entries').doc(entryId).update({
       jobNotes: newNote.trim(),
       updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
     });
-    
+
     // Je nach Kontext Dashboard aktualisieren
     if (window.currentUser.isAdmin) {
       window.loadAllEntries();
     } else {
       window.loadUserEntries();
     }
-    
+
   } catch (error) {
     console.error('Fehler beim Aktualisieren der Notiz:', error);
     if (window.toast && typeof window.toast.error === 'function') {

@@ -1,175 +1,108 @@
-// ==================== APP INITIALISIERUNG ====================
-// Zentrale Initialisierung für PelletTrackr
+// ==================== APP INITIALIZATION MODULE ====================
+// Zentrale App-Initialisierung und Firebase-Verbindung
 
-// Global variables
-let currentUser = null;
-let isAdmin = false;
-let isInitialized = false;
-
-// Initialize Firebase first
-function initializeFirebaseFirst() {
-    try {
-        console.log('🔧 Initialisiere Firebase zuerst...');
-        
-        // Check if Firebase SDK is available
-        if (typeof firebase === 'undefined') {
-            console.error('❌ Firebase SDK nicht verfügbar');
-            return false;
-        }
-        
-        // Get config from firebase-config.js
-        const config = window.firebaseConfig || {
-            apiKey: "AIzaSyBaaMwmjxyytxHLinmigccF30-1Wl0tzD0",
-            authDomain: "fgf-3d-druck.firebaseapp.com",
-            databaseURL: "https://fgf-3d-druck-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "fgf-3d-druck",
-            storageBucket: "fgf-3d-druck.firebasestorage.app",
-            messagingSenderId: "37190466890",
-            appId: "1:37190466890:web:cfb25f3c2f6bb62006d5b3"
-        };
-        
-        // Always initialize Firebase - this creates the DEFAULT app
-        console.log('🔄 Initialisiere Firebase DEFAULT App...');
-        firebase.initializeApp(config);
-        console.log('✅ Firebase DEFAULT App initialisiert');
-        
-        // Get the DEFAULT app instance
-        const firebaseApp = firebase.app();
-        console.log('✅ Firebase App Name:', firebaseApp.name);
-        
-        // Initialize Firestore with the DEFAULT app
-        const db = firebaseApp.firestore();
-        
-        // Cache-Einstellungen (weniger restriktiv für Entwicklung)
-        db.settings({
-            cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
-            merge: true
-        });
-        
-        window.db = db;
-        
-        // Initialize Auth with the DEFAULT app
-        const auth = firebaseApp.auth();
-        window.auth = auth;
-        
-        console.log('✅ Firebase DEFAULT App vollständig initialisiert');
-        return true;
-        
-    } catch (error) {
-        console.error('❌ Firebase-Initialisierung fehlgeschlagen:', error);
-        return false;
-    }
+// App-Initialisierung bereits erfolgt?
+if (typeof window.appInitialized === 'undefined') {
+  window.appInitialized = false;
 }
 
-// Test Firebase connection
+// App initialisieren
+function initializeApp() {
+  if (window.appInitialized) {
+    console.log("🚀 PelletTrackr bereits initialisiert, überspringe...");
+    return;
+  }
+
+  console.log("🚀 PelletTrackr wird initialisiert...");
+  window.appInitialized = true;
+
+  // Protected data is available only after Firebase has restored the session.
+  // A denied anonymous read is not an internet connection failure.
+  if (window.firebase?.auth) {
+    firebase.auth().onAuthStateChanged(user => {
+      if (user) {
+        testFirebaseConnection();
+        if (typeof setupEquipmentListener === 'function') setupEquipmentListener();
+      } else if (typeof cleanupEquipmentListeners === 'function') {
+        cleanupEquipmentListeners();
+      }
+    });
+  }
+
+  // Check for existing session (auto-login)
+  if (typeof checkExistingSession === 'function') {
+    const hasSession = checkExistingSession();
+    if (!hasSession) {
+      // No session found, show login screen
+      showScreen('loginScreen');
+      // Setup login key handlers
+      if (typeof setupLoginKeyHandlers === 'function') {
+        setupLoginKeyHandlers();
+      }
+    }
+  } else {
+    // Fallback if auth.js not loaded yet
+    setTimeout(() => {
+      if (typeof checkExistingSession === 'function') {
+        const hasSession = checkExistingSession();
+        if (!hasSession) {
+          showScreen('loginScreen');
+          // Setup login key handlers
+          if (typeof setupLoginKeyHandlers === 'function') {
+            setupLoginKeyHandlers();
+          }
+        }
+      } else {
+        showScreen('loginScreen');
+        // Setup login key handlers
+        if (typeof setupLoginKeyHandlers === 'function') {
+          setupLoginKeyHandlers();
+        }
+      }
+    }, 100);
+  }
+
+  console.log("✅ PelletTrackr bereit!");
+}
+
+// Firebase-Verbindung testen
 async function testFirebaseConnection() {
-    try {
-        console.log('🔍 Teste Firebase-Verbindung...');
-        
-        if (!window.db) {
-            console.error('❌ Firestore nicht verfügbar');
-            return false;
-        }
-        
-        // Test read operation
-        const testDoc = await window.db.collection('test').limit(1).get();
-        console.log('✅ Firebase-Verbindung erfolgreich');
-        return true;
-        
-    } catch (error) {
-        console.error('❌ Firebase-Verbindung fehlgeschlagen:', error);
-        return false;
-    }
-}
+  try {
+    console.log("🧪 Teste Firebase-Verbindung...");
 
-// Initialize app
-async function initializeApp() {
-    try {
-        console.log('🚀 Starte PelletTrackr-Initialisierung...');
-        
-        // Show loading indicator
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        if (loadingIndicator) {
-            loadingIndicator.style.display = 'flex';
-        }
-        
-        // Initialize Firebase first
-        if (!initializeFirebaseFirst()) {
-            throw new Error('Firebase-Initialisierung fehlgeschlagen');
-        }
-        
-        // Test connection
-        const connectionOk = await testFirebaseConnection();
-        if (!connectionOk) {
-            console.warn('⚠️ Firebase-Verbindung nicht optimal, aber App wird fortgesetzt');
-        }
-        
-        // Initialize other modules
-        console.log('🔧 Initialisiere Module...');
-        
-        // Initialize auth system
-        if (typeof initializeSecureAuth === 'function') {
-            console.log('🔐 Initialisiere Secure Auth...');
-            initializeSecureAuth();
-        }
-        
-        // Initialize equipment system
-        if (typeof setupEquipmentListener === 'function') {
-            console.log('🔧 Initialisiere Equipment System...');
-            setupEquipmentListener();
-        }
-        
-        // Initialize other listeners
-        console.log('📡 Initialisiere Listener...');
-        
-        // Check existing session
-        if (typeof checkExistingSession === 'function') {
-            console.log('🔍 Prüfe bestehende Session...');
-            await checkExistingSession();
-        }
-        
-        // Hide loading indicator
-        if (loadingIndicator) {
-            loadingIndicator.style.display = 'none';
-        }
-        
-        console.log('✅ PelletTrackr erfolgreich initialisiert');
-        isInitialized = true;
-        
-    } catch (error) {
-        console.error('❌ App-Initialisierung fehlgeschlagen:', error);
-        
-        // Hide loading indicator on error
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        if (loadingIndicator) {
-            loadingIndicator.style.display = 'none';
-        }
-        
-        // Show error message
-        if (typeof safeShowToast === 'function') {
-            safeShowToast('App-Initialisierung fehlgeschlagen: ' + error.message, 'error');
-        }
+    // Warten bis Firebase verfügbar ist
+    let attempts = 0;
+    while (!window.db && attempts < 10) {
+      console.log("⏳ Warte auf Firebase-Initialisierung...");
+      await new Promise(resolve => setTimeout(resolve, 100));
+      attempts++;
     }
-}
 
-// Safe showToast function
-function safeShowToast(message, type = 'info') {
-    if (typeof window.showToast === 'function') {
-        window.showToast(message, type);
-    } else if (window.toast && typeof window.toast[type] === 'function') {
-        window.toast[type](message);
+    if (!window.db) {
+      console.error("❌ Firebase nicht verfügbar nach 1 Sekunde");
+      return;
+    }
+
+    // Einfache Abfrage um Verbindung zu testen
+    const testQuery = await window.db.collection('materials').limit(1).get();
+
+    if (testQuery.empty) {
+      console.log("📦 Firebase verbunden - Datenbank ist leer");
     } else {
-        console.log(`Toast (${type}): ${message}`);
+      console.log("✅ Firebase verbunden - Daten gefunden:", testQuery.size, "Material(s)");
     }
+
+    return true;
+  } catch (error) {
+    console.error("Datenbankverbindung fehlgeschlagen:", error);
+    const indicator = document.getElementById('loadingIndicator');
+    if (indicator) indicator.style.display = 'none';
+
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error("Datenbankverbindung fehlgeschlagen!\n\nBitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.");
+    } else {
+      alert("Datenbankverbindung fehlgeschlagen!\n\nBitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.");
+    }
+    return false;
+  }
 }
-
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('📄 DOM geladen, starte Initialisierung...');
-    initializeApp();
-});
-
-// Global exports
-window.initializeApp = initializeApp;
-window.testFirebaseConnection = testFirebaseConnection;
-window.safeShowToast = safeShowToast;

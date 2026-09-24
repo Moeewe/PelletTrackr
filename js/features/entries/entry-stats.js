@@ -4,6 +4,51 @@
 // Global state for entries and listeners
 let userEntriesListener = null;
 let adminEntriesListener = null;
+const ENTRY_PAGE_SIZE = 50;
+const entryPages = {
+  user: { cursor: null, hasMore: true, loading: false, older: new Map() },
+  admin: { cursor: null, hasMore: true, loading: false, older: new Map() }
+};
+function entryDateValue(entry) {
+  const value=entry.timestamp?.toDate ? entry.timestamp.toDate() : new Date(entry.timestamp || 0);
+  return Number.isFinite(value.getTime()) ? value.getTime() : 0;
+}
+function combineEntryPages(kind, recentDocs) {
+  const state=entryPages[kind], recent=new Map();
+  recentDocs.forEach(doc=>recent.set(doc.id,{id:doc.id,...doc.data()}));
+  if(state.older.size===0) {
+    state.cursor=recentDocs.length ? recentDocs[recentDocs.length-1] : state.cursor;
+    state.hasMore=recentDocs.length===ENTRY_PAGE_SIZE;
+  }
+  const combined=new Map(state.older);
+  recent.forEach((value,id)=>combined.set(id,value));
+  return Array.from(combined.values()).sort((a,b)=>entryDateValue(b)-entryDateValue(a));
+}
+function showEntryPager(kind, loaded) {
+  const container=document.getElementById(kind==='user'?'userEntriesTable':'adminEntriesTable');
+  if(!container) return;
+  container.querySelector('.entry-load-more')?.remove();
+  const state=entryPages[kind];
+  if(!state.hasMore) return;
+  container.insertAdjacentHTML('beforeend',`<div class="entry-load-more" style="display:flex;justify-content:center;gap:12px;padding:20px"><span>${loaded} Aufträge geladen</span><button class="btn btn-secondary" onclick="loadMoreEntries('${kind}')" ${state.loading?'disabled':''}>${state.loading?'Lädt …':'Weitere 50 laden'}</button></div>`);
+}
+async function loadMoreEntries(kind) {
+  const state=entryPages[kind];
+  if(state.loading||!state.hasMore||!state.cursor) return;
+  state.loading=true; showEntryPager(kind,kind==='user'?window.allUserEntries.length:window.allAdminEntries.length);
+  try {
+    let query=window.db.collection('entries').orderBy('timestamp','desc').startAfter(state.cursor).limit(ENTRY_PAGE_SIZE);
+    if(kind==='user') query=window.db.collection('entries').where('name','==',window.currentUser.name).where('kennung','==',window.currentUser.kennung).orderBy('timestamp','desc').startAfter(state.cursor).limit(ENTRY_PAGE_SIZE);
+    const snapshot=await query.get();
+    snapshot.docs.forEach(doc=>state.older.set(doc.id,{id:doc.id,...doc.data()}));
+    if(snapshot.docs.length) state.cursor=snapshot.docs[snapshot.docs.length-1];
+    state.hasMore=snapshot.docs.length===ENTRY_PAGE_SIZE;
+    const entries=combineEntryPages(kind,kind==='user'?[]:[]);
+    if(kind==='user'){window.allUserEntries=entries;window.currentUserEntries=entries;renderUserEntries(entries);}
+    else {window.allAdminEntries=entries;window.currentAdminEntries=entries;renderAdminEntries(entries);}
+  } catch(error) { window.toast?.error(error.message||'Weitere Aufträge konnten nicht geladen werden.'); }
+  finally {state.loading=false;showEntryPager(kind,kind==='user'?window.allUserEntries.length:window.allAdminEntries.length);}
+}
 
 /**
  * Setup real-time listener for user entries
@@ -14,35 +59,29 @@ function setupUserEntriesListener() {
     userEntriesListener();
     userEntriesListener = null;
   }
-  
+  Object.assign(entryPages.user,{cursor:null,hasMore:true,loading:false,older:new Map()});
+
   try {
     userEntriesListener = window.db.collection("entries")
       .where("name", "==", window.currentUser.name)
       .where("kennung", "==", window.currentUser.kennung)
+      .orderBy('timestamp','desc').limit(ENTRY_PAGE_SIZE)
       .onSnapshot((snapshot) => {
-        const entries = [];
-        snapshot.forEach(doc => {
-          entries.push({ id: doc.id, ...doc.data() });
-        });
-
-        // Nach Datum sortieren (neueste zuerst)
-        entries.sort((a, b) => {
-          if (!a.timestamp || !b.timestamp) return 0;
-          return b.timestamp.toDate() - a.timestamp.toDate();
-        });
+        const entries = combineEntryPages('user',snapshot.docs);
 
         // Global speichern für Suche und Paginierung
         window.allUserEntries = entries;
         window.currentUserEntries = entries;
-        
+
         renderUserEntries(entries);
-        
+        showEntryPager('user',entries.length);
+
         console.log('Live update: Loaded user entries:', entries.length);
       }, (error) => {
         console.error("Error in user entries listener:", error);
-        document.getElementById("userEntriesTable").innerHTML = '<p>Fehler beim Laden der Drucke.</p>';
+        document.getElementById("userEntriesTable").innerHTML = '<p>Fehler beim Laden der Aufträge.</p>';
       });
-      
+
     console.log("✅ User entries listener registered");
   } catch (error) {
     console.error("❌ Failed to setup user entries listener:", error);
@@ -58,33 +97,26 @@ function setupAdminEntriesListener() {
     adminEntriesListener();
     adminEntriesListener = null;
   }
-  
+  Object.assign(entryPages.admin,{cursor:null,hasMore:true,loading:false,older:new Map()});
+
   try {
-    adminEntriesListener = window.db.collection('entries')
+    adminEntriesListener = window.db.collection('entries').orderBy('timestamp','desc').limit(ENTRY_PAGE_SIZE)
       .onSnapshot((snapshot) => {
-        const entries = [];
-        snapshot.forEach(doc => {
-          entries.push({ id: doc.id, ...doc.data() });
-        });
-        
-        // Nach Datum sortieren (neueste zuerst)
-        entries.sort((a, b) => {
-          if (!a.timestamp || !b.timestamp) return 0;
-          return b.timestamp.toDate() - a.timestamp.toDate();
-        });
-        
+        const entries = combineEntryPages('admin',snapshot.docs);
+
         // Global speichern für Suche und Paginierung
         window.allAdminEntries = entries;
         window.currentAdminEntries = entries;
-        
+
         renderAdminEntries(entries);
-        
+        showEntryPager('admin',entries.length);
+
         console.log('Live update: Loaded admin entries:', entries.length);
       }, (error) => {
         console.error("Error in admin entries listener:", error);
-        document.getElementById("adminEntriesTable").innerHTML = '<p>Fehler beim Laden der Drucke.</p>';
+        document.getElementById("adminEntriesTable").innerHTML = '<p>Fehler beim Laden der Aufträge.</p>';
       });
-      
+
     console.log("✅ Admin entries listener registered");
   } catch (error) {
     console.error("❌ Failed to setup admin entries listener:", error);
@@ -100,7 +132,7 @@ async function loadUserEntries() {
         }
 
         console.log('📊 Loading entries for user:', window.currentUser.username);
-        
+
         const snapshot = await window.db.collection('entries')
             .where("username", "==", window.currentUser.username)
             .orderBy("timestamp", "desc")
@@ -116,7 +148,7 @@ async function loadUserEntries() {
 
         console.log(`✅ Loaded ${entries.length} entries for user`);
         renderUserEntries(entries);
-        
+
     } catch (error) {
         console.error('❌ Error loading user entries:', error);
         if (window.toast && typeof window.toast.error === 'function') {
@@ -134,7 +166,7 @@ async function loadUserStats() {
         }
 
         console.log('📊 Loading stats for user:', window.currentUser.username);
-        
+
         const snapshot = await window.db.collection('entries')
             .where("username", "==", window.currentUser.username)
             .get();
@@ -148,7 +180,7 @@ async function loadUserStats() {
             const entry = doc.data();
             totalCost += entry.totalCost || 0;
             totalEntries++;
-            
+
             if (entry.paid || entry.isPaid) {
                 paidEntries++;
             } else {
@@ -163,9 +195,9 @@ async function loadUserStats() {
             paidEntries,
             unpaidEntries
         });
-        
+
         console.log(`✅ User stats updated: ${totalEntries} entries, €${totalCost.toFixed(2)} total`);
-        
+
     } catch (error) {
         console.error('❌ Error loading user stats:', error);
     }
@@ -176,48 +208,48 @@ async function loadAdminStats() {
   try {
     const entriesSnapshot = await window.db.collection('entries').get();
     const usersSnapshot = await window.db.collection('users').get();
-    
+
     let totalEntries = 0;
     let totalRevenue = 0;
     let pendingAmount = 0;
     const activeUsers = new Set(); // Nutzer mit Einträgen
     let totalRegisteredUsers = 0; // Alle registrierten Nutzer
-    
+
     // Registrierte Nutzer zählen
     usersSnapshot.forEach(doc => {
       totalRegisteredUsers++;
     });
-    
+
     // Einträge analysieren
     entriesSnapshot.forEach(doc => {
       const entry = doc.data();
       totalEntries++;
-      
+
       if (entry.kennung) {
         activeUsers.add(entry.kennung); // Nutzer mit tatsächlichen Einträgen
       }
-      
+
       const cost = entry.totalCost || 0;
       totalRevenue += cost;
-      
+
       if (!entry.paid && !entry.isPaid) {
         pendingAmount += cost;
       }
     });
-    
+
     // Stats anzeigen - alle registrierten Nutzer
     document.getElementById('adminTotalEntries').textContent = totalEntries;
     document.getElementById('adminTotalUsers').textContent = totalRegisteredUsers; // Alle registrierten Nutzer
     document.getElementById('adminTotalRevenue').textContent = window.formatCurrency(totalRevenue);
     document.getElementById('adminPendingAmount').textContent = window.formatCurrency(pendingAmount);
-    
+
     // Drucker-Status aktualisieren
     if (typeof updatePrinterStatusDisplay === 'function') {
       updatePrinterStatusDisplay();
     }
-    
+
     console.log(`📊 Admin Stats: ${totalRegisteredUsers} registriert, ${activeUsers.size} aktiv, ${totalEntries} Einträge`);
-    
+
   } catch (error) {
     console.error('Fehler beim Laden der Admin-Stats:', error);
   }
@@ -238,7 +270,7 @@ function cleanupEntryListeners() {
     userEntriesListener = null;
     console.log("🧹 User entries listener cleaned up");
   }
-  
+
   if (adminEntriesListener) {
     adminEntriesListener();
     adminEntriesListener = null;
@@ -254,3 +286,4 @@ window.loadAdminStats = loadAdminStats;
 window.setupUserEntriesListener = setupUserEntriesListener;
 window.setupAdminEntriesListener = setupAdminEntriesListener;
 window.cleanupEntryListeners = cleanupEntryListeners;
+window.loadMoreEntries = loadMoreEntries;

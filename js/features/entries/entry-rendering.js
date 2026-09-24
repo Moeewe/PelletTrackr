@@ -6,12 +6,24 @@ let currentUserPage = 1;
 let currentAdminPage = 1;
 const ENTRIES_PER_PAGE = 5;
 
+function entryEmptyState(audience) {
+  const search = document.getElementById(audience + 'SearchInput')?.value.trim();
+  const sort = document.getElementById(audience + 'SortSelect')?.value || '';
+  const filtered = Boolean(search) || sort.startsWith('status-');
+  const title = filtered ? 'Keine passenden Aufträge gefunden' : 'Noch keine Aufträge vorhanden';
+  const hint = filtered ? 'Passe die Suche oder den Statusfilter an.' : audience === 'user'
+    ? 'Erfasse deinen ersten Auftrag im Formular weiter oben.'
+    : 'Sobald ein Auftrag erfasst wurde, erscheint er hier in der Übersicht.';
+  return '<div class="entry-empty-state" role="status"><h3>'+title+'</h3><p>'+hint+'</p></div>';
+}
+
 // User-Drucke rendern (vollständige Version mit Card + Table)
 function renderUserEntries(entries) {
   const tableDiv = document.getElementById("userEntriesTable");
-  
+  tableDiv.classList.toggle('is-empty', entries.length === 0);
+
   if (entries.length === 0) {
-    const message = '<p>Noch keine Drucke vorhanden. Füge deinen ersten 3D-Druck hinzu!</p>';
+    const message = entryEmptyState('user');
     tableDiv.innerHTML = message;
     return;
   }
@@ -26,7 +38,7 @@ function renderUserEntries(entries) {
             <tr>
               <th onclick="sortUserEntries('date')">Datum</th>
               <th onclick="sortUserEntries('jobName')">Job</th>
-              <th onclick="sortUserEntries('printer')">Drucker</th>
+              <th onclick="sortUserEntries('printer')">Maschine</th>
               <th onclick="sortUserEntries('printTime')">Zeit</th>
               <th onclick="sortUserEntries('material')">Material</th>
               <th onclick="sortUserEntries('materialMenge')">Menge</th>
@@ -45,26 +57,26 @@ function renderUserEntries(entries) {
   entries.forEach(entry => {
     const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
     const isPaid = entry.paid || entry.isPaid;
-    const status = isPaid ? 
-      '<span class="entry-status-badge status-paid">Bezahlt</span>' : 
+    const status = isPaid ?
+      '<span class="entry-status-badge status-paid">Bezahlt</span>' :
       '<span class="entry-status-badge status-unpaid">Offen</span>';
     const jobName = entry.jobName || "3D-Druck Auftrag";
     const jobNotes = entry.jobNotes || "";
     const truncatedNotes = jobNotes.length > 30 ? jobNotes.substring(0, 30) + "..." : jobNotes;
-    
+
     // Aktionen für User (Zahlungsnachweis und Bearbeiten)
     const actions = `
       <div class="actions">
         ${ButtonFactory.showNachweis(entry.id, isPaid)}
         ${ButtonFactory.editEntry(entry.id, true, isPaid)}
       </div>`;
-    
+
     // Tabellen-Zeile für Desktop
     containerHtml += `
       <tr class="entry-row">
         <td data-label="Datum"><span class="cell-value">${date}</span></td>
         <td data-label="Job"><span class="cell-value">${jobName}</span></td>
-        <td data-label="Drucker"><span class="cell-value">${entry.printer || '-'}</span></td>
+        <td data-label="Maschine"><span class="cell-value">${entry.machineName || entry.printer || '-'}</span></td>
         <td data-label="Zeit"><span class="cell-value">${entry.printTime ? entry.printTime + ' min' : '-'}</span></td>
         <td data-label="Material"><span class="cell-value">${entry.material}</span></td>
         <td data-label="Menge"><span class="cell-value">${entry.materialMenge.toFixed(2)} kg</span></td>
@@ -86,7 +98,7 @@ function renderUserEntries(entries) {
           </tbody>
         </table>
       </div>
-      
+
       <!-- Mobile Cards mit Paginierung -->
       <div class="entry-cards" id="userEntryCards">
   `;
@@ -103,17 +115,17 @@ function renderUserEntries(entries) {
     const isPaid = entry.paid || entry.isPaid;
     const jobName = entry.jobName || "3D-Druck Auftrag";
     const jobNotes = entry.jobNotes || "";
-    
+
     // Status Badge
     const statusBadgeClass = isPaid ? 'status-paid' : 'status-unpaid';
     const statusBadgeText = isPaid ? 'BEZAHLT' : 'OFFEN';
-    
+
     // Aktionen für Cards
     const cardActions = `
       ${ButtonFactory.showNachweis(entry.id, isPaid)}
       ${ButtonFactory.editEntry(entry.id, true, isPaid)}
     `;
-    
+
     // Card HTML
     containerHtml += `
       <div class="entry-card">
@@ -122,49 +134,49 @@ function renderUserEntries(entries) {
           <h3 class="entry-job-title">${jobName}</h3>
           <span class="entry-status-badge ${statusBadgeClass}">${statusBadgeText}</span>
         </div>
-        
+
         <!-- Card Body mit Detail-Zeilen -->
         <div class="entry-card-body">
           <div class="entry-detail-row">
             <span class="entry-detail-label">Datum</span>
             <span class="entry-detail-value">${date}</span>
           </div>
-          
+
           <div class="entry-detail-row">
-            <span class="entry-detail-label">Drucker</span>
-            <span class="entry-detail-value">${entry.printer || 'Nicht angegeben'}</span>
+            <span class="entry-detail-label">Maschine</span>
+            <span class="entry-detail-value">${entry.machineName || entry.printer || 'Nicht angegeben'}</span>
           </div>
-          
+
           <div class="entry-detail-row">
             <span class="entry-detail-label">Zeit</span>
             <span class="entry-detail-value">${entry.printTime ? entry.printTime + ' min' : 'Nicht angegeben'}</span>
           </div>
-          
+
           <div class="entry-detail-row">
             <span class="entry-detail-label">Material</span>
             <span class="entry-detail-value">${entry.material}</span>
           </div>
-          
+
           <div class="entry-detail-row">
             <span class="entry-detail-label">Menge</span>
             <span class="entry-detail-value">${entry.materialMenge.toFixed(2)} kg</span>
           </div>
-          
+
           <div class="entry-detail-row">
             <span class="entry-detail-label">Masterbatch</span>
             <span class="entry-detail-value">${entry.masterbatch}</span>
           </div>
-          
+
           <div class="entry-detail-row">
             <span class="entry-detail-label">MB Menge</span>
             <span class="entry-detail-value">${entry.masterbatchMenge.toFixed(2)} g</span>
           </div>
-          
+
           <div class="entry-detail-row">
             <span class="entry-detail-label">Kosten</span>
             <span class="entry-detail-value cost-value">${formatCurrency(entry.totalCost)}</span>
           </div>
-          
+
           ${jobNotes ? `
           <div class="entry-detail-row">
             <span class="entry-detail-label">Notizen</span>
@@ -172,7 +184,7 @@ function renderUserEntries(entries) {
           </div>
           ` : ''}
         </div>
-        
+
         <!-- Card Footer mit Buttons -->
         <div class="entry-card-footer">
           ${cardActions}
@@ -189,12 +201,12 @@ function renderUserEntries(entries) {
           Seite ${currentUserPage} von ${totalPages}
         </div>
         <div class="pagination-buttons">
-          ${currentUserPage > 1 ? 
-            `<button class="btn btn-secondary" onclick="changeUserPage(${currentUserPage - 1})">Vorherige Seite</button>` : 
+          ${currentUserPage > 1 ?
+            `<button class="btn btn-secondary" onclick="changeUserPage(${currentUserPage - 1})">Vorherige Seite</button>` :
             '<button class="btn btn-secondary" disabled>Vorherige Seite</button>'
           }
-          ${currentUserPage < totalPages ? 
-            `<button class="btn btn-primary" onclick="changeUserPage(${currentUserPage + 1})">Nächste Seite</button>` : 
+          ${currentUserPage < totalPages ?
+            `<button class="btn btn-primary" onclick="changeUserPage(${currentUserPage + 1})">Nächste Seite</button>` :
             '<button class="btn btn-primary" disabled>Nächste Seite</button>'
           }
         </div>
@@ -206,9 +218,9 @@ function renderUserEntries(entries) {
       </div>
     </div>
   `;
-  
+
   tableDiv.innerHTML = containerHtml;
-  
+
   // Check for existing payment requests and update button states
   checkAndUpdatePaymentRequestButtons(entries);
 }
@@ -233,9 +245,10 @@ function changeAdminPage(newPage) {
 // Admin-Drucke rendern (vollständige Version mit Card + Table für Admin)
 function renderAdminEntries(entries) {
   const tableDiv = document.getElementById("adminEntriesTable");
-  
+  tableDiv.classList.toggle('is-empty', entries.length === 0);
+
   if (entries.length === 0) {
-    const message = '<p>Noch keine Drucke vorhanden.</p>';
+    const message = entryEmptyState('admin');
     tableDiv.innerHTML = message;
     return;
   }
@@ -252,7 +265,7 @@ function renderAdminEntries(entries) {
               <th onclick="sortAdminEntriesBy('name')">Name</th>
               <th onclick="sortAdminEntriesBy('kennung')">Kennung</th>
               <th onclick="sortAdminEntriesBy('jobName')">Job</th>
-              <th onclick="sortAdminEntriesBy('printer')">Drucker</th>
+              <th onclick="sortAdminEntriesBy('printer')">Maschine</th>
               <th onclick="sortAdminEntriesBy('printTime')">Zeit</th>
               <th onclick="sortAdminEntriesBy('material')">Material</th>
               <th onclick="sortAdminEntriesBy('materialMenge')">Mat. Menge</th>
@@ -271,16 +284,16 @@ function renderAdminEntries(entries) {
   entries.forEach(entry => {
     const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString('de-DE') : 'Unbekannt';
     const isPaid = entry.paid || entry.isPaid;
-    const status = isPaid ? 
-      '<span class="entry-status-badge status-paid">Bezahlt</span>' : 
+    const status = isPaid ?
+      '<span class="entry-status-badge status-paid">Bezahlt</span>' :
       '<span class="entry-status-badge status-unpaid">Offen</span>';
     const jobName = entry.jobName || "3D-Druck Auftrag";
     const jobNotes = entry.jobNotes || "";
     const truncatedNotes = jobNotes.length > 20 ? jobNotes.substring(0, 20) + "..." : jobNotes;
-    
+
     const actions = `
       <div class="actions">
-        ${!isPaid ? 
+        ${!isPaid ?
           ButtonFactory.registerPayment(entry.id) :
           `${ButtonFactory.undoPayment(entry.id)}
            ${ButtonFactory.showNachweis(entry.id, true)}`
@@ -289,7 +302,7 @@ function renderAdminEntries(entries) {
         ${ButtonFactory.deleteEntry(entry.id)}
       </div>
     `;
-    
+
     // Tabellen-Zeile für Desktop
     containerHtml += `
       <tr id="entry-${entry.id}">
@@ -297,7 +310,7 @@ function renderAdminEntries(entries) {
         <td data-label="Name"><span class="cell-value">${entry.name}</span></td>
         <td data-label="Kennung"><span class="cell-value">${entry.kennung}</span></td>
         <td data-label="Job"><span class="cell-value">${jobName}</span></td>
-        <td data-label="Drucker"><span class="cell-value">${entry.printer || '-'}</span></td>
+        <td data-label="Maschine"><span class="cell-value">${entry.machineName || entry.printer || '-'}</span></td>
         <td data-label="Zeit"><span class="cell-value">${entry.printTime ? entry.printTime + ' min' : '-'}</span></td>
         <td data-label="Material"><span class="cell-value">${entry.material}</span></td>
         <td data-label="Mat. Menge"><span class="cell-value">${(entry.materialMenge || 0).toFixed(2)} kg</span></td>
@@ -319,7 +332,7 @@ function renderAdminEntries(entries) {
           </tbody>
         </table>
       </div>
-      
+
       <!-- Mobile Cards für Admin mit Paginierung -->
       <div class="entry-cards" id="adminEntryCards">
   `;
@@ -336,14 +349,14 @@ function renderAdminEntries(entries) {
     const isPaid = entry.paid || entry.isPaid;
     const jobName = entry.jobName || "3D-Druck Auftrag";
     const jobNotes = entry.jobNotes || "";
-    
+
     // Status Badge
     const statusBadgeClass = isPaid ? 'status-paid' : 'status-unpaid';
     const statusBadgeText = isPaid ? 'BEZAHLT' : 'OFFEN';
-    
+
     // Admin-Aktionen für Cards
     const cardActions = `
-      ${!isPaid ? 
+      ${!isPaid ?
         ButtonFactory.registerPayment(entry.id) :
         `${ButtonFactory.undoPayment(entry.id)}
          ${ButtonFactory.showNachweis(entry.id, true)}`
@@ -351,7 +364,7 @@ function renderAdminEntries(entries) {
       ${ButtonFactory.editEntry(entry.id)}
       ${ButtonFactory.deleteEntry(entry.id)}
     `;
-    
+
     // Admin Card HTML (mit Name und Kennung)
     containerHtml += `
       <div class="entry-card" id="entry-card-${entry.id}">
@@ -360,59 +373,59 @@ function renderAdminEntries(entries) {
           <h3 class="entry-job-title">${jobName}</h3>
           <span class="entry-status-badge ${statusBadgeClass}">${statusBadgeText}</span>
         </div>
-        
+
         <!-- Card Body mit Detail-Zeilen -->
         <div class="entry-card-body">
           <div class="entry-detail-row">
             <span class="entry-detail-label">Datum</span>
             <span class="entry-detail-value">${date}</span>
           </div>
-          
+
           <div class="entry-detail-row">
             <span class="entry-detail-label">Name</span>
             <span class="entry-detail-value">${entry.name}</span>
           </div>
-          
+
           <div class="entry-detail-row">
             <span class="entry-detail-label">FH-Kennung</span>
             <span class="entry-detail-value">${entry.kennung}</span>
           </div>
-          
+
           <div class="entry-detail-row">
-            <span class="entry-detail-label">Drucker</span>
-            <span class="entry-detail-value">${entry.printer || 'Nicht angegeben'}</span>
+            <span class="entry-detail-label">Maschine</span>
+            <span class="entry-detail-value">${entry.machineName || entry.printer || 'Nicht angegeben'}</span>
           </div>
-          
+
           <div class="entry-detail-row">
             <span class="entry-detail-label">Zeit</span>
             <span class="entry-detail-value">${entry.printTime ? entry.printTime + ' min' : 'Nicht angegeben'}</span>
           </div>
-          
+
           <div class="entry-detail-row">
             <span class="entry-detail-label">Material</span>
             <span class="entry-detail-value">${entry.material}</span>
           </div>
-          
+
           <div class="entry-detail-row">
             <span class="entry-detail-label">Mat. Menge</span>
             <span class="entry-detail-value">${(entry.materialMenge || 0).toFixed(2)} kg</span>
           </div>
-          
+
           <div class="entry-detail-row">
             <span class="entry-detail-label">Masterbatch</span>
             <span class="entry-detail-value">${entry.masterbatch}</span>
           </div>
-          
+
           <div class="entry-detail-row">
             <span class="entry-detail-label">MB Menge</span>
             <span class="entry-detail-value">${(entry.masterbatchMenge || 0).toFixed(2)} g</span>
           </div>
-          
+
           <div class="entry-detail-row">
             <span class="entry-detail-label">Kosten</span>
             <span class="entry-detail-value cost-value">${formatCurrency(entry.totalCost)}</span>
           </div>
-          
+
           ${jobNotes ? `
           <div class="entry-detail-row">
             <span class="entry-detail-label">Notizen</span>
@@ -420,7 +433,7 @@ function renderAdminEntries(entries) {
           </div>
           ` : ''}
         </div>
-        
+
         <!-- Card Footer mit Admin-Buttons -->
         <div class="entry-card-footer">
           ${cardActions}
@@ -437,12 +450,12 @@ function renderAdminEntries(entries) {
           Seite ${currentAdminPage} von ${totalAdminPages}
         </div>
         <div class="pagination-buttons">
-          ${currentAdminPage > 1 ? 
-            `<button class="btn btn-secondary" onclick="changeAdminPage(${currentAdminPage - 1})">Vorherige Seite</button>` : 
+          ${currentAdminPage > 1 ?
+            `<button class="btn btn-secondary" onclick="changeAdminPage(${currentAdminPage - 1})">Vorherige Seite</button>` :
             '<button class="btn btn-secondary" disabled>Vorherige Seite</button>'
           }
-          ${currentAdminPage < totalAdminPages ? 
-            `<button class="btn btn-primary" onclick="changeAdminPage(${currentAdminPage + 1})">Nächste Seite</button>` : 
+          ${currentAdminPage < totalAdminPages ?
+            `<button class="btn btn-primary" onclick="changeAdminPage(${currentAdminPage + 1})">Nächste Seite</button>` :
             '<button class="btn btn-primary" disabled>Nächste Seite</button>'
           }
         </div>
@@ -454,7 +467,7 @@ function renderAdminEntries(entries) {
         </div>
       </div>
     `;
-  
+
   tableDiv.innerHTML = containerHtml;
 }
 
@@ -463,10 +476,10 @@ function renderAdminEntries(entries) {
  */
 async function checkAndUpdatePaymentRequestButtons(entries) {
   if (!entries || !window.currentUser || window.currentUser.isAdmin) return;
-  
+
   // Only check unpaid entries
   const unpaidEntries = entries.filter(entry => !(entry.paid || entry.isPaid));
-  
+
   for (const entry of unpaidEntries) {
     try {
       const requestExists = await checkPaymentRequestExists(entry.id);
