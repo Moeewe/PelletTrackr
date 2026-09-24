@@ -143,6 +143,17 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // Zeitsitzungen und Maschinen-Sperren werden ausschließlich über
+    // vertrauenswürdige Cloud Functions geschrieben.
+    match /machineSessions/{sessionId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
+      allow write: if false;
+    }
+    match /activeMachineSessions/{machineKey} {
+      allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
+      allow write: if false;
+    }
+
     match /materials/{documentId} {
       allow read: if signedIn();
       allow write: if isAdmin();

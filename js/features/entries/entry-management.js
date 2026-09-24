@@ -95,10 +95,94 @@ async function markEntryAsUnpaid(entryId) {
   }
 }
 
+async function archiveEntry(entryId, archived) {
+  if (!window.checkAdminAccess()) return;
+  const action = archived ? 'ins Archiv verschieben' : 'wiederherstellen';
+  const confirmed = await window.toast.confirm(
+    `Möchtest du diesen Auftrag ${action}? Der Eintrag und seine Zahlungsdaten bleiben erhalten.`,
+    archived ? 'Archivieren' : 'Wiederherstellen',
+    'Abbrechen'
+  );
+  if (!confirmed) return;
+
+  try {
+    const user = window.firebase.auth().currentUser;
+    await window.db.collection('entries').doc(entryId).update({
+      archived: Boolean(archived),
+      ...(archived ? {
+        archivedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+        archivedBy: user.uid,
+        archivedByName: window.currentUser?.name || 'Admin'
+      } : {
+        unarchivedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+        unarchivedBy: user.uid
+      })
+    });
+    window.toast.success(archived ? 'Auftrag archiviert. Er bleibt vollständig erhalten.' : 'Auftrag wiederhergestellt.');
+    window.loadAdminStats?.();
+    window.loadAllEntries?.();
+  } catch (error) {
+    window.toast.error('Auftrag konnte nicht archiviert werden: ' + error.message);
+  }
+}
+
+async function archiveOlderEntries() {
+  if (!window.checkAdminAccess()) return;
+  const input = document.getElementById('adminArchiveBefore');
+  const day = input?.value;
+  if (!day) return window.toast.warning('Bitte zuerst einen Stichtag auswählen.');
+  const cutoff = new Date(`${day}T00:00:00`);
+  if (!Number.isFinite(cutoff.getTime())) return window.toast.warning('Der Stichtag ist ungültig.');
+  const confirmed = await window.toast.confirm(
+    `Alle Aufträge vor dem ${cutoff.toLocaleDateString('de-DE')} werden in das Archiv verschoben. Es werden keine Aufträge oder Zahlungsdaten gelöscht.`,
+    'Alte Aufträge archivieren', 'Abbrechen'
+  );
+  if (!confirmed) return;
+
+  try {
+    const db = window.db;
+    const user = window.firebase.auth().currentUser;
+    let cursor = null;
+    let archivedCount = 0;
+    while (true) {
+      let query = db.collection('entries').where('timestamp', '<', cutoff)
+        .orderBy('timestamp', 'asc').limit(450);
+      if (cursor) query = query.startAfter(cursor);
+      const snapshot = await query.get();
+      if (snapshot.empty) break;
+      const batch = db.batch();
+      let writes = 0;
+      snapshot.docs.forEach(doc => {
+        if (doc.data().archived === true) return;
+        batch.update(doc.ref, {
+          archived: true,
+          archivedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+          archivedBy: user.uid,
+          archivedByName: window.currentUser?.name || 'Admin'
+        });
+        writes++;
+      });
+      if (writes) {
+        await batch.commit();
+        archivedCount += writes;
+      }
+      cursor = snapshot.docs[snapshot.docs.length - 1];
+      if (snapshot.docs.length < 450) break;
+    }
+    window.toast.success(`${archivedCount} alte ${archivedCount === 1 ? 'Auftrag wurde' : 'Aufträge wurden'} archiviert; nichts wurde gelöscht.`);
+    window.loadAdminStats?.();
+    window.loadAllEntries?.();
+  } catch (error) {
+    window.toast.error('Alte Aufträge konnten nicht archiviert werden: ' + error.message);
+  }
+}
+
 // ==================== GLOBAL EXPORTS ====================
 // Export functions to window for global access
 window.markEntryAsPaid = markEntryAsPaid;
 window.markEntryAsUnpaid = markEntryAsUnpaid;
+window.archiveEntry = archiveEntry;
+window.archiveOlderEntries = archiveOlderEntries;
 
 /**
  * Update admin payment button state immediately

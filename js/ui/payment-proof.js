@@ -101,7 +101,7 @@ async function showPaymentProof(entryId) {
         
         <div class="proof-footer">
           <p><strong>Generiert am:</strong> ${new Date().toLocaleDateString('de-DE')} um ${new Date().toLocaleTimeString('de-DE')}</p>
-          <p><strong>FGF 3D-Druck Verwaltung</strong> • FH Münster • PelletTrackr System</p>
+          <p><strong>PelletTrackr · Create Smart. Pay Smarter.</strong> • FH Münster</p>
           <p>Dieser Zahlungsnachweis ist maschinell erstellt und ohne Unterschrift gültig.</p>
         </div>
       </div>
@@ -356,7 +356,7 @@ function emailPaymentProof() {
   const currentTime = new Date().toLocaleTimeString('de-DE');
   
   // Professioneller E-Mail-Subject
-  const subject = encodeURIComponent(`✅ Zahlungsbestätigung FGF 3D-Druck - ${entry.jobName || 'Auftrag'} (${entry.kennung})`);
+  const subject = encodeURIComponent(`✅ Zahlungsbestätigung PelletTrackr - ${entry.jobName || 'Auftrag'} (${entry.kennung})`);
   
   // Professionelle HTML-E-Mail mit Corporate Design
   const htmlBody = `
@@ -365,7 +365,7 @@ function emailPaymentProof() {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zahlungsbestätigung FGF 3D-Druck</title>
+    <title>Zahlungsbestätigung PelletTrackr</title>
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
     
@@ -374,7 +374,7 @@ function emailPaymentProof() {
         <h1 style="margin: 0; font-size: 24px;">
             <span style="background: #FFEB00; color: #000; padding: 4px 8px;">Pellet</span>Trackr
         </h1>
-        <p style="margin: 5px 0 0 0; font-size: 14px; color: #ccc;">FGF 3D-Druck Verwaltung • FH Münster</p>
+        <p style="margin: 5px 0 0 0; font-size: 14px; color: #ccc;">Create Smart. Pay Smarter. • FH Münster</p>
     </div>
     
     <!-- Hauptinhalt -->
@@ -483,13 +483,13 @@ function emailPaymentProof() {
     <p>Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
     
     <p>Mit freundlichen Grüßen<br>
-    <strong>Ihr FGF 3D-Druck Team</strong><br>
+    <strong>Ihr PelletTrackr Team</strong><br>
     Fachhochschule Münster</p>
     
     <!-- Footer -->
     <div style="border-top: 2px solid #eee; padding-top: 20px; margin-top: 30px; text-align: center; font-size: 12px; color: #666;">
         <p style="margin: 5px 0;">
-            <strong>FGF 3D-Druck Verwaltung</strong> • Fachhochschule Münster • PelletTrackr System
+            <strong>PelletTrackr · Create Smart. Pay Smarter.</strong> • Fachhochschule Münster
         </p>
         <p style="margin: 5px 0;">
             Automatisch generiert am ${currentDate} um ${currentTime}
@@ -505,7 +505,7 @@ function emailPaymentProof() {
   
   // Konvertiere HTML zu Text-Fallback (für E-Mail-Clients ohne HTML-Support)
   const textBody = `
-FGF 3D-DRUCK VERWALTUNG - ZAHLUNGSBESTÄTIGUNG
+PELLETTRACKR - ZAHLUNGSBESTÄTIGUNG
 ==============================================
 
 Sehr geehrte/r ${entry.name},
@@ -541,11 +541,11 @@ Vielen Dank für die Nutzung unseres 3D-Druck Services!
 Bei Fragen stehen wir Ihnen gerne zur Verfügung.
 
 Mit freundlichen Grüßen
-Ihr FGF 3D-Druck Team
+Ihr PelletTrackr Team
 Fachhochschule Münster
 
 ──────────────────────────────────────────────
-FGF 3D-Druck Verwaltung • FH Münster • PelletTrackr System
+PelletTrackr · Create Smart. Pay Smarter. • FH Münster
 Automatisch generiert am ${currentDate} um ${currentTime}
 Dieser Zahlungsnachweis ist maschinell erstellt und ohne Unterschrift rechtsgültig.
   `;

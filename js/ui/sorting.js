@@ -229,74 +229,38 @@ function searchUserEntries() {
 
 // Admin Entries durchsuchen
 function searchAdminEntries() {
-  if (!window.allAdminEntries || window.allAdminEntries.length === 0) return;
+  filterAdminEntries();
+}
 
-  const searchTerm = document.getElementById('adminSearchInput').value.toLowerCase();
-  
-  if (!searchTerm) {
-    // Zeige alle Einträge wenn Suchfeld leer ist
-    window.renderAdminEntries(window.allAdminEntries);
-    return;
-  }
-
-  const filteredEntries = window.allAdminEntries.filter(entry => {
-    return (
-      (entry.name && entry.name.toLowerCase().includes(searchTerm)) ||
-      (entry.kennung && entry.kennung.toLowerCase().includes(searchTerm)) ||
-      (entry.material && entry.material.toLowerCase().includes(searchTerm)) ||
-      (entry.masterbatch && entry.masterbatch.toLowerCase().includes(searchTerm)) ||
-      (entry.jobName && entry.jobName.toLowerCase().includes(searchTerm)) ||
-      (entry.paid ? 'bezahlt' : 'offen').includes(searchTerm)
-    );
+function filterAdminEntries() {
+  const entries = window.allAdminEntries || [];
+  const term = (document.getElementById('adminSearchInput')?.value || '').trim().toLocaleLowerCase('de');
+  const archive = document.getElementById('adminArchiveSelect')?.value || 'active';
+  const sortValue = document.getElementById('adminSortSelect')?.value || 'date-desc';
+  let filtered = entries.filter(entry => {
+    if (archive === 'active' && entry.archived === true) return false;
+    if (archive === 'archived' && entry.archived !== true) return false;
+    if (sortValue === 'status-paid' && !(entry.paid || entry.isPaid)) return false;
+    if (sortValue === 'status-unpaid' && (entry.paid || entry.isPaid)) return false;
+    if (!term) return true;
+    const fields = [entry.name, entry.kennung, entry.jobName, entry.machineName, entry.printer,
+      entry.material, entry.masterbatch, entry.jobNotes, entry.paid || entry.isPaid ? 'bezahlt' : 'offen'];
+    return fields.some(value => String(value || '').toLocaleLowerCase('de').includes(term));
   });
-
-  window.renderAdminEntries(filteredEntries);
+  const date = entry => entry.timestamp?.toDate ? entry.timestamp.toDate().getTime() : new Date(entry.timestamp || 0).getTime();
+  if (sortValue === 'date-asc') filtered.sort((a, b) => date(a) - date(b));
+  else if (sortValue === 'name-asc') filtered.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'de'));
+  else if (sortValue === 'name-desc') filtered.sort((a, b) => String(b.name || '').localeCompare(String(a.name || ''), 'de'));
+  else if (sortValue === 'cost-desc') filtered.sort((a, b) => Number(b.totalCost || 0) - Number(a.totalCost || 0));
+  else if (sortValue === 'cost-asc') filtered.sort((a, b) => Number(a.totalCost || 0) - Number(b.totalCost || 0));
+  else filtered.sort((a, b) => date(b) - date(a));
+  window.renderAdminEntries(filtered);
+  window.showEntryPager?.('admin', filtered.length);
 }
 
 // Admin Entries sortieren (über Select-Dropdown)
 function sortAdminEntries() {
-  if (!window.allAdminEntries || window.allAdminEntries.length === 0) return;
-
-  const sortValue = document.getElementById('adminSortSelect').value;
-  const [criteria, direction] = sortValue.split('-');
-
-  let sortedEntries = [...window.allAdminEntries];
-
-  switch (criteria) {
-    case 'date':
-      sortedEntries.sort((a, b) => {
-        const dateA = a.timestamp ? new Date(a.timestamp.toDate()) : new Date(0);
-        const dateB = b.timestamp ? new Date(b.timestamp.toDate()) : new Date(0);
-        return direction === 'asc' ? dateA - dateB : dateB - dateA;
-      });
-      break;
-    
-    case 'name':
-      sortedEntries.sort((a, b) => {
-        const nameA = (a.name || '').toLowerCase();
-        const nameB = (b.name || '').toLowerCase();
-        return direction === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
-      });
-      break;
-    
-    case 'cost':
-      sortedEntries.sort((a, b) => {
-        const costA = parseFloat(a.totalCost) || 0;
-        const costB = parseFloat(b.totalCost) || 0;
-        return direction === 'asc' ? costA - costB : costB - costA;
-      });
-      break;
-    
-    case 'status':
-      if (direction === 'paid') {
-        sortedEntries = sortedEntries.filter(entry => entry.paid || entry.isPaid);
-      } else if (direction === 'unpaid') {
-        sortedEntries = sortedEntries.filter(entry => !(entry.paid || entry.isPaid));
-      }
-      break;
-  }
-
-  window.renderAdminEntries(sortedEntries);
+  filterAdminEntries();
 }
 
 // ==================== VISUAL SORT INDICATORS ====================
@@ -310,4 +274,5 @@ window.sortAdminEntriesBy = sortAdminEntriesBy;
 window.sortAdminEntries = sortAdminEntries;
 window.searchUserEntries = searchUserEntries;
 window.searchAdminEntries = searchAdminEntries;
+window.filterAdminEntries = filterAdminEntries;
 window.searchAdmins = searchAdmins;

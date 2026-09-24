@@ -266,7 +266,7 @@ function knowledgeMachineOptions() {
   return `${dynamicOptions}<optgroup label="Roboter-Anleitungen"><option value="profile:weber">Großroboter · Weber DXR25 / DXR-Steuerung</option><option value="profile:ur5">Kleiner Roboterarm · Universal Robots UR5 / UR5slicer</option></optgroup><optgroup label="Weitere Anleitungen"><option value="profile:ginger">Ginger</option></optgroup>`;
 }
 
-async function showKnowledgeBase() {
+async function showKnowledgeBase(machineReference = null) {
   await Promise.all([loadKnowledgeMachines(), loadKnowledgeDocuments()]);
   showModalWithContent(`<div class="modal-header"><h2>Wissensdatenbank & Hilfe</h2><button class="close-btn" onclick="closeModal()">&times;</button></div>
     <div class="modal-body knowledge-base">
@@ -278,6 +278,14 @@ async function showKnowledgeBase() {
     </div>
     <div class="modal-footer"><span class="knowledge-sync-state">${knowledgeDocuments.length ? `${knowledgeDocuments.length} Dokumentabschnitte zwischengespeichert` : `${knowledgeSources.length} README-Quellen verfügbar; Inhalte werden passend zur Frage geladen`}</span><button class="btn btn-secondary" onclick="closeModal()">Schließen</button></div>`);
   showKnowledgeGuideMode();
+  if (machineReference) {
+    const select=document.getElementById('knowledgeMachineSelect');
+    if (select) {
+      select.value=`machine:${machineReference.collection}:${machineReference.id}`;
+      if (select.value) startKnowledgeGuide();
+      else window.toast.warning('Diese Maschine ist nicht mehr verfügbar. Ich zeige die allgemeinen Anleitungen.');
+    }
+  }
 }
 
 function showKnowledgeGuideMode() {

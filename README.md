@@ -1,10 +1,10 @@
 # PelletTrackr v1.0.0
 
-**FGF 3D-Druck Verwaltung und Abrechnungssystem**
+**Create Smart. Pay Smarter.** – Werkstatt- und Fertigungsplattform
 
 ## Überblick
 
-PelletTrackr ist ein vollständiges Verwaltungs- und Abrechnungssystem für 3D-Druck-Services. Die Anwendung ermöglicht es Benutzern, Druckaufträge zu verwalten, Materialien zu bestellen und Ausrüstung zu leihen, während Administratoren alle Prozesse überwachen und verwalten können.
+PelletTrackr ist eine Verwaltungs- und Abrechnungsplattform für Werkstatt- und Fertigungsaufträge. Sie unterstützt unter anderem 3D-Druck, Laser, CNC und Robotik sowie Materialbestellungen, Ausleihe und administrative Abläufe.
 
 ## Features
 
@@ -152,4 +152,4 @@ Website: [Ihre Website]
 
 ---
 
-**PelletTrackr v1.0.0** - Print Smart. Pay Smart. 
+**PelletTrackr** – Create Smart. Pay Smarter.

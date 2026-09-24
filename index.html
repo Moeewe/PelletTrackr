@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PelletTrackr - FGF 3D-Druck Verwaltung</title>
+    <title>PelletTrackr | Create Smart. Pay Smarter.</title>
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -19,12 +19,12 @@
                 <h1 class="logo">
                     <span class="highlight">Pellet</span>Trackr
                 </h1>
-                <p class="tagline">Print Smart. Pay Smart.</p>
+                <p class="tagline">Create Smart. Pay Smarter.</p>
             </div>
 
             <form class="login-form" id="loginForm">
                 <div class="form-group">
-                    <input type="email" id="loginEmail" class="form-input" placeholder="E-Mail-Adresse" autocomplete="username">
+                    <input type="email" id="loginEmail" class="form-input" placeholder="E-Mail-Adresse" autocomplete="username" oninput="updateMasterAdminAccessButton()">
                 </div>
 
                 <div class="form-group">
@@ -54,6 +54,10 @@
 
                 <div class="form-group">
                     <button type="button" class="btn btn-link" onclick="showPasswordResetSection()">Passwort vergessen</button>
+                </div>
+                <div class="form-group" id="masterAdminBootstrapControl" hidden>
+                    <button type="button" class="btn btn-secondary" onclick="claimOneTimeMasterAdmin()">Einmaligen Admin-Erstzugang nutzen</button>
+                    <small>Nur für das freigegebene, bestätigte Konto; einmalig und bis 31.10.2026.</small>
                 </div>
             </form>
 
@@ -249,6 +253,13 @@
             <div class="services-section">
                 <h2 class="section-title">Deine Services</h2>
                 <div class="services-grid">
+                    <div class="service-card">
+                        <div class="service-header"><h3 class="service-title">Maschinenzeit</h3></div>
+                        <div class="service-content">
+                            <div class="service-description">Nutzung starten und minutengenau abrechnen</div>
+                            <div class="service-action"><button class="btn btn-primary btn-sm" onclick="MachineTime.open()">Maschinenzeit öffnen</button></div>
+                        </div>
+                    </div>
                     <!-- Leihe -->
                     <div class="service-card">
                         <div class="service-header">
@@ -463,7 +474,16 @@
             <div class="entries-section">
                 <h2 class="section-title">Alle Fertigungsaufträge</h2>
                 <div class="table-controls">
+                    <label class="admin-archive-cutoff">Ältere Aufträge archivieren ab
+                        <input type="date" id="adminArchiveBefore" aria-label="Stichtag zum Archivieren alter Aufträge">
+                    </label>
+                    <button class="btn btn-secondary" type="button" onclick="archiveOlderEntries()">Alte Aufträge archivieren</button>
                     <input type="text" id="adminSearchInput" placeholder="Geladene Aufträge durchsuchen …" aria-label="Geladene Aufträge durchsuchen" title="Durchsucht die bereits geladenen Aufträge. Lade weitere Aufträge, um den Suchbereich zu erweitern." class="search-input" onkeyup="searchAdminEntries()">
+                    <select id="adminArchiveSelect" class="sort-select" aria-label="Auftragsbereich" onchange="filterAdminEntries()">
+                        <option value="active">Aktuelle Aufträge</option>
+                        <option value="archived">Archivierte Aufträge</option>
+                        <option value="all">Alle Aufträge</option>
+                    </select>
                     <select id="adminSortSelect" class="sort-select" onchange="sortAdminEntries()">
                         <option value="date-desc">Datum (neueste zuerst)</option>
                         <option value="date-asc">Datum (älteste zuerst)</option>
@@ -819,6 +839,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <!-- UX Helpers -->
     <script src="ux-helpers.js?v=1.0.1"></script>
@@ -835,6 +856,7 @@
     <script src="js/ui/button-factory.js?v=1.0.1"></script>
     <script src="js/ui/cost-calculator.js?v=20260924-billing"></script>
     <script src="js/features/billing.js"></script>
+    <script src="js/features/machine-time.js?v=20260924-timer"></script>
     <script src="js/features/assets/machine-management.js?v=20260924-robot-types"></script>
     <script src="js/ui/modals.js?v=20260924-dialogs"></script>
     <script src="js/ui/payment-proof.js"></script>
@@ -867,11 +889,11 @@
     <div class="global-footer">
         <div class="global-footer-content">
             <div class="global-footer-links">
-                <a href="impressum.html?from=app" target="_blank" onclick="console.log('Impressum Link clicked!'); sessionStorage.setItem('openedFromApp', 'true');">Impressum</a>
-                <a href="datenschutz.html?from=app" target="_blank" onclick="console.log('Datenschutz Link clicked!'); sessionStorage.setItem('openedFromApp', 'true');">Datenschutz</a>
+                <a href="HTML/impressum.html?from=app" target="_blank" rel="noopener">Impressum</a>
+                <a href="HTML/datenschutz.html?from=app" target="_blank" rel="noopener">Datenschutz</a>
             </div>
             <div class="global-footer-copyright">
-                © PelletTrackr - 2025 v1.0.1
+                © PelletTrackr · Create Smart. Pay Smarter.
             </div>
         </div>
     </div>

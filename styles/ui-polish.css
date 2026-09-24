@@ -34,6 +34,29 @@ input, select, textarea, button { font-family: inherit; }
   overflow: visible;
   background: transparent;
 }
+.admin-job-list { display: grid; gap: 12px; min-width: 0; }
+.admin-job-card { min-width: 0; border: 1px solid #d6d6d6; background: #fff; padding: 16px 18px 12px; }
+.admin-job-card.is-archived { background: #f7f7f7; border-style: dashed; }
+.admin-job-main { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(180px, auto); gap: 16px; align-items: center; }
+.admin-job-title-block { min-width: 0; }
+.admin-job-eyebrow { font-size: .8125rem; color: #5c5c5c; }
+.admin-job-title-block h3 { margin: 3px 0; font-size: 1.05rem; line-height: 1.35; overflow-wrap: anywhere; }
+.admin-job-title-block p { margin: 0; color: #555; font-size: .9rem; }
+.admin-job-status-block { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.admin-job-price { white-space: nowrap; font-size: 1rem; }
+.admin-job-archived-label { color: #666; font-size: .8125rem; }
+.admin-job-actions { display: flex; justify-content: flex-end; align-items: center; gap: 6px; flex-wrap: wrap; }
+.admin-job-actions .btn { margin: 0; min-height: 38px; padding: 8px 10px; font-size: .8125rem; }
+.admin-job-more { border-top: 1px solid #eee; margin-top: 12px; padding-top: 8px; }
+.admin-job-more summary { cursor: pointer; width: fit-content; color: #444; font-size: .875rem; }
+.admin-job-details { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 16px; padding: 12px 0 2px; }
+.admin-job-detail { min-width: 0; display: grid; gap: 2px; }
+.admin-job-detail span { color: #666; font-size: .75rem; }
+.admin-job-detail strong { font-size: .875rem; font-weight: 500; overflow-wrap: anywhere; }
+.admin-job-count { padding: 12px 2px; color: #666; font-size: .875rem; }
+.admin-archive-cutoff { display: flex; align-items: center; gap: 8px; color: #555; font-size: .875rem; }
+.admin-archive-cutoff input { min-height: 42px; max-width: 180px; border: 1px solid #777; padding: 8px; }
+.machine-guide-qr { display: flex; justify-content: center; padding: 20px; margin: 16px auto; width: fit-content; background: #fff; border: 1px solid #ddd; }
 .entry-empty-state {
   padding: 32px 24px;
   background: #f7f7f7;
@@ -53,5 +76,24 @@ input, select, textarea, button { font-family: inherit; }
   .screen .table-controls, .modal .table-controls { flex-direction: column; }
   .screen .search-input, .screen .sort-select, .modal .search-input, .modal .sort-select { flex: none; width: 100%; font-size: 16px; }
   .entry-empty-state { padding: 24px 16px; }
+  .admin-job-main { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
+  .admin-job-status-block { grid-column: 2; grid-row: 1; justify-content: flex-end; }
+  .admin-job-actions { grid-column: 1 / -1; justify-content: flex-start; }
+  .admin-job-details { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-archive-cutoff { justify-content: space-between; }
+  .admin-archive-cutoff input { max-width: 100%; }
   .modal .form-input, .modal .form-select { font-size: 16px; }
 }
+.machine-time-panel > section { margin: 1.25rem 0; padding: 1rem; border: 1px solid #d5d9de; border-radius: 10px; }
+.machine-time-panel h3 { margin: 0 0 .8rem; }
+.machine-time-panel label { display: block; max-width: 38rem; margin: .8rem 0; }
+.machine-time-panel .form-select { display: block; width: 100%; margin-top: .35rem; }
+.machine-time-running { background: #f3f8f4; border-color: #a5c8ae !important; }
+.machine-time-clock { margin: .25rem 0; font-size: clamp(1.8rem, 6vw, 2.6rem); font-variant-numeric: tabular-nums; font-weight: 700; }
+.machine-time-cost, .machine-time-session small { color: #535b64; }
+.machine-time-list { display: grid; gap: .65rem; }
+.machine-time-session { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .8rem; border: 1px solid #e0e3e6; border-radius: 8px; }
+.machine-time-session > div { display: grid; gap: .2rem; }
+.machine-time-notice { padding: .8rem; background: #fff4d6; border-radius: 8px; }
+.machine-time-empty { color: #59616a; }
+@media (max-width: 520px) { .machine-time-session { align-items: flex-start; flex-direction: column; } }

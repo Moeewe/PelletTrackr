@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Datenschutz - PelletTrackr</title>
+    <title>Datenschutz - PelletTrackr | Create Smart. Pay Smarter.</title>
     <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
@@ -111,7 +111,8 @@
             );
 
             // Prüfe Session Storage
-            const sessionFromApp = sessionStorage.getItem('openedFromApp') === 'true';
+            let sessionFromApp = false;
+            try { sessionFromApp = sessionStorage.getItem('openedFromApp') === 'true'; } catch (_) { /* file:// kann Storage einschränken */ }
 
             return fromApp || referrerFromApp || sessionFromApp;
         }

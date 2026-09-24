@@ -398,7 +398,7 @@ function sendPaymentReminder(kennung) {
     return;
   }
 
-  const subject = encodeURIComponent(`Zahlungserinnerung - FGF 3D-Druck Service | ${user.name}`);
+  const subject = encodeURIComponent(`Zahlungserinnerung - PelletTrackr | ${user.name}`);
   const openEntries = (user.entries || []).filter(e => !(e.paid || e.isPaid));
   const currentDate = new Date().toLocaleDateString('de-DE');
 
@@ -406,7 +406,7 @@ function sendPaymentReminder(kennung) {
   const body = encodeURIComponent(`Sehr geehrte/r ${user.name},
 
 ═════════════════════════════════════════════════════════
-               ZAHLUNGSERINNERUNG - FGF 3D-DRUCK SERVICE
+               ZAHLUNGSERINNERUNG - PELLETTRACKR
 ═════════════════════════════════════════════════════════
 
 Datum: ${currentDate}
@@ -451,7 +451,7 @@ Zahlungsnachweis über das PelletTrackr System.
 
 ─────────────────────────────────────────────────────────
 Mit freundlichen Grüßen
-FGF 3D-Druck Service Team
+PelletTrackr Team
 Fachhochschule Münster
 
 Diese E-Mail wurde automatisch generiert von PelletTrackr
@@ -475,7 +475,7 @@ function sendUrgentReminder(kennung) {
     return;
   }
 
-  const subject = encodeURIComponent(`DRINGENDE MAHNUNG - FGF 3D-Druck Service | ${user.name}`);
+  const subject = encodeURIComponent(`DRINGENDE ZAHLUNGSERINNERUNG - PelletTrackr | ${user.name}`);
   const openEntries = (user.entries || []).filter(e => !(e.paid || e.isPaid));
   const currentDate = new Date().toLocaleDateString('de-DE');
   const oldestEntry = openEntries.reduce((oldest, entry) => {
@@ -491,7 +491,7 @@ function sendUrgentReminder(kennung) {
 
 ═════════════════════════════════════════════════════════
                    DRINGENDE ZAHLUNGSMAHNUNG
-                    FGF 3D-Druck Service
+                    PelletTrackr · Create Smart. Pay Smarter.
 ═════════════════════════════════════════════════════════
 
 WICHTIGER HINWEIS: ZAHLUNGSRÜCKSTAND
@@ -555,7 +555,7 @@ DRINGENDER KONTAKT
 Bei Zahlungsschwierigkeiten oder Fragen kontaktieren Sie
 umgehend das FGF Team zur Klärung der Situation.
 
-FGF 3D-Druck Service Team
+PelletTrackr Team
 Fachhochschule Münster
 
 DRINGENDE MAHNUNG - Generiert am: ${currentDate}

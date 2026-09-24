@@ -243,7 +243,7 @@ function changeAdminPage(newPage) {
 }
 
 // Admin-Drucke rendern (vollständige Version mit Card + Table für Admin)
-function renderAdminEntries(entries) {
+function renderAdminEntriesLegacy(entries) {
   const tableDiv = document.getElementById("adminEntriesTable");
   tableDiv.classList.toggle('is-empty', entries.length === 0);
 
@@ -469,6 +469,67 @@ function renderAdminEntries(entries) {
     `;
 
   tableDiv.innerHTML = containerHtml;
+}
+
+function renderAdminEntries(entries) {
+  const container = document.getElementById('adminEntriesTable');
+  if (!container) return;
+  container.classList.toggle('is-empty', entries.length === 0);
+  if (!entries.length) {
+    container.innerHTML = entryEmptyState('admin');
+    return;
+  }
+
+  const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[char]);
+  const formatDate = value => {
+    const date = value?.toDate ? value.toDate() : new Date(value || 0);
+    return Number.isFinite(date.getTime()) && date.getTime() > 0 ? date.toLocaleDateString('de-DE') : 'Datum fehlt';
+  };
+
+  const cards = entries.map(entry => {
+    const archived = entry.archived === true;
+    const paid = entry.paid === true || entry.isPaid === true;
+    const job = entry.jobName || entry.operationType || 'Fertigungsauftrag';
+    const machine = entry.machineName || entry.printer || 'Maschine nicht angegeben';
+    const amount = formatCurrency(entry.totalCost);
+    const paymentAction = paid
+      ? `${ButtonFactory.undoPayment(entry.id)} ${ButtonFactory.showNachweis(entry.id, true)}`
+      : ButtonFactory.registerPayment(entry.id);
+    const archiveAction = `<button class="btn btn-secondary admin-job-archive" onclick="archiveEntry(${JSON.stringify(entry.id)},${!archived})">${archived ? 'Wiederherstellen' : 'Archivieren'}</button>`;
+    const duration = Number(entry.printTime || entry.durationMinutes || 0);
+    const details = [
+      ['FH-Kennung', entry.kennung || '—'],
+      ['Material', entry.material || '—'],
+      ['Materialmenge', entry.materialMenge ? `${Number(entry.materialMenge).toLocaleString('de-DE')} kg` : '—'],
+      ['Zusatzmaterial', entry.masterbatch || '—'],
+      ['Zusatzmaterial-Menge', entry.masterbatchMenge ? `${Number(entry.masterbatchMenge).toLocaleString('de-DE')} g` : '—'],
+      ['Notizen', entry.jobNotes || '—'],
+      ['Tarifgruppe', entry.billingGroup || '—']
+    ];
+    const detailsHtml = details.map(([label, value]) => `<div class="admin-job-detail"><span>${escape(label)}</span><strong>${escape(value)}</strong></div>`).join('');
+
+    return `<article class="admin-job-card${archived ? ' is-archived' : ''}" id="entry-${escape(entry.id)}">
+      <div class="admin-job-main">
+        <div class="admin-job-title-block">
+          <div class="admin-job-eyebrow">${escape(formatDate(entry.timestamp))} · ${escape(entry.name || 'Name fehlt')}</div>
+          <h3>${escape(job)}</h3>
+          <p>${escape(machine)}${duration ? ` · ${duration.toLocaleString('de-DE')} min` : ''}</p>
+        </div>
+        <div class="admin-job-status-block">
+          <strong class="admin-job-price">${escape(amount)}</strong>
+          <span class="entry-status-badge ${paid ? 'status-paid' : 'status-unpaid'}">${paid ? 'Bezahlt' : 'Offen'}</span>
+          ${archived ? '<span class="admin-job-archived-label">Archiviert</span>' : ''}
+        </div>
+        <div class="admin-job-actions">${paymentAction}${ButtonFactory.editEntry(entry.id)}${archiveAction}</div>
+      </div>
+      <details class="admin-job-more"><summary>Auftragsdetails</summary><div class="admin-job-details">${detailsHtml}</div></details>
+    </article>`;
+  }).join('');
+
+  container.innerHTML = `<div class="admin-job-list" aria-label="Fertigungsaufträge">${cards}</div>
+    <div class="admin-job-count">${entries.length} ${entries.length === 1 ? 'Auftrag' : 'Aufträge'} im aktuellen Suchbereich</div>`;
 }
 
 /**

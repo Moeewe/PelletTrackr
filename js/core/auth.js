@@ -24,6 +24,55 @@ async function linkLegacyProfileAfterVerification(user, profile, kennung) {
   }
 }
 
+function openMachineGuideFromUrl() {
+  const url = new URL(window.location.href);
+  const reference = url.searchParams.get('maschinenGuide');
+  if (!reference) return;
+  const [collection, id] = reference.split(':');
+  if (!['printers', 'equipment', 'machines'].includes(collection) || !id) return;
+  url.searchParams.delete('maschinenGuide');
+  window.history.replaceState({}, '', url.href);
+  window.setTimeout(() => window.showKnowledgeBase?.({ collection, id }), 350);
+}
+
+function updateMasterAdminAccessButton() {
+  const email = document.getElementById('loginEmail')?.value.trim().toLowerCase();
+  const control = document.getElementById('masterAdminBootstrapControl');
+  if (control) control.hidden = email !== 'm.wesseler@fh-muenster.de';
+}
+
+async function claimOneTimeMasterAdmin() {
+  const email = document.getElementById('loginEmail')?.value.trim();
+  const password = document.getElementById('loginPassword')?.value || '';
+  if (email?.toLowerCase() !== 'm.wesseler@fh-muenster.de' || !password) {
+    return safeShowToast('Bitte die freigegebene E-Mail-Adresse und dein Passwort eingeben.', 'warning');
+  }
+  try {
+    const credential = await firebase.auth().signInWithEmailAndPassword(email, password);
+    if (!credential.user.emailVerified) {
+      await firebase.auth().signOut();
+      return safeShowToast('Bitte bestätige zuerst deine E-Mail-Adresse.', 'warning');
+    }
+    const claim = firebase.functions('europe-west1').httpsCallable('claimOneTimeMasterAdmin');
+    await claim({});
+    const profile = await window.db.collection('users').doc(credential.user.uid).get();
+    const data = profile.data() || {};
+    window.currentUser = {
+      uid: credential.user.uid, email: credential.user.email,
+      name: data.name || credential.user.displayName || 'Admin',
+      username: data.username || extractUsernameFromEmail(credential.user.email),
+      kennung: data.kennung || data.legacyKennung || extractUsernameFromEmail(credential.user.email),
+      isAdmin: data.isAdmin === true, emailVerified: credential.user.emailVerified
+    };
+    saveSession(window.currentUser);
+    showAdminDashboard();
+    safeShowToast('Der einmalige Admin-Erstzugang wurde aktiviert.', 'success');
+  } catch (error) {
+    if (firebase.auth().currentUser) await firebase.auth().signOut();
+    safeShowToast(error.message || 'Der einmalige Admin-Erstzugang konnte nicht aktiviert werden.', 'error');
+  }
+}
+
 // Check for existing session on page load
 let authRestoreStarted = false;
 function checkExistingSession() {
@@ -53,6 +102,7 @@ function checkExistingSession() {
         kennung:profile.kennung || profile.legacyKennung || extractUsernameFromEmail(user.email), isAdmin:profile.isAdmin === true
       };
       showDashboard();
+      openMachineGuideFromUrl();
     } catch (error) { safeShowToast('Dein Benutzerprofil konnte nicht geladen werden. Bitte erneut anmelden.', 'error'); }
   });
   return true;
@@ -773,6 +823,7 @@ async function performEmailLogin() {
             } else {
                 showUserDashboard();
             }
+            openMachineGuideFromUrl();
 
             safeShowToast('Erfolgreich angemeldet', 'success');
 
@@ -984,3 +1035,5 @@ window.createUserProfile = createUserProfile;
 window.checkAdminStatus = checkAdminStatus;
 window.legacyLoginWithEmail = legacyLoginWithEmail;
 window.setupLoginKeyHandlers = setupLoginKeyHandlers;
+window.updateMasterAdminAccessButton = updateMasterAdminAccessButton;
+window.claimOneTimeMasterAdmin = claimOneTimeMasterAdmin;

@@ -45,7 +45,7 @@ async function loadMoreEntries(kind) {
     state.hasMore=snapshot.docs.length===ENTRY_PAGE_SIZE;
     const entries=combineEntryPages(kind,kind==='user'?[]:[]);
     if(kind==='user'){window.allUserEntries=entries;window.currentUserEntries=entries;renderUserEntries(entries);}
-    else {window.allAdminEntries=entries;window.currentAdminEntries=entries;renderAdminEntries(entries);}
+    else {window.allAdminEntries=entries;window.currentAdminEntries=entries;if(typeof filterAdminEntries==='function')filterAdminEntries();else renderAdminEntries(entries);}
   } catch(error) { window.toast?.error(error.message||'Weitere Aufträge konnten nicht geladen werden.'); }
   finally {state.loading=false;showEntryPager(kind,kind==='user'?window.allUserEntries.length:window.allAdminEntries.length);}
 }
@@ -108,7 +108,8 @@ function setupAdminEntriesListener() {
         window.allAdminEntries = entries;
         window.currentAdminEntries = entries;
 
-        renderAdminEntries(entries);
+        if (typeof filterAdminEntries === 'function') filterAdminEntries();
+        else renderAdminEntries(entries);
         showEntryPager('admin',entries.length);
 
         console.log('Live update: Loaded admin entries:', entries.length);
