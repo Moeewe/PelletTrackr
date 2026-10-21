@@ -155,28 +155,6 @@
                 </div>
                 </div>
 
-            <!-- User Stats -->
-            <div class="stats-section">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-number" id="userTotalEntries">0</div>
-                        <div class="stat-label" id="userPrintsLabel">Aufträge</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="userTotalCost">0,00 €</div>
-                        <div class="stat-label">Gesamtkosten</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="userPaidAmount">0,00 €</div>
-                        <div class="stat-label">Bezahlt</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="userUnpaidAmount">0,00 €</div>
-                        <div class="stat-label">Offen</div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Entry Form -->
             <div class="form-section">
                 <h2 class="section-title">Fertigungsauftrag erfassen</h2>
@@ -262,8 +240,16 @@
                     <div class="service-card">
                         <div class="service-header"><h3 class="service-title">Maschinenzeit</h3></div>
                         <div class="service-content">
-                            <div class="service-description">Nutzung starten und minutengenau abrechnen</div>
-                            <div class="service-action"><button class="btn btn-primary btn-sm" onclick="MachineTime.open()">Maschinenzeit öffnen</button></div>
+                            <div class="service-description">Stoppuhr für Maschinen mit Zeittarif: Starten, arbeiten, beenden – die Zeit wird automatisch abgerechnet.</div>
+                            <div class="service-action"><button class="btn btn-primary btn-sm" onclick="MachineTime.open()">Stoppuhr starten / beenden</button></div>
+                        </div>
+                    </div>
+                    <!-- Hilfe -->
+                    <div class="service-card">
+                        <div class="service-header"><h3 class="service-title">Hilfe & Anleitungen</h3></div>
+                        <div class="service-content">
+                            <div class="service-description">Schritt für Schritt durch Maschinen, Abläufe und Fehlerhilfe</div>
+                            <div class="service-action"><button class="btn btn-primary btn-sm" onclick="showKnowledgeBase()">Hilfe-Assistent öffnen</button></div>
                         </div>
                     </div>
                     <!-- Leihe -->
@@ -322,11 +308,26 @@
                 </div>
             </div>
 
-            <!-- Knowledge base -->
-            <div class="entries-section knowledge-entry-section">
-                <h2 class="section-title">Wissensdatenbank & Maschinenhilfe</h2>
-                <p>Anleitungen, geführte Abläufe und Fehlerhilfe aus der LARGER.slicer-Dokumentation.</p>
-                <button class="btn btn-primary" onclick="showKnowledgeBase()">Hilfe-Assistent öffnen</button>
+            <!-- User Stats -->
+            <div class="stats-section">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="userTotalEntries">0</div>
+                        <div class="stat-label" id="userPrintsLabel">Aufträge</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="userTotalCost">0,00 €</div>
+                        <div class="stat-label">Gesamtkosten</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="userPaidAmount">0,00 €</div>
+                        <div class="stat-label">Bezahlt</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="userUnpaidAmount">0,00 €</div>
+                        <div class="stat-label">Offen</div>
+                    </div>
+                </div>
             </div>
 
             <!-- User Entries -->
