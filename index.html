@@ -128,23 +128,29 @@
             <div class="machine-overview-section">
                 <div class="machine-status-grid">
                     <span class="machine-overview-title" onclick="showPrinterStatus()">Maschinen</span>
-                    <div class="machine-status-item" onclick="showPrinterStatus()">
+                    <div class="machine-status-item" onclick="showPrinterStatus('available')">
                         <div class="status-circle status-available">
                             <span class="status-number" id="userAvailableMachines">0</span>
                         </div>
                         <span class="status-label">Verfügbar</span>
                     </div>
-                    <div class="machine-status-item" onclick="showPrinterStatus()">
+                    <div class="machine-status-item" onclick="showPrinterStatus('in_use')">
                         <div class="status-circle status-in-use">
                             <span class="status-number" id="userInUseMachines">0</span>
                         </div>
                         <span class="status-label">In Betrieb</span>
                     </div>
-                    <div class="machine-status-item" onclick="showPrinterStatus()">
+                    <div class="machine-status-item" onclick="showPrinterStatus('maintenance')">
                         <div class="status-circle status-maintenance">
                             <span class="status-number" id="userMaintenanceMachines">0</span>
                         </div>
                         <span class="status-label">Wartung</span>
+                    </div>
+                    <div class="machine-status-item" onclick="showPrinterStatus('broken')">
+                        <div class="status-circle status-broken">
+                            <span class="status-number" id="userBrokenMachines">0</span>
+                        </div>
+                        <span class="status-label">Defekt</span>
                     </div>
                 </div>
                 </div>
@@ -379,23 +385,29 @@
             <div class="machine-overview-section">
                 <div class="machine-status-grid">
                     <span class="machine-overview-title" onclick="showPrinterStatus()">Maschinen</span>
-                    <div class="machine-status-item" onclick="showPrinterStatus()">
+                    <div class="machine-status-item" onclick="showPrinterStatus('available')">
                         <div class="status-circle status-available">
                             <span class="status-number" id="availableMachines">0</span>
                         </div>
                         <span class="status-label">Verfügbar</span>
                     </div>
-                    <div class="machine-status-item" onclick="showPrinterStatus()">
+                    <div class="machine-status-item" onclick="showPrinterStatus('in_use')">
                         <div class="status-circle status-in-use">
                             <span class="status-number" id="inUseMachines">0</span>
                         </div>
                         <span class="status-label">In Betrieb</span>
                     </div>
-                    <div class="machine-status-item" onclick="showPrinterStatus()">
+                    <div class="machine-status-item" onclick="showPrinterStatus('maintenance')">
                         <div class="status-circle status-maintenance">
                             <span class="status-number" id="maintenanceMachines">0</span>
                         </div>
                         <span class="status-label">Wartung</span>
+                    </div>
+                    <div class="machine-status-item" onclick="showPrinterStatus('broken')">
+                        <div class="status-circle status-broken">
+                            <span class="status-number" id="brokenMachines">0</span>
+                        </div>
+                        <span class="status-label">Defekt</span>
                     </div>
                 </div>
             </div>
@@ -869,6 +881,7 @@
     <script src="js/ui/cost-calculator.js?v=20260924-billing"></script>
     <script src="js/features/billing.js"></script>
     <script src="js/features/machine-time.js?v=20260924-timer"></script>
+    <script src="js/ui/machine-overview.js?v=20261021"></script>
     <script src="js/ui/status-buttons.js?v=20261021"></script>
     <script src="js/features/assets/machine-management.js?v=20260924-robot-types"></script>
     <script src="js/features/assets/machine-labels.js?v=20261021"></script>

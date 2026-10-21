@@ -52,6 +52,7 @@
   const panelState = { items: [], term: '', filter: 'all', limit: PAGE };
 
   function collectMachines() {
+    if (window.MachineOverview) return window.MachineOverview.items();
     const printers = typeof userPrinters !== 'undefined' ? userPrinters : [];
     const machines = typeof userProductionMachines !== 'undefined' ? userProductionMachines : [];
     return [
@@ -86,8 +87,9 @@
       ? `<div class="entry-show-more"><span>${visible.length} von ${shown.length} angezeigt</span><button type="button" class="btn btn-secondary" onclick="MachineStatus.more()">${Math.min(PAGE, shown.length - visible.length)} weitere anzeigen</button></div>` : '');
   }
 
-  function panel() {
-    Object.assign(panelState, { items: collectMachines(), term: '', filter: 'all', limit: PAGE });
+  function panel(initialFilter) {
+    const filter = typeof initialFilter === 'string' && ['available', 'in_use', 'maintenance', 'broken'].includes(initialFilter) ? initialFilter : 'all';
+    Object.assign(panelState, { items: collectMachines(), term: '', filter, limit: PAGE });
     const admin = !!window.currentUser?.isAdmin;
     (window.showModalWithContent || window.showModal)(`<div class="modal-header"><h3>Maschinen</h3><button class="close-btn" onclick="closeModal()">&times;</button></div>
       <div class="modal-body">
@@ -106,6 +108,12 @@
 
   // Die gemeinsame Übersicht ersetzt die alte, lange Liste.
   document.addEventListener('DOMContentLoaded', () => { window.showPrinterStatus = panel; });
+  // Live: Liste und Zähler im geöffneten Dialog folgen den Änderungen in der Datenbank.
+  document.addEventListener('machines:updated', () => {
+    if (!document.getElementById('machinePanelList')) return;
+    panelState.items = collectMachines();
+    renderPanel();
+  });
 
   window.MachineStatus = {
     buttons, set, normalize, label: status => LABELS[normalize(status)] || status, panel,
