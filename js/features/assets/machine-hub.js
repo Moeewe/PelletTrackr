@@ -57,9 +57,10 @@
   // Nur gesicherte Angaben. Technische Daten (Arbeitsbereich, Werkzeuge) trägt die Werkstatt selbst ein.
   const LASER_SAFETY = 'CO₂-Laser zum Schneiden und Gravieren. Nicht lasern: PVC (setzt Chlor frei, ätzend, schädigt die Optik), ABS, Polycarbonat, Teflon sowie Schaum aus Polystyrol oder Polypropylen (Brand- bzw. Gesundheitsgefahr). Laser nie unbeaufsichtigt laufen lassen, Feuerlöscher griffbereit halten, Absaugung nach Herstellerangabe nutzen. Allgemeine Hinweise – bitte mit Herstellerunterlagen und Werkstattleitung abgleichen.';
   const STARTER = [
-    { starterKey: 'zuend-cnc', match: /z(ü|ue|u)nd/i, name: 'Zünd CNC Cutter', model: 'Zünd G3', machineType: 'cnc', jobTypes: ['CNC-Fräsen', 'Schneiden', 'Gravieren'],
-      buildVolume: 'ca. 1800 × 2500 mm (bitte prüfen)', trainingGroup: 'Einweisung Zünd CNC Cutter', trainingTypeName: 'Einweisung Zünd CNC Cutter',
-      notes: 'Zum Schneiden, Fräsen und Gravieren. Verbraucht kein Werkstattmaterial. Werkzeuge bitte eintragen.' },
+    { starterKey: 'zuend-cnc', match: /z(ü|ue|u)nd/i, name: 'Zünd CNC Cutter', model: 'Zünd G3 L-2500', machineType: 'cnc', jobTypes: ['CNC-Fräsen', 'Schneiden', 'Gravieren'],
+      buildVolume: '1800 × 2500 mm, Arbeitshöhe 50 mm', trainingGroup: 'Einweisung Zünd CNC Cutter', trainingTypeName: 'Einweisung Zünd CNC Cutter',
+      notes: 'Zünd Digital Cutter G3 L-2500 zum Schneiden, Fräsen und Gravieren. Verbraucht kein Werkstattmaterial. Arbeitshöhe 50 mm (Öffnungshöhe 60 mm). Fräsmodul RM-A 1 kW mit MQL, Werkzeugwechsler ARC (bis 8 Werkzeuge), einstellbares Vakuum, Absaugung CLEANTEX CTM 48 E, Kamera ICC. Software: Zünd Cut Center ab V3.5.6 oder MIND ab V6.1. Quelle: LARGER.slicer-Anleitung.',
+      safetyText: 'Nur eingewiesene Personen. Schutzbrille tragen. Die Absaugung muss laufen, bevor gefräst wird. Niemals in den Arbeitsbereich greifen, solange die Maschine in Betrieb ist. Not-Aus-Taster erreichbar halten. Werkzeugzustand vor jedem Auftrag prüfen. Material mit dem Vakuum sicher fixieren. Maximale Materialdicke 50 mm. Normales Schneiden und 2D-Aufträge laufen über das Zünd Cut Center, das Grasshopper-Skript ist nur für 3D-Fräsen gedacht.' },
     { starterKey: 'trotec-speedy-500-1', match: /trotec/i, name: 'Trotec Speedy 500 (Laser 1)', model: 'Trotec Speedy 500', machineType: 'laser', jobTypes: ['Lasern', 'Schneiden', 'Gravieren'],
       buildVolume: 'ca. 1200 × 700 mm (bitte prüfen)', trainingGroup: 'Laserschein · Trotec Speedy 500', trainingTypeName: 'Laserschein · Trotec Speedy 500', safetyText: LASER_SAFETY },
     { starterKey: 'trotec-speedy-500-2', match: /trotec/i, name: 'Trotec Speedy 500 (Laser 2)', model: 'Trotec Speedy 500', machineType: 'laser', jobTypes: ['Lasern', 'Schneiden', 'Gravieren'],

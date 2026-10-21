@@ -288,7 +288,7 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 .add-box .form-group { padding: 12px 16px; margin: 0; }
 .add-box .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px; }
 #materialsTable .data-table, #masterbatchesTable .data-table > table { display: none; }
-.material-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.material-grid, .masterbatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
 .material-card { display: flex; flex-direction: column; gap: 4px; padding: 16px; background: #f8f9fa; border: 2px solid #000; }
 .material-card[hidden] { display: none !important; }
 .material-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
@@ -335,3 +335,40 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 .materials-container, #materialsTable, #materialsTable .entries-container { border: 0 !important; box-shadow: none !important; padding: 0 !important; background: transparent !important; }
 .material-card-actions .btn { min-height: 40px; padding: 8px 14px; font-size: 13px; }
 .compact-list .safety-card h3, .compact-list .safety-card h4 { margin-bottom: 4px; }
+
+/* Preise & Nutzergruppen */
+.billing-intro { margin: 0 0 16px; color: #333; }
+.billing-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 8px; }
+.billing-group-card { display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; background: #f8f9fa; border: 2px solid #000; }
+.billing-group-card strong { font-size: 26px; }
+.billing-group-card span { color: #444; font-size: 14px; }
+.billing-head h3 { margin: 0; font-size: 20px; }
+.billing-head p { margin: 2px 0 12px; color: #555; }
+.billing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-bottom: 8px; }
+.billing-rate { margin: 0; padding: 14px 16px; background: #f8f9fa; border: 2px solid #000; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.billing-rate legend { padding: 0 6px; font-weight: 700; }
+.billing-rate label { font-size: 13px; font-weight: 700; color: #333; margin-top: 4px; display: block; }
+.billing-rate .form-select, .billing-rate .form-input { width: 100%; box-sizing: border-box; margin: 0; }
+.billing-amount { display: flex; align-items: center; gap: 8px; }
+.billing-amount span { flex: none; font-size: 13px; color: #555; }
+.billing-example { margin: 6px 0 0; font-size: 13px; color: #555; min-height: 2.6em; }
+.billing-actions { position: sticky; bottom: 0; padding: 12px 0; background: #fff; border-top: 1px solid #ddd; }
+
+/* Auftragsliste (Admin): Werkzeugleiste */
+.entry-toolbar-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.entry-toolbar-row .sort-select { width: auto; max-width: 240px; }
+.entry-toolbar-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; color: #555; font-size: 14px; }
+.printer-filters-small .filter-chip { min-height: 32px; padding: 2px 10px; font-size: 13px; border-width: 1px; }
+.admin-entry-controls select.sort-select { width: auto !important; align-self: auto; max-width: 240px; }
+
+/* Einheitliche Eingabefelder in Dialogen: schwarzer Rand, gelber Fokus (kein grüner "gültig"-Rand) */
+.modal .form-input:valid, .modal .form-select:valid, .modal .form-textarea:valid,
+.modal .form-input, .modal .form-select, .modal .form-textarea { border-color: #000; }
+.modal .form-input:focus, .modal .form-select:focus, .modal .form-textarea:focus,
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: #000; outline: 3px solid #FFEB00; outline-offset: 0; box-shadow: none; }
+.masterbatches-container, #masterbatchesTable, #masterbatchesTable .entries-container { border: 0 !important; box-shadow: none !important; padding: 0 !important; background: transparent !important; }
+.material-card-actions .btn { flex: 1 1 auto; text-align: center; justify-content: center; }
+.kguide-links a, .kdoc-head a, .kdoc-toc a, .knowledge-result a, .knowledge-source a { color: #000; text-decoration: underline; text-underline-offset: 2px; }
+.kguide-links a:hover, .kdoc-head a:hover { background: #FFEB00; }
+.equipment-controls .search-container, .equipment-controls .search-field, .equipment-controls .search-input { width: 100%; box-sizing: border-box; }
+.equipment-controls { margin-bottom: 12px; }

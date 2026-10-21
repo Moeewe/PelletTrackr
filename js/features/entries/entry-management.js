@@ -126,6 +126,43 @@ async function archiveEntry(entryId, archived) {
   }
 }
 
+// Dialog zum Archivieren: Stichtag wählen, Vorschau sehen, bestätigen.
+function showArchiveDialog() {
+  if (!window.checkAdminAccess()) return;
+  const year = new Date(); year.setFullYear(year.getFullYear() - 1);
+  const iso = date => [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+  window.showModal(`<div class="modal-header"><h3>Alte Aufträge archivieren</h3><button class="close-btn" onclick="closeModal()">&times;</button></div>
+    <div class="modal-body">
+      <p>Archivierte Aufträge verschwinden aus der normalen Liste, bleiben aber erhalten. Du findest sie jederzeit unter „Archiv“.</p>
+      <label class="form-label" for="adminArchiveBefore">Aufträge archivieren, die älter sind als</label>
+      <input type="date" id="adminArchiveBefore" class="form-input" value="${iso(year)}" oninput="updateArchivePreview()">
+      <div id="archivePreview" class="maint-summary" role="status"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-primary" onclick="archiveFromDialog()">Archivieren</button><button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button></div>`);
+  updateArchivePreview();
+}
+function updateArchivePreview() {
+  const target = document.getElementById('archivePreview');
+  const day = document.getElementById('adminArchiveBefore')?.value;
+  if (!target) return;
+  const cutoff = day ? new Date(`${day}T00:00:00`) : null;
+  if (!cutoff || !Number.isFinite(cutoff.getTime())) { target.textContent = 'Bitte einen Stichtag wählen.'; return; }
+  const time = e => (e.timestamp?.toDate ? e.timestamp.toDate() : new Date(e.timestamp || 0)).getTime();
+  const hit = (window.allAdminEntries || []).filter(e => e.archived !== true && time(e) < cutoff.getTime());
+  const open = hit.filter(e => !(e.paid || e.isPaid));
+  const openSum = open.reduce((sum, e) => sum + (Number(e.totalCost) || 0), 0);
+  target.innerHTML = `<p><strong>${hit.length}</strong> der geladenen Aufträge sind betroffen.</p>`
+    + (open.length ? `<p>Davon noch offen: <strong>${open.length}</strong> (${openSum.toFixed(2).replace('.', ',')} €). Sie werden mitarchiviert und bleiben unter „Archiv“ auffindbar.</p>` : '<p>Alle betroffenen Aufträge sind bezahlt.</p>')
+    + '<p><small>Beim Archivieren werden alle Aufträge vor dem Stichtag berücksichtigt, auch noch nicht geladene.</small></p>';
+}
+async function archiveFromDialog() {
+  await archiveOlderEntries();
+  window.closeModal?.();
+}
+window.showArchiveDialog = showArchiveDialog;
+window.updateArchivePreview = updateArchivePreview;
+window.archiveFromDialog = archiveFromDialog;
+
 async function archiveOlderEntries() {
   if (!window.checkAdminAccess()) return;
   const input = document.getElementById('adminArchiveBefore');

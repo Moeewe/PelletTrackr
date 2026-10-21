@@ -2,47 +2,50 @@
 // Source-bound help for LARGER.slicer machine documentation.
 
 const KNOWLEDGE_REPOSITORY = 'https://github.com/Moeewe/LARGER.slicer';
-const KNOWLEDGE_SOURCES = [
-  {
-    id: 'overview',
-    label: 'LARGER.slicer – Übersicht',
-    raw: 'https://raw.githubusercontent.com/Moeewe/LARGER.slicer/main/README.md',
-    url: `${KNOWLEDGE_REPOSITORY}/blob/main/README.md`
-  },
-  {
-    id: 'weber',
-    label: 'Weber DXR25 – Schnellstart und Bedienung',
-    raw: 'https://raw.githubusercontent.com/Moeewe/LARGER.slicer/main/EXAMPLE%20FILES/00%20-%20WEBER%20%3A%20GINGER%20%5BRobotic%5D%203D%20Printing/00%20-%20WEBER%20-%20DXR25%20-%20README/README%20Weber%20DXR25%20PRINTER%20QUICK%20START%20GUIDE%20GERMAN.md',
-    url: `${KNOWLEDGE_REPOSITORY}/blob/main/EXAMPLE%20FILES/00%20-%20WEBER%20%3A%20GINGER%20%5BRobotic%5D%203D%20Printing/00%20-%20WEBER%20-%20DXR25%20-%20README/README%20Weber%20DXR25%20PRINTER%20QUICK%20START%20GUIDE%20GERMAN.md`
-  },
-  {
-    id: 'kuka',
-    label: 'KUKA – Fehlerbehebung',
-    raw: 'https://raw.githubusercontent.com/Moeewe/LARGER.slicer/main/LARGERslicer/documentations/KUKA_ROBOT_TROUBLESHOOTING.md',
-    url: `${KNOWLEDGE_REPOSITORY}/blob/main/LARGERslicer/documentations/KUKA_ROBOT_TROUBLESHOOTING.md`
-  },
-  {
-    id: 'ginger',
-    label: 'Ginger – Quick Start Guide',
-    raw: 'https://raw.githubusercontent.com/Moeewe/LARGER.slicer/main/EXAMPLE%20FILES/00%20-%20WEBER%20%3A%20GINGER%20%5BRobotic%5D%203D%20Printing/00%20-%20GINGER%20-%20ONE%20-%20README/README%20GINGER%2000%20QUICK%20START%20GUIDE.md',
-    url: `${KNOWLEDGE_REPOSITORY}/blob/main/EXAMPLE%20FILES/00%20-%20WEBER%20%3A%20GINGER%20%5BRobotic%5D%203D%20Printing/00%20-%20GINGER%20-%20ONE%20-%20README/README%20GINGER%2000%20QUICK%20START%20GUIDE.md`
-  },
-  {
-    id: 'ur5',
-    label: 'UR5 – Quick Start Guide',
-    raw: 'https://raw.githubusercontent.com/Moeewe/LARGER.slicer/main/EXAMPLE%20FILES/00%20-%20UNIVERSAL%20ROBOTS%20-%20UR5/README%20UR5%2000%20QUICK%20START%20GUIDE.md',
-    url: `${KNOWLEDGE_REPOSITORY}/blob/main/EXAMPLE%20FILES/00%20-%20UNIVERSAL%20ROBOTS%20-%20UR5/README%20UR5%2000%20QUICK%20START%20GUIDE.md`
+
+// Dokumentenindex aus dem LARGER.slicer-Ordner (erzeugt mit scripts/build-knowledge.mjs):
+// Dokumente je Maschine, Inhaltsverzeichnisse, durchsuchbare Abschnitte und Fehlerhilfen.
+let knowledgeIndex = null;
+let knowledgeIndexPromise = null;
+function loadKnowledgeIndex() {
+  if (knowledgeIndex) return Promise.resolve(knowledgeIndex);
+  if (!knowledgeIndexPromise) {
+    knowledgeIndexPromise = fetch('data/larger-slicer.json')
+      .then(response => (response.ok ? response.json() : Promise.reject(new Error('HTTP ' + response.status))))
+      .then(data => { knowledgeIndex = data; return data; })
+      .catch(error => { console.warn('Dokumentenindex nicht verfügbar:', error); knowledgeIndexPromise = null; return null; });
   }
-];
-
-let knowledgeSources = KNOWLEDGE_SOURCES;
-
-function isKnowledgeMarkdown(path) {
-  return typeof path === 'string' && path.toLowerCase().endsWith('.md');
+  return knowledgeIndexPromise;
 }
 
-function knowledgeSourceLinkList() {
-  return knowledgeSources.map(source => `<a href="${source.url}" target="_blank" rel="noopener noreferrer">${knowledgeEscape(source.label)}</a>`).join('');
+const KNOWLEDGE_MACHINE_LABELS = { weber: 'Weber DXR25', ginger: 'Ginger One', ur5: 'Universal Robots UR5', zuend: 'Zünd G3 (CNC)', all: 'Allgemein' };
+const KNOWLEDGE_SOURCE_DOCS = { weber: 'weber-de', ginger: 'ginger', kuka: 'kuka-de', ur5: 'ur5', zuend: 'zuend', overview: 'overview' };
+const knowledgeDocUrl = (doc, anchor) => `${doc.url}${anchor ? '#' + anchor : ''}`;
+const knowledgeDocsFor = profile => (knowledgeIndex?.docs || []).filter(doc => doc.machines.includes(profile));
+
+function knowledgeDocChips(doc) {
+  return `<span class="material-chip">${knowledgeEscape(doc.kind)}</span><span class="material-chip">${knowledgeEscape(String(doc.lang).toUpperCase())}</span>`;
+}
+function knowledgeDocItem(doc, withToc = true) {
+  const toc = withToc && doc.toc?.length > 1
+    ? `<details class="kdoc-toc"><summary>Inhalt (${doc.toc.length})</summary><ul>${doc.toc.map(item => `<li><a href="${knowledgeEscape(knowledgeDocUrl(doc, item.anchor))}" target="_blank" rel="noopener noreferrer">${knowledgeEscape(item.title)}</a></li>`).join('')}</ul></details>` : '';
+  return `<li class="kdoc"><div class="kdoc-head"><a href="${knowledgeEscape(knowledgeDocUrl(doc))}" target="_blank" rel="noopener noreferrer">${knowledgeEscape(doc.title)}</a>${knowledgeDocChips(doc)}</div>${toc}</li>`;
+}
+
+// Dokumente zur Maschine (Anleitungen, Fehlerbehebung, Checklisten)
+function knowledgeDocsBlock(profile) {
+  const docs = knowledgeDocsFor(profile);
+  if (!docs.length) return '';
+  return `<div class="kguide-links"><h4>Dokumente zu dieser Maschine</h4><ul class="kdocs">${docs.map(doc => knowledgeDocItem(doc)).join('')}</ul></div>`;
+}
+
+// Alle Dokumente, nach Maschine gruppiert (Startseite, eingeklappt)
+function knowledgeAllDocsBlock() {
+  if (!knowledgeIndex) return '<p>Dokumente werden geladen …</p>';
+  return Object.entries(KNOWLEDGE_MACHINE_LABELS).map(([profile, label]) => {
+    const docs = knowledgeDocsFor(profile);
+    return docs.length ? `<h4 class="kdocs-group">${knowledgeEscape(label)}</h4><ul class="kdocs">${docs.map(doc => knowledgeDocItem(doc, false)).join('')}</ul>` : '';
+  }).join('') + `<p class="kdocs-source"><small>Stand ${knowledgeEscape(knowledgeIndex.source?.generatedAt || '')} · <a href="${KNOWLEDGE_REPOSITORY}" target="_blank" rel="noopener noreferrer">Repository auf GitHub</a></small></p>`;
 }
 
 const KNOWLEDGE_GUIDES = {
@@ -56,6 +59,18 @@ const KNOWLEDGE_GUIDES = {
       'Auftrag erfassen. Gib unter „Fertigungsauftrag erfassen“ einen Job-Namen, die Maschine und die Zeit an. Material und Menge nur, wenn du welches verbraucht hast. Die Kosten siehst du sofort.',
       'Bezahlen. Offene Aufträge findest du unter „Deine Aufträge“. Sobald die Werkstatt die Zahlung bestätigt, steht der Auftrag auf „Bezahlt“ und du kannst den Nachweis öffnen.',
       'Mehr Services. Unter „Deine Services“ kannst du Equipment leihen, Defekte melden und Material wünschen. Etwas klappt nicht? Nutze die Suche in der Hilfe oder melde ein Problem.'
+    ]
+  },
+  zuend: {
+    title: 'Zünd G3 L-2500 · 3D-Fräsen und Schneiden', source: 'zuend',
+    steps: [
+      'Sicherheit prüfen. Nur als eingewiesene Person arbeiten, Schutzbrille tragen, die Absaugung einschalten und den Not-Aus-Taster erreichbar halten.',
+      'Material auflegen. Höchstens 50 mm dick (Öffnungshöhe 60 mm). Das Material flach auflegen und mit dem Vakuum sicher fixieren; die Saugfläche an die Materialgröße anpassen.',
+      'Datei vorbereiten. Für 3D-Fräsen die Rhino-Datei und das Grasshopper-Skript öffnen; die Geometrie muss in den Arbeitsbereich von 1800 × 2500 mm passen und darf höchstens 50 mm hoch sein. Normales Schneiden und 2D-Aufträge laufen über die Software Zünd Cut Center.',
+      'Parameter einstellen. Materialdicke, Zustelltiefe (typisch 2–5 mm), Bahnabstand (60–80 % des Werkzeugdurchmessers), Werkzeug aus dem Magazin und Spindeldrehzahl (typisch 18.000–24.000 U/min) festlegen.',
+      'Werkzeugweg prüfen. Die Vorschau in Rhino kontrollieren und die Z-Werte innerhalb der sicheren Grenzen halten, dann die PLT-Datei exportieren.',
+      'Auf die Maschine übertragen. PLT-Datei im Zünd Cut Center laden, die Werkzeughöhe kalibrieren und den Auftrag über die Oberfläche des Cut Centers starten.',
+      'Während des Fräsens beobachten. Niemals in den Arbeitsbereich greifen, solange die Maschine läuft. Bei schlechter Oberfläche, Rattern oder zu wenig Vakuum hilft die Fehlerhilfe unten.'
     ]
   },
   weber: {
@@ -155,10 +170,8 @@ const KNOWLEDGE_FAQ = [
   }
 ];
 
-let knowledgeDocuments = [];
 let knowledgeMachines = [];
 let knowledgeArticles = [];
-let knowledgeRepositorySources = KNOWLEDGE_SOURCES;
 let activeGuide = null;
 let activeGuideStep = 0;
 
@@ -168,18 +181,20 @@ function knowledgeEscape(value) {
 }
 
 function knowledgeSourceLink(sourceId) {
-  const source = KNOWLEDGE_SOURCES.find(item => item.id === sourceId) || KNOWLEDGE_SOURCES[0];
-  return `<a href="${source.url}" target="_blank" rel="noopener noreferrer">Quelle: ${knowledgeEscape(source.label)}</a>`;
+  const doc = knowledgeIndex?.docs.find(item => item.id === KNOWLEDGE_SOURCE_DOCS[sourceId]);
+  return doc ? `<a href="${knowledgeEscape(knowledgeDocUrl(doc))}" target="_blank" rel="noopener noreferrer">Quelle: ${knowledgeEscape(doc.title)}</a>` : '';
 }
 
 function knowledgeProfileForMachine(machine) {
   const type=String(machine?.machineType||machine?.category||'').toLowerCase();
   if(type==='ur5') return 'ur5';
   if(type==='weber_dxr') return 'weber';
+  if(type==='cnc') return 'zuend';
   const text = `${machine?.name || ''} ${machine?.model || ''} ${machine?.category || ''}`.toLowerCase();
   if (/ur\s?-?5|universal robots?/.test(text)) return 'ur5';
   if (/weber|dxr|kuka/.test(text)) return 'weber';
   if (/ginger/.test(text)) return 'ginger';
+  if (/z(ü|ue|u)nd|\bg3\b|cnc/.test(text)) return 'zuend';
   if (/ur\s?-?5|universal robot/.test(text)) return 'ur5';
   return '';
 }
@@ -209,73 +224,6 @@ async function loadKnowledgeMachines() {
   }
 }
 
-function splitKnowledgeDocument(source, markdown) {
-  return markdown.split(/\n(?=#{1,4}\s)/).map(section => {
-    const lines = section.trim().split('\n');
-    const title = (lines[0] || source.label).replace(/^#+\s*/, '');
-    const text = lines.slice(1).join(' ').replace(/[`*_>#|\[\]]/g, ' ').replace(/\s+/g, ' ').trim();
-    return { sourceId: source.id, sourceLabel: source.label, sourceUrl: source.url, title, text };
-  }).filter(section => section.text.length > 40);
-}
-
-let knowledgeTreeLoaded = false;
-async function loadKnowledgeDocuments() {
-  if (knowledgeTreeLoaded) return;
-  knowledgeTreeLoaded = true;
-  const cacheKey = 'pelletTrackr_knowledge_v3';
-  try {
-    const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
-    if (cached && Date.now() - cached.timestamp < 6 * 60 * 60 * 1000 && Array.isArray(cached.documents)) {
-      knowledgeDocuments = cached.documents;
-      knowledgeSources = Array.isArray(cached.sources) && cached.sources.length ? cached.sources : KNOWLEDGE_SOURCES;
-      knowledgeRepositorySources = knowledgeSources;
-      return;
-    }
-  } catch (_) { /* ignore invalid cache */ }
-
-  let repositorySources = KNOWLEDGE_SOURCES;
-  try {
-    const treeResponse = await fetch('https://api.github.com/repos/Moeewe/LARGER.slicer/git/trees/main?recursive=1');
-    if (treeResponse.ok) {
-      const tree = await treeResponse.json();
-      const markdownFiles = (tree.tree || []).filter(item => item.type === 'blob' && isKnowledgeMarkdown(item.path)).slice(0, 80);
-      if (markdownFiles.length) {
-        repositorySources = markdownFiles.map(item => {
-          const encodedPath = item.path.split('/').map(encodeURIComponent).join('/');
-          return {
-            id: `repo:${item.path}`,
-            label: item.path,
-            raw: `https://raw.githubusercontent.com/Moeewe/LARGER.slicer/main/${encodedPath}`,
-            url: `${KNOWLEDGE_REPOSITORY}/blob/main/${encodedPath}`
-          };
-        });
-        knowledgeSources = repositorySources;
-        knowledgeRepositorySources = repositorySources;
-      }
-    }
-  } catch (error) {
-    console.warn('GitHub-Dateiliste nicht verfügbar, verwende Kern-Dokumente:', error);
-  }
-
-  knowledgeRepositorySources = repositorySources;
-  knowledgeSources = repositorySources;
-}
-
-async function loadRelevantKnowledgeDocuments(question) {
-  const terms=knowledgeTokens(question);
-  const loaded=new Set(knowledgeDocuments.map(section=>section.sourceId));
-  let candidates=knowledgeRepositorySources.map(source=>({source,score:terms.reduce((n,term)=>n+(source.label.toLowerCase().includes(term)?1:0),0)}))
-    .filter(item=>item.score>0&&!loaded.has(item.source.id)).sort((a,b)=>b.score-a.score).slice(0,4);
-  if(!candidates.length) candidates=knowledgeRepositorySources.filter(source=>!loaded.has(source.id)).slice(0,3).map(source=>({source,score:0}));
-  const results=await Promise.allSettled(candidates.map(async ({source})=>{
-    const response=await fetch(source.raw); if(!response.ok)throw Error(`HTTP ${response.status}`);
-    return splitKnowledgeDocument(source,await response.text());
-  }));
-  knowledgeDocuments.push(...results.flatMap(result=>result.status==='fulfilled'?result.value:[]));
-  if(knowledgeDocuments.length) try {localStorage.setItem('pelletTrackr_knowledge_v3',JSON.stringify({timestamp:Date.now(),documents:knowledgeDocuments,sources:knowledgeSources}));} catch (_) { /* cache optional */ }
-}
-
-// Eigene Anleitung, die im Maschinen-Dokument gepflegt wird (Admin: Maschinen & Anleitungen).
 function knowledgeHasGuide(machine) {
   return Array.isArray(machine?.guideSteps) && machine.guideSteps.length > 0;
 }
@@ -312,14 +260,11 @@ function knowledgeEquipmentBlock(machine) {
 // Videos, Dokumente und die passende README aus GitHub zur Maschine
 function knowledgeLinksBlock(machine, profile) {
   const links = knowledgeLinksFor(machine);
-  const readme = profile && KNOWLEDGE_GUIDES[profile]?.source ? KNOWLEDGE_SOURCES.find(item => item.id === KNOWLEDGE_GUIDES[profile].source) : null;
-  const items = [
-    ...links.map(link => `<li><a href="${knowledgeEscape(link.url)}" target="_blank" rel="noopener noreferrer">${knowledgeEscape(link.title || link.url)}</a></li>`),
-    ...(readme ? [`<li><a href="${readme.url}" target="_blank" rel="noopener noreferrer">${knowledgeEscape(readme.label)} (GitHub)</a></li>`] : [])
-  ];
+  const items = links.map(link => `<li><a href="${knowledgeEscape(link.url)}" target="_blank" rel="noopener noreferrer">${knowledgeEscape(link.title || link.url)}</a></li>`);
   const suggest = machine?.id ? `<button class="link-small" onclick="knowledgeSuggestTutorial()">Tutorial vorschlagen</button>` : '';
-  if (!items.length && !suggest) return '';
-  return `<div class="kguide-links"><h4>Videos & Dokumente</h4>${items.length ? `<ul>${items.join('')}</ul>` : '<p>Noch keine Links hinterlegt.</p>'}${suggest}</div>`;
+  const own = items.length || suggest
+    ? `<div class="kguide-links"><h4>Videos & Links</h4>${items.length ? `<ul>${items.join('')}</ul>` : '<p>Noch keine Links hinterlegt.</p>'}${suggest}</div>` : '';
+  return own + knowledgeDocsBlock(profile);
 }
 
 function knowledgeArticlesFor(machine) {
@@ -342,7 +287,7 @@ function knowledgeGuideTargets() {
     if (profile) covered.add(profile);
     return profile || knowledgeArticlesFor(machine).length || knowledgeHasGuide(machine) || knowledgeLinksFor(machine).length || knowledgeHasSafety(machine);
   }).map(machine => ({ value: `machine:${machine.collection}:${machine.id}`, name: machine.name, status: knowledgeStatusLabel(machine.status), statusKey: machine.status || '', profile: knowledgeProfileForMachine(machine) }));
-  const general = [['weber', 'Weber DXR25 (Großroboter)'], ['ur5', 'Universal Robots UR5'], ['ginger', 'Ginger']]
+  const general = [['weber', 'Weber DXR25 (Großroboter)'], ['ur5', 'Universal Robots UR5'], ['ginger', 'Ginger'], ['zuend', 'Zünd G3 (CNC-Fräse)']]
     .filter(([profile]) => !covered.has(profile))
     .map(([profile, name]) => ({ value: `profile:${profile}`, name, status: '', statusKey: '', profile }));
   return [...targets, ...general];
@@ -355,7 +300,7 @@ async function showKnowledgeBase(machineReference = null) {
       <div id="knowledgeContent"><p>Wird geladen …</p></div>
     </div>
     <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Schließen</button></div>`);
-  await loadKnowledgeMachines();
+  await Promise.all([loadKnowledgeMachines(), loadKnowledgeIndex()]);
   showKnowledgeGuideMode();
   if (machineReference) {
     const value = `machine:${machineReference.collection}:${machineReference.id}`;
@@ -380,7 +325,7 @@ function showKnowledgeGuideMode() {
       <div class="knowledge-chat-input"><input id="knowledgeQuestion" class="form-input" placeholder="Beschreibe kurz das Problem …" enterkeyhint="search" onkeydown="if(event.key === 'Enter'){ submitKnowledgeQuestion(); }"><button class="btn btn-primary" onclick="submitKnowledgeQuestion()">Suchen</button></div>
       <div class="knowledge-suggestions"><button onclick="askKnowledgeQuestion('Der Roboter bewegt sich nicht')">Roboter bewegt sich nicht</button><button onclick="askKnowledgeQuestion('Sicherheitsbereich ausgelöst')">Sicherheitsstopp</button><button onclick="askKnowledgeQuestion('Die erste Schicht haftet nicht')">Erste Schicht haftet nicht</button></div>
       <div id="knowledgeConversation" class="knowledge-conversation"></div></div>
-    <details class="knowledge-readme-links"><summary>Weitere Dokumente</summary><div>${knowledgeSourceLinkList()}${articles}</div></details>`;
+    <details class="knowledge-readme-links"><summary>Alle Dokumente (LARGER.slicer)</summary><div>${knowledgeAllDocsBlock()}${articles}</div></details>`;
 }
 
 function startKnowledgeGuide(valueArg) {
@@ -538,25 +483,75 @@ function knowledgeGuidePrevious() { if (activeGuide && activeGuideStep > 0) { ac
 // Alte Aufrufer: der Chat ist jetzt Teil der Startseite.
 function showKnowledgeChatMode() { showKnowledgeGuideMode(); document.getElementById('knowledgeQuestion')?.focus(); }
 
+// Die Anleitungen sind teils englisch: häufige deutsche Begriffe werden um englische Entsprechungen ergänzt.
+const KNOWLEDGE_STOPWORDS = new Set(['nicht', 'beim', 'der', 'die', 'das', 'und', 'ist', 'mit', 'von', 'fur', 'auf', 'den', 'dem', 'ein', 'eine', 'wie', 'was', 'wenn', 'kann', 'noch', 'nur', 'aber', 'oder', 'the', 'and', 'for', 'are', 'with', 'reicht', 'geht', 'wird']);
+const KNOWLEDGE_SYNONYMS = {
+  vakuum: ['vacuum'], frasen: ['milling', 'router'], frase: ['milling', 'router'], schneiden: ['cutting', 'cut'], werkzeug: ['tool'], absaugung: ['extraction', 'dust'],
+  duse: ['nozzle'], duese: ['nozzle'], druck: ['print'], drucken: ['print'], haftet: ['adhesion', 'stick'], haftung: ['adhesion'], bett: ['bed'],
+  sicherheit: ['safety'], zaun: ['fence'], rattern: ['chatter'], oberflache: ['surface', 'finish'], drehzahl: ['rpm', 'speed'], tiefe: ['depth'],
+  kamera: ['camera'], verbindung: ['connection'], temperatur: ['temperature'], material: ['material'], kalibrieren: ['calibration', 'calibrate'], bewegt: ['move', 'motion'], bewegung: ['motion', 'movement']
+};
+
 function knowledgeTokens(text) {
-  return String(text).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[^a-z0-9äöüß]+/).filter(token => token.length > 2);
+  const base = String(text).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').split(/[^a-z0-9]+/)
+    .filter(token => token.length > 2 && !KNOWLEDGE_STOPWORDS.has(token));
+  return [...new Set(base.flatMap(token => [token, ...(KNOWLEDGE_SYNONYMS[token] || [])]))];
 }
 
+// Welche Maschine ist gemeint? (aus dem Fragetext, wenn keine Anleitung geöffnet ist)
+function knowledgeProfileFromText(text) {
+  const t = String(text).toLowerCase();
+  if (/ginger/.test(t)) return 'ginger';
+  if (/ur\s?-?5|universal/.test(t)) return 'ur5';
+  if (/weber|dxr|kuka|smartpad/.test(t)) return 'weber';
+  if (/z(ü|ue|u)nd|cnc|fräs|fraes|vakuum|vacuum/.test(t)) return 'zuend';
+  return '';
+}
+
+// Suche im Dokumentenindex: Abschnitte der Maschine, die gerade geöffnet ist, zählen stärker.
 function searchKnowledgeDocuments(question) {
   const tokens = knowledgeTokens(question);
-  const repository=knowledgeDocuments.map(section => {
-    const haystack = `${section.title} ${section.text}`.toLowerCase();
-    const score = tokens.reduce((sum, token) => sum + (haystack.includes(token) ? (section.title.toLowerCase().includes(token) ? 3 : 1) : 0), 0);
-    return { ...section, score };
+  if (!tokens.length) return [];
+  const profile = activeGuide?.profile || knowledgeProfileFromText(question);
+  const fromIndex = [];
+  (knowledgeIndex?.docs || []).forEach(doc => {
+    const boost = profile && doc.machines.includes(profile) ? 1.5 : 1;
+    doc.sections.forEach(section => {
+      const title = section.title.toLowerCase();
+      const haystack = `${title} ${section.text.toLowerCase()}`;
+      const score = tokens.reduce((sum, token) => sum + (haystack.includes(token) ? (title.includes(token) ? 3 : 1) : 0), 0) * boost;
+      if (score >= 2) fromIndex.push({ title: section.title, text: section.text, docTitle: doc.title, lang: doc.lang, url: knowledgeDocUrl(doc, section.anchor), score });
+    });
+  });
+  const local = knowledgeArticles.map(a => {
+    const text = `${a.title} ${a.machineName || ''} ${a.body}`;
+    return { title: a.title, text: a.body, docTitle: a.machineName || 'Werkstatt-Anleitung', url: a.url || '', score: tokens.reduce((n, t) => n + (text.toLowerCase().includes(t) ? 1 : 0), 0) };
   }).filter(result => result.score > 0);
-  const local=knowledgeArticles.map(a=>{const text=`${a.title} ${a.machineName||''} ${a.body}`;return {title:a.title,text,sourceLabel:a.machineName||'Werkstatt-Anleitung',sourceUrl:a.url||'',score:tokens.reduce((n,t)=>n+(text.toLowerCase().includes(t)?1:0),0)};}).filter(a=>a.score>0);
-  return [...repository,...local].sort((a,b)=>b.score-a.score).slice(0,3);
+  return [...fromIndex, ...local].sort((a, b) => b.score - a.score).slice(0, 3);
 }
 
+// Fehlerhilfen: feste Antworten zuerst, danach die Fehlerbilder aus den Anleitungen (Tabellen "Problem / Lösung")
 function findKnowledgeFaq(question) {
   const normalized = question.toLowerCase();
-  return KNOWLEDGE_FAQ.map(item => ({ item, score: item.keywords.reduce((sum, keyword) => sum + (normalized.includes(keyword) ? 2 : 0), 0) }))
+  const asked = activeGuide?.profile || knowledgeProfileFromText(question);
+  // Feste Antworten gelten nur für ihre Maschine, sobald klar ist, welche gemeint ist.
+  const fixed = KNOWLEDGE_FAQ.map(item => ({ item, score: asked && item.profile && item.profile !== asked ? 0 : item.keywords.reduce((sum, keyword) => sum + (normalized.includes(keyword) ? 2 : 0), 0) }))
     .sort((a, b) => b.score - a.score)[0];
+  if (fixed && fixed.score > 0) return fixed;
+  const tokens = knowledgeTokens(question);
+  const profile = activeGuide?.profile || knowledgeProfileFromText(question);
+  const best = (knowledgeIndex?.faq || []).filter(entry => !profile || entry.machines.includes(profile) || entry.machines.includes('all')).map(entry => {
+    const asked = entry.question.toLowerCase();
+    const answer = entry.answer.toLowerCase();
+    // Treffer im Fehlerbild zählen mehr als Treffer in der Lösung.
+    const score = tokens.reduce((sum, token) => sum + (asked.includes(token) ? 3 : answer.includes(token) ? 1 : 0), 0) * (profile && entry.machines.includes(profile) ? 1.5 : 1);
+    return { entry, score };
+  }).sort((a, b) => b.score - a.score)[0];
+  if (best && best.score >= 3) {
+    const doc = knowledgeIndex.docs.find(item => item.id === best.entry.docId);
+    return { score: best.score, item: { title: best.entry.question, answer: best.entry.answer, link: doc ? { url: knowledgeDocUrl(doc, best.entry.anchor), label: doc.title } : null } };
+  }
+  return fixed;
 }
 
 function askKnowledgeQuestion(question) {
@@ -572,19 +567,19 @@ async function submitKnowledgeQuestion() {
   if (!question || !conversation) return;
   conversation.insertAdjacentHTML('beforeend', `<div class="knowledge-message user">${knowledgeEscape(question)}</div>`);
   input.value = '';
+  await loadKnowledgeIndex();
   const faq = findKnowledgeFaq(question);
-  let results = searchKnowledgeDocuments(question);
-  if ((!faq || faq.score===0) && (!results.length || results.every(result=>result.score<2))) {
-    const pending=document.createElement('div'); pending.className='knowledge-message assistant'; pending.textContent='Ich suche in den passenden READMEs …'; conversation.appendChild(pending);
-    await loadKnowledgeDocuments(); await loadRelevantKnowledgeDocuments(question); pending.remove(); results=searchKnowledgeDocuments(question);
-  }
+  const results = searchKnowledgeDocuments(question);
   let answer;
   if (faq && faq.score > 0) {
-    answer = `<strong>${knowledgeEscape(faq.item.title)}</strong><p>${knowledgeEscape(faq.item.answer)}</p><div class="knowledge-source">${knowledgeSourceLink(faq.item.source)}</div>`;
+    const source = faq.item.link
+      ? `<a href="${knowledgeEscape(faq.item.link.url)}" target="_blank" rel="noopener noreferrer">Mehr dazu: ${knowledgeEscape(faq.item.link.label)}</a>`
+      : knowledgeSourceLink(faq.item.source);
+    answer = `<strong>${knowledgeEscape(faq.item.title)}</strong><p>${knowledgeEscape(faq.item.answer)}</p><div class="knowledge-source">${source}</div>`;
   } else if (results.length) {
-    answer = `<strong>Passende Stellen in der Dokumentation</strong>${results.map(result => `<div class="knowledge-result"><b>${knowledgeEscape(result.title)}</b><p>${knowledgeEscape(result.text.slice(0, 500))}${result.text.length > 500 ? '…' : ''}</p><a href="${result.sourceUrl}" target="_blank" rel="noopener noreferrer">${knowledgeEscape(result.sourceLabel)}</a></div>`).join('')}<p>Wenn das noch nicht passt, nenne bitte Maschine, angezeigte Fehlermeldung und den letzten ausgeführten Schritt.</p>`;
+    answer = `<strong>Passende Stellen in der Dokumentation</strong>${results.map(result => `<div class="knowledge-result"><b>${knowledgeEscape(result.title)}</b><p>${knowledgeEscape(result.text.slice(0, 420))}${result.text.length > 420 ? '…' : ''}</p>${result.url ? `<a href="${knowledgeEscape(result.url)}" target="_blank" rel="noopener noreferrer">${knowledgeEscape(result.docTitle)}${result.lang ? ' (' + knowledgeEscape(String(result.lang).toUpperCase()) + ')' : ''}</a>` : `<small>${knowledgeEscape(result.docTitle)}</small>`}</div>`).join('')}`;
   } else {
-    answer = `<strong>Keine eindeutige Stelle gefunden.</strong><p>Nenne bitte die Maschine, den genauen Wortlaut der Meldung und ob Not-Aus, Türfreigabe und Statusanzeigen aktiv sind. Bei Gefahr oder unklarer Lage nicht weiterfahren.</p><div class="knowledge-source">${knowledgeSourceLink('overview')}</div>`;
+    answer = `<strong>Keine eindeutige Stelle gefunden.</strong><p>Nenne bitte die Maschine, den genauen Wortlaut der Meldung und ob Not-Aus, Türfreigabe und Statusanzeigen aktiv sind. Bei Gefahr oder unklarer Lage nicht weiterfahren.</p>`;
   }
   conversation.insertAdjacentHTML('beforeend', `<div class="knowledge-message assistant">${answer}</div>`);
   conversation.scrollTop = conversation.scrollHeight;

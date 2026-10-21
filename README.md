@@ -69,6 +69,16 @@ firebase deploy --only firestore:rules,firestore:indexes
 cd functions && npm install && cd .. && firebase deploy --only functions
 ```
 
+
+### Hilfe-Dokumentation (LARGER.slicer) aktualisieren
+Die Anleitungen für Ginger, Weber, UR5 und Zünd liegen im Repository `Moeewe/LARGER.slicer`. Die Hilfe in der App nutzt
+einen daraus erzeugten Index (`data/larger-slicer.json`: Dokumente je Maschine, Inhaltsverzeichnisse, Suche, Fehlerhilfen).
+Nach Änderungen an den Anleitungen den Index neu erzeugen und die Seite veröffentlichen:
+
+```bash
+node scripts/build-knowledge.mjs "/Pfad/zu/LARGER.slicer"
+```
+
 ## Konfiguration
 
 ### Firebase Setup

@@ -95,16 +95,40 @@
       window.toast.success('Auftrag gespeichert. Der angewendete Tarif bleibt im Auftrag erhalten.');
     }catch(error){window.toast.error(error.message);}finally{saving=false;}
   }
-  function modal(body) {window.showModal('<div class="modal-header safety-header"><h2>Tarife & Nutzergruppen</h2><button class="btn btn-secondary" onclick="closeModal()">Schließen</button></div><div class="modal-body safety-manager">'+body+'</div>',{clearStack:true,pushToStack:false});}
+  function modal(body, backAction) {
+    window.showModal('<div class="modal-header safety-header"><h2>Preise &amp; Nutzergruppen</h2>'+(backAction
+      ? '<button class="btn btn-secondary" onclick="'+backAction+'">Zurück</button>'
+      : '<button class="btn btn-secondary" onclick="closeModal()">Schließen</button>')+'</div><div class="modal-body safety-manager">'+body+'</div>',{clearStack:true,pushToStack:false});
+  }
+  // Kurztext zu einem Tarif, z. B. "18,00 € pro Stunde · ohne Material"
+  function rateText(r) {
+    if(!r) return 'Bisherige Regel';
+    const money=euro((r.rateCents||0)/100);
+    const base={legacy:'Bisherige Regel',free:'Kostenlos',flat:money+' pro Auftrag',minute:money+' pro Minute',hour:money+' pro Stunde'}[r.mode]||r.mode;
+    return base+(r.materialRule==='none'?' · ohne Material':'');
+  }
   async function open() {
     try {
       await admin();
       const [p,e,m,u,r]=await Promise.all(['printers','equipment','machines','users','billingPolicies'].map(c=>window.db.collection(c).get()));
-      machines=[...p.docs.map(d=>({...d.data(),id:d.id,collection:'printers'})),...e.docs.map(d=>({...d.data(),id:d.id,collection:'equipment'})),...m.docs.map(d=>({...d.data(),id:d.id,collection:'machines'}))];
+      machines=[...p.docs.map(d=>({...d.data(),id:d.id,collection:'printers'})),...e.docs.map(d=>({...d.data(),id:d.id,collection:'equipment'})),...m.docs.map(d=>({...d.data(),id:d.id,collection:'machines'}))]
+        .sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'de'));
       users=u.docs.map(d=>({...d.data(),id:d.id})); policies=Object.fromEntries(r.docs.map(d=>[d.id,d.data()]));
-      modal('<p>Tarife gelten je Maschine und Nutzergruppe. Ohne neuen Tarif bleibt die bisherige Abrechnung bestehen. Eine Pauschale gilt pro Auftrag, Zeitpreise werden anteilig berechnet. Bestehende Aufträge bleiben unverändert.</p>'+
-        '<h3>Maschinentarife</h3><div class="safety-grid compact-list">'+machines.map((m,i)=>'<article class="safety-card"><h4>'+esc(m.name)+'</h4><p>'+esc(m.jobTypes?.join(' · ')||(m.collection==='printers'?'3D-Druck':m.collection==='equipment'?'Equipment':'Maschine'))+' · '+(policies[policyId(m.collection,m.id)]?'Tarif hinterlegt':'Bisherige Regel')+'</p><button class="btn btn-secondary" onclick="Billing.edit('+i+')">Tarif bearbeiten</button></article>').join('')+'</div>'+
-        '<h3>Nutzergruppen</h3><p>Standard für alle sind Studierende. Eine andere Gruppe (Mitarbeitende, Externe) weist du im Nutzerprofil zu: Nutzerverwaltung → Person → Bearbeiten → Nutzergruppe.</p>');
+      const count=key=>users.filter(x=>(x.billingGroup==='students'||!x.billingGroup?'standard':x.billingGroup)===key).length;
+      const groupCards=Object.entries(groups).map(([key,label])=>'<div class="billing-group-card"><strong>'+count(key)+'</strong><span>'+esc(label)+'</span></div>').join('');
+      const rows=machines.map((m,i)=>{
+        const policy=policies[policyId(m.collection,m.id)];
+        const kind=window.machineKindLabel?window.machineKindLabel(m):(m.collection==='equipment'?'Equipment':'Maschine');
+        const summary=policy
+          ? Object.entries(groups).map(([g,label])=>label.replace(' (Standard)','')+': '+(policy.rates[g]?rateText(policy.rates[g]):'wie Studierende')).join(' · ')
+          : 'Bisherige Regel (noch kein Tarif hinterlegt)';
+        return '<article class="safety-card"><h4>'+esc(m.name)+'</h4><p>'+esc(kind)+'</p><p>'+esc(summary)+'</p><button class="btn btn-secondary btn-small" onclick="Billing.edit('+i+')">Tarif bearbeiten</button></article>';
+      }).join('');
+      modal('<p class="billing-intro">Der Preis eines Auftrags ergibt sich aus <strong>Maschine</strong> und <strong>Nutzergruppe</strong>. Neue Tarife gelten für neue Aufträge; bestehende Aufträge bleiben unverändert.</p>'+
+        '<h3>Nutzergruppen</h3><div class="billing-groups">'+groupCards+'</div>'+
+        '<p class="hub-hint">Standard sind Studierende. Eine andere Gruppe weist du im Nutzerprofil zu.</p>'+
+        '<div class="safety-actions"><button class="btn btn-secondary" onclick="showUserManager()">Nutzer verwalten</button></div>'+
+        '<h3>Tarife je Maschine</h3><div class="safety-grid compact-list">'+rows+'</div>');
     }catch(error){window.toast.error(error.message);}
   }
   // Direkt zum Tarif einer Maschine (aus "Maschinen verwalten")
@@ -113,22 +137,42 @@
     const index=machines.findIndex(m=>m.collection===collection&&m.id===id);
     if(index>=0) edit(index);
   }
-  function showGroup() {const u=users[Number($('billingUser').value)];$('billingGroup').value=u?.billingGroup||'standard';}
-  async function saveGroup() {
-    try {await admin();const u=users[Number($('billingUser').value)];if(!u)throw Error('Bitte eine Person auswählen.');
-      await window.db.collection('users').doc(u.id).update({billingGroup:$('billingGroup').value});window.toast.success('Abrechnungsgruppe gespeichert.');await open();
-    }catch(error){window.toast.error(error.message);}
+
+  const UNITS={legacy:'',free:'',flat:'€ pro Auftrag',minute:'€ pro Minute',hour:'€ pro Stunde',inherit:''};
+  // Felder je nach Abrechnungsart ein-/ausblenden und ein Beispiel (90 Minuten) rechnen
+  function refreshRate(g) {
+    const mode=$('mode-'+g).value;
+    const amountBox=$('amount-'+g), materialBox=$('materialbox-'+g);
+    const hasAmount=['flat','minute','hour'].includes(mode);
+    amountBox.hidden=!hasAmount; materialBox.hidden=mode==='inherit';
+    $('unit-'+g).textContent=UNITS[mode]||'';
+    let example='';
+    if(hasAmount) {
+      const rate=cents(Number($('rate-'+g).value)||0);
+      const machine=mode==='flat'?rate:mode==='minute'?90*rate:Math.round(90*rate/60);
+      example='Beispiel: 90 Minuten → Maschine '+euro(machine/100);
+    } else if(mode==='free') example='Keine Maschinenkosten.';
+    else if(mode==='legacy') example='Bisherige Regel: Stundenkosten nur bei eigenem Material, sonst nur Materialkosten.';
+    else if(mode==='inherit') example='Es gilt der Tarif der Studierenden.';
+    $('example-'+g).textContent=example;
   }
   function edit(index) {
     selection=machines[index];const policy=policies[policyId(selection.collection,selection.id)];revision=policy?.revision||0;
-    modal('<h3>'+esc(selection.name)+'</h3><p>„Wie Studierende“ gilt nur, wenn für die Gruppe kein eigener Tarif hinterlegt ist. Eigenes Material wird nicht berechnet; separat ausgewählter Werkstatt-Masterbatch wird bei neuen Tarifen zusätzlich berechnet. Für Laser „Kein Material berechnen“ wählen.</p>'+
-      Object.entries(groups).map(([g,label])=>{
-        const defaultRule=selection.usesMaterial===false?'none':'workshop'; // Maschinen ohne Werkstattmaterial: Material standardmäßig nicht berechnen
-        const r=policy?.rates[g] || (g==='standard'?{mode:'legacy',rateCents:cents(number(selection.pricePerHour)),materialRule:defaultRule}:{mode:'inherit',rateCents:0,materialRule:defaultRule});
-        return '<fieldset class="billing-rate"><legend>'+label+'</legend><label>Abrechnung<select id="mode-'+g+'" class="form-select">'+Object.entries(g==='standard'?modes:{inherit:'Wie Studierende (Standard)',...modes}).map(([k,v])=>'<option value="'+k+'" '+(k===r.mode?'selected':'')+'>'+v+'</option>').join('')+'</select></label>'+
-          '<label>Betrag (€ je Auftrag / Minute / Stunde)<input id="rate-'+g+'" class="form-input" type="number" min="0" max="100000" step="0.01" value="'+r.rateCents/100+'"></label>'+
-          '<label>Material<select id="material-'+g+'" class="form-select"><option value="workshop">Werkstattmaterial nach Menge berechnen</option><option value="none" '+(r.materialRule==='none'?'selected':'')+'>Kein Material berechnen</option></select></label></fieldset>';
-      }).join('')+'<p>Bei „Keine Maschinenkosten“ wird der Betrag ignoriert. „Bisherige Regel“: Stundenkosten nur bei eigenem Material, sonst ausschließlich Materialkosten.</p><div class="safety-actions"><button class="btn btn-primary" onclick="Billing.savePolicy()">Tarife speichern</button><button class="btn btn-secondary" onclick="Billing.open()">Zurück</button></div>');
+    const defaultRule=selection.usesMaterial===false?'none':'workshop'; // Maschinen ohne Werkstattmaterial: Material standardmäßig nicht berechnen
+    const cards=Object.entries(groups).map(([g,label])=>{
+      const r=policy?.rates[g] || (g==='standard'?{mode:'legacy',rateCents:cents(number(selection.pricePerHour)),materialRule:defaultRule}:{mode:'inherit',rateCents:0,materialRule:defaultRule});
+      const options=Object.entries(g==='standard'?modes:{inherit:'Wie Studierende',...modes}).map(([k,v])=>'<option value="'+k+'" '+(k===r.mode?'selected':'')+'>'+v+'</option>').join('');
+      return '<fieldset class="billing-rate"><legend>'+esc(label)+'</legend>'+
+        '<label for="mode-'+g+'">Abrechnung</label><select id="mode-'+g+'" class="form-select" onchange="Billing.refreshRate(\''+g+'\')">'+options+'</select>'+
+        '<div id="amount-'+g+'"><label for="rate-'+g+'">Betrag</label><div class="billing-amount"><input id="rate-'+g+'" class="form-input" type="number" min="0" max="100000" step="0.01" inputmode="decimal" value="'+r.rateCents/100+'" oninput="Billing.refreshRate(\''+g+'\')"><span id="unit-'+g+'"></span></div></div>'+
+        '<div id="materialbox-'+g+'"><label for="material-'+g+'">Material</label><select id="material-'+g+'" class="form-select"><option value="workshop">Nach Menge berechnen</option><option value="none" '+(r.materialRule==='none'?'selected':'')+'>Nicht berechnen</option></select></div>'+
+        '<p id="example-'+g+'" class="billing-example"></p></fieldset>';
+    }).join('');
+    modal('<div class="billing-head"><h3>'+esc(selection.name)+'</h3><p>'+esc(window.machineKindLabel?window.machineKindLabel(selection):'')+(selection.usesMaterial===false?' · ohne Werkstattmaterial':'')+'</p></div>'+
+      '<p class="billing-intro">Lege je Nutzergruppe fest, wie die Maschine abgerechnet wird. Eigenes Material wird nicht berechnet; ein Werkstatt-Masterbatch kommt bei neuen Tarifen zusätzlich dazu.</p>'+
+      '<div class="billing-grid">'+cards+'</div>'+
+      '<div class="safety-actions billing-actions"><button class="btn btn-primary" onclick="Billing.savePolicy()">Tarif speichern</button><button class="btn btn-secondary" onclick="Billing.open()">Zurück</button></div>','Billing.open()');
+    Object.keys(groups).forEach(refreshRate);
   }
   async function savePolicy() {
     try {
@@ -146,5 +190,5 @@
       window.toast.success('Tarife gespeichert. Sie gelten für neue Aufträge.');await open();
     }catch(error){window.toast.error(error.message);}
   }
-  window.Billing={groups,openFor,calculate,quote,preview,addEntry,open,edit,savePolicy,showGroup,saveGroup};
+  window.Billing={groups,openFor,calculate,quote,preview,addEntry,open,edit,savePolicy,refreshRate};
 })();

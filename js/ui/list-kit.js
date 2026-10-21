@@ -26,6 +26,7 @@
         { label: 'Pellets', test: el => el.dataset.type === 'pellet' },
         { label: 'Filament', test: el => el.dataset.type === 'filament' }
       ] },
+    { selector: '.masterbatch-grid', item: '.material-card', search: true, page: 12, noun: 'Masterbatches', placeholder: 'Masterbatch suchen …', minItems: 6 },
     { selector: '#printerGrid', item: '.printer-row', search: false, page: 20, noun: 'Drucker' },
     { selector: '.knowledge-tiles', item: ':scope > button', search: true, page: 12, noun: 'Maschinen', placeholder: 'Maschine suchen …' },
     { selector: '.label-list', item: 'label.label-row', search: true, page: 30, noun: 'Maschinen', placeholder: 'Maschine suchen …' },

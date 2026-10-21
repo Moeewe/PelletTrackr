@@ -481,29 +481,26 @@
                 <h2 class="section-title">Alle Fertigungsaufträge</h2>
                 <div class="table-controls admin-entry-controls">
                     <input type="text" id="adminSearchInput" placeholder="Aufträge durchsuchen: Name, Job, Maschine, Material …" aria-label="Geladene Aufträge durchsuchen" title="Durchsucht die bereits geladenen Aufträge. Lade weitere Aufträge, um den Suchbereich zu erweitern." class="search-input" onkeyup="searchAdminEntries()">
-                    <div id="adminStatusChips" class="printer-filters" role="group" aria-label="Nach Zahlungsstatus filtern"></div>
-                    <select id="adminSortSelect" class="sort-select" aria-label="Sortierung" onchange="sortAdminEntries()">
-                        <option value="date-desc">Datum (neueste zuerst)</option>
-                        <option value="date-asc">Datum (älteste zuerst)</option>
-                        <option value="name-asc">Name (A-Z)</option>
-                        <option value="name-desc">Name (Z-A)</option>
-                        <option value="cost-desc">Kosten (höchste zuerst)</option>
-                        <option value="cost-asc">Kosten (niedrigste zuerst)</option>
+                    <div class="entry-toolbar-row">
+                        <div id="adminStatusChips" class="printer-filters" role="group" aria-label="Nach Zahlungsstatus filtern"></div>
+                        <select id="adminSortSelect" class="sort-select" aria-label="Sortierung" onchange="sortAdminEntries()">
+                            <option value="date-desc">Neueste zuerst</option>
+                            <option value="date-asc">Älteste zuerst</option>
+                            <option value="name-asc">Name A–Z</option>
+                            <option value="name-desc">Name Z–A</option>
+                            <option value="cost-desc">Höchste Kosten</option>
+                            <option value="cost-asc">Niedrigste Kosten</option>
+                        </select>
+                    </div>
+                    <div class="entry-toolbar-meta">
+                        <div id="adminArchiveChips" class="printer-filters printer-filters-small" role="group" aria-label="Archiv"></div>
+                        <button class="link-small" type="button" onclick="showArchiveDialog()">Alte Aufträge archivieren …</button>
+                    </div>
+                    <select id="adminArchiveSelect" hidden aria-hidden="true">
+                        <option value="active">Aktuelle Aufträge</option>
+                        <option value="archived">Archivierte Aufträge</option>
+                        <option value="all">Alle Aufträge</option>
                     </select>
-                    <details class="add-box admin-archive-box">
-                        <summary>Archiv &amp; Aufräumen</summary>
-                        <div class="admin-archive-body">
-                            <label class="form-label" for="adminArchiveSelect">Anzeigen</label>
-                            <select id="adminArchiveSelect" class="sort-select" aria-label="Auftragsbereich" onchange="filterAdminEntries(true)">
-                                <option value="active">Aktuelle Aufträge</option>
-                                <option value="archived">Archivierte Aufträge</option>
-                                <option value="all">Alle Aufträge</option>
-                            </select>
-                            <label class="form-label" for="adminArchiveBefore">Ältere Aufträge archivieren ab</label>
-                            <input type="date" id="adminArchiveBefore" class="form-input" aria-label="Stichtag zum Archivieren alter Aufträge">
-                            <button class="btn btn-secondary" type="button" onclick="archiveOlderEntries()">Alte Aufträge archivieren</button>
-                        </div>
-                    </details>
                 </div>
                 <div class="admin-entries-container">
                     <div id="adminEntriesTable" class="data-table data-table-responsive"></div>

@@ -247,8 +247,26 @@ function renderAdminStatusChips(entries) {
   target.innerHTML = chips.map(([key, label]) => `<button type="button" class="filter-chip ${adminStatusFilter === key ? 'active' : ''} ${key === 'open' && open.length ? 'chip-attention' : ''}" onclick="setAdminStatusFilter('${key}')">${label}</button>`).join('');
 }
 
+// Archiv-Filter (kleine Chips unter der Werkzeugleiste): aktuell, archiviert, alle
+function setArchiveFilter(key) {
+  const select = document.getElementById('adminArchiveSelect');
+  if (select) select.value = key;
+  window.resetEntryLimit?.('admin');
+  filterAdminEntries(true);
+}
+window.setArchiveFilter = setArchiveFilter;
+function renderArchiveChips(entries) {
+  const target = document.getElementById('adminArchiveChips');
+  if (!target) return;
+  const archived = entries.filter(e => e.archived === true).length;
+  const current = document.getElementById('adminArchiveSelect')?.value || 'active';
+  const chips = [['active', `Aktuell (${entries.length - archived})`], ['archived', `Archiv (${archived})`], ['all', `Alle (${entries.length})`]];
+  target.innerHTML = chips.map(([key, label]) => `<button type="button" class="filter-chip ${current === key ? 'active' : ''}" onclick="setArchiveFilter('${key}')">${label}</button>`).join('');
+}
+
 function filterAdminEntries() {
   const entries = window.allAdminEntries || [];
+  renderArchiveChips(entries);
   const term = (document.getElementById('adminSearchInput')?.value || '').trim().toLocaleLowerCase('de');
   const archive = document.getElementById('adminArchiveSelect')?.value || 'active';
   const sortValue = document.getElementById('adminSortSelect')?.value || 'date-desc';

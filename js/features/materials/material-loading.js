@@ -676,8 +676,9 @@ async function loadMasterbatchesForManagement() {
     `;
 
     const masterbatchData = [];
+    const sortedBatchDocs = [...snapshot.docs].sort((x, y) => String(x.data().name || '').localeCompare(String(y.data().name || ''), 'de'));
 
-    snapshot.forEach(doc => {
+    sortedBatchDocs.forEach(doc => {
       const masterbatch = doc.data();
 
       // Berechne Brutto und VK (falls alte Daten)
@@ -721,49 +722,23 @@ async function loadMasterbatchesForManagement() {
           </table>
         </div>
 
-        <!-- Mobile Cards -->
-        <div class="entry-cards">
+        <!-- Karten -->
+        <div class="masterbatch-grid">
     `;
 
-    // Card-Struktur für Mobile
+    // Karten (wie bei den Materialien)
     masterbatchData.forEach(masterbatch => {
       containerHtml += `
-        <div class="entry-card">
-          <!-- Card Header mit Masterbatch-Name -->
-          <div class="entry-card-header">
-            <h3 class="entry-job-title">${masterbatch.name}</h3>
-            <span class="entry-detail-value">${masterbatch.manufacturer}</span>
-          </div>
-
-          <!-- Card Body mit Detail-Zeilen -->
-          <div class="entry-card-body">
-            <div class="entry-detail-row">
-              <span class="entry-detail-label">EK Netto</span>
-              <span class="entry-detail-value">${window.formatCurrency(masterbatch.netPrice, 4)}/g</span>
-            </div>
-
-            <div class="entry-detail-row">
-              <span class="entry-detail-label">EK Brutto</span>
-              <span class="entry-detail-value">${window.formatCurrency(masterbatch.grossPrice, 4)}/g</span>
-            </div>
-
-            <div class="entry-detail-row">
-              <span class="entry-detail-label">Gemeinkosten</span>
-              <span class="entry-detail-value">${masterbatch.markup}%</span>
-            </div>
-
-            <div class="entry-detail-row">
-              <span class="entry-detail-label">Verkaufspreis</span>
-              <span class="entry-detail-value cost-value">${window.formatCurrency(masterbatch.sellingPrice, 4)}/g</span>
-            </div>
-          </div>
-
-          <!-- Card Footer mit Buttons -->
-          <div class="entry-card-footer">
+        <article class="material-card">
+          <div class="material-card-head"><h3>${masterbatch.name}</h3><span class="material-chip">Masterbatch</span></div>
+          <p class="material-card-sub">${masterbatch.manufacturer}</p>
+          <div class="material-card-price"><strong>${window.formatCurrency(masterbatch.sellingPrice, 4)}/g</strong>
+            <small>EK netto ${window.formatCurrency(masterbatch.netPrice, 4)} · Gemeinkosten ${masterbatch.markup}%</small></div>
+          <div class="material-card-actions">
             ${ButtonFactory.editMasterbatch(masterbatch.id)}
             ${ButtonFactory.deleteMasterbatch(masterbatch.id)}
           </div>
-        </div>
+        </article>
       `;
     });
 
