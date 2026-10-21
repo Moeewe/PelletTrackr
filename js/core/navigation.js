@@ -81,7 +81,7 @@ function updateUserPrintsLabel() {
       const firstName = window.currentUser.name.split(' ')[0];
 
       // Always show personalized label (both mobile and desktop)
-      userPrintsLabel.textContent = `Aufträge von ${firstName}`;
+      userPrintsLabel.textContent = 'Aufträge';
     }
   } catch (error) {
     console.warn('Could not update user prints label:', error);

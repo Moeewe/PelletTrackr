@@ -56,7 +56,7 @@ const KNOWLEDGE_GUIDES = {
       'Dein Dashboard. Ganz oben siehst du, welche Maschinen gerade frei sind. Darunter stehen deine Aufträge und Kosten: Gesamtkosten, Bezahlt und Offen.',
       'Einweisung klären. Für manche Maschinen brauchst du eine Sicherheitsunterweisung. Unter „Mein Profil“ siehst du, für welche du eingetragen bist. Im Zweifel frag in der Werkstatt.',
       'Schritt-für-Schritt-Hilfe nutzen. Wähle hier unter „Hilfe & Anleitungen“ deine Maschine und arbeite die Schritte ab. An der Maschine selbst kommst du mit dem QR-Code auf dem Etikett direkt dorthin.',
-      'Auftrag erfassen. Gib unter „Fertigungsauftrag erfassen“ einen Job-Namen, die Maschine und die Zeit an. Material und Menge nur, wenn du welches verbraucht hast. Die Kosten siehst du sofort.',
+      'Auftrag erfassen. Gib unter „Auftrag erfassen“ einen Job-Namen, die Maschine und die Zeit an. Material und Menge nur, wenn du welches verbraucht hast. Die Kosten siehst du sofort.',
       'Bezahlen. Offene Aufträge findest du unter „Deine Aufträge“. Sobald die Werkstatt die Zahlung bestätigt, steht der Auftrag auf „Bezahlt“ und du kannst den Nachweis öffnen.',
       'Mehr Services. Unter „Deine Services“ kannst du Equipment leihen, Defekte melden und Material wünschen. Etwas klappt nicht? Nutze die Suche in der Hilfe oder melde ein Problem.'
     ]

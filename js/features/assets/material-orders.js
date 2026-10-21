@@ -301,7 +301,7 @@ async function submitMaterialRequest() {
 function showMaterialOrders() {
     const modalContent = `
         <div class="modal-header">
-            <h3>Bestellungen verwalten</h3>
+            <h3>Materialwünsche &amp; Bestellungen</h3>
             <button class="close-btn" onclick="closeModal()">&times;</button>
         </div>
         <div class="modal-body">

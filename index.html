@@ -117,7 +117,7 @@
                 </h1>
                 <div class="user-info">
                     <button id="adminToggleBtn" class="btn btn-secondary admin-toggle" onclick="toggleAdminView()" style="display: none;">
-                        Admin
+                        Adminansicht
                     </button>
                     <button class="btn btn-link" onclick="openUserProfileModal()">Mein Profil</button>
                     <button class="btn btn-link" onclick="logout()">Abmelden</button>
@@ -127,7 +127,7 @@
             <!-- Live Printer Overview for User -->
             <div class="machine-overview-section">
                 <div class="machine-status-grid">
-                    <span class="machine-overview-title" onclick="showPrinterStatus()">Fertigungsmaschinen</span>
+                    <span class="machine-overview-title" onclick="showPrinterStatus()">Maschinen</span>
                     <div class="machine-status-item" onclick="showPrinterStatus()">
                         <div class="status-circle status-available">
                             <span class="status-number" id="userAvailableMachines">0</span>
@@ -189,13 +189,13 @@
                         <div class="service-header"><h3 class="service-title">Hilfe & Anleitungen</h3></div>
                         <div class="service-content">
                             <div class="service-description">Schritt für Schritt durch Maschinen, Abläufe und Fehlerhilfe</div>
-                            <div class="service-action"><button class="btn btn-primary btn-sm" onclick="showKnowledgeBase()">Hilfe-Assistent öffnen</button></div>
+                            <div class="service-action"><button class="btn btn-primary btn-sm" onclick="showKnowledgeBase()">Hilfe öffnen</button></div>
                         </div>
                     </div>
                     <!-- Leihe -->
                     <div class="service-card">
                         <div class="service-header">
-                            <h3 class="service-title">Leihe</h3>
+                            <h3 class="service-title">Equipment</h3>
                         </div>
                         <div class="service-content">
                             <div class="service-description">Equipment anfragen</div>
@@ -205,7 +205,7 @@
                                     Meine Ausleihen
                                     <span class="notification-badge" data-badge="user-equipment-requests" style="display: none;">0</span>
                                 </button>
-                                <button class="btn btn-secondary btn-sm" onclick="showEquipmentRequest()">Anfrage stellen</button>
+                                <button class="btn btn-secondary btn-sm" onclick="showEquipmentRequest()">Equipment anfragen</button>
                             </div>
                         </div>
                     </div>
@@ -213,7 +213,7 @@
                     <!-- Problem -->
                     <div class="service-card">
                         <div class="service-header">
-                            <h3 class="service-title">Problem</h3>
+                            <h3 class="service-title">Probleme</h3>
                         </div>
                         <div class="service-content">
                             <div class="service-description">Defekte melden</div>
@@ -244,7 +244,7 @@
                                     Meine Wünsche
                                     <span class="notification-badge" data-badge="user-material-requests" style="display: none;">0</span>
                                 </button>
-                                <button class="btn btn-secondary btn-sm" onclick="showMaterialRequest()">Wunsch äußern</button>
+                                <button class="btn btn-secondary btn-sm" onclick="showMaterialRequest()">Material wünschen</button>
                             </div>
                         </div>
                     </div>
@@ -253,7 +253,7 @@
 
             <!-- Entry Form -->
             <div class="form-section">
-                <h2 class="section-title">Fertigungsauftrag erfassen</h2>
+                <h2 class="section-title">Auftrag erfassen</h2>
                 <form class="entry-form">
                     <p id="entryPrefillHint" class="form-hint" hidden></p>
                     <div class="form-row">
@@ -328,7 +328,7 @@
                     </div>
 
                     <button type="button" class="btn btn-primary" onclick="addEntry()">
-                        Auftrag erfassen
+                        Auftrag speichern
                     </button>
                 </form>
             </div>
@@ -369,7 +369,7 @@
                 <div class="user-info">
                     <span class="welcome-message"></span>
                     <button class="btn btn-secondary admin-toggle" onclick="toggleAdminView()">
-                        Benutzer
+                        Nutzeransicht
                     </button>
                     <button class="btn btn-link" onclick="logout()">Abmelden</button>
                 </div>
@@ -378,7 +378,7 @@
             <!-- Live Printer Overview -->
             <div class="machine-overview-section">
                 <div class="machine-status-grid">
-                    <span class="machine-overview-title" onclick="showPrinterStatus()">Fertigungsmaschinen</span>
+                    <span class="machine-overview-title" onclick="showPrinterStatus()">Maschinen</span>
                     <div class="machine-status-item" onclick="showPrinterStatus()">
                         <div class="status-circle status-available">
                             <span class="status-number" id="availableMachines">0</span>
@@ -405,7 +405,7 @@
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-number" id="adminTotalEntries">0</div>
-                        <div class="stat-label">Fertigungsaufträge</div>
+                        <div class="stat-label">Aufträge</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-number" id="adminTotalUsers">0</div>
@@ -417,7 +417,7 @@
                     </div>
                     <div class="stat-card">
                         <div class="stat-number" id="adminPendingAmount">0,00 €</div>
-                        <div class="stat-label">Ausstehend</div>
+                        <div class="stat-label">Offen</div>
                     </div>
                 </div>
             </div>
@@ -432,11 +432,11 @@
                             <span class="notification-badge" data-badge="payment-requests" style="display: none;">0</span>
                         </button>
                         <button class="btn btn-secondary" onclick="showProblemReports()">
-                            Problem-Reports
+                            Problemmeldungen
                             <span class="notification-badge" data-badge="problem-reports" style="display: none;">0</span>
                         </button>
                         <button class="btn btn-secondary" onclick="showMaterialOrders()">
-                            Bestellungen
+                            Materialwünsche
                             <span class="notification-badge" data-badge="material-orders" style="display: none;">0</span>
                         </button>
                     </div>
@@ -463,7 +463,7 @@
                     <div class="control-buttons">
                         <button class="btn btn-secondary" onclick="showMaterialManager()">Materialien</button>
                         <button class="btn btn-secondary" onclick="showMasterbatchManager()">Masterbatches</button>
-                        <button class="btn btn-secondary" onclick="Billing.open()">Tarife &amp; Nutzergruppen</button>
+                        <button class="btn btn-secondary" onclick="Billing.open()">Preise &amp; Nutzergruppen</button>
                     </div>
                 </div>
 
@@ -471,14 +471,14 @@
                     <h3 class="control-title">Nutzer</h3>
                     <div class="control-buttons">
                         <button class="btn btn-secondary" onclick="showUserManager()">Nutzer verwalten</button>
-                        <button class="btn btn-secondary" onclick="showKnowledgeBase()">Hilfe &amp; Anleitungen ansehen</button>
+                        <button class="btn btn-secondary" onclick="showKnowledgeBase()">Hilfe &amp; Anleitungen</button>
                     </div>
                 </div>
             </div>
 
             <!-- All Entries Table -->
             <div class="entries-section">
-                <h2 class="section-title">Alle Fertigungsaufträge</h2>
+                <h2 class="section-title">Alle Aufträge</h2>
                 <div class="table-controls admin-entry-controls">
                     <input type="text" id="adminSearchInput" placeholder="Aufträge durchsuchen: Name, Job, Maschine, Material …" aria-label="Geladene Aufträge durchsuchen" title="Durchsucht die bereits geladenen Aufträge. Lade weitere Aufträge, um den Suchbereich zu erweitern." class="search-input" onkeyup="searchAdminEntries()">
                     <div class="entry-toolbar-row">
@@ -706,7 +706,7 @@
     <div id="problemReportsModal" class="modal">
         <div class="modal-content modal-large">
             <div class="modal-header">
-                <h2>Problem Reports</h2>
+                <h2>Problemmeldungen</h2>
                 <button class="close-btn" onclick="closeProblemReports()">&times;</button>
             </div>
             <div class="modal-body">

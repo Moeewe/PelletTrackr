@@ -276,7 +276,6 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 /* Admin-Dashboard: Bereiche nach Aufgaben */
 .admin-controls { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
 .control-section { padding: 20px; }
-.control-section-todo { border-top: 6px solid #FFEB00; }
 .control-title { margin: 0 0 14px; font-size: 18px; }
 .control-buttons { display: flex; flex-direction: column; gap: 10px; }
 .control-buttons .btn { width: 100%; justify-content: space-between; text-align: left; min-height: 44px; }

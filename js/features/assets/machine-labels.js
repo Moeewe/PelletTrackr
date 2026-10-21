@@ -47,7 +47,7 @@
         lastGroup = row.group;
         return `${heading}<label class="checkbox-label label-row"><input type="checkbox" class="checkbox-input" data-label-index="${i}" ${checked(row) ? 'checked' : ''}><span class="checkbox-text">${esc(row.name)}</span></label>`;
       }).join('');
-      window.showModal(`<div class="modal-header"><h2>Maschinen-Etiketten</h2><button class="close-btn" onclick="closeModal()">&times;</button></div>
+      window.showModal(`<div class="modal-header"><h2>QR-Etiketten</h2><button class="close-btn" onclick="closeModal()">&times;</button></div>
         <div class="modal-body">
           <p>Der QR-Code wählt die Maschine im Auftragsformular vor und öffnet direkt die Anleitung.</p>
           <label class="form-label" for="labelSize">Größe</label>
@@ -79,7 +79,7 @@
     if (!selected.length) return window.toast.warning('Bitte mindestens eine Maschine auswählen.');
     const size = SIZES[document.getElementById('labelSize').value] || SIZES.small;
     const labels = selected.map(row => `<div class="label"><div class="brand">Pellet<b>Trackr</b></div><img src="${qrDataUrl(machineUrl(row))}" alt=""><div class="name">${esc(row.name)}</div><div class="hint">Scannen: Maschine wählen &amp; Anleitung öffnen</div></div>`).join('');
-    const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Maschinen-Etiketten</title><style>
+    const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>QR-Etiketten</title><style>
       @page { size: A4; margin: 8mm; }
       * { box-sizing: border-box; }
       body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: #000; }

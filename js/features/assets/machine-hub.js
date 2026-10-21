@@ -75,6 +75,35 @@
     return [...(missingZuend ? [zuend] : []), ...trotecs.slice(Math.min(existingTrotec, trotecs.length))];
   };
 
+  // Bereits angelegte Startmaschinen mit den Angaben aus der Anleitung ergänzen (nichts Eigenes wird überschrieben).
+  function starterPatch(item) {
+    const entry = STARTER.find(e => e.starterKey === item.starterKey);
+    if (!entry) return null;
+    const patch = {};
+    if (!String(item.safetyText || '').trim() && entry.safetyText) patch.safetyText = entry.safetyText;
+    if ((!item.buildVolume || /bitte prüfen/.test(item.buildVolume)) && entry.buildVolume && item.buildVolume !== entry.buildVolume && entry.starterKey === 'zuend-cnc') patch.buildVolume = entry.buildVolume;
+    if (entry.starterKey === 'zuend-cnc') {
+      if (item.model === 'Zünd G3') patch.model = entry.model;
+      if (!item.notes || /Werkzeuge bitte eintragen/.test(item.notes)) patch.notes = entry.notes;
+    }
+    return Object.keys(patch).length ? patch : null;
+  }
+  const starterUpdates = () => state.items.map(item => ({ item, patch: starterPatch(item) })).filter(x => x.patch);
+
+  async function updateStarterData() {
+    try {
+      const user = await requireAdmin();
+      const updates = starterUpdates();
+      if (!updates.length) return;
+      const batch = window.db.batch();
+      updates.forEach(({ item, patch }) => batch.update(window.db.collection(item.collection).doc(item.id),
+        { ...patch, updatedBy: user.uid, updatedAt: window.firebase.firestore.FieldValue.serverTimestamp() }));
+      await batch.commit();
+      window.toast.success(`${updates.length} Maschine${updates.length === 1 ? '' : 'n'} ergänzt.`);
+      await open();
+    } catch (error) { window.toast.error(error.message || 'Ergänzen fehlgeschlagen.'); }
+  }
+
   async function addStarter() {
     try {
       const user = await requireAdmin();
@@ -108,6 +137,8 @@
     if (!list) return;
     const banner = $('hubStarter');
     if (banner) banner.hidden = !starterPending().length;
+    const update = $('hubStarterUpdate');
+    if (update) update.hidden = !starterUpdates().length;
     const term = state.term.trim().toLowerCase();
     const normalize = status => window.MachineStatus.normalize(status);
     state.items.sort((a, b) => typeOf(a).label.localeCompare(typeOf(b).label, 'de') || a.name.localeCompare(b.name, 'de'));
@@ -157,6 +188,8 @@
          <div id="hubFilters" class="printer-filters" role="group" aria-label="Nach Status filtern"></div></div>
          <div id="hubStarter" class="form-hint" hidden><strong>Vorschlag:</strong> Zünd CNC Cutter und 2× Trotec Speedy 500 anlegen (ohne Werkstattmaterial, mit Einweisungspflicht). Du kannst alles danach bearbeiten.
            <div class="safety-actions"><button class="btn btn-primary btn-small" onclick="MachineHub.addStarter()">Jetzt anlegen</button></div></div>
+         <div id="hubStarterUpdate" class="form-hint" hidden><strong>Angaben ergänzen:</strong> Für Zünd und Trotec fehlen noch Angaben aus der Anleitung (Arbeitsbereich, Sicherheitstext). Eigene Eingaben bleiben unverändert.
+           <div class="safety-actions"><button class="btn btn-primary btn-small" onclick="MachineHub.updateStarterData()">Angaben ergänzen</button></div></div>
          <div id="hubList" class="printer-list-compact"></div>`,
         '<button class="btn btn-primary" onclick="MachineHub.edit(-1)">Maschine hinzufügen</button><button class="btn btn-secondary" onclick="closeModal()">Schließen</button>');
       renderList();
@@ -245,7 +278,7 @@
          <div class="form-group"><label class="form-label" for="hubModel">Modell</label><input id="hubModel" class="form-input" maxlength="140" value="${esc(item?.model || '')}"></div>
          <div class="form-group"><label class="form-label" for="hubLocation">Standort</label><input id="hubLocation" class="form-input" maxlength="140" placeholder="z. B. Werkstatt Raum 1" value="${esc(item?.location || '')}"></div>
          <div class="form-group"><label class="form-label" for="hubVolume">Bauraum / Arbeitsbereich</label><input id="hubVolume" class="form-input" maxlength="80" placeholder="z. B. 300 × 300 × 400 mm" value="${esc(item?.buildVolume || '')}"></div>
-         <div class="form-group" data-hub-printer-only><label class="form-label" for="hubPrice">Preis pro Stunde (alte Abrechnung)</label><input id="hubPrice" class="form-input" type="number" min="0" step="0.01" value="${esc(item?.pricePerHour ?? '')}"><small>Nur für die bisherige Regel. Aktuelle Preise legst du unter „Tarife &amp; Nutzergruppen“ fest.</small></div>
+         <div class="form-group" data-hub-printer-only><label class="form-label" for="hubPrice">Preis pro Stunde (alte Abrechnung)</label><input id="hubPrice" class="form-input" type="number" min="0" step="0.01" value="${esc(item?.pricePerHour ?? '')}"><small>Nur für die bisherige Regel. Aktuelle Preise legst du unter „Preise &amp; Nutzergruppen“ fest.</small></div>
          <fieldset class="hub-fieldset"><legend>Material</legend>
            <label class="checkbox-label"><input type="checkbox" class="checkbox-input" id="hubUses" ${item?.usesMaterial === false ? '' : 'checked'} onchange="MachineHub.usesChanged()"> Verbraucht Werkstattmaterial (Filament, Pellets)</label>
            <p class="hub-hint" data-hub-material>Welche Materialformen kann die Maschine verarbeiten? Im Auftragsformular erscheinen dann nur passende Materialien.</p>
@@ -340,7 +373,7 @@
   }
 
   window.MachineHub = {
-    open, edit, save, duplicate, remove, addStarter,
+    open, edit, save, duplicate, remove, addStarter, updateStarterData,
     maintenance: index => { const m = state.items[index]; if (m) window.MachineMaintenance.open(m.collection, m.id, 'MachineHub.open()'); },
     pickEquipment: (id, name, checked) => { checked ? equipmentPicked.set(id, name) : equipmentPicked.delete(id); },
     tariff: index => { const m = state.items[index]; if (m) window.Billing.openFor(m.collection, m.id); },

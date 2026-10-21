@@ -205,7 +205,7 @@ function showPrinterStatus() {
 
     const modalContent = `
         <div class="modal-header">
-            <h3>Fertigungsmaschinen – Verfügbarkeit</h3>
+            <h3>Maschinen – Verfügbarkeit</h3>
             <button class="close-btn" onclick="closeModal()">&times;</button>
         </div>
         <div class="modal-body">

@@ -1,4 +1,4 @@
-// Maschinen & Anleitungen (Admin): jede Maschine hat ihre eigene Anleitung, einen QR-Code und einen festen Link.
+// Anleitungen & Betriebsanweisungen (Admin): jede Maschine hat ihre eigene Anleitung, einen QR-Code und einen festen Link.
 // Die Anleitung liegt direkt am Maschinen-Dokument (Feld "guideSteps"), damit Maschine und Tutorial nie auseinanderlaufen.
 (() => {
   'use strict';
@@ -74,7 +74,7 @@
           <button class="btn btn-secondary btn-small" onclick="MachineLabels.open(['${esc(row.collection)}:${esc(row.id)}'])">QR / Etikett</button>
           <button class="btn btn-secondary btn-small" onclick="KnowledgeAdmin.copyLink(${i})">Link kopieren</button></div></article>`;
       }).join('');
-      shell('Maschinen & Anleitungen',
+      shell('Anleitungen & Betriebsanweisungen',
         (suggestionCards ? `<h3>Vorschläge von Nutzern (${suggestions.length})</h3><div class="safety-grid">${suggestionCards}</div><h3>Alle Maschinen</h3>` : '') +
         '<p>Jede Maschine hat eine eigene Schritt-für-Schritt-Anleitung, Links zu Videos und Dokumenten, einen QR-Code und einen festen Link. Der Link führt nach der Anmeldung direkt zur Maschine: Anleitung öffnen und Maschine für Aufträge vorauswählen.</p>' +
         (cards ? `<div class="safety-grid compact-list">${cards}</div>` : '<p>Noch keine Maschinen angelegt.</p>') +
@@ -100,7 +100,7 @@
          <label>Schritte<textarea id="guideSteps" class="form-input" rows="12" placeholder="Maschine einschalten. Hauptschalter auf I stellen …">${esc(steps)}</textarea></label>
          <p><small>Ohne eigene Schritte zeigt die Hilfe für bekannte Maschinen (Weber, UR5, Ginger) die allgemeine Anleitung.</small></p>
          <label>Links zu Videos & Dokumenten (optional)<textarea id="guideLinks" class="form-input" rows="5" placeholder="Einführungsvideo | https://www.youtube.com/watch?v=…&#10;Bedienungsanleitung | https://…">${esc(linksToText(row.guideLinks))}</textarea></label>
-         <p><small>Pro Zeile ein Link, nach Wunsch mit Titel: <em>Titel | https://…</em>. Nutzer können zusätzlich selbst Tutorials vorschlagen; die Vorschläge erscheinen oben in „Maschinen &amp; Anleitungen“.</small></p>
+         <p><small>Pro Zeile ein Link, nach Wunsch mit Titel: <em>Titel | https://…</em>. Nutzer können zusätzlich selbst Tutorials vorschlagen; die Vorschläge erscheinen oben in „Anleitungen &amp; Betriebsanweisungen“.</small></p>
          <fieldset class="hub-fieldset"><legend>Sicherheits- und Betriebsanweisung (Arbeitsschutz)</legend>
            <p class="hub-hint">Nutzer können sie in der Hilfe zur Maschine jederzeit aufrufen. Du kannst den Text direkt einfügen und/oder Links (z. B. zum PDF) hinterlegen.</p>
            <label>Text<textarea id="safetyText" class="form-input" rows="8" maxlength="8000" placeholder="Gefahren, Schutzmaßnahmen, Verhalten im Notfall …">${esc(row.safetyText || '')}</textarea></label>

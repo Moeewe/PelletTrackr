@@ -47,7 +47,7 @@
     }
   }
 
-  // ---------- Übersicht "Fertigungsmaschinen" (Nutzer und Admin) ----------
+  // ---------- Übersicht "Maschinen" (Nutzer und Admin) ----------
   const PAGE = 15;
   const panelState = { items: [], term: '', filter: 'all', limit: PAGE };
 
@@ -89,7 +89,7 @@
   function panel() {
     Object.assign(panelState, { items: collectMachines(), term: '', filter: 'all', limit: PAGE });
     const admin = !!window.currentUser?.isAdmin;
-    (window.showModalWithContent || window.showModal)(`<div class="modal-header"><h3>Fertigungsmaschinen</h3><button class="close-btn" onclick="closeModal()">&times;</button></div>
+    (window.showModalWithContent || window.showModal)(`<div class="modal-header"><h3>Maschinen</h3><button class="close-btn" onclick="closeModal()">&times;</button></div>
       <div class="modal-body">
         <div class="printer-toolbar"><input type="text" id="machinePanelSearch" class="search-input" placeholder="Maschine suchen …" autocomplete="off" oninput="MachineStatus.search(this.value)"><div id="machinePanelFilters" class="printer-filters" role="group" aria-label="Nach Status filtern"></div></div>
         <div id="machinePanelList" class="printer-list-compact"></div>
