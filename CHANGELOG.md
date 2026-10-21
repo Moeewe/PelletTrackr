@@ -72,7 +72,7 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Initiale Entwicklung und Testing
 - UI/UX Optimierungen
 - Bug-Fixes und Performance-Verbesserungen
-- Admin-Passwort auf fgf2025admin gesetzt
+- Admin-Passwort geändert
 - Alle blauen UI-Elemente durch orange ersetzt
 - Border- und Radius-Optimierungen
 
