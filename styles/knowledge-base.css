@@ -198,63 +198,66 @@
 .label-group { margin: 12px 0 4px; font-size: 14px; text-transform: uppercase; color: #555; }
 .label-row { display: flex; align-items: center; min-height: 44px; }
 
-/* ==================== HILFE: ATTRAKTIVERE OBERFLÄCHE ==================== */
-.knowledge-hero { margin-bottom: 16px; padding: 18px 16px; background: #FFEB00; border: 2px solid #000; }
-.knowledge-hero h3 { margin: 0 0 4px; font-size: 22px; }
-.knowledge-hero p { margin: 0; }
+/* ==================== HILFE: GLEICHE OPTIK WIE DAS DASHBOARD ==================== */
+/* Flache Karten (#f8f9fa, 2px schwarzer Rand, keine Rundung, kein Schatten), schwarze/weiße Buttons. */
+.knowledge-base .knowledge-disclaimer { margin: 0 0 16px; padding: 10px 12px; background: #f8f9fa; border: 0; border-left: 4px solid #000; font-size: 14px; }
 
-.knowledge-tiles { grid-template-columns: 1fr; gap: 12px; margin-bottom: 20px; }
+.knowledge-hero { margin: 24px 0 12px; padding: 0 0 8px; background: none; border: 0; border-bottom: 2px solid #000; }
+.knowledge-hero h3 { margin: 0 0 4px; font-size: 20px; font-weight: 700; }
+.knowledge-hero p { margin: 0; color: #444; }
+
+.knowledge-start,
+.knowledge-tile {
+  display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%; min-height: 64px; padding: 16px 20px; margin: 0;
+  background: #f8f9fa; color: #000; border: 2px solid #000; border-radius: 0; box-shadow: none;
+  cursor: pointer; font: inherit; text-align: left; transform: none; transition: background .2s ease;
+}
+.knowledge-start:hover, .knowledge-start:focus-visible,
+.knowledge-tile:hover, .knowledge-tile:focus-visible { background: #e9ecef; transform: none; box-shadow: none; }
+.knowledge-start strong { display: block; font-size: 17px; color: #000; }
+.knowledge-start small { display: block; margin-top: 2px; font-size: 14px; color: #444; }
+.knowledge-start .knowledge-tile-go { color: #000; }
+
+.knowledge-tiles { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 24px; }
 @media (min-width: 560px) { .knowledge-tiles { grid-template-columns: repeat(2, 1fr); } }
-.knowledge-tile { flex-direction: row; align-items: center; gap: 14px; width: 100%; min-height: 76px; padding: 14px; box-shadow: 4px 4px 0 #000; transition: transform .1s, box-shadow .1s; }
-.knowledge-tile:hover, .knowledge-tile:focus-visible { background: #fff9c4; transform: translate(2px, 2px); box-shadow: 2px 2px 0 #000; }
-.knowledge-tile-icon { font-size: 34px; line-height: 1; flex: none; }
 .knowledge-tile-text { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
 .knowledge-tile-text strong { font-size: 17px; overflow-wrap: anywhere; }
-.knowledge-tile-go { font-size: 22px; font-weight: 700; }
-.knowledge-status { display: inline-flex; align-items: center; gap: 6px; color: #444; }
-.knowledge-status::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: #999; }
-.knowledge-status-available::before { background: #2e9e4f; }
-.knowledge-status-maintenance::before, .knowledge-status-in_use::before, .knowledge-status-printing::before { background: #e8a200; }
-.knowledge-status-broken::before { background: #d62828; }
+.knowledge-tile-go { font-size: 20px; font-weight: 700; flex: none; }
+.knowledge-tile small { font-size: 14px; color: #444; }
+.knowledge-status { display: inline-flex; align-items: center; gap: 6px; }
+.knowledge-status::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: #999; }
+.knowledge-status-available::before { background: #28a745; }
+.knowledge-status-maintenance::before, .knowledge-status-in_use::before, .knowledge-status-printing::before { background: #ffc107; }
+.knowledge-status-broken::before { background: #dc3545; }
 
-.knowledge-help-card { padding: 16px; border: 2px solid #000; background: #fafafa; margin-bottom: 16px; }
-.knowledge-help-card h3 { margin: 0 0 12px; font-size: 18px; }
-.knowledge-suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
-.knowledge-suggestions button { min-height: 40px; padding: 6px 14px; border: 1px solid #000; background: #fff; border-radius: 999px; cursor: pointer; font: inherit; font-size: 14px; }
-.knowledge-suggestions button:hover { background: #FFEB00; }
+.knowledge-help-card { margin: 0 0 16px; padding: 20px; background: #f8f9fa; border: 2px solid #000; border-radius: 0; }
+.knowledge-help-card h3 { margin: 0 0 12px; font-size: 18px; font-weight: 700; }
+.knowledge-suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.knowledge-suggestions button { min-height: 40px; padding: 8px 12px; background: #fff; color: #000; border: 2px solid #000; border-radius: 0; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.knowledge-suggestions button:hover { background: #e9ecef; }
 
-/* Anleitung: Schritt-für-Schritt */
-.kguide-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+/* Schritt-für-Schritt */
+.kguide-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
 .kguide-machine { font-weight: 700; }
 .kstep-bar { display: flex; gap: 4px; margin-bottom: 16px; }
-.kstep-seg { flex: 1; height: 10px; min-width: 6px; padding: 0; border: 1px solid #000; background: #fff; cursor: default; }
+.kstep-seg { flex: 1; height: 8px; min-width: 6px; padding: 0; border: 2px solid #000; border-radius: 0; background: #fff; cursor: default; }
 .kstep-seg.done { background: #000; cursor: pointer; }
 .kstep-seg.current { background: #FFEB00; }
-.kstep-card { padding: 20px 18px; border: 2px solid #000; background: #fff; box-shadow: 5px 5px 0 #000; margin-bottom: 18px; }
-.kstep-warning { border-color: #d62828; box-shadow: 5px 5px 0 #d62828; }
-.kstep-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
-.kstep-number { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: #FFEB00; border: 2px solid #000; border-radius: 50%; font-size: 22px; font-weight: 800; }
-.kstep-count { color: #666; font-size: 14px; }
-.kstep-title { margin: 0 0 8px; font-size: 22px; line-height: 1.25; }
-.kstep-body { margin: 0; font-size: 17px; line-height: 1.55; color: #222; }
-.kstep-callout { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; padding: 10px 12px; background: #ffe9e9; border-left: 4px solid #d62828; font-size: 14px; }
-.kstep-actions { display: flex; flex-direction: column; gap: 10px; }
-.kstep-next { width: 100%; min-height: 56px; font-size: 18px; }
+.kstep-card { margin-bottom: 16px; padding: 20px; background: #f8f9fa; border: 2px solid #000; border-radius: 0; box-shadow: none; }
+.kstep-warning { border-color: #000; }
+.kstep-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.kstep-number { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: #000; color: #fff; border: 0; border-radius: 0; font-size: 18px; font-weight: 700; }
+.kstep-count { color: #444; font-size: 14px; }
+.kstep-title { margin: 0 0 8px; font-size: 20px; line-height: 1.3; font-weight: 700; }
+.kstep-body { margin: 0; font-size: 16px; line-height: 1.55; color: #222; }
+.kstep-callout { display: flex; gap: 10px; align-items: flex-start; margin-top: 16px; padding: 10px 12px; background: #fff; border: 0; border-left: 4px solid #dc3545; font-size: 14px; }
+.kstep-callout-mark { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: #dc3545; color: #fff; border-radius: 50%; font-size: 14px; }
+.kstep-actions { display: flex; flex-direction: column; gap: 12px; }
+.kstep-next { width: 100%; min-height: 48px; font-size: 16px; }
 .kstep-actions .btn-secondary { width: 100%; }
-.kstep-foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 12px; font-size: 13px; }
+.kstep-foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 16px; font-size: 13px; }
 
-.kdone { text-align: center; padding: 24px 12px; display: flex; flex-direction: column; gap: 12px; align-items: stretch; }
-.kdone-icon { font-size: 64px; }
-.kdone h3 { margin: 0; font-size: 26px; }
-.knowledge-base .knowledge-disclaimer { background: #fff3f3; border: 0; border-left: 4px solid #d62828; padding: 8px 12px; font-size: 13px; }
-
-/* Einstieg "Erste Schritte" und Feinschliff ohne Emojis */
-.knowledge-start { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 72px; margin-bottom: 16px; padding: 14px 16px; background: #000; color: #fff; border: 2px solid #000; box-shadow: 4px 4px 0 #FFEB00; cursor: pointer; font: inherit; text-align: left; }
-.knowledge-start strong { display: block; font-size: 18px; color: #FFEB00; }
-.knowledge-start small { display: block; margin-top: 2px; color: #ddd; font-size: 14px; }
-.knowledge-start:hover, .knowledge-start:focus-visible { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #FFEB00; }
-.knowledge-start .knowledge-tile-go { color: #FFEB00; }
-.knowledge-hero { background: #fff; padding: 0 0 8px; border: 0; }
-.knowledge-hero h3 { font-size: 18px; }
-.kstep-callout-mark { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; background: #d62828; color: #fff; border-radius: 50%; font-size: 15px; }
-.kdone-icon { display: inline-flex; align-items: center; justify-content: center; width: 72px; height: 72px; margin: 0 auto; background: #FFEB00; border: 2px solid #000; border-radius: 50%; font-size: 40px; font-weight: 800; }
+.kdone { display: flex; flex-direction: column; gap: 12px; align-items: stretch; padding: 24px 0; text-align: center; }
+.kdone-icon { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; margin: 0 auto; background: #000; color: #fff; border: 0; border-radius: 0; font-size: 30px; font-weight: 700; }
+.kdone h3 { margin: 0; font-size: 22px; }
