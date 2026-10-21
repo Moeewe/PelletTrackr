@@ -313,6 +313,9 @@ Möchtest du dich als "${userResult.existingName}" anmelden?`;
 }
 
 function loginAsAdmin() {
+  // Legacy-Admin-Login mit Client-Passwort ist abgeschaltet; Adminrechte kommen aus users/<uid>.
+  toast.warning('Bitte melde dich mit E-Mail und Passwort an.');
+  return;
   const name = document.getElementById('loginName').value.trim();
   const kennung = document.getElementById('loginKennung').value.trim();
   const password = document.getElementById('adminPassword').value;
@@ -322,11 +325,6 @@ function loginAsAdmin() {
     toast.warning('Bitte Name und FH-Kennung eingeben!');
             return;
         }
-
-  if (password !== ADMIN_PASSWORD) {
-    toast.error('Falsches Admin-Passwort!');
-    return;
-  }
 
   // Admin-Login mit Loading-Effekt
   setButtonLoading(adminButton, true);

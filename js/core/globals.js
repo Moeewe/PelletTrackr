@@ -3,7 +3,6 @@
 
 // Globale Variablen - Aktualisiert für Email/Passwort-System
 window.currentUser = { name: '', email: '', username: '', isAdmin: false };
-window.ADMIN_PASSWORD = 'fgf2025admin'; // In production sollte das in einer sicheren Konfiguration stehen
 
 // Globale Daten für Suche und Sortierung
 window.allUserEntries = [];
