@@ -38,3 +38,17 @@ window.formatCurrency = formatCurrency;
 window.checkAdminAccess = checkAdminAccess;
 window.parseGermanNumber = parseGermanNumber;
 window.escapeQuotes = escapeQuotes;
+
+// Native alert() blockiert besonders auf dem Handy; stattdessen als Toast anzeigen.
+// Fällt auf das Original zurück, solange das Toast-System noch nicht geladen ist.
+(function () {
+  const nativeAlert = window.alert.bind(window);
+  window.alert = function (message) {
+    const toast = window.toast;
+    if (!toast || typeof toast.error !== 'function') return nativeAlert(message);
+    const text = String(message ?? '');
+    if (/fehler|fehlgeschlagen|nicht gefunden/i.test(text)) toast.error(text);
+    else if (/erfolgreich|gesendet|genehmigt/i.test(text)) toast.success(text);
+    else toast.warning(text);
+  };
+})();

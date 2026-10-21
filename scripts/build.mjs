@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const staging = mkdtempSync(join(root, '.build-staging-'));
-for (const name of ['index.html','styles.css','favicon.svg','ux-helpers.js','web-app-modular.js','js','styles','HTML','assets','_redirects']) {
+for (const name of ['index.html','styles.css','favicon.svg','manifest.webmanifest','ux-helpers.js','web-app-modular.js','js','styles','HTML','assets','_redirects']) {
   if (existsSync(join(root,name))) cpSync(join(root,name),join(staging,name),{recursive:true});
 }
 for (const name of ['impressum','datenschutz']) {
