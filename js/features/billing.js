@@ -77,6 +77,8 @@
   async function addEntry() {
     if(saving)return; saving=true;
     try {
+      const jobName=$('jobName').value.trim();
+      if(!jobName){$('jobName').focus();$('jobName').scrollIntoView({behavior:'smooth',block:'center'});throw Error('Bitte gib einen Job-Namen an.');}
       const q=await quote();
       const entry={name:q.profile.name||window.currentUser.name,kennung:q.profile.kennung||window.currentUser.kennung||q.uid,
         userId:q.uid,billingVersion:1,billingGroup:q.group,tariffSnapshot:q.tariff,policyRevision:q.policyRevision,
@@ -85,7 +87,7 @@
         material:q.material?.name||'',materialId:q.material?.id||'',materialMenge:q.input.quantity,materialPrice:q.input.materialPrice,materialCost:q.materialCents/100,
         masterbatch:q.additive?.name||'',masterbatchId:q.additive?.id||'',masterbatchMenge:q.input.additiveQuantity,masterbatchPrice:q.input.additivePrice,masterbatchCost:q.additiveCents/100,
         ownMaterialUsed:q.input.ownMaterial,totalCost:q.totalCents/100,machineCents:q.machineCents,materialCents:q.materialCents,additiveCents:q.additiveCents,totalCents:q.totalCents,
-        jobName:$('jobName').value.trim()||'Maschinennutzung',jobNotes:$('jobNotes').value.trim(),timestamp:window.firebase.firestore.FieldValue.serverTimestamp(),paid:false};
+        jobName,jobNotes:$('jobNotes').value.trim(),timestamp:window.firebase.firestore.FieldValue.serverTimestamp(),paid:false};
       await window.db.collection('entries').add(entry);
       window.clearForm(); $('costBreakdown').textContent='Tarif wird nach Maschinen- und Materialauswahl angezeigt.';
       window.loadUserStats?.();window.loadUserEntries?.();

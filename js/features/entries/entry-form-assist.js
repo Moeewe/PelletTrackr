@@ -24,6 +24,21 @@
     if (event.target && ['material', 'masterbatch'].includes(event.target.id)) syncAmountFields();
   });
 
+  // Live-Kostenvorschau: unabhängig von der Initialisierungsreihenfolge per Event-Delegation.
+  let previewTimer = null;
+  const livePreview = delay => {
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(() => window.Billing?.preview?.(), delay);
+  };
+  const typedFields = ['printTime', 'materialMenge', 'masterbatchMenge'];
+  const pickedFields = ['printer', 'material', 'masterbatch', 'ownMaterialUsed'];
+  document.addEventListener('input', event => {
+    if (typedFields.includes(event.target?.id)) livePreview(300);
+  });
+  document.addEventListener('change', event => {
+    if (pickedFields.includes(event.target?.id) || typedFields.includes(event.target?.id)) livePreview(0);
+  });
+
   // Tarif der gewählten Maschine: ohne Materialabrechnung / ohne Zeitabrechnung entfallen Felder.
   document.addEventListener('billing:quote', event => {
     const tariff = event.detail?.tariff || {};

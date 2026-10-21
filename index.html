@@ -156,6 +156,12 @@
                     <p id="entryPrefillHint" class="form-hint" hidden></p>
                     <div class="form-row">
                         <div class="form-group">
+                            <label class="form-label" for="jobName">Job-Name *</label>
+                            <input type="text" id="jobName" class="form-input" maxlength="140" required autocomplete="off" placeholder="z.B. Prototyp Gehäuse, Ersatzteil">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
                             <label class="form-label">Maschine</label>
                             <select id="printer" class="form-select">
                                 <option value="">Maschine auswählen ...</option>
@@ -191,12 +197,6 @@
 
                     <details id="formMore" class="form-more">
                         <summary>Weitere Angaben (optional)</summary>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">Job-Name</label>
-                                <input type="text" id="jobName" class="form-input" placeholder="z.B. Prototyp Gehäuse, Ersatzteil, etc.">
-                            </div>
-                        </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">Masterbatch (Farbzusatz)</label>

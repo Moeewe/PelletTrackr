@@ -165,3 +165,21 @@ body {
 .service-status { margin: 4px 0 10px; font-size: 14px; color: #666; }
 .service-status-active { color: #000; font-weight: 700; }
 .service-status-active::before { content: "● "; color: #d62828; }
+
+/* Login/Registrierung/Passwort-Reset: alle Buttons gleich breit */
+.login-container .btn,
+.login-container .button-group .btn,
+.login-container .btn-link {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+}
+.login-container .form-group { margin-bottom: 12px; }
+.login-container .link-small { width: auto; display: inline; }
+
+.login-container .button-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; width: 100%; }
+.login-container .login-options { flex-direction: row; align-items: center; }
+.login-container .login-options .checkbox-label { width: auto; }
