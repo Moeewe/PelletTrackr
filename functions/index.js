@@ -17,7 +17,7 @@ const masterAdminClaimExpiresAt = defineString('MASTER_ADMIN_CLAIM_EXPIRES_AT', 
  * No legacy privilege is copied. Current admin status is retained only when
  * it was already assigned to the destination UID by an administrator.
  */
-exports.linkLegacyAccount = onCall({ region: 'europe-west1', maxInstances: 10 }, async request => {
+exports.linkLegacyAccount = onCall({ region: 'europe-west1', maxInstances: 2, memory: '256MiB' }, async request => {
   const uid = request.auth?.uid;
   const email = String(request.auth?.token?.email || '').trim().toLowerCase();
   if (!uid || !email) {
@@ -119,7 +119,7 @@ function sessionMachineCollection(value) {
   return value;
 }
 
-exports.startMachineSession = onCall({ region: 'europe-west1', maxInstances: 20 }, async request => {
+exports.startMachineSession = onCall({ region: 'europe-west1', maxInstances: 3, memory: '256MiB' }, async request => {
   const uid = requireVerifiedAccount(request);
   const collection = sessionMachineCollection(String(request.data?.machineCollection || ''));
   const machineId = String(request.data?.machineId || '').trim();
@@ -180,7 +180,7 @@ exports.startMachineSession = onCall({ region: 'europe-west1', maxInstances: 20 
   return { sessionId: sessionRef.id, startedAtMs, machineName: machine.name || machineId, tariff };
 });
 
-exports.finishMachineSession = onCall({ region: 'europe-west1', maxInstances: 20 }, async request => {
+exports.finishMachineSession = onCall({ region: 'europe-west1', maxInstances: 3, memory: '256MiB' }, async request => {
   const uid = requireVerifiedAccount(request);
   const sessionId = String(request.data?.sessionId || '').trim();
   if (!sessionId || sessionId.includes('/')) throw new HttpsError('invalid-argument', 'Die Zeiterfassung wurde nicht gefunden.');
@@ -250,7 +250,7 @@ exports.finishMachineSession = onCall({ region: 'europe-west1', maxInstances: 20
   return result;
 });
 
-exports.claimOneTimeMasterAdmin = onCall({ region: 'europe-west1', maxInstances: 1 }, async request => {
+exports.claimOneTimeMasterAdmin = onCall({ region: 'europe-west1', maxInstances: 1, memory: '256MiB' }, async request => {
   const uid = requireVerifiedAccount(request);
   const email = String(request.auth.token.email || '').trim().toLowerCase();
   const expiresAt = Date.parse(masterAdminClaimExpiresAt.value());
