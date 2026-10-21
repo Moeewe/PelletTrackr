@@ -18,6 +18,7 @@ if (typeof firebase !== 'undefined') {
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
+    firebase.auth().languageCode = 'de';
     window.db = firebase.firestore();
     window.firebase = firebase;
 } else {

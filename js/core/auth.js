@@ -749,7 +749,12 @@ async function performEmailLogin() {
             const user = userCredential.user;
 
             if (!user.emailVerified) {
-                safeShowToast('Bitte bestätige zuerst deine E-Mail-Adresse über den zugesandten Link.', 'warning');
+                // Nicht bestätigt: Link automatisch erneut senden, damit niemand festhängt.
+                let resent = false;
+                try { await sendVerificationMail(user); resent = true; } catch (_) { /* z. B. zu viele Anfragen */ }
+                safeShowToast(resent
+                    ? 'Deine E-Mail ist noch nicht bestätigt. Wir haben dir den Link gerade erneut geschickt – bitte auch den Spam-Ordner prüfen.'
+                    : 'Deine E-Mail ist noch nicht bestätigt. Bitte nutze den Link aus der Bestätigungsmail (auch im Spam-Ordner nachsehen).', 'warning');
                 await firebase.auth().signOut();
                 return;
             }
@@ -806,6 +811,17 @@ async function performEmailLogin() {
 }
 
 // Registrierungs-Funktion
+// Aktions-Mails (Bestätigung, Passwort-Reset) führen nach dem Klick zurück in die App.
+// Ist die App-Domain in Firebase nicht freigegeben, wird ohne Rücksprung-Link gesendet.
+async function sendVerificationMail(user) {
+    const settings = { url: `${(window.APP_PUBLIC_URL || window.location.origin).replace(/\/$/, '')}/`, handleCodeInApp: false };
+    try { await user.sendEmailVerification(settings); }
+    catch (error) {
+        if (error.code === 'auth/unauthorized-continue-uri' || error.code === 'auth/invalid-continue-uri') await user.sendEmailVerification();
+        else throw error;
+    }
+}
+
 async function registerUser() {
     const name = document.getElementById('regName').value.trim();
     const email = document.getElementById('regEmail').value.trim();
@@ -849,7 +865,7 @@ async function registerUser() {
             });
 
             // Email-Verifizierung senden
-            await user.sendEmailVerification();
+            await sendVerificationMail(user);
 
             // Firestore User-Dokument erstellen
             await createUserProfile(user.uid, {
@@ -863,7 +879,7 @@ async function registerUser() {
 
             await firebase.auth().signOut();
 
-            safeShowToast('Account erstellt! Bitte bestätigen Sie Ihre E-Mail-Adresse.', 'success');
+            safeShowToast('Account erstellt! Wir haben dir eine Bestätigungs-Mail geschickt. Sie kann ein bis zwei Minuten dauern – bitte auch den Spam-Ordner prüfen.', 'success');
             showLoginSection();
 
         } catch (error) {
@@ -888,8 +904,13 @@ async function resetPassword() {
     // Check if Firebase is available
     if (typeof firebase !== 'undefined' && typeof firebase.auth === 'function') {
         try {
-            await firebase.auth().sendPasswordResetEmail(email);
-            safeShowToast('Passwort-Reset E-Mail gesendet!', 'success');
+            const settings = { url: `${(window.APP_PUBLIC_URL || window.location.origin).replace(/\/$/, '')}/`, handleCodeInApp: false };
+            try { await firebase.auth().sendPasswordResetEmail(email, settings); }
+            catch (error) {
+                if (error.code === 'auth/unauthorized-continue-uri' || error.code === 'auth/invalid-continue-uri') await firebase.auth().sendPasswordResetEmail(email);
+                else throw error;
+            }
+            safeShowToast('Wenn es zu dieser Adresse ein Konto gibt, haben wir dir einen Link geschickt. Bitte auch den Spam-Ordner prüfen.', 'success');
             showLoginSection();
 
         } catch (error) {

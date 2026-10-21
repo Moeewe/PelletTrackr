@@ -247,3 +247,14 @@
 .kdone-icon { font-size: 64px; }
 .kdone h3 { margin: 0; font-size: 26px; }
 .knowledge-base .knowledge-disclaimer { background: #fff3f3; border: 0; border-left: 4px solid #d62828; padding: 8px 12px; font-size: 13px; }
+
+/* Einstieg "Erste Schritte" und Feinschliff ohne Emojis */
+.knowledge-start { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 72px; margin-bottom: 16px; padding: 14px 16px; background: #000; color: #fff; border: 2px solid #000; box-shadow: 4px 4px 0 #FFEB00; cursor: pointer; font: inherit; text-align: left; }
+.knowledge-start strong { display: block; font-size: 18px; color: #FFEB00; }
+.knowledge-start small { display: block; margin-top: 2px; color: #ddd; font-size: 14px; }
+.knowledge-start:hover, .knowledge-start:focus-visible { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #FFEB00; }
+.knowledge-start .knowledge-tile-go { color: #FFEB00; }
+.knowledge-hero { background: #fff; padding: 0 0 8px; border: 0; }
+.knowledge-hero h3 { font-size: 18px; }
+.kstep-callout-mark { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; background: #d62828; color: #fff; border-radius: 50%; font-size: 15px; }
+.kdone-icon { display: inline-flex; align-items: center; justify-content: center; width: 72px; height: 72px; margin: 0 auto; background: #FFEB00; border: 2px solid #000; border-radius: 50%; font-size: 40px; font-weight: 800; }

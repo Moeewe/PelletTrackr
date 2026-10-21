@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#FFEB00">
+    <title>PelletTrackr | Konto</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <style>
+        :root { --yellow: #FFEB00; --ink: #000; --muted: #666; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: var(--ink); background: #fff; }
+        main { width: 100%; max-width: 420px; }
+        h1.logo { margin: 0 0 4px; text-align: center; font-size: 34px; letter-spacing: -1px; }
+        .highlight { background: var(--yellow); padding: 0 6px; }
+        .tagline { margin: 0 0 28px; text-align: center; color: var(--muted); }
+        .card { padding: 24px 20px; border: 2px solid var(--ink); box-shadow: 5px 5px 0 var(--ink); }
+        h2 { margin: 0 0 8px; font-size: 22px; }
+        p { margin: 0 0 16px; line-height: 1.5; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; }
+        input { width: 100%; min-height: 48px; padding: 12px 14px; margin-bottom: 14px; border: 2px solid var(--ink); border-radius: 0; font-size: 16px; font-family: inherit; }
+        input:focus { outline: 3px solid var(--yellow); }
+        button, a.btn { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 48px; padding: 12px 16px; border: 2px solid var(--ink); border-radius: 0; background: var(--ink); color: #fff; font-size: 16px; font-weight: 700; font-family: inherit; text-decoration: none; cursor: pointer; }
+        button[disabled] { opacity: .6; cursor: wait; }
+        .error { margin: 0 0 14px; padding: 10px 12px; background: #fff3f3; border-left: 4px solid #d62828; font-size: 14px; }
+        .mark { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; margin-bottom: 12px; background: var(--yellow); border: 2px solid var(--ink); border-radius: 50%; font-size: 30px; font-weight: 800; }
+        .center { text-align: center; }
+        small { color: var(--muted); }
+    </style>
+</head>
+<body>
+<main>
+    <h1 class="logo"><span class="highlight">Pellet</span>Trackr</h1>
+    <p class="tagline">Create Smart. Pay Smarter.</p>
+    <div class="card" id="card"><p>Einen Moment …</p></div>
+</main>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script>
+// Eigene Seite für die Links in Firebase-Mails (Bestätigung, Passwort zurücksetzen, E-Mail-Änderung).
+const firebaseConfig = {
+    apiKey: "AIzaSyBaaMwmjxyytxHLinmigccF30-1Wl0tzD0",
+    authDomain: "fgf-3d-druck.firebaseapp.com",
+    projectId: "fgf-3d-druck",
+    appId: "1:37190466890:web:cfb25f3c2f6bb62006d5b3"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+auth.languageCode = 'de';
+
+const params = new URLSearchParams(location.search);
+const mode = params.get('mode');
+const code = params.get('oobCode');
+const card = document.getElementById('card');
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const appLink = '/';
+
+const messages = {
+    'auth/expired-action-code': 'Dieser Link ist abgelaufen. Bitte fordere einen neuen an.',
+    'auth/invalid-action-code': 'Dieser Link ist ungültig oder wurde schon benutzt. Bitte fordere einen neuen an.',
+    'auth/user-disabled': 'Dieses Konto ist deaktiviert.',
+    'auth/user-not-found': 'Zu diesem Link gibt es kein Konto mehr.',
+    'auth/weak-password': 'Das Passwort ist zu schwach. Bitte mindestens 6 Zeichen verwenden.'
+};
+const friendly = error => messages[error.code] || 'Das hat leider nicht geklappt. Bitte versuche es erneut.';
+
+function success(title, text, button) {
+    card.innerHTML = `<div class="center"><div class="mark">✓</div><h2>${esc(title)}</h2><p>${esc(text)}</p></div><a class="btn" href="${appLink}">${esc(button)}</a>`;
+}
+function failure(error) {
+    card.innerHTML = `<h2>Link nicht nutzbar</h2><p>${esc(friendly(error))}</p><a class="btn" href="${appLink}">Zur Anmeldung</a>`;
+}
+
+async function applyAndConfirm(title, text) {
+    try { await auth.applyActionCode(code); success(title, text, 'Zur Anmeldung'); }
+    catch (error) { failure(error); }
+}
+
+async function showReset() {
+    let email;
+    try { email = await auth.verifyPasswordResetCode(code); }
+    catch (error) { return failure(error); }
+    card.innerHTML = `<h2>Neues Passwort festlegen</h2><p>Für <strong>${esc(email)}</strong></p>
+        <div id="msg"></div>
+        <form id="resetForm" novalidate>
+            <label for="pw">Neues Passwort</label>
+            <input id="pw" type="password" autocomplete="new-password" minlength="6" required>
+            <label for="pw2">Passwort wiederholen</label>
+            <input id="pw2" type="password" autocomplete="new-password" minlength="6" required>
+            <button type="submit" id="go">Passwort speichern</button>
+        </form>`;
+    document.getElementById('resetForm').addEventListener('submit', async event => {
+        event.preventDefault();
+        const msg = document.getElementById('msg');
+        const pw = document.getElementById('pw').value;
+        if (pw.length < 6) { msg.innerHTML = '<p class="error">Bitte mindestens 6 Zeichen verwenden.</p>'; return; }
+        if (pw !== document.getElementById('pw2').value) { msg.innerHTML = '<p class="error">Die Passwörter stimmen nicht überein.</p>'; return; }
+        const go = document.getElementById('go');
+        go.disabled = true;
+        try {
+            await auth.confirmPasswordReset(code, pw);
+            success('Passwort geändert', 'Du kannst dich jetzt mit deinem neuen Passwort anmelden.', 'Zur Anmeldung');
+        } catch (error) {
+            go.disabled = false;
+            msg.innerHTML = `<p class="error">${esc(friendly(error))}</p>`;
+        }
+    });
+}
+
+if (!code) failure({ code: 'auth/invalid-action-code' });
+else if (mode === 'resetPassword') showReset();
+else if (mode === 'verifyEmail') applyAndConfirm('E-Mail bestätigt', 'Dein Konto ist aktiviert. Du kannst dich jetzt anmelden.');
+else if (mode === 'recoverEmail') applyAndConfirm('E-Mail-Adresse wiederhergestellt', 'Die frühere E-Mail-Adresse ist wieder aktiv.');
+else failure({ code: 'auth/invalid-action-code' });
+</script>
+</body>
+</html>

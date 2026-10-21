@@ -46,6 +46,18 @@ function knowledgeSourceLinkList() {
 }
 
 const KNOWLEDGE_GUIDES = {
+  start: {
+    title: 'Erste Schritte mit PelletTrackr', source: null,
+    steps: [
+      'Konto bestätigen. Registriere dich mit deiner Hochschul-E-Mail und klicke auf den Link in der Bestätigungsmail. Kommt keine Mail an, schau im Spam-Ordner nach oder melde dich einfach an – wir senden den Link dann erneut.',
+      'Dein Dashboard. Ganz oben siehst du, welche Maschinen gerade frei sind. Darunter stehen deine Aufträge und Kosten: Gesamtkosten, Bezahlt und Offen.',
+      'Einweisung klären. Für manche Maschinen brauchst du eine Sicherheitsunterweisung. Unter „Mein Profil“ siehst du, für welche du eingetragen bist. Im Zweifel frag in der Werkstatt.',
+      'Schritt-für-Schritt-Hilfe nutzen. Wähle hier unter „Hilfe & Anleitungen“ deine Maschine und arbeite die Schritte ab. An der Maschine selbst kommst du mit dem QR-Code auf dem Etikett direkt dorthin.',
+      'Auftrag erfassen. Gib unter „Fertigungsauftrag erfassen“ einen Job-Namen, die Maschine und die Zeit an. Material und Menge nur, wenn du welches verbraucht hast. Die Kosten siehst du sofort.',
+      'Bezahlen. Offene Aufträge findest du unter „Deine Aufträge“. Sobald die Werkstatt die Zahlung bestätigt, steht der Auftrag auf „Bezahlt“ und du kannst den Nachweis öffnen.',
+      'Mehr Services. Unter „Deine Services“ kannst du Equipment leihen, Defekte melden und Material wünschen. Etwas klappt nicht? Nutze die Suche in der Hilfe oder melde ein Problem.'
+    ]
+  },
   weber: {
     title: 'Weber DXR25 · Großroboter / DXR-Steuerung', source: 'weber',
     steps: [
@@ -268,14 +280,6 @@ function knowledgeArticlesFor(machine) {
   return knowledgeArticles.filter(a => a.machineName && haystack.includes(a.machineName.toLocaleLowerCase('de')));
 }
 
-const KNOWLEDGE_ICONS = { weber: '🤖', ur5: '🤖', ginger: '🖨️', admin: '🛠️' };
-function knowledgeIconFor(item) {
-  const text = `${item.profile || ''} ${item.name || ''}`.toLowerCase();
-  if (/laser/.test(text)) return '✂️';
-  if (/cnc|fräs/.test(text)) return '⚙️';
-  return KNOWLEDGE_ICONS[item.profile] || '🛠️';
-}
-
 // Ein Schritt = kurzer Titel + Details; Sicherheitshinweise werden hervorgehoben.
 function knowledgeSplitStep(text) {
   const match = String(text).match(/^(.{12,90}?[.:])\s+([\s\S]+)$/);
@@ -319,13 +323,13 @@ function showKnowledgeGuideMode() {
   const target = document.getElementById('knowledgeContent');
   if (!target) return;
   const tiles = knowledgeGuideTargets().map(item => `<button class="knowledge-tile" onclick="startKnowledgeGuide('${knowledgeEscape(item.value)}')">
-      <span class="knowledge-tile-icon">${knowledgeIconFor(item)}</span>
       <span class="knowledge-tile-text"><strong>${knowledgeEscape(item.name)}</strong>${item.status ? `<small class="knowledge-status knowledge-status-${knowledgeEscape(item.statusKey)}">${knowledgeEscape(item.status)}</small>` : '<small>Anleitung</small>'}</span>
       <span class="knowledge-tile-go" aria-hidden="true">→</span></button>`).join('');
   const articles = knowledgeArticles.map(a => `<article><strong>${knowledgeEscape(a.title)}</strong>${a.machineName ? ` · ${knowledgeEscape(a.machineName)}` : ''}<p>${knowledgeEscape(a.body)}</p>${a.url ? `<a href="${knowledgeEscape(a.url)}" target="_blank" rel="noopener noreferrer">Anleitung öffnen</a>` : ''}</article>`).join('');
-  target.innerHTML = `<div class="knowledge-hero"><h3>Womit möchtest du starten?</h3><p>Wähle deine Maschine – wir führen dich Schritt für Schritt.</p></div>
+  target.innerHTML = `<button class="knowledge-start" onclick="startKnowledgeGuide('profile:start')"><span><strong>Neu hier? Erste Schritte</strong><small>In 2 Minuten wissen, wie alles funktioniert</small></span><span class="knowledge-tile-go" aria-hidden="true">→</span></button>
+    <div class="knowledge-hero"><h3>Deine Maschine</h3><p>Wähle eine Maschine – wir führen dich Schritt für Schritt.</p></div>
     <div class="knowledge-tiles">${tiles || '<p>Noch keine Anleitungen hinterlegt.</p>'}</div>
-    <div class="knowledge-help-card"><h3>🔎 Etwas funktioniert nicht?</h3>
+    <div class="knowledge-help-card"><h3>Etwas funktioniert nicht?</h3>
       <div class="knowledge-chat-input"><input id="knowledgeQuestion" class="form-input" placeholder="Beschreibe kurz das Problem …" enterkeyhint="search" onkeydown="if(event.key === 'Enter'){ submitKnowledgeQuestion(); }"><button class="btn btn-primary" onclick="submitKnowledgeQuestion()">Suchen</button></div>
       <div class="knowledge-suggestions"><button onclick="askKnowledgeQuestion('Der Roboter bewegt sich nicht')">Roboter bewegt sich nicht</button><button onclick="askKnowledgeQuestion('Sicherheitsbereich ausgelöst')">Sicherheitsstopp</button><button onclick="askKnowledgeQuestion('Die erste Schicht haftet nicht')">Erste Schicht haftet nicht</button></div>
       <div id="knowledgeConversation" class="knowledge-conversation"></div></div>
@@ -358,7 +362,7 @@ function startKnowledgeGuide(valueArg) {
 function knowledgeGuideHeader() {
   const total = activeGuide.steps.length;
   const segments = activeGuide.steps.map((_, i) => `<button class="kstep-seg ${i < activeGuideStep ? 'done' : ''} ${i === activeGuideStep ? 'current' : ''}" ${i < activeGuideStep ? `onclick="knowledgeGuideGo(${i})" aria-label="Zu Schritt ${i + 1}"` : 'tabindex="-1" aria-hidden="true"'}></button>`).join('');
-  return `<div class="kguide-top"><button class="btn btn-link knowledge-back" onclick="showKnowledgeGuideMode()">← Alle Maschinen</button><span class="kguide-machine">${knowledgeIconFor({ profile: activeGuide.profile, name: activeGuide.machine?.name || activeGuide.title })} ${knowledgeEscape(activeGuide.machine?.name || activeGuide.title)}</span></div>
+  return `<div class="kguide-top"><button class="btn btn-link knowledge-back" onclick="showKnowledgeGuideMode()">← Alle Maschinen</button><span class="kguide-machine">${knowledgeEscape(activeGuide.machine?.name || activeGuide.title)}</span></div>
     <div class="kstep-bar" role="progressbar" aria-valuemin="1" aria-valuemax="${total}" aria-valuenow="${activeGuideStep + 1}">${segments}</div>`;
 }
 
@@ -373,23 +377,25 @@ function renderKnowledgeGuideStep() {
       <div class="kstep-head"><span class="kstep-number">${activeGuideStep + 1}</span><span class="kstep-count">von ${total}</span></div>
       <h3 class="kstep-title">${knowledgeEscape(title)}</h3>
       ${body ? `<p class="kstep-body">${knowledgeEscape(body)}</p>` : ''}
-      ${warning ? '<div class="kstep-callout">⚠️ <span><strong>Sicherheit:</strong> Nur eingewiesene Personen. Bei Gefahr sofort stoppen, im Notfall Not-Aus drücken.</span></div>' : ''}
+      ${warning ? '<div class="kstep-callout"><b class="kstep-callout-mark">!</b><span><strong>Sicherheit:</strong> Nur eingewiesene Personen. Bei Gefahr sofort stoppen, im Notfall Not-Aus drücken.</span></div>' : ''}
     </div>
     <div class="kstep-actions">
       <button class="btn btn-primary kstep-next" onclick="${isLast ? 'knowledgeGuideDone()' : 'knowledgeGuideNext()'}">✓ ${isLast ? 'Alles erledigt' : 'Erledigt – weiter'}</button>
       <button class="btn btn-secondary" onclick="knowledgeGuidePrevious()" ${activeGuideStep === 0 ? 'disabled' : ''}>Zurück</button>
     </div>
-    <div class="kstep-foot"><button class="link-small" onclick="showKnowledgeChatMode()">Etwas klappt nicht? Frage stellen</button><span class="knowledge-source">${knowledgeSourceLink(activeGuide.source)}</span></div>`;
+    <div class="kstep-foot"><button class="link-small" onclick="showKnowledgeChatMode()">Etwas klappt nicht? Frage stellen</button><span class="knowledge-source">${activeGuide.source ? knowledgeSourceLink(activeGuide.source) : ''}</span></div>`;
 }
 
 function knowledgeGuideDone() {
   const target = document.getElementById('knowledgeContent');
   if (!target || !activeGuide) return;
+  const isStart = activeGuide.profile === 'start';
   activeGuideStep = activeGuide.steps.length;
   const name = knowledgeEscape(activeGuide.machine?.name || activeGuide.title);
-  target.innerHTML = `<div class="kdone"><div class="kdone-icon">🎉</div><h3>Geschafft!</h3><p>Alle ${activeGuide.steps.length} Schritte für <strong>${name}</strong> sind erledigt. Viel Erfolg bei der Arbeit!</p>
-    <button class="btn btn-primary" onclick="knowledgeFinishGuide()">Auftrag erfassen</button>
-    <button class="btn btn-secondary" onclick="showKnowledgeGuideMode()">Zurück zur Übersicht</button></div>`;
+  target.innerHTML = `<div class="kdone"><div class="kdone-icon">✓</div><h3>Geschafft!</h3>
+    <p>${isStart ? 'Du kennst jetzt die Grundlagen. Such dir als Nächstes deine Maschine aus.' : `Alle ${activeGuide.steps.length} Schritte für <strong>${name}</strong> sind erledigt. Viel Erfolg bei der Arbeit!`}</p>
+    <button class="btn btn-primary" onclick="${isStart ? 'showKnowledgeGuideMode()' : 'knowledgeFinishGuide()'}">${isStart ? 'Maschine wählen' : 'Auftrag erfassen'}</button>
+    <button class="btn btn-secondary" onclick="${isStart ? 'closeModal()' : 'showKnowledgeGuideMode()'}">${isStart ? 'Schließen' : 'Zurück zur Übersicht'}</button></div>`;
 }
 
 function knowledgeGuideGo(index) { if (activeGuide && index >= 0 && index < activeGuide.steps.length) { activeGuideStep = index; renderKnowledgeGuideStep(); } }
