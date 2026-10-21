@@ -59,6 +59,22 @@ async function fillMaterialMachines(materialSnapshot) {
   }
 }
 
+// Maschinen ohne Werkstattmaterial (z. B. Laser): Materialfelder im Auftragsformular ausblenden.
+function applyMachineMaterialUse(rule) {
+  const uses = !rule || rule.uses !== false;
+  window.__machineUsesMaterial = uses;
+  ['materialRow', 'ownMaterialRow'].forEach(id => { const row = document.getElementById(id); if (row) row.hidden = !uses; });
+  if (!uses) {
+    const select = document.getElementById('material');
+    if (select) select.value = '';
+    const amount = document.getElementById('materialMenge');
+    if (amount) amount.value = '';
+    const own = document.getElementById('ownMaterialUsed');
+    if (own) own.checked = false;
+    document.getElementById('material')?.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+}
+
 // Masterbatch nur anbieten, wenn die gewählte Maschine ihn unterstützt (Feld "Masterbatch möglich").
 function applyMachineMasterbatch(rule) {
   const select = document.getElementById('masterbatch');
@@ -199,6 +215,9 @@ async function loadFormPrinters() {
       option.dataset.rule = JSON.stringify(window.machineMaterialRule ? window.machineMaterialRule(printer) : null);
       option.dataset.training = printer.requiresSafetyTraining ? '1' : '';
       option.dataset.status = printer.status || 'available';
+      const hasGuide = (Array.isArray(printer.guideSteps) && printer.guideSteps.length) || (Array.isArray(printer.guideLinks) && printer.guideLinks.length)
+        || (typeof knowledgeProfileForMachine === 'function' && knowledgeProfileForMachine({ ...printer, collection }));
+      option.dataset.guide = hasGuide ? '1' : '';
       const statusNote = { maintenance: ' (Wartung)', broken: ' (Defekt)' }[window.MachineStatus ? (printer.status === 'printing' ? 'in_use' : printer.status) : ''] || '';
       option.textContent = printer.name + statusNote;
 
@@ -321,10 +340,12 @@ function setupFormEventListeners() {
         try { rule = JSON.parse(selectedOption.dataset.rule || 'null'); } catch (_) { rule = null; }
         loadMaterials(rule);
         applyMachineMasterbatch(rule);
+        applyMachineMaterialUse(rule);
       } else {
         // Keine Maschine gewählt: alle Materialien
         loadMaterials();
         applyMachineMasterbatch(null);
+        applyMachineMaterialUse(null);
       }
       if (typeof window.updateCostPreview === 'function') {
         window.updateCostPreview();

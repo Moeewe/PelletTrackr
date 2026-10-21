@@ -357,7 +357,14 @@
     finally { state.busy = false; if ($('safetySave')) $('safetySave').disabled = false; }
   }
 
-  window.SafetyTraining={edit,save,revoke,history,settings,requirement,addType,render,cleanup,bulkRefresh,bulkToggle,bulkSelectShown,bulkClear,bulkSave};
+  async function bulkForMachine(collection, id) {
+    try {
+      await loadAdmin();
+      const index = state.machines.findIndex(m => m.collection === collection && m.id === id);
+      bulk(index);
+    } catch (error) { notify(error.message); }
+  }
+  window.SafetyTraining={bulkForMachine,edit,save,revoke,history,settings,requirement,addType,render,cleanup,bulkRefresh,bulkToggle,bulkSelectShown,bulkClear,bulkSave};
   window.showSafetyTrainingManager=manager;
   window.initializeSafetyTrainingsForUser=loadOwn;
   window.loadUserSafetyTrainings=loadOwn;

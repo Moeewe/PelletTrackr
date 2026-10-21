@@ -31,7 +31,9 @@ function machineMaterialRule(machine) {
   return {
     types,
     ids: Array.isArray(machine?.materialIds) ? machine.materialIds : [],
-    masterbatch: machine?.supportsMasterbatch !== false
+    masterbatch: machine?.supportsMasterbatch !== false,
+    // false = die Maschine verbraucht kein Werkstattmaterial (z. B. Laser); ältere Maschinen ohne Angabe gelten als "ja"
+    uses: machine?.usesMaterial !== false
   };
 }
 window.machineMaterialRule = machineMaterialRule;

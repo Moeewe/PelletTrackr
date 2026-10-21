@@ -68,14 +68,24 @@
       }
     }
     hint.textContent = messages.join(' ');
-    hint.hidden = !messages.length;
+    if (option.dataset.guide === '1') {
+      const [collection, id] = option.value.split('/');
+      const link = document.createElement('button');
+      link.type = 'button';
+      link.className = 'link-small';
+      link.textContent = 'Anleitung zu dieser Maschine';
+      link.addEventListener('click', () => window.showKnowledgeBase?.({ collection, id }));
+      if (messages.length) hint.append(' ');
+      hint.append(link);
+    }
+    hint.hidden = !hint.childNodes.length;
   }
   document.addEventListener('change', event => { if (event.target?.id === 'printer') updateMachineHint(); });
 
   // Tarif der gewählten Maschine: ohne Materialabrechnung / ohne Zeitabrechnung entfallen Felder.
   document.addEventListener('billing:quote', event => {
     const tariff = event.detail?.tariff || {};
-    const noMaterial = tariff.materialRule === 'none';
+    const noMaterial = tariff.materialRule === 'none' || window.__machineUsesMaterial === false;
     setHidden('materialRow', noMaterial);
     setHidden('ownMaterialRow', noMaterial);
     setHidden('printTimeGroup', ['flat', 'free'].includes(tariff.mode));

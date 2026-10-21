@@ -390,12 +390,23 @@ function startKnowledgeGuide(valueArg) {
   renderKnowledgeGuideStep();
 }
 
+// Welches Material die Maschine verarbeitet (aus "Maschinen verwalten")
+function knowledgeMaterialLine(machine) {
+  if (!machine || !window.machineMaterialRule) return '';
+  const rule = window.machineMaterialRule(machine);
+  if (!rule.uses) return '';
+  const forms = rule.types.map(type => ({ filament: 'Filament', pellet: 'Pellet' }[type] || type));
+  if (!forms.length && !rule.ids.length) return '';
+  return `<p class="kguide-material">Material: ${knowledgeEscape(forms.join(' · ') || 'ausgewählte Materialien')}${rule.masterbatch ? '' : ' · ohne Masterbatch'}</p>`;
+}
+
 function knowledgeGuideHeader() {
   const total = activeGuide.steps.length;
   const segments = activeGuide.steps.map((_, i) => i < activeGuideStep
     ? `<button class="kstep-seg done" onclick="knowledgeGuideGo(${i})" aria-label="Zu Schritt ${i + 1}"></button>`
     : `<span class="kstep-seg ${i === activeGuideStep ? 'current' : ''}"></span>`).join('');
   return `<div class="kguide-top"><button class="btn btn-link knowledge-back" onclick="showKnowledgeGuideMode()">← Alle Maschinen</button><span class="kguide-machine">${knowledgeEscape(activeGuide.machine?.name || activeGuide.title)}</span></div>
+    ${knowledgeMaterialLine(activeGuide.machine)}
     <div class="kstep-bar" role="progressbar" aria-valuemin="1" aria-valuemax="${total}" aria-valuenow="${activeGuideStep + 1}">${segments}</div>`;
 }
 

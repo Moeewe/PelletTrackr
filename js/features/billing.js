@@ -107,6 +107,12 @@
         '<h3>Nutzergruppen</h3><p>Standard für alle sind Studierende. Eine andere Gruppe (Mitarbeitende, Externe) weist du im Nutzerprofil zu: Nutzerverwaltung → Person → Bearbeiten → Nutzergruppe.</p>');
     }catch(error){window.toast.error(error.message);}
   }
+  // Direkt zum Tarif einer Maschine (aus "Maschinen verwalten")
+  async function openFor(collection,id) {
+    await open();
+    const index=machines.findIndex(m=>m.collection===collection&&m.id===id);
+    if(index>=0) edit(index);
+  }
   function showGroup() {const u=users[Number($('billingUser').value)];$('billingGroup').value=u?.billingGroup||'standard';}
   async function saveGroup() {
     try {await admin();const u=users[Number($('billingUser').value)];if(!u)throw Error('Bitte eine Person auswählen.');
@@ -117,7 +123,8 @@
     selection=machines[index];const policy=policies[policyId(selection.collection,selection.id)];revision=policy?.revision||0;
     modal('<h3>'+esc(selection.name)+'</h3><p>„Wie Studierende“ gilt nur, wenn für die Gruppe kein eigener Tarif hinterlegt ist. Eigenes Material wird nicht berechnet; separat ausgewählter Werkstatt-Masterbatch wird bei neuen Tarifen zusätzlich berechnet. Für Laser „Kein Material berechnen“ wählen.</p>'+
       Object.entries(groups).map(([g,label])=>{
-        const r=policy?.rates[g] || (g==='standard'?{mode:'legacy',rateCents:cents(number(selection.pricePerHour)),materialRule:'workshop'}:{mode:'inherit',rateCents:0,materialRule:'workshop'});
+        const defaultRule=selection.usesMaterial===false?'none':'workshop'; // Maschinen ohne Werkstattmaterial: Material standardmäßig nicht berechnen
+        const r=policy?.rates[g] || (g==='standard'?{mode:'legacy',rateCents:cents(number(selection.pricePerHour)),materialRule:defaultRule}:{mode:'inherit',rateCents:0,materialRule:defaultRule});
         return '<fieldset class="billing-rate"><legend>'+label+'</legend><label>Abrechnung<select id="mode-'+g+'" class="form-select">'+Object.entries(g==='standard'?modes:{inherit:'Wie Studierende (Standard)',...modes}).map(([k,v])=>'<option value="'+k+'" '+(k===r.mode?'selected':'')+'>'+v+'</option>').join('')+'</select></label>'+
           '<label>Betrag (€ je Auftrag / Minute / Stunde)<input id="rate-'+g+'" class="form-input" type="number" min="0" max="100000" step="0.01" value="'+r.rateCents/100+'"></label>'+
           '<label>Material<select id="material-'+g+'" class="form-select"><option value="workshop">Werkstattmaterial nach Menge berechnen</option><option value="none" '+(r.materialRule==='none'?'selected':'')+'>Kein Material berechnen</option></select></label></fieldset>';
@@ -139,5 +146,5 @@
       window.toast.success('Tarife gespeichert. Sie gelten für neue Aufträge.');await open();
     }catch(error){window.toast.error(error.message);}
   }
-  window.Billing={groups,calculate,quote,preview,addEntry,open,edit,savePolicy,showGroup,saveGroup};
+  window.Billing={groups,openFor,calculate,quote,preview,addEntry,open,edit,savePolicy,showGroup,saveGroup};
 })();

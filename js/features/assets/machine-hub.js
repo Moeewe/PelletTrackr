@@ -8,13 +8,13 @@
   const COLLECTIONS = ['printers', 'machines'];
   // Art → Sammlung. Drucker bleiben in "printers", alles andere in "machines".
   const TYPES = [
-    { key: 'filament', label: '3D-Drucker (Filament)', collection: 'printers', forms: ['filament'] },
-    { key: 'pellet', label: '3D-Drucker (Pellet)', collection: 'printers', forms: ['pellet'] },
-    { key: 'laser', label: 'Laser', collection: 'machines', jobTypes: ['Lasern'], forms: [] },
-    { key: 'cnc', label: 'CNC-Fräse', collection: 'machines', jobTypes: ['CNC-Fräsen'], forms: [] },
-    { key: 'weber_dxr', label: 'Großroboter (Weber DXR25)', collection: 'machines', jobTypes: ['Roboter', 'Weber DXR25'], forms: ['pellet'] },
-    { key: 'ur5', label: 'Roboterarm (Universal Robots UR5)', collection: 'machines', jobTypes: ['Roboter', 'Universal Robots UR5'], forms: [] },
-    { key: 'other', label: 'Sonstige Maschine', collection: 'machines', jobTypes: ['Weitere Fertigung'], forms: [] }
+    { key: 'filament', label: '3D-Drucker (Filament)', collection: 'printers', forms: ['filament'], uses: true },
+    { key: 'pellet', label: '3D-Drucker (Pellet)', collection: 'printers', forms: ['pellet'], uses: true },
+    { key: 'laser', label: 'Laser', collection: 'machines', jobTypes: ['Lasern'], forms: [], uses: false },
+    { key: 'cnc', label: 'CNC-Fräse', collection: 'machines', jobTypes: ['CNC-Fräsen'], forms: [], uses: false },
+    { key: 'weber_dxr', label: 'Großroboter (Weber DXR25)', collection: 'machines', jobTypes: ['Roboter', 'Weber DXR25'], forms: ['pellet'], uses: true },
+    { key: 'ur5', label: 'Roboterarm (Universal Robots UR5)', collection: 'machines', jobTypes: ['Roboter', 'Universal Robots UR5'], forms: [], uses: true },
+    { key: 'other', label: 'Sonstige Maschine', collection: 'machines', jobTypes: ['Weitere Fertigung'], forms: [], uses: false }
   ];
   const FORMS = { filament: 'Filament', pellet: 'Pellet' };
   const PAGE = 15;
@@ -22,6 +22,7 @@
   let materials = [];
   let materialRestrict = false;
   let materialPicked = new Set();
+  let autoUses = null; // automatisch gesetzter Wert für "Verbraucht Material" (nur solange nicht von Hand geändert)
   let autoForms = null; // zuletzt automatisch vorgewählte Formen (nur solange der Nutzer sie nicht geändert hat)
 
   const $ = id => document.getElementById(id);
@@ -78,13 +79,15 @@
       const heading = kind !== lastKind ? `<h4 class="printer-group">${esc(kind)}</h4>` : '';
       lastKind = kind;
       const guide = Array.isArray(item.guideSteps) && item.guideSteps.length ? 'Anleitung vorhanden' : 'Keine Anleitung';
-      const details = [item.model, linkSummary(item), item.requiresSafetyTraining ? 'Einweisung nötig' : '', item.active === false ? 'Deaktiviert' : '', guide].filter(Boolean).join(' · ');
+      const details = [item.model, item.usesMaterial === false ? 'Ohne Werkstattmaterial' : linkSummary(item), item.requiresSafetyTraining ? 'Einweisung nötig' : '', item.active === false ? 'Deaktiviert' : '', guide].filter(Boolean).join(' · ');
       const index = state.items.indexOf(item);
       return `${heading}<article class="printer-row ${item.active === false ? 'is-inactive' : ''}">
         <div class="printer-row-main"><h4 class="printer-row-name">${esc(item.name)}</h4><p class="printer-row-details">${esc(details)}</p></div>
         ${window.MachineStatus.buttons(item.collection, item.id, item.status)}
         <details class="printer-row-more"><summary>Mehr</summary><div class="printer-row-actions">
           <button class="btn btn-secondary btn-small" onclick="MachineHub.edit(${index})">Bearbeiten</button>
+          <button class="btn btn-secondary btn-small" onclick="MachineHub.tariff(${index})">Tarif</button>
+          <button class="btn btn-secondary btn-small" onclick="MachineHub.train(${index})">Personen einweisen</button>
           <button class="btn btn-secondary btn-small" onclick="MachineHub.guide(${index})">Anleitung</button>
           <button class="btn btn-secondary btn-small" onclick="MachineHub.qr(${index})">QR / Etikett</button>
           <button class="btn btn-secondary btn-small" onclick="MachineHub.duplicate(${index})">Duplizieren</button>
@@ -139,9 +142,17 @@
       : '<p class="printer-empty">Keine passenden Materialien angelegt.</p>';
   }
 
+  function toggleMaterialFields() {
+    const uses = $('hubUses')?.checked !== false;
+    document.querySelectorAll('[data-hub-material]').forEach(el => { el.hidden = !uses; });
+  }
+
   function onTypeChange() {
     const type = TYPES.find(t => t.key === $('hubType').value);
     document.querySelectorAll('[data-hub-printer-only]').forEach(el => { el.hidden = type.collection !== 'printers'; });
+    const usesBox = $('hubUses');
+    if (usesBox && autoUses !== 'locked' && (autoUses === null || usesBox.checked === autoUses)) { usesBox.checked = type.uses; autoUses = type.uses; }
+    toggleMaterialFields();
     // Passende Materialform vorwählen, solange sie nicht von Hand geändert wurde
     const current = selectedForms().sort().join(',');
     if (!current || (autoForms !== null && current === autoForms)) {
@@ -160,6 +171,7 @@
       const rule = window.machineMaterialRule(item || {});
       materialRestrict = rule.ids.length > 0;
       autoForms = item ? null : TYPES[0].forms.join(',');
+      autoUses = item ? 'locked' : TYPES[0].uses; // bestehende Maschinen behalten ihren gespeicherten Wert
       materialPicked = new Set(rule.ids);
       // Beim Bearbeiten nur Arten derselben Sammlung anbieten (Drucker bleiben Drucker).
       const typeOptions = TYPES.filter(t => !item || t.collection === item.collection)
@@ -175,11 +187,12 @@
          <div class="form-group" data-hub-printer-only><label class="form-label" for="hubVolume">Bauraum</label><input id="hubVolume" class="form-input" maxlength="80" placeholder="z. B. 300 × 300 × 400 mm" value="${esc(item?.buildVolume || '')}"></div>
          <div class="form-group" data-hub-printer-only><label class="form-label" for="hubPrice">Preis pro Stunde (alte Abrechnung)</label><input id="hubPrice" class="form-input" type="number" min="0" step="0.01" value="${esc(item?.pricePerHour ?? '')}"><small>Nur für die bisherige Regel. Aktuelle Preise legst du unter „Tarife &amp; Nutzergruppen“ fest.</small></div>
          <fieldset class="hub-fieldset"><legend>Material</legend>
-           <p class="hub-hint">Welche Materialformen kann die Maschine verarbeiten? Im Auftragsformular erscheinen dann nur passende Materialien.</p>
-           <div class="hub-checks">${forms}</div>
-           <label class="checkbox-label"><input type="checkbox" class="checkbox-input" id="hubRestrict" ${materialRestrict ? 'checked' : ''} onchange="MachineHub.restrictChanged(this.checked)"> Nur bestimmte Materialien erlauben</label>
-           <div id="hubRestrictBox" ${materialRestrict ? '' : 'hidden'}><div id="hubMaterialList" class="hub-material-list"></div></div>
-           <label class="checkbox-label"><input type="checkbox" class="checkbox-input" id="hubMasterbatch" ${rule.masterbatch ? 'checked' : ''}> Masterbatch (Farbzusatz) möglich</label>
+           <label class="checkbox-label"><input type="checkbox" class="checkbox-input" id="hubUses" ${item?.usesMaterial === false ? '' : 'checked'} onchange="MachineHub.usesChanged()"> Verbraucht Werkstattmaterial (Filament, Pellets)</label>
+           <p class="hub-hint" data-hub-material>Welche Materialformen kann die Maschine verarbeiten? Im Auftragsformular erscheinen dann nur passende Materialien.</p>
+           <div class="hub-checks" data-hub-material>${forms}</div>
+           <label class="checkbox-label" data-hub-material><input type="checkbox" class="checkbox-input" id="hubRestrict" ${materialRestrict ? 'checked' : ''} onchange="MachineHub.restrictChanged(this.checked)"> Nur bestimmte Materialien erlauben</label>
+           <div id="hubRestrictBox" data-hub-material ${materialRestrict ? '' : 'hidden'}><div id="hubMaterialList" class="hub-material-list"></div></div>
+           <label class="checkbox-label" data-hub-material><input type="checkbox" class="checkbox-input" id="hubMasterbatch" ${rule.masterbatch ? 'checked' : ''}> Masterbatch (Farbzusatz) möglich</label>
          </fieldset>
          <fieldset class="hub-fieldset"><legend>Einweisung</legend>
            <label class="checkbox-label"><input type="checkbox" class="checkbox-input" id="hubTraining" ${item?.requiresSafetyTraining ? 'checked' : ''}> Einweisung erforderlich</label>
@@ -203,13 +216,14 @@
       if (item && type.collection !== item.collection) throw Error('Die Art passt nicht zur bestehenden Maschine.');
       const priceText = $('hubPrice')?.value;
       if (type.collection === 'printers' && priceText && !(Number(priceText) >= 0)) throw Error('Bitte einen gültigen Preis eingeben.');
-      const forms = selectedForms();
-      const ids = materialRestrict ? Array.from(materialPicked).filter(id => materials.some(m => m.id === id && (!forms.length || forms.includes(m.type)))) : [];
-      if (materialRestrict && !ids.length) throw Error('Bitte mindestens ein Material auswählen oder „Nur bestimmte Materialien erlauben“ ausschalten.');
+      const uses = $('hubUses').checked;
+      const forms = uses ? selectedForms() : [];
+      const ids = uses && materialRestrict ? Array.from(materialPicked).filter(id => materials.some(m => m.id === id && (!forms.length || forms.includes(m.type)))) : [];
+      if (uses && materialRestrict && !ids.length) throw Error('Bitte mindestens ein Material auswählen oder „Nur bestimmte Materialien erlauben“ ausschalten.');
       const data = {
         name, model: $('hubModel').value.trim(), location: $('hubLocation').value.trim(), notes: $('hubNotes').value.trim(),
         active: $('hubActive').checked, requiresSafetyTraining: $('hubTraining').checked, trainingTypeName: $('hubTrainingName').value.trim(),
-        materialTypes: forms, materialIds: ids, supportsMasterbatch: $('hubMasterbatch').checked,
+        usesMaterial: uses, materialTypes: forms, materialIds: ids, supportsMasterbatch: uses && $('hubMasterbatch').checked,
         updatedBy: user.uid, updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
       };
       if (type.collection === 'printers') {
@@ -258,6 +272,9 @@
 
   window.MachineHub = {
     open, edit, save, duplicate, remove,
+    tariff: index => { const m = state.items[index]; if (m) window.Billing.openFor(m.collection, m.id); },
+    train: index => { const m = state.items[index]; if (m) window.SafetyTraining.bulkForMachine(m.collection, m.id); },
+    usesChanged: () => { toggleMaterialFields(); autoUses = 'locked'; },
     guide: index => { const m = state.items[index]; if (m) window.KnowledgeAdmin.editGuide(m.collection, m.id, 'MachineHub.open()'); },
     qr: index => { const m = state.items[index]; if (m) window.MachineLabels.open([`${m.collection}:${m.id}`]); },
     search: term => { state.term = term; state.limit = PAGE; renderList(); },
