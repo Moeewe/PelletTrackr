@@ -417,6 +417,8 @@ function closeEquipmentRequests() {
  * Load equipment requests from Firebase
  */
 async function loadEquipmentRequests() {
+    // Die Collection "requests" ist laut Firestore-Regeln nur für Admins lesbar.
+    if (!window.currentUser?.isAdmin) return;
     try {
         // Use simple query without orderBy to avoid index issues
         const querySnapshot = await window.db.collection('requests')
