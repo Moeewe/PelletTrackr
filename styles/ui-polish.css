@@ -97,3 +97,51 @@ input, select, textarea, button { font-family: inherit; }
 .machine-time-notice { padding: .8rem; background: #fff4d6; border-radius: 8px; }
 .machine-time-empty { color: #59616a; }
 @media (max-width: 520px) { .machine-time-session { align-items: flex-start; flex-direction: column; } }
+
+/* ==================== MOBILE USABILITY ==================== */
+/* Touch-Ziele mind. 44px, Eingaben mind. 16px (verhindert Zoom beim Fokus in iOS Safari). */
+@media (max-width: 768px), (pointer: coarse) {
+  .btn,
+  button.btn,
+  .btn-small {
+    min-height: 44px;
+  }
+
+  .form-input,
+  .form-select,
+  .form-textarea,
+  .modal .form-input,
+  .modal .form-select,
+  .modal .form-textarea,
+  .search-input,
+  .sort-select {
+    font-size: 16px;
+    min-height: 44px;
+  }
+
+  .close-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .checkbox-label {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+/* Notch/Home-Indikator nicht überdecken (viewport-fit=cover) */
+body {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Bewegung reduzieren, wenn das System es verlangt */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
