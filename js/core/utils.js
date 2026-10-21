@@ -6,6 +6,23 @@ function formatCurrency(amount, decimals = 2) {
   return (amount || 0).toFixed(decimals).replace('.', ',') + ' €';
 }
 
+// Verständliche Maschinenart statt interner Namen wie "printers" oder "weber_dxr".
+function machineKindLabel(machine) {
+  if (!machine) return 'Maschine';
+  const kinds = { laser: 'Laser', cnc: 'CNC-Fräse', weber_dxr: 'Großroboter', ur5: 'Roboterarm', other: 'Weitere Fertigung' };
+  const typed = kinds[String(machine.machineType || machine.category || '').toLowerCase()];
+  if (typed) return typed;
+  if (Array.isArray(machine.jobTypes) && machine.jobTypes.length) return machine.jobTypes.join(' · ');
+  if (machine.collection === 'printers') {
+    const material = String(machine.type || '').toLowerCase();
+    return material === 'pellet' ? '3D-Drucker (Pellet)' : material === 'filament' ? '3D-Drucker (Filament)' : '3D-Drucker';
+  }
+  if (machine.collection === 'equipment') return 'Equipment (zum Ausleihen)';
+  if (machine.collection === 'safetyTrainingTypes') return 'Unterweisungsart';
+  return 'Maschine';
+}
+window.machineKindLabel = machineKindLabel;
+
 // Admin-Zugriff prüfen
 function checkAdminAccess() {
   if (!window.currentUser || !window.currentUser.isAdmin) {

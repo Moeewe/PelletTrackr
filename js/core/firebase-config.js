@@ -25,6 +25,22 @@ if (typeof firebase !== 'undefined') {
     console.error("❌ Firebase SDK nicht gefunden!");
 }
 
+// Firestore-Aufruf mit Wiederholung bei Verbindungsproblemen. Fehlende Berechtigungen o. Ä. werden
+// nicht wiederholt, sondern sofort gemeldet.
+async function safeFirebaseOp(operation, maxRetries = 3, delay = 1000) {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+            return await operation();
+        } catch (error) {
+            const transient = ['unavailable', 'deadline-exceeded', 'resource-exhausted'].includes(error?.code);
+            if (!transient || attempt === maxRetries - 1) throw error;
+            console.warn(`⚠️ Firebase-Verbindungsproblem (Versuch ${attempt + 1}/${maxRetries}):`, error.code);
+            await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, attempt)));
+        }
+    }
+}
+window.safeFirebaseOp = safeFirebaseOp;
+
 // ===== SICHERHEITSVERBESSERUNGEN =====
 // Diese Funktionen werden später implementiert
 

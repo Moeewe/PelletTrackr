@@ -156,6 +156,11 @@ const userEscape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'
 function managedUserAction(index, action, checked) {
   const user = visibleManagedUsers[index];
   if (!window.checkAdminAccess() || !user) return;
+  if (action === 'safety') {
+    closeModal();
+    window.showSafetyTrainingManager?.(user.email || user.name || '');
+    return;
+  }
   if (!user.kennung || window.allUsers.filter(u => u.kennung === user.kennung).length !== 1) {
     window.toast.warning('Dieses Profil benötigt zuerst eine eindeutige Kontozuordnung. Es werden keine Änderungen vorgenommen.');
     return;
@@ -185,7 +190,7 @@ function renderUsersTable(users) {
       '<div><dt>Bezahlt</dt><dd>'+money(u.paidAmount)+'</dd></div>'+
       '<div><dt>Letzter Druck</dt><dd>'+userEscape(u.lastEntry?.toLocaleDateString('de-DE')||'Noch kein Druck')+'</dd></div></dl>'+
       '<label class="managed-user-admin"><input type="checkbox" '+(u.isAdmin?'checked':'')+' onchange="managedUserAction('+i+',\'admin\',this.checked)"> Administratorrechte</label>'+
-      '<div class="safety-actions">'+(u.unpaidAmount>0?button('Zahlungserinnerung','reminder')+button('Dringende Erinnerung','urgent'):'')+button('Nutzer löschen','remove','danger')+'</div></details></article>';
+      '<div class="safety-actions">'+button('Unterweisungen','safety')+(u.unpaidAmount>0?button('Zahlungserinnerung','reminder')+button('Dringende Erinnerung','urgent'):'')+button('Nutzer löschen','remove','danger')+'</div></details></article>';
   }).join('')+'</div>';
 }
 

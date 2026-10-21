@@ -97,7 +97,7 @@
   function openModal(title, content) {
     window.showModal('<div class="modal-header safety-header"><h2>'+esc(title)+'</h2>'+button('Schließen','closeModal()')+'</div><div class="modal-body safety-manager">'+content+'</div>', {clearStack:true,pushToStack:false});
   }
-  async function manager() {
+  async function manager(presetSearch = '') {
     try {
       await loadAdmin();
       openModal('Sicherheitsunterweisungen', '<p>Laserschein, Roboter- und Maschineneinweisungen mit Datum dokumentieren. Für mehrere gleichartige Laser eine gemeinsame Unterweisungsart wie „Laserschein · Trotec Speedy 500“ anlegen und den Nachweis dort einmalig pro Person führen.</p>'+
@@ -107,6 +107,7 @@
         '<label>Maschine<select id="safetyMachineFilter" class="form-select" onchange="SafetyTraining.render()">'+option('','Alle Maschinen')+state.machines.map(m=>option(key(m),m.name)).join('')+'</select></label>'+
         '<label>Status<select id="safetyStatusFilter" class="form-select" onchange="SafetyTraining.render()">'+option('','Alle')+option('active','Eingewiesen')+option('revoked','Entzogen')+option('missing','Nicht hinterlegt')+'</select></label>'+
         '<label>Sortierung<select id="safetySort" class="form-select" onchange="SafetyTraining.render()">'+option('name','Person A–Z')+option('machine','Maschine A–Z')+option('date','Neueste Unterweisung')+'</select></label></div><div id="safetyRows"></div>');
+      if (typeof presetSearch === 'string' && presetSearch && $('safetySearch')) $('safetySearch').value = presetSearch;
       render();
     } catch(error) { notify(error.message); }
   }
@@ -134,7 +135,7 @@
       const mid = state.machines.findIndex(m => key(m) === recordKey(r));
       const m = state.machines[mid];
       return '<article class="safety-card"><h3>'+esc(r.userName || r.userEmail || r.userId)+'</h3><p>'+esc(r.userEmail || '')+'</p><h4>'+esc(machineName(r))+'</h4>'+
-        '<p>'+esc(m ? m.collection === typesCollection ? 'Unterweisungsart' : machineStatus(m.status) : 'Zuordnung fehlt / Maschine entfernt')+'</p>'+badge(r)+
+        '<p>'+esc(m ? m.collection === typesCollection ? 'Unterweisungsart' : window.machineKindLabel(m)+' · '+machineStatus(m.status) : 'Zuordnung fehlt / Maschine entfernt')+'</p>'+badge(r)+
         '<p>Unterweisung: '+date(r.trainingDate)+'</p>'+(r.status === 'revoked' ? '<p>Entzogen: '+date(r.revokedAt)+'</p>' : '')+
         '<div class="safety-actions">'+(idx < 0 ? button('Hinterlegen','SafetyTraining.edit(-1,'+uid+','+mid+')','primary') :
         button('Historie','SafetyTraining.history('+idx+')')+
@@ -143,10 +144,11 @@
     }).join('')+'</div>';
   }
   function edit(index=-1, userIndex=-1, machineIndex=-1) {
+    if (index < 0) return bulk(machineIndex, userIndex);
     const r = state.records[index];
     openModal(r ? 'Unterweisung bearbeiten / erneut bestätigen' : 'Unterweisung hinterlegen',
       '<label>Person<select id="safetyUser" class="form-select" '+(r ? 'disabled' : '')+'>'+option('','Bitte auswählen')+state.users.map((u,i)=>option(i,(u.name || u.email || u.id)+' · '+(u.email || u.kennung || u.id))).join('')+'</select></label>'+
-      '<label>Maschine / Unterweisungsart<select id="safetyAsset" class="form-select" '+(r ? 'disabled' : '')+'>'+option('','Bitte auswählen')+state.machines.map((m,i)=>option(i,m.name+' · '+(m.collection === typesCollection ? 'Unterweisungsart' : m.collection === 'equipment' ? 'Equipment' : (m.jobTypes||[]).join(' / ') || 'Maschine'))).join('')+'</select></label>'+
+      '<label>Maschine / Unterweisungsart<select id="safetyAsset" class="form-select" '+(r ? 'disabled' : '')+'>'+option('','Bitte auswählen')+state.machines.map((m,i)=>option(i,m.name+' · '+window.machineKindLabel(m))).join('')+'</select></label>'+
       '<label>Datum der Unterweisung<input id="safetyDate" class="form-input" type="date" max="'+today()+'" value="'+today()+'"></label>'+
       '<label>Durchgeführt von<input id="safetyInstructor" class="form-input" maxlength="160" placeholder="Name der einweisenden Person"></label>'+
       '<label>Notiz / Nachweisnummer<textarea id="safetyNote" class="form-input" maxlength="2000"></textarea></label>'+
@@ -237,7 +239,7 @@
   }
   function settings() {
     openModal('Maschinen & Unterweisungsarten','<p>Vorhandene Maschinen auswählen, für die eine Unterweisung erforderlich ist. Allgemeine Nachweise wie „Laserschein“ können unabhängig von einer bestimmten Maschine erfasst werden.</p>'+
-      '<div class="safety-grid">'+state.machines.map((m,i)=>'<article class="safety-card"><h3>'+esc(m.name)+'</h3><p>'+esc(m.collection)+'</p>'+
+      '<div class="safety-grid">'+state.machines.map((m,i)=>'<article class="safety-card"><h3>'+esc(m.name)+'</h3><p>'+esc(window.machineKindLabel(m))+'</p>'+
         (m.collection === typesCollection ? '<p>Allgemeine Unterweisungsart</p>' : button(isRequired(m) ? 'Unterweisungspflicht deaktivieren' : 'Unterweisung erforderlich','SafetyTraining.requirement('+i+','+!isRequired(m)+')'))+'</article>').join('')+'</div>'+
       '<label>Neue Unterweisungsart<input class="form-input" id="safetyTypeName" maxlength="160" placeholder="Laserschein · Trotec Speedy 500"></label>'+
       '<div class="safety-actions">'+button('Unterweisungsart anlegen','SafetyTraining.addType()','primary')+button('Zur Übersicht','showSafetyTrainingManager()')+'</div>');
@@ -263,7 +265,99 @@
       await loadAdmin(); settings();
     } catch(error) { notify(error.message); }
   }
-  window.SafetyTraining={edit,save,revoke,history,settings,requirement,addType,render,cleanup};
+
+  // ---------- Einweisung für mehrere Personen auf einmal ----------
+  const bulkState = { selected: new Set() };
+  const personLabel = u => u.name || u.email || u.kennung || u.id;
+  const hasActive = (userId, machineKey) => state.records.some(r => r.userId === userId && r.status === 'active' && recordKey(r) === machineKey);
+
+  function bulk(machineIndex = -1, userIndex = -1) {
+    bulkState.selected = new Set(userIndex >= 0 && state.users[userIndex] ? [state.users[userIndex].id] : []);
+    openModal('Einweisung dokumentieren',
+      '<p>Wähle die Maschine und tippe Namen an. Es erscheinen nur Personen, die noch keine gültige Einweisung dafür haben.</p>'+
+      '<label>Maschine / Unterweisungsart<select id="safetyAsset" class="form-select" onchange="SafetyTraining.bulkRefresh()">'+option('','Bitte auswählen')+
+        state.machines.map((m,i)=>option(i,m.name+' · '+window.machineKindLabel(m))).join('')+'</select></label>'+
+      '<div class="safety-filters"><label>Datum der Einweisung<input id="safetyDate" class="form-input" type="date" max="'+today()+'" value="'+today()+'"></label>'+
+      '<label>Durchgeführt von<input id="safetyInstructor" class="form-input" maxlength="160" placeholder="Name der einweisenden Person"></label></div>'+
+      '<label>Personen<input id="safetyPersonSearch" class="form-input" type="search" autocomplete="off" placeholder="Name, E-Mail oder Kennung tippen …" oninput="SafetyTraining.bulkRefresh()"></label>'+
+      '<div class="safety-picker-bar"><span id="safetyPickCount"></span><span><button type="button" class="link-small" onclick="SafetyTraining.bulkSelectShown()">Alle angezeigten auswählen</button><button type="button" class="link-small" onclick="SafetyTraining.bulkClear()">Auswahl leeren</button></span></div>'+
+      '<div id="safetyPersonList" class="safety-person-list"></div>'+
+      '<label>Notiz (optional)<textarea id="safetyNote" class="form-input" maxlength="2000"></textarea></label>'+
+      '<div class="safety-actions">'+button('Speichern','SafetyTraining.bulkSave()','primary',{id:'safetySave'})+button('Abbrechen','showSafetyTrainingManager()')+'</div>');
+    $('safetyInstructor').value = window.currentUser?.name || '';
+    if (machineIndex >= 0) $('safetyAsset').value = machineIndex;
+    bulkRefresh();
+  }
+
+  function bulkCandidates() {
+    const machine = state.machines[Number($('safetyAsset')?.value)];
+    if (!machine) return null;
+    const search = ($('safetyPersonSearch')?.value || '').trim().toLocaleLowerCase('de');
+    const machineKey = key(machine);
+    const open = state.users.filter(u => !hasActive(u.id, machineKey));
+    const shown = open.filter(u => !search || [u.name, u.email, u.kennung].join(' ').toLocaleLowerCase('de').includes(search));
+    return { machine, shown, doneCount: state.users.length - open.length };
+  }
+
+  function bulkRefresh() {
+    const list = $('safetyPersonList');
+    if (!list) return;
+    const info = bulkCandidates();
+    if (!info) { list.innerHTML = '<p class="safety-picker-empty">Bitte zuerst die Maschine auswählen.</p>'; updateBulkCount(); return; }
+    list.innerHTML = (info.shown.length ? info.shown.map(u =>
+        '<label class="safety-person"><input type="checkbox" class="checkbox-input" data-user="'+esc(u.id)+'" '+(bulkState.selected.has(u.id) ? 'checked' : '')+
+        ' onchange="SafetyTraining.bulkToggle(this.dataset.user,this.checked)"><span><strong>'+esc(personLabel(u))+'</strong><small>'+esc(u.email || u.kennung || '')+'</small></span></label>').join('')
+      : '<p class="safety-picker-empty">'+(info.doneCount === state.users.length && state.users.length ? 'Alle Personen sind bereits eingewiesen.' : 'Keine passende Person gefunden.')+'</p>')+
+      (info.doneCount ? '<p class="safety-picker-note">'+info.doneCount+' Person'+(info.doneCount === 1 ? ' ist' : 'en sind')+' bereits eingewiesen und wird nicht angezeigt.</p>' : '');
+    updateBulkCount();
+  }
+  function updateBulkCount() {
+    const n = bulkState.selected.size;
+    if ($('safetyPickCount')) $('safetyPickCount').textContent = n ? n+' ausgewählt' : 'Niemand ausgewählt';
+    if ($('safetySave')) $('safetySave').textContent = n > 1 ? 'Für '+n+' Personen speichern' : 'Speichern';
+  }
+  function bulkToggle(userId, checked) { checked ? bulkState.selected.add(userId) : bulkState.selected.delete(userId); updateBulkCount(); }
+  function bulkSelectShown() { (bulkCandidates()?.shown || []).forEach(u => bulkState.selected.add(u.id)); bulkRefresh(); }
+  function bulkClear() { bulkState.selected.clear(); bulkRefresh(); }
+
+  async function bulkSave() {
+    if (state.busy) return;
+    const machine = state.machines[Number($('safetyAsset')?.value)];
+    const trainingDate = $('safetyDate')?.value;
+    const instructor = $('safetyInstructor')?.value.trim();
+    const people = state.users.filter(u => bulkState.selected.has(u.id));
+    if (!machine) return notify('Bitte eine Maschine auswählen.');
+    if (!people.length) return notify('Bitte mindestens eine Person auswählen.');
+    if (!validDate(trainingDate) || !instructor) return notify('Bitte ein gültiges Datum (nicht in der Zukunft) und die einweisende Person angeben.');
+    state.busy = true;
+    if ($('safetySave')) $('safetySave').disabled = true;
+    const failed = [];
+    let done = 0;
+    try {
+      const machineDoc = await window.db.collection(machine.collection).doc(machine.id).get();
+      if (!machineDoc.exists) throw new Error('Die Maschine wurde inzwischen entfernt.');
+      for (const user of people) {
+        try {
+          const matches = state.records.filter(r => r.userId === user.id && recordKey(r) === key(machine));
+          if (matches.length > 1) throw new Error('Mehrere Alt-Einträge vorhanden.');
+          const existing = matches[0];
+          const ref = window.db.collection(recordsCollection).doc(existing?.id || await documentId(user.id, key(machine)));
+          await change(ref, {
+            userId:user.id,userName:user.name || '',userEmail:user.email || '',
+            machineCollection:machine.collection,machineId:machine.id,machineName:machine.name,
+            status:'active',trainingDate,instructor,note:$('safetyNote').value.trim(),revokedAt:null,revokedBy:null
+          }, existing?.revision || 0, existing ? (existing.status === 'revoked' ? 'renew' : 'update') : 'create');
+          done++;
+        } catch (error) { failed.push(personLabel(user)+': '+error.message); }
+      }
+      if (done) notify(done === 1 ? 'Einweisung gespeichert.' : done+' Einweisungen gespeichert.', 'success');
+      if (failed.length) notify('Nicht gespeichert – '+failed.join('; '));
+      await manager(); loadOwn();
+    } catch (error) { notify(error.message); }
+    finally { state.busy = false; if ($('safetySave')) $('safetySave').disabled = false; }
+  }
+
+  window.SafetyTraining={edit,save,revoke,history,settings,requirement,addType,render,cleanup,bulkRefresh,bulkToggle,bulkSelectShown,bulkClear,bulkSave};
   window.showSafetyTrainingManager=manager;
   window.initializeSafetyTrainingsForUser=loadOwn;
   window.loadUserSafetyTrainings=loadOwn;
