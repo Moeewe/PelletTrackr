@@ -10,6 +10,15 @@ for (const name of ['impressum','datenschutz']) {
   const html=readFileSync(join(root,'HTML',name+'.html'),'utf8').replace('href="../styles.css"','href="styles.css"');
   writeFileSync(join(staging,name+'.html'),html);
 }
+// Inline the @import chain of styles.css into one file: one request instead of 16 sequential ones.
+const cssPath=join(staging,'styles.css');
+if (existsSync(cssPath)) {
+  const css=readFileSync(cssPath,'utf8').replace(/@import url\(['"]\.\/([^'"]+)['"]\);?/g,(m,file)=>{
+    const f=join(root,file);
+    return existsSync(f)?readFileSync(f,'utf8'):m;
+  });
+  writeFileSync(cssPath,css);
+}
 // Preserve the previous build instead of deleting it; never touch source files.
 if (existsSync(join(root,'dist'))) {
   mkdirSync(join(root,'.build-backups'),{recursive:true});
