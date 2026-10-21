@@ -4,6 +4,7 @@
 
   function decorate(input) {
     if (input.dataset.clearReady || !input.parentNode) return;
+    if (input.parentNode.querySelector('.search-clear')) return; // eigenes Kreuz vorhanden
     input.dataset.clearReady = '1';
     const wrap = document.createElement('span');
     wrap.className = 'search-field';

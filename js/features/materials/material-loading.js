@@ -155,6 +155,11 @@ async function loadFormPrinters() {
     console.log("🔄 Erstelle Drucker-Optionen...");
     let loadedCount = 0;
 
+    // Viele Maschinen: nach Art gruppiert (Drucker, Laser, Roboter …) und alphabetisch sortiert.
+    const kindOf = ({doc,collection}) => window.machineKindLabel ? window.machineKindLabel({...doc.data(), collection}) : '';
+    availableMachines.sort((a, b) => kindOf(a).localeCompare(kindOf(b), 'de') || String(a.doc.data().name || '').localeCompare(String(b.doc.data().name || ''), 'de'));
+    const optionGroups = new Map();
+
     availableMachines.forEach(({doc,collection}) => {
       const printer = doc.data();
       console.log("➕ Verarbeite Drucker:", printer.name, "Preis/Stunde:", printer.pricePerHour, "Typ:", printer.type);
@@ -165,11 +170,14 @@ async function loadFormPrinters() {
       option.dataset.collection = collection;
       option.dataset.pricePerHour = printer.pricePerHour || 0;
       option.dataset.type = printer.type || '';
-      option.textContent = (printer.jobTypes?.length ? printer.jobTypes.join(' · ')+' — ' : '')+printer.name;
+      option.textContent = printer.name;
 
       console.log(`📝 Erstelle Option: "${option.textContent}" (value: "${option.value}", pricePerHour: ${option.dataset.pricePerHour})`);
 
-      select.appendChild(option);
+      const kind = kindOf({doc,collection});
+      let group = optionGroups.get(kind);
+      if (!group) { group = document.createElement('optgroup'); group.label = kind; optionGroups.set(kind, group); select.appendChild(group); }
+      group.appendChild(option);
       loadedCount++;
 
       console.log(`✅ Option ${loadedCount} hinzugefügt`);

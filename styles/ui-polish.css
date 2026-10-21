@@ -232,3 +232,16 @@ body {
 input[type="search"]::-webkit-search-cancel-button { display: none; }
 .printer-row-more > summary::after { content: " ▾"; }
 .printer-row-more[open] > summary::after { content: " ▴"; }
+
+/* Maschinenübersicht (Nutzer/Admin) */
+.printer-group { margin: 16px 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .5px; color: #555; }
+.mstatus-pill { display: inline-block; padding: 6px 12px; border: 2px solid #000; font-weight: 600; font-size: 13px; margin: 8px 0; }
+.mstatus-pill.mstatus-btn-available { background: #28a745; color: #fff; }
+.mstatus-pill.mstatus-btn-in_use { background: #ffc107; }
+.mstatus-pill.mstatus-btn-maintenance { background: #6c757d; color: #fff; }
+.mstatus-pill.mstatus-btn-broken { background: #dc3545; color: #fff; }
+.mstatus-btn[disabled] { opacity: .45; cursor: not-allowed; }
+
+/* List Kit */
+.lk-toolbar { display: flex; flex-direction: column; gap: 12px; margin: 12px 0; }
+[hidden] { display: none !important; }
