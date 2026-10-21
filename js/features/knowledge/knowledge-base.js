@@ -268,6 +268,21 @@ function knowledgeArticlesFor(machine) {
   return knowledgeArticles.filter(a => a.machineName && haystack.includes(a.machineName.toLocaleLowerCase('de')));
 }
 
+const KNOWLEDGE_ICONS = { weber: '🤖', ur5: '🤖', ginger: '🖨️', admin: '🛠️' };
+function knowledgeIconFor(item) {
+  const text = `${item.profile || ''} ${item.name || ''}`.toLowerCase();
+  if (/laser/.test(text)) return '✂️';
+  if (/cnc|fräs/.test(text)) return '⚙️';
+  return KNOWLEDGE_ICONS[item.profile] || '🛠️';
+}
+
+// Ein Schritt = kurzer Titel + Details; Sicherheitshinweise werden hervorgehoben.
+function knowledgeSplitStep(text) {
+  const match = String(text).match(/^(.{12,90}?[.:])\s+([\s\S]+)$/);
+  const title = (match ? match[1] : text).replace(/[.:]$/, '');
+  return { title, body: match ? match[2] : '', warning: /not-aus|sofort stoppen|gefahr|kollision|eingewiesen|singularit/i.test(text) };
+}
+
 // Nur Maschinen anzeigen, für die es wirklich eine Anleitung gibt.
 function knowledgeGuideTargets() {
   const covered = new Set();
@@ -275,10 +290,10 @@ function knowledgeGuideTargets() {
     const profile = knowledgeProfileForMachine(machine);
     if (profile) covered.add(profile);
     return profile || knowledgeArticlesFor(machine).length;
-  }).map(machine => ({ value: `machine:${machine.collection}:${machine.id}`, name: machine.name, status: knowledgeStatusLabel(machine.status) }));
+  }).map(machine => ({ value: `machine:${machine.collection}:${machine.id}`, name: machine.name, status: knowledgeStatusLabel(machine.status), statusKey: machine.status || '', profile: knowledgeProfileForMachine(machine) }));
   const general = [['weber', 'Weber DXR25 (Großroboter)'], ['ur5', 'Universal Robots UR5'], ['ginger', 'Ginger']]
     .filter(([profile]) => !covered.has(profile))
-    .map(([profile, name]) => ({ value: `profile:${profile}`, name, status: '' }));
+    .map(([profile, name]) => ({ value: `profile:${profile}`, name, status: '', statusKey: '', profile }));
   return [...targets, ...general];
 }
 
@@ -303,11 +318,15 @@ function showKnowledgeGuideMode() {
   activeGuide = null; activeGuideStep = 0;
   const target = document.getElementById('knowledgeContent');
   if (!target) return;
-  const tiles = knowledgeGuideTargets().map(item => `<button class="knowledge-tile" onclick="startKnowledgeGuide('${knowledgeEscape(item.value)}')"><strong>${knowledgeEscape(item.name)}</strong>${item.status ? `<small>${knowledgeEscape(item.status)}</small>` : ''}</button>`).join('');
+  const tiles = knowledgeGuideTargets().map(item => `<button class="knowledge-tile" onclick="startKnowledgeGuide('${knowledgeEscape(item.value)}')">
+      <span class="knowledge-tile-icon">${knowledgeIconFor(item)}</span>
+      <span class="knowledge-tile-text"><strong>${knowledgeEscape(item.name)}</strong>${item.status ? `<small class="knowledge-status knowledge-status-${knowledgeEscape(item.statusKey)}">${knowledgeEscape(item.status)}</small>` : '<small>Anleitung</small>'}</span>
+      <span class="knowledge-tile-go" aria-hidden="true">→</span></button>`).join('');
   const articles = knowledgeArticles.map(a => `<article><strong>${knowledgeEscape(a.title)}</strong>${a.machineName ? ` · ${knowledgeEscape(a.machineName)}` : ''}<p>${knowledgeEscape(a.body)}</p>${a.url ? `<a href="${knowledgeEscape(a.url)}" target="_blank" rel="noopener noreferrer">Anleitung öffnen</a>` : ''}</article>`).join('');
-  target.innerHTML = `<div class="knowledge-panel"><h3>Welche Maschine?</h3><div class="knowledge-tiles">${tiles || '<p>Noch keine Anleitungen hinterlegt.</p>'}</div></div>
-    <div class="knowledge-panel"><h3>Etwas funktioniert nicht?</h3>
-      <div class="knowledge-chat-input"><input id="knowledgeQuestion" class="form-input" placeholder="z. B. Der Roboter bewegt sich nicht" enterkeyhint="search" onkeydown="if(event.key === 'Enter'){ submitKnowledgeQuestion(); }"><button class="btn btn-primary" onclick="submitKnowledgeQuestion()">Suchen</button></div>
+  target.innerHTML = `<div class="knowledge-hero"><h3>Womit möchtest du starten?</h3><p>Wähle deine Maschine – wir führen dich Schritt für Schritt.</p></div>
+    <div class="knowledge-tiles">${tiles || '<p>Noch keine Anleitungen hinterlegt.</p>'}</div>
+    <div class="knowledge-help-card"><h3>🔎 Etwas funktioniert nicht?</h3>
+      <div class="knowledge-chat-input"><input id="knowledgeQuestion" class="form-input" placeholder="Beschreibe kurz das Problem …" enterkeyhint="search" onkeydown="if(event.key === 'Enter'){ submitKnowledgeQuestion(); }"><button class="btn btn-primary" onclick="submitKnowledgeQuestion()">Suchen</button></div>
       <div class="knowledge-suggestions"><button onclick="askKnowledgeQuestion('Der Roboter bewegt sich nicht')">Roboter bewegt sich nicht</button><button onclick="askKnowledgeQuestion('Sicherheitsbereich ausgelöst')">Sicherheitsstopp</button><button onclick="askKnowledgeQuestion('Die erste Schicht haftet nicht')">Erste Schicht haftet nicht</button></div>
       <div id="knowledgeConversation" class="knowledge-conversation"></div></div>
     <details class="knowledge-readme-links"><summary>Weitere Dokumente</summary><div>${knowledgeSourceLinkList()}${articles}</div></details>`;
@@ -336,31 +355,51 @@ function startKnowledgeGuide(valueArg) {
   renderKnowledgeGuideStep();
 }
 
+function knowledgeGuideHeader() {
+  const total = activeGuide.steps.length;
+  const segments = activeGuide.steps.map((_, i) => `<button class="kstep-seg ${i < activeGuideStep ? 'done' : ''} ${i === activeGuideStep ? 'current' : ''}" ${i < activeGuideStep ? `onclick="knowledgeGuideGo(${i})" aria-label="Zu Schritt ${i + 1}"` : 'tabindex="-1" aria-hidden="true"'}></button>`).join('');
+  return `<div class="kguide-top"><button class="btn btn-link knowledge-back" onclick="showKnowledgeGuideMode()">← Alle Maschinen</button><span class="kguide-machine">${knowledgeIconFor({ profile: activeGuide.profile, name: activeGuide.machine?.name || activeGuide.title })} ${knowledgeEscape(activeGuide.machine?.name || activeGuide.title)}</span></div>
+    <div class="kstep-bar" role="progressbar" aria-valuemin="1" aria-valuemax="${total}" aria-valuenow="${activeGuideStep + 1}">${segments}</div>`;
+}
+
 function renderKnowledgeGuideStep() {
   const target = document.getElementById('knowledgeContent');
   if (!target || !activeGuide) return;
   const total = activeGuide.steps.length;
   const isLast = activeGuideStep === total - 1;
-  const percent = Math.round((activeGuideStep + 1) / total * 100);
-  target.innerHTML = `<div class="knowledge-panel">
-    <button class="btn btn-link knowledge-back" onclick="showKnowledgeGuideMode()">← Alle Maschinen</button>
-    <h3>${knowledgeEscape(activeGuide.machine?.name || activeGuide.title)}</h3>
-    <div class="knowledge-progress">Schritt ${activeGuideStep + 1} von ${total}</div>
-    <div class="knowledge-bar"><span style="width:${percent}%"></span></div>
-    <div class="knowledge-step">${knowledgeEscape(activeGuide.steps[activeGuideStep])}</div>
-    <div class="knowledge-step-actions">
-      <button class="btn btn-secondary" onclick="knowledgeGuidePrevious()" ${activeGuideStep === 0 ? 'disabled' : ''}>Zurück</button>
-      ${isLast ? '<button class="btn btn-success" onclick="knowledgeFinishGuide()">Fertig – Auftrag erfassen</button>' : '<button class="btn btn-primary" onclick="knowledgeGuideNext()">Erledigt, weiter</button>'}
+  const { title, body, warning } = knowledgeSplitStep(activeGuide.steps[activeGuideStep]);
+  target.innerHTML = `${knowledgeGuideHeader()}
+    <div class="kstep-card ${warning ? 'kstep-warning' : ''}">
+      <div class="kstep-head"><span class="kstep-number">${activeGuideStep + 1}</span><span class="kstep-count">von ${total}</span></div>
+      <h3 class="kstep-title">${knowledgeEscape(title)}</h3>
+      ${body ? `<p class="kstep-body">${knowledgeEscape(body)}</p>` : ''}
+      ${warning ? '<div class="kstep-callout">⚠️ <span><strong>Sicherheit:</strong> Nur eingewiesene Personen. Bei Gefahr sofort stoppen, im Notfall Not-Aus drücken.</span></div>' : ''}
     </div>
-    <div class="knowledge-source">${knowledgeSourceLink(activeGuide.source)}</div></div>`;
+    <div class="kstep-actions">
+      <button class="btn btn-primary kstep-next" onclick="${isLast ? 'knowledgeGuideDone()' : 'knowledgeGuideNext()'}">✓ ${isLast ? 'Alles erledigt' : 'Erledigt – weiter'}</button>
+      <button class="btn btn-secondary" onclick="knowledgeGuidePrevious()" ${activeGuideStep === 0 ? 'disabled' : ''}>Zurück</button>
+    </div>
+    <div class="kstep-foot"><button class="link-small" onclick="showKnowledgeChatMode()">Etwas klappt nicht? Frage stellen</button><span class="knowledge-source">${knowledgeSourceLink(activeGuide.source)}</span></div>`;
 }
+
+function knowledgeGuideDone() {
+  const target = document.getElementById('knowledgeContent');
+  if (!target || !activeGuide) return;
+  activeGuideStep = activeGuide.steps.length;
+  const name = knowledgeEscape(activeGuide.machine?.name || activeGuide.title);
+  target.innerHTML = `<div class="kdone"><div class="kdone-icon">🎉</div><h3>Geschafft!</h3><p>Alle ${activeGuide.steps.length} Schritte für <strong>${name}</strong> sind erledigt. Viel Erfolg bei der Arbeit!</p>
+    <button class="btn btn-primary" onclick="knowledgeFinishGuide()">Auftrag erfassen</button>
+    <button class="btn btn-secondary" onclick="showKnowledgeGuideMode()">Zurück zur Übersicht</button></div>`;
+}
+
+function knowledgeGuideGo(index) { if (activeGuide && index >= 0 && index < activeGuide.steps.length) { activeGuideStep = index; renderKnowledgeGuideStep(); } }
 
 // Am Ende der Anleitung: Maschine im Auftragsformular vorauswählen und dorthin springen.
 function knowledgeFinishGuide() {
   const machine = activeGuide?.machine;
   closeModal();
   if (machine?.collection && machine?.id) {
-    window.pendingMachineRef = { collection: machine.collection, id: machine.id };
+    window.pendingMachineRef = { collection: machine.collection, id: machine.id, source: 'guide' };
     document.dispatchEvent(new CustomEvent('machine:scanned'));
   }
   document.querySelector('.entry-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -429,6 +468,8 @@ window.showKnowledgeGuideMode = showKnowledgeGuideMode;
 window.showKnowledgeChatMode = showKnowledgeChatMode;
 window.startKnowledgeGuide = startKnowledgeGuide;
 window.knowledgeFinishGuide = knowledgeFinishGuide;
+window.knowledgeGuideDone = knowledgeGuideDone;
+window.knowledgeGuideGo = knowledgeGuideGo;
 window.knowledgeGuideNext = knowledgeGuideNext;
 window.knowledgeGuidePrevious = knowledgeGuidePrevious;
 window.askKnowledgeQuestion = askKnowledgeQuestion;

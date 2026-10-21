@@ -33,7 +33,7 @@ function openMachineGuideFromUrl() {
   url.searchParams.delete('maschinenGuide');
   window.history.replaceState({}, '', url.href);
   // QR-Code an der Maschine: Maschine im Auftragsformular vorauswählen
-  window.pendingMachineRef = { collection, id };
+  window.pendingMachineRef = { collection, id, source: 'qr' };
   document.dispatchEvent(new CustomEvent('machine:scanned'));
   window.setTimeout(() => window.showKnowledgeBase?.({ collection, id }), 350);
 }

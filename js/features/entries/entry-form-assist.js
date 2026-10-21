@@ -102,7 +102,7 @@
     if (!ready) return;
     window.pendingMachineRef = null;
     if (await applyDefaults(`${ref.collection}/${ref.id}`, null)) {
-      showHint('Maschine per QR-Code ausgewählt.');
+      showHint(ref.source === 'guide' ? 'Maschine aus der Anleitung übernommen.' : 'Maschine per QR-Code ausgewählt.');
       $('printer').scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }
