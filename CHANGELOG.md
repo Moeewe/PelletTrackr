@@ -5,12 +5,22 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/),
 und dieses Projekt folgt [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - 2026-10-21
+
+### Geändert
+- E-Mail-Login mit Firebase Auth, Cloud Functions für Altkonto-Verknüpfung und Maschinenzeit
+- Client-seitiges Admin-Passwort entfernt; Adminrechte nur über `users/<uid>.isAdmin`
+- Weniger Firestore-Lesezugriffe (begrenzte Listener, einfache Dashboard-Abfragen)
+- Mobile: größere Touch-Ziele, 16px-Eingaben, Safe-Areas, PWA-Manifest
+- Build: CSS-@imports zu einer Datei zusammengeführt; `alert()` als Toast
+- Firestore-Regeln: `requests` nur für Admins; neuer Index `entries(username, timestamp)`
+
 ## [1.0.0] - 2025-07-23
 
 ### Hinzugefügt
 - **Erste stabile Version** von PelletTrackr
 - **Vollständiges Benutzer-Management** mit FH-Kennung-basierter Authentifizierung
-- **Admin-Bereich** mit Passwort-Schutz (Standard: fgf2025admin)
+- **Admin-Bereich** mit Passwort-Schutz
 - **Druckauftrag-System** mit Material- und Masterbatch-Verwaltung
 - **Material-Bestellsystem** mit Genehmigungs-Workflow
 - **Ausrüstung-Verleih-System** mit Status-Tracking

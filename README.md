@@ -30,7 +30,7 @@ PelletTrackr ist eine Verwaltungs- und Abrechnungsplattform für Werkstatt- und 
 - **Frontend**: Vanilla JavaScript, HTML5, CSS3
 - **Backend**: Firebase Firestore
 - **Authentication**: Firebase Auth
-- **Hosting**: Netlify
+- **Hosting**: Netlify (Frontend), Firebase (Firestore, Auth, Cloud Functions in europe-west1)
 - **Styling**: Custom CSS mit responsivem Design
 
 ### Browser-Unterstützung
@@ -61,32 +61,32 @@ open http://localhost:8001
 
 ### Produktions-Deployment
 ```bash
-# Build-Prozess
-npm run build
+# Frontend: Push auf master -> Netlify baut automatisch (netlify.toml, build.sh -> dist/)
+git push origin master
 
-# Deployment
-npm run deploy
+# Firebase (Projekt fgf-3d-druck)
+firebase deploy --only firestore:rules,firestore:indexes
+cd functions && npm install && cd .. && firebase deploy --only functions
 ```
 
 ## Konfiguration
 
 ### Firebase Setup
-1. Firebase-Projekt erstellen
-2. Firestore Database aktivieren
-3. Authentication aktivieren
-4. `firebase-config.js` mit Ihren Credentials aktualisieren
+1. Firebase-Projekt erstellen (Blaze-Tarif für Cloud Functions)
+2. Firestore Database und Authentication (E-Mail/Passwort) aktivieren
+3. Netlify-Domain unter Authentication → Authorized domains eintragen
+4. `js/core/firebase-config.js` mit den Projekt-Credentials aktualisieren
+5. `functions/.env` mit `MASTER_ADMIN_CLAIM_EXPIRES_AT=<ISO-Datum>` anlegen (nicht im Git)
 
-### Admin-Passwort
-Das Standard-Admin-Passwort ist: `fgf2025admin`
-
-**Wichtig**: Ändern Sie das Passwort in der Produktionsumgebung!
+### Admin-Rechte
+Adminrechte werden ausschließlich über das Feld `isAdmin: true` im Dokument `users/<uid>` vergeben. Es gibt kein Client-Passwort mehr.
 
 ## Verwendung
 
 ### Erste Schritte
 1. Öffnen Sie die Anwendung in Ihrem Browser
-2. Melden Sie sich mit Ihrem Namen und FH-Kennung an
-3. Für Admin-Funktionen: Klicken Sie auf "Als Admin anmelden"
+2. Registrieren Sie sich mit E-Mail und Passwort und bestätigen Sie die E-Mail-Adresse
+3. Vorhandene FH-Kennung-Konten werden beim ersten Login mit der Kennung verknüpft
 
 ### Benutzer-Workflow
 1. **Druckauftrag erstellen**: Material, Menge und Masterbatch auswählen
@@ -109,7 +109,7 @@ Das Standard-Admin-Passwort ist: `fgf2025admin`
 - DSGVO-konforme Datenspeicherung
 
 ### Admin-Sicherheit
-- Passwort-geschützter Admin-Bereich
+- Adminrechte nur serverseitig über Firestore-Regeln (`users/<uid>.isAdmin`)
 - Session-Management
 - Audit-Logs für kritische Aktionen
 
@@ -132,7 +132,6 @@ Bitte melden Sie Bugs über das Problem-Report-System in der Anwendung oder erst
 - Zahlungsnachweis-Generierung
 - Responsive Design
 - Firebase-Integration
-- Admin-Passwort: fgf2025admin
 
 ## Lizenz
 
