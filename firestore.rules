@@ -194,9 +194,10 @@ service cloud.firestore {
     match /tutorialSuggestions/{suggestionId} {
       allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
       allow create: if signedIn()
-        && request.resource.data.keys().hasOnly(['machineCollection', 'machineId', 'machineName', 'title', 'url', 'note', 'userId', 'userName', 'status', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['machineCollection', 'machineId', 'machineName', 'kind', 'title', 'url', 'note', 'userId', 'userName', 'status', 'createdAt'])
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.status == 'pending'
+        && request.resource.data.kind in ['tutorial', 'safety']
         && request.resource.data.machineCollection in ['printers', 'machines', 'equipment']
         && request.resource.data.machineId is string && request.resource.data.machineId.size() > 0 && request.resource.data.machineId.size() <= 128
         && request.resource.data.url is string && request.resource.data.url.matches('^https://[^ ]{4,500}$')
@@ -204,6 +205,19 @@ service cloud.firestore {
         && request.resource.data.note is string && request.resource.data.note.size() <= 1000
         && request.resource.data.createdAt == request.time;
       allow update, delete: if isAdmin();
+    }
+    // Wartungsverlauf je Maschine: nur Admins, nur anhängen (kein Ändern/Löschen).
+    match /maintenanceLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin()
+        && request.resource.data.machineCollection in ['printers', 'machines', 'equipment']
+        && request.resource.data.machineId is string && request.resource.data.machineId.size() > 0
+        && request.resource.data.type in ['Wartung', 'Reinigung', 'Reparatur', 'Prüfung', 'Sonstiges']
+        && request.resource.data.description is string && request.resource.data.description.size() > 0
+        && request.resource.data.description.size() <= 2000
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
     }
     match /knowledgeArticles/{articleId} {
       allow read: if signedIn();

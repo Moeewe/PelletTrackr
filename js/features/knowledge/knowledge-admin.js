@@ -60,7 +60,7 @@
         suggestions = pending.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       } catch (_) { suggestions = []; }
       state.suggestions = suggestions;
-      const suggestionCards = suggestions.map((item, i) => `<article class="safety-card"><h4>${esc(item.machineName || 'Maschine')}</h4>
+      const suggestionCards = suggestions.map((item, i) => `<article class="safety-card"><h4>${esc(item.machineName || 'Maschine')} <small>(${item.kind === 'safety' ? 'Betriebsanweisung' : 'Tutorial'})</small></h4>
           <p><a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.title || item.url)}</a></p>
           ${item.note ? `<p>${esc(item.note)}</p>` : ''}<p><small>Vorgeschlagen von ${esc(item.userName || 'Nutzer')}</small></p>
           <div class="safety-actions"><button class="btn btn-primary" onclick="KnowledgeAdmin.reviewSuggestion(${i},true)">Übernehmen</button>
@@ -69,7 +69,7 @@
         const steps = Array.isArray(row.guideSteps) ? row.guideSteps.length : 0;
         const links = Array.isArray(row.guideLinks) ? row.guideLinks.length : 0;
         return `<article class="safety-card"><h3>${esc(row.name)}</h3><p>${esc(window.machineKindLabel(row))}</p>
-          <p>${steps ? `Anleitung: ${steps} Schritt${steps === 1 ? '' : 'e'}` : 'Noch keine eigene Anleitung'}${links ? ` · ${links} Link${links === 1 ? '' : 's'}` : ''}</p>
+          <p>${steps ? `Anleitung: ${steps} Schritt${steps === 1 ? '' : 'e'}` : 'Noch keine eigene Anleitung'}${links ? ` · ${links} Link${links === 1 ? '' : 's'}` : ''}${row.safetyText || (row.safetyLinks || []).length ? ' · Betriebsanweisung vorhanden' : ' · Keine Betriebsanweisung'}</p>
           <div class="safety-actions"><button class="btn btn-primary" onclick="KnowledgeAdmin.editGuide(${i})">Anleitung</button>
           <button class="btn btn-secondary" onclick="MachineLabels.open(['${esc(row.collection)}:${esc(row.id)}'])">QR / Etikett</button>
           <button class="btn btn-secondary" onclick="KnowledgeAdmin.copyLink(${i})">Link kopieren</button></div></article>`;
@@ -101,6 +101,11 @@
          <p><small>Ohne eigene Schritte zeigt die Hilfe für bekannte Maschinen (Weber, UR5, Ginger) die allgemeine Anleitung.</small></p>
          <label>Links zu Videos & Dokumenten (optional)<textarea id="guideLinks" class="form-input" rows="5" placeholder="Einführungsvideo | https://www.youtube.com/watch?v=…&#10;Bedienungsanleitung | https://…">${esc(linksToText(row.guideLinks))}</textarea></label>
          <p><small>Pro Zeile ein Link, nach Wunsch mit Titel: <em>Titel | https://…</em>. Nutzer können zusätzlich selbst Tutorials vorschlagen; die Vorschläge erscheinen oben in „Maschinen &amp; Anleitungen“.</small></p>
+         <fieldset class="hub-fieldset"><legend>Sicherheits- und Betriebsanweisung (Arbeitsschutz)</legend>
+           <p class="hub-hint">Nutzer können sie in der Hilfe zur Maschine jederzeit aufrufen. Du kannst den Text direkt einfügen und/oder Links (z. B. zum PDF) hinterlegen.</p>
+           <label>Text<textarea id="safetyText" class="form-input" rows="8" maxlength="8000" placeholder="Gefahren, Schutzmaßnahmen, Verhalten im Notfall …">${esc(row.safetyText || '')}</textarea></label>
+           <label>Links (optional)<textarea id="safetyLinks" class="form-input" rows="3" placeholder="Betriebsanweisung (PDF) | https://…">${esc(linksToText(row.safetyLinks))}</textarea></label>
+         </fieldset>
          <div class="safety-actions"><button class="btn btn-primary" onclick="KnowledgeAdmin.saveGuide(0)">Speichern</button>
          <button class="btn btn-secondary" onclick="MachineLabels.open(['${esc(row.collection)}:${esc(row.id)}'])">QR / Etikett</button></div>`,
         back || 'KnowledgeAdmin.open()');
@@ -118,10 +123,12 @@
       await window.db.collection(row.collection).doc(row.id).update({
         guideSteps: steps,
         guideLinks: links,
+        safetyText: document.getElementById('safetyText')?.value.trim().slice(0, 8000) || '',
+        safetyLinks: parseLinks(document.getElementById('safetyLinks')?.value),
         guideUpdatedBy: user.uid,
         guideUpdatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
       });
-      window.toast.success(steps.length || links.length ? 'Gespeichert.' : 'Anleitung und Links entfernt.');
+      window.toast.success('Gespeichert.');
       const target = back; back = null;
       const match = /^(?:([A-Za-z]+)\.)?([A-Za-z]+)\(\)$/.exec(target || '');
       const fn = match ? (match[1] ? window[match[1]]?.[match[2]] : window[match[2]]) : null;
@@ -139,7 +146,7 @@
       if (approve) {
         const machine = window.db.collection(item.machineCollection).doc(item.machineId);
         if (!(await machine.get()).exists) throw Error('Die Maschine gibt es nicht mehr.');
-        batch.update(machine, { guideLinks: window.firebase.firestore.FieldValue.arrayUnion({ title: item.title || new URL(item.url).hostname.replace(/^www\./, ''), url: item.url }) });
+        batch.update(machine, { [item.kind === 'safety' ? 'safetyLinks' : 'guideLinks']: window.firebase.firestore.FieldValue.arrayUnion({ title: item.title || new URL(item.url).hostname.replace(/^www\./, ''), url: item.url }) });
       }
       batch.update(window.db.collection('tutorialSuggestions').doc(item.id), { status: approve ? 'approved' : 'rejected', reviewedBy: user.uid });
       await batch.commit();

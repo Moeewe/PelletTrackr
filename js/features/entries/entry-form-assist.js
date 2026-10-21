@@ -67,17 +67,23 @@
         messages.push('Für diese Maschine ist eine Einweisung nötig – bei dir ist noch keine eingetragen. Frag bitte in der Werkstatt.');
       }
     }
+    let equipment = [];
+    try { equipment = JSON.parse(option.dataset.equipment || '[]'); } catch (_) { equipment = []; }
+    if (equipment.length) messages.push('Dafür brauchst du: ' + equipment.map(item => item.name).join(', ') + '.');
     hint.textContent = messages.join(' ');
-    if (option.dataset.guide === '1') {
-      const [collection, id] = option.value.split('/');
+    const [collection, id] = option.value.split('/');
+    const addLink = (label, action) => {
       const link = document.createElement('button');
       link.type = 'button';
       link.className = 'link-small';
-      link.textContent = 'Anleitung zu dieser Maschine';
-      link.addEventListener('click', () => window.showKnowledgeBase?.({ collection, id }));
-      if (messages.length) hint.append(' ');
+      link.textContent = label;
+      link.addEventListener('click', action);
+      if (hint.childNodes.length) hint.append(' ');
       hint.append(link);
-    }
+    };
+    if (equipment.length) addLink('Ausleihe anfragen', () => window.showEquipmentRequest?.());
+    if (option.dataset.safety === '1') addLink('Betriebsanweisung lesen', () => window.showKnowledgeBase?.({ collection, id }));
+    if (option.dataset.guide === '1') addLink('Anleitung zu dieser Maschine', () => window.showKnowledgeBase?.({ collection, id }));
     hint.hidden = !hint.childNodes.length;
   }
   document.addEventListener('change', event => { if (event.target?.id === 'printer') updateMachineHint(); });

@@ -22,6 +22,8 @@
   let materials = [];
   let materialRestrict = false;
   let materialPicked = new Set();
+  let equipmentList = [];
+  let equipmentPicked = new Map();
   let autoUses = null; // automatisch gesetzter Wert für "Verbraucht Material" (nur solange nicht von Hand geändert)
   let autoForms = null; // zuletzt automatisch vorgewählte Formen (nur solange der Nutzer sie nicht geändert hat)
 
@@ -53,14 +55,15 @@
 
   // ---------- Startset: Maschinen der Werkstatt ----------
   // Nur gesicherte Angaben. Technische Daten (Arbeitsbereich, Werkzeuge) trägt die Werkstatt selbst ein.
-  const LASER_NOTE = 'CO₂-Laser zum Schneiden und Gravieren. Nicht lasern: PVC (setzt Chlor frei, ätzend, schädigt die Optik), ABS, Polycarbonat, Teflon sowie Schaum aus Polystyrol oder Polypropylen (Brand- bzw. Gesundheitsgefahr). Laser nie unbeaufsichtigt laufen lassen, Feuerlöscher griffbereit halten, Absaugung nach Herstellerangabe nutzen. Allgemeine Hinweise – bitte mit Herstellerunterlagen und Werkstattleitung abgleichen. Arbeitsbereich bitte eintragen.';
+  const LASER_SAFETY = 'CO₂-Laser zum Schneiden und Gravieren. Nicht lasern: PVC (setzt Chlor frei, ätzend, schädigt die Optik), ABS, Polycarbonat, Teflon sowie Schaum aus Polystyrol oder Polypropylen (Brand- bzw. Gesundheitsgefahr). Laser nie unbeaufsichtigt laufen lassen, Feuerlöscher griffbereit halten, Absaugung nach Herstellerangabe nutzen. Allgemeine Hinweise – bitte mit Herstellerunterlagen und Werkstattleitung abgleichen.';
   const STARTER = [
-    { starterKey: 'zuend-cnc', match: /z(ü|ue|u)nd/i, name: 'Zünd CNC Cutter', model: 'Zünd Digital Cutter', machineType: 'cnc', jobTypes: ['CNC-Fräsen', 'Schneiden', 'Gravieren'],
-      trainingTypeName: 'Einweisung Zünd CNC Cutter', notes: 'Zum Schneiden, Fräsen und Gravieren. Verbraucht kein Werkstattmaterial. Modell, Arbeitsbereich und Werkzeuge bitte eintragen.' },
+    { starterKey: 'zuend-cnc', match: /z(ü|ue|u)nd/i, name: 'Zünd CNC Cutter', model: 'Zünd G3', machineType: 'cnc', jobTypes: ['CNC-Fräsen', 'Schneiden', 'Gravieren'],
+      buildVolume: 'ca. 1800 × 2500 mm (bitte prüfen)', trainingTypeName: 'Einweisung Zünd CNC Cutter',
+      notes: 'Zum Schneiden, Fräsen und Gravieren. Verbraucht kein Werkstattmaterial. Werkzeuge bitte eintragen.' },
     { starterKey: 'trotec-speedy-500-1', match: /trotec/i, name: 'Trotec Speedy 500 (Laser 1)', model: 'Trotec Speedy 500', machineType: 'laser', jobTypes: ['Lasern', 'Schneiden', 'Gravieren'],
-      trainingTypeName: 'Laserschein · Trotec Speedy 500', notes: LASER_NOTE },
+      buildVolume: 'ca. 1200 × 700 mm (bitte prüfen)', trainingTypeName: 'Laserschein · Trotec Speedy 500', safetyText: LASER_SAFETY },
     { starterKey: 'trotec-speedy-500-2', match: /trotec/i, name: 'Trotec Speedy 500 (Laser 2)', model: 'Trotec Speedy 500', machineType: 'laser', jobTypes: ['Lasern', 'Schneiden', 'Gravieren'],
-      trainingTypeName: 'Laserschein · Trotec Speedy 500', notes: LASER_NOTE }
+      buildVolume: 'ca. 1200 × 700 mm (bitte prüfen)', trainingTypeName: 'Laserschein · Trotec Speedy 500', safetyText: LASER_SAFETY }
   ];
   // Was fehlt noch? Vorhandene Maschinen (auch von Hand angelegte) werden nicht doppelt angelegt.
   const starterPending = () => {
@@ -121,13 +124,17 @@
       const heading = kind !== lastKind ? `<h4 class="printer-group">${esc(kind)}</h4>` : '';
       lastKind = kind;
       const guide = Array.isArray(item.guideSteps) && item.guideSteps.length ? 'Anleitung vorhanden' : 'Keine Anleitung';
-      const details = [item.model, item.usesMaterial === false ? 'Ohne Werkstattmaterial' : linkSummary(item), item.requiresSafetyTraining ? 'Einweisung nötig' : '', item.active === false ? 'Deaktiviert' : '', guide].filter(Boolean).join(' · ');
+      const maint = window.maintenanceState(item);
+      const badge = maint && maint.level !== 'ok' ? `<span class="maint-badge maint-${maint.level}">${esc(maint.label)}</span>` : '';
+      const equipment = Array.isArray(item.requiredEquipment) && item.requiredEquipment.length ? 'Equipment: ' + item.requiredEquipment.map(e => e.name).join(', ') : '';
+      const details = [item.model, item.usesMaterial === false ? 'Ohne Werkstattmaterial' : linkSummary(item), item.requiresSafetyTraining ? 'Einweisung nötig' : '', equipment, item.active === false ? 'Deaktiviert' : '', guide].filter(Boolean).join(' · ');
       const index = state.items.indexOf(item);
       return `${heading}<article class="printer-row ${item.active === false ? 'is-inactive' : ''}">
-        <div class="printer-row-main"><h4 class="printer-row-name">${esc(item.name)}</h4><p class="printer-row-details">${esc(details)}</p></div>
+        <div class="printer-row-main"><h4 class="printer-row-name">${esc(item.name)}</h4><p class="printer-row-details">${esc(details)}${badge}</p></div>
         ${window.MachineStatus.buttons(item.collection, item.id, item.status)}
         <details class="printer-row-more"><summary>Mehr</summary><div class="printer-row-actions">
           <button class="btn btn-secondary btn-small" onclick="MachineHub.edit(${index})">Bearbeiten</button>
+          <button class="btn btn-secondary btn-small" onclick="MachineHub.maintenance(${index})">Wartung</button>
           <button class="btn btn-secondary btn-small" onclick="MachineHub.tariff(${index})">Tarif</button>
           <button class="btn btn-secondary btn-small" onclick="MachineHub.train(${index})">Personen einweisen</button>
           <button class="btn btn-secondary btn-small" onclick="MachineHub.guide(${index})">Anleitung</button>
@@ -162,6 +169,13 @@
   });
 
   // ---------- Bearbeiten ----------
+  async function fetchEquipment() {
+    try {
+      const snap = await window.db.collection('equipment').get();
+      equipmentList = snap.docs.map(doc => ({ id: doc.id, name: doc.data().name || doc.id })).sort((a, b) => a.name.localeCompare(b.name, 'de'));
+    } catch (_) { equipmentList = []; }
+  }
+
   async function fetchMaterials() {
     if (materials.length) return;
     try {
@@ -209,7 +223,7 @@
   async function edit(index) {
     try {
       await requireAdmin();
-      await fetchMaterials();
+      await Promise.all([fetchMaterials(), fetchEquipment()]);
       const item = index >= 0 ? state.items[index] : null;
       const current = item ? typeOf(item) : TYPES[0];
       const rule = window.machineMaterialRule(item || {});
@@ -217,6 +231,7 @@
       autoForms = item ? null : TYPES[0].forms.join(',');
       autoUses = item ? 'locked' : TYPES[0].uses; // bestehende Maschinen behalten ihren gespeicherten Wert
       materialPicked = new Set(rule.ids);
+      equipmentPicked = new Map((item?.requiredEquipment || []).map(e => [e.id, e.name]));
       // Beim Bearbeiten nur Arten derselben Sammlung anbieten (Drucker bleiben Drucker).
       const typeOptions = TYPES.filter(t => !item || t.collection === item.collection)
         .map(t => `<option value="${t.key}" ${t.key === current.key ? 'selected' : ''}>${esc(t.label)}</option>`).join('');
@@ -238,6 +253,10 @@
            <div id="hubRestrictBox" data-hub-material ${materialRestrict ? '' : 'hidden'}><div id="hubMaterialList" class="hub-material-list"></div></div>
            <label class="checkbox-label" data-hub-material><input type="checkbox" class="checkbox-input" id="hubMasterbatch" ${rule.masterbatch ? 'checked' : ''}> Masterbatch (Farbzusatz) möglich</label>
          </fieldset>
+         ${equipmentList.length ? `<fieldset class="hub-fieldset"><legend>Benötigtes Equipment</legend>
+           <p class="hub-hint">Z. B. ein Schlüssel oder Schutzbrille zum Ausleihen. Nutzer sehen den Hinweis im Auftragsformular und in der Anleitung.</p>
+           <div class="hub-material-list">${equipmentList.map(e => `<label class="checkbox-label hub-material"><input type="checkbox" class="checkbox-input" ${equipmentPicked.has(e.id) ? 'checked' : ''} onchange="MachineHub.pickEquipment('${esc(e.id)}','${esc(e.name).replace(/'/g, '')}',this.checked)"><span>${esc(e.name)}</span></label>`).join('')}</div>
+         </fieldset>` : ''}
          <fieldset class="hub-fieldset"><legend>Einweisung</legend>
            <label class="checkbox-label"><input type="checkbox" class="checkbox-input" id="hubTraining" ${item?.requiresSafetyTraining ? 'checked' : ''}> Einweisung erforderlich</label>
            <input id="hubTrainingName" class="form-input" maxlength="160" placeholder="Einweisungsart (optional), z. B. Laserschein" value="${esc(item?.trainingTypeName || '')}">
@@ -267,6 +286,7 @@
       const data = {
         name, model: $('hubModel').value.trim(), location: $('hubLocation').value.trim(), notes: $('hubNotes').value.trim(),
         active: $('hubActive').checked, requiresSafetyTraining: $('hubTraining').checked, trainingTypeName: $('hubTrainingName').value.trim(),
+        requiredEquipment: Array.from(equipmentPicked, ([id, name]) => ({ id, name })),
         usesMaterial: uses, materialTypes: forms, materialIds: ids, supportsMasterbatch: uses && $('hubMasterbatch').checked,
         updatedBy: user.uid, updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
       };
@@ -317,6 +337,8 @@
 
   window.MachineHub = {
     open, edit, save, duplicate, remove, addStarter,
+    maintenance: index => { const m = state.items[index]; if (m) window.MachineMaintenance.open(m.collection, m.id, 'MachineHub.open()'); },
+    pickEquipment: (id, name, checked) => { checked ? equipmentPicked.set(id, name) : equipmentPicked.delete(id); },
     tariff: index => { const m = state.items[index]; if (m) window.Billing.openFor(m.collection, m.id); },
     train: index => { const m = state.items[index]; if (m) window.SafetyTraining.bulkForMachine(m.collection, m.id); },
     usesChanged: () => { toggleMaterialFields(); autoUses = 'locked'; },

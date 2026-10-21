@@ -283,6 +283,32 @@ function knowledgeLinksFor(machine) {
   return (Array.isArray(machine?.guideLinks) ? machine.guideLinks : []).filter(link => /^https:\/\//.test(link?.url || ''));
 }
 
+function knowledgeSafetyLinksFor(machine) {
+  return (Array.isArray(machine?.safetyLinks) ? machine.safetyLinks : []).filter(link => /^https:\/\//.test(link?.url || ''));
+}
+function knowledgeHasSafety(machine) {
+  return Boolean(String(machine?.safetyText || '').trim()) || knowledgeSafetyLinksFor(machine).length > 0;
+}
+
+// Sicherheits- und Betriebsanweisung (Arbeitsschutz) der Maschine; Nutzer können Links vorschlagen.
+function knowledgeSafetyBlock(machine, open = false) {
+  if (!machine) return '';
+  const text = String(machine.safetyText || '').trim();
+  const links = knowledgeSafetyLinksFor(machine).map(link => `<li><a href="${knowledgeEscape(link.url)}" target="_blank" rel="noopener noreferrer">${knowledgeEscape(link.title || link.url)}</a></li>`).join('');
+  if (!text && !links && !machine.id) return '';
+  return `<details class="kguide-safety" ${open ? 'open' : ''}><summary>Sicherheits- und Betriebsanweisung</summary><div class="kguide-safety-body">
+    ${text ? `<p class="kguide-safety-text">${knowledgeEscape(text)}</p>` : ''}${links ? `<ul>${links}</ul>` : ''}
+    ${!text && !links ? '<p>Für diese Maschine ist noch keine Betriebsanweisung hinterlegt.</p>' : ''}
+    ${machine.id ? '<button class="link-small" onclick="knowledgeSuggestTutorial(\'safety\')">Betriebsanweisung vorschlagen</button>' : ''}</div></details>`;
+}
+
+// Benötigtes Equipment (z. B. Schlüssel), das zur Maschine gehört
+function knowledgeEquipmentBlock(machine) {
+  const items = Array.isArray(machine?.requiredEquipment) ? machine.requiredEquipment : [];
+  if (!items.length) return '';
+  return `<p class="kguide-material">Dafür brauchst du: ${knowledgeEscape(items.map(item => item.name).join(', '))}. <button class="link-small" onclick="closeModal();showEquipmentRequest?.()">Ausleihe anfragen</button></p>`;
+}
+
 // Videos, Dokumente und die passende README aus GitHub zur Maschine
 function knowledgeLinksBlock(machine, profile) {
   const links = knowledgeLinksFor(machine);
@@ -314,7 +340,7 @@ function knowledgeGuideTargets() {
   const targets = knowledgeMachines.filter(machine => {
     const profile = knowledgeProfileForMachine(machine);
     if (profile) covered.add(profile);
-    return profile || knowledgeArticlesFor(machine).length || knowledgeHasGuide(machine) || knowledgeLinksFor(machine).length;
+    return profile || knowledgeArticlesFor(machine).length || knowledgeHasGuide(machine) || knowledgeLinksFor(machine).length || knowledgeHasSafety(machine);
   }).map(machine => ({ value: `machine:${machine.collection}:${machine.id}`, name: machine.name, status: knowledgeStatusLabel(machine.status), statusKey: machine.status || '', profile: knowledgeProfileForMachine(machine) }));
   const general = [['weber', 'Weber DXR25 (Großroboter)'], ['ur5', 'Universal Robots UR5'], ['ginger', 'Ginger']]
     .filter(([profile]) => !covered.has(profile))
@@ -367,7 +393,7 @@ function startKnowledgeGuide(valueArg) {
     profile = knowledgeProfileForMachine(machine);
   }
   // Nur Links hinterlegt (z. B. Video-Tutorials ohne eigene Schritte): Linkseite zeigen.
-  if (machine && !knowledgeHasGuide(machine) && knowledgeLinksFor(machine).length && !KNOWLEDGE_GUIDES[profile]) {
+  if (machine && !knowledgeHasGuide(machine) && (knowledgeLinksFor(machine).length || knowledgeHasSafety(machine)) && !KNOWLEDGE_GUIDES[profile]) {
     activeGuide = { title: machine.name, profile: profile || 'custom', machine, source: null, steps: [], linksOnly: true };
     renderKnowledgeLinksPage(); return;
   }
@@ -407,6 +433,8 @@ function knowledgeGuideHeader() {
     : `<span class="kstep-seg ${i === activeGuideStep ? 'current' : ''}"></span>`).join('');
   return `<div class="kguide-top"><button class="btn btn-link knowledge-back" onclick="showKnowledgeGuideMode()">← Alle Maschinen</button><span class="kguide-machine">${knowledgeEscape(activeGuide.machine?.name || activeGuide.title)}</span></div>
     ${knowledgeMaterialLine(activeGuide.machine)}
+    ${knowledgeEquipmentBlock(activeGuide.machine)}
+    ${knowledgeSafetyBlock(activeGuide.machine)}
     <div class="kstep-bar" role="progressbar" aria-valuemin="1" aria-valuemax="${total}" aria-valuenow="${activeGuideStep + 1}">${segments}</div>`;
 }
 
@@ -435,18 +463,21 @@ function renderKnowledgeLinksPage() {
   const target = document.getElementById('knowledgeContent');
   if (!target || !activeGuide) return;
   target.innerHTML = `<div class="kguide-top"><button class="btn btn-link knowledge-back" onclick="showKnowledgeGuideMode()">← Alle Maschinen</button><span class="kguide-machine">${knowledgeEscape(activeGuide.title)}</span></div>
-    <div class="kstep-card"><h3 class="kstep-title">Tutorials &amp; Dokumente</h3><p class="kstep-body">Für diese Maschine gibt es noch keine Schritt-für-Schritt-Anleitung, aber hilfreiche Links.</p></div>
+    <div class="kstep-card"><h3 class="kstep-title">Infos zur Maschine</h3><p class="kstep-body">Für diese Maschine gibt es noch keine Schritt-für-Schritt-Anleitung, aber diese Informationen.</p></div>
+    ${knowledgeMaterialLine(activeGuide.machine)}${knowledgeEquipmentBlock(activeGuide.machine)}
+    ${knowledgeSafetyBlock(activeGuide.machine, true)}
     ${knowledgeLinksBlock(activeGuide.machine, activeGuide.profile)}`;
 }
 
 // Tutorial vorschlagen (Nutzer): Admins prüfen und übernehmen den Link
-function knowledgeSuggestTutorial() {
+function knowledgeSuggestTutorial(kind = 'tutorial') {
   const machine = activeGuide?.machine;
   const target = document.getElementById('knowledgeContent');
   if (!machine?.id || !target) return;
   const back = activeGuide.linksOnly ? 'renderKnowledgeLinksPage()' : 'renderKnowledgeGuideStep()';
-  target.innerHTML = `<div class="kstep-card"><h3 class="kstep-title">Tutorial vorschlagen</h3>
-      <p class="kstep-body">Kennst du ein gutes Video oder Dokument zu <strong>${knowledgeEscape(machine.name)}</strong>? Die Werkstatt prüft den Link und nimmt ihn auf.</p>
+  target.innerHTML = `<div class="kstep-card"><h3 class="kstep-title">Link vorschlagen</h3>
+      <p class="kstep-body">Kennst du ein gutes Video, ein Dokument oder die Betriebsanweisung zu <strong>${knowledgeEscape(machine.name)}</strong>? Die Werkstatt prüft den Link und nimmt ihn auf.</p>
+      <label class="form-label" for="suggestKind">Art</label><select id="suggestKind" class="form-select"><option value="tutorial" ${kind === 'tutorial' ? 'selected' : ''}>Tutorial / Video / Dokument</option><option value="safety" ${kind === 'safety' ? 'selected' : ''}>Betriebsanweisung / Sicherheit</option></select>
       <label class="form-label" for="suggestUrl">Link (https://…)</label><input id="suggestUrl" class="form-input" type="url" inputmode="url" autocapitalize="none" placeholder="https://www.youtube.com/watch?v=…">
       <label class="form-label" for="suggestTitle">Titel (optional)</label><input id="suggestTitle" class="form-input" maxlength="160" placeholder="z. B. Einführung in die Bedienung">
       <label class="form-label" for="suggestNote">Hinweis (optional)</label><input id="suggestNote" class="form-input" maxlength="500" placeholder="Wofür ist das hilfreich?"></div>
@@ -463,6 +494,7 @@ async function knowledgeSubmitSuggestion() {
   try {
     await window.db.collection('tutorialSuggestions').add({
       machineCollection: machine.collection, machineId: machine.id, machineName: machine.name || '',
+      kind: document.getElementById('suggestKind')?.value === 'safety' ? 'safety' : 'tutorial',
       title: document.getElementById('suggestTitle').value.trim().slice(0, 160),
       url, note: document.getElementById('suggestNote').value.trim().slice(0, 500),
       userId: uid, userName: window.currentUser?.name || '', status: 'pending',

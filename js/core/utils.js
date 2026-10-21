@@ -23,6 +23,19 @@ function machineKindLabel(machine) {
 }
 window.machineKindLabel = machineKindLabel;
 
+// Wartungsstand einer Maschine aus den Feldern lastMaintenanceAt / nextMaintenanceAt (ohne zusätzliche Abfragen).
+function maintenanceState(machine) {
+  const toDate = value => (value?.toDate ? value.toDate() : value ? new Date(value) : null);
+  const next = toDate(machine?.nextMaintenanceAt);
+  if (!next || Number.isNaN(next.getTime())) return null;
+  const days = Math.ceil((next.getTime() - Date.now()) / 86400000);
+  const date = next.toLocaleDateString('de-DE');
+  if (days < 0) return { level: 'overdue', label: `Wartung überfällig seit ${date}` };
+  if (days <= 14) return { level: 'soon', label: days === 0 ? 'Wartung heute fällig' : `Wartung in ${days} Tag${days === 1 ? '' : 'en'} fällig` };
+  return { level: 'ok', label: `Nächste Wartung ${date}` };
+}
+window.maintenanceState = maintenanceState;
+
 // Verknüpfung Maschine ↔ Material: welche Materialformen (Filament/Pellet) und welche Materialien
 // eine Maschine verarbeitet und ob Masterbatch (Farbzusatz) möglich ist. Ältere Drucker haben nur "type".
 function machineMaterialRule(machine) {

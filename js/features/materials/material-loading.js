@@ -218,6 +218,8 @@ async function loadFormPrinters() {
       const hasGuide = (Array.isArray(printer.guideSteps) && printer.guideSteps.length) || (Array.isArray(printer.guideLinks) && printer.guideLinks.length)
         || (typeof knowledgeProfileForMachine === 'function' && knowledgeProfileForMachine({ ...printer, collection }));
       option.dataset.guide = hasGuide ? '1' : '';
+      option.dataset.safety = (String(printer.safetyText || '').trim() || (printer.safetyLinks || []).length) ? '1' : '';
+      option.dataset.equipment = JSON.stringify(Array.isArray(printer.requiredEquipment) ? printer.requiredEquipment : []);
       const statusNote = { maintenance: ' (Wartung)', broken: ' (Defekt)' }[window.MachineStatus ? (printer.status === 'printing' ? 'in_use' : printer.status) : ''] || '';
       option.textContent = printer.name + statusNote;
 
@@ -549,8 +551,10 @@ async function loadMaterialsForManagement() {
       const grossPrice = netPrice * (1 + taxRate / 100);
       const sellingPrice = grossPrice * (1 + markup / 100);
 
+      const stock = window.MaterialStock ? window.MaterialStock.summary(material) : { text: '', low: false };
       materialData.push({
         id: doc.id,
+        stock,
         name: material.name,
         manufacturer: material.manufacturer || 'Unbekannt',
         netPrice,
@@ -562,7 +566,7 @@ async function loadMaterialsForManagement() {
       // Tabellen-Zeile für Desktop
       containerHtml += `
         <tr id="material-row-${doc.id}">
-          <td><span class="cell-value">${material.name}</span><small class="material-machines" data-material="${doc.id}"></small></td>
+          <td><span class="cell-value">${material.name}</span><small class="material-stock ${stock.low ? 'is-low' : ''}">${stock.text}</small><small class="material-machines" data-material="${doc.id}"></small></td>
           <td><span class="cell-value">${material.type === 'pellet' ? 'Pellets' : material.type === 'filament' ? 'Filament' : 'Unbekannt'}</span></td>
           <td><span class="cell-value">${material.manufacturer || 'Unbekannt'}</span></td>
           <td><span class="cell-value">${window.formatCurrency(netPrice)}</span></td>
@@ -571,6 +575,7 @@ async function loadMaterialsForManagement() {
           <td><span class="cell-value">${window.formatCurrency(sellingPrice)}</span></td>
           <td class="actions">
             <div class="action-group">
+              <button class="btn btn-secondary btn-small" onclick="MaterialStock.open('${doc.id}')">Bestand</button>
               ${ButtonFactory.editMaterial(doc.id)}
               ${ButtonFactory.deleteMaterial(doc.id)}
             </div>
@@ -596,6 +601,7 @@ async function loadMaterialsForManagement() {
           <div class="entry-card-header">
             <h3 class="entry-job-title">${material.name}</h3>
             <span class="entry-detail-value">${material.manufacturer}</span>
+            <small class="material-stock ${material.stock.low ? 'is-low' : ''}">${material.stock.text}</small>
             <small class="material-machines" data-material="${material.id}"></small>
           </div>
 
@@ -624,6 +630,7 @@ async function loadMaterialsForManagement() {
 
           <!-- Card Footer mit Buttons -->
           <div class="entry-card-footer">
+            <button class="btn btn-secondary btn-small" onclick="MaterialStock.open('${material.id}')">Bestand</button>
             ${ButtonFactory.editMaterial(material.id)}
             ${ButtonFactory.deleteMaterial(material.id)}
           </div>

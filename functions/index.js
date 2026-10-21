@@ -1,6 +1,8 @@
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
+const { onDocumentCreated } = require('firebase-functions/v2/firestore');
+const { stockDeduction, nextStock } = require('./stock');
 const { defineString } = require('firebase-functions/params');
 const { logger } = require('firebase-functions');
 
@@ -281,4 +283,24 @@ exports.claimOneTimeMasterAdmin = onCall({ region: 'europe-west1', maxInstances:
   });
   logger.warn('One-time master admin bootstrap claimed', { uid, email });
   return { granted: true };
+});
+
+/**
+ * Bucht das Material eines neuen Auftrags vom Bestand ab (nur Materialien mit geführtem Bestand).
+ * Läuft in einer Transaktion und merkt sich am Auftrag, dass gebucht wurde, damit eine erneute
+ * Zustellung des Ereignisses nicht doppelt abzieht.
+ */
+exports.bookMaterialStock = onDocumentCreated({ document: 'entries/{entryId}', region: 'europe-west1', maxInstances: 2, memory: '256MiB' }, async event => {
+  const snapshot = event.data;
+  const deduction = stockDeduction(snapshot?.data());
+  if (!deduction) return;
+  const materialRef = db.collection('materials').doc(deduction.materialId);
+  await db.runTransaction(async tx => {
+    const [entry, material] = await Promise.all([tx.get(snapshot.ref), tx.get(materialRef)]);
+    if (!entry.exists || entry.data().stockBooked === true) return;
+    const stock = nextStock(material.exists ? material.data().stockKg : undefined, deduction.kg);
+    tx.update(snapshot.ref, { stockBooked: true });
+    if (stock !== null) tx.update(materialRef, { stockKg: stock, stockUpdatedAt: FieldValue.serverTimestamp() });
+  });
+  logger.info('Material stock booked', { entry: snapshot.id, material: deduction.materialId, kg: deduction.kg });
 });
