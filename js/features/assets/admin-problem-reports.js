@@ -24,7 +24,7 @@ function setupProblemReportsListener() {
     
     try {
         problemReportsListener = window.db.collection('problemReports')
-            .orderBy('reportedAt', 'desc')
+            .orderBy('reportedAt', 'desc').limit(200)
             .onSnapshot((snapshot) => {
                 problemReports = [];
                 snapshot.forEach((doc) => {

@@ -18,8 +18,13 @@ function setupPaymentStatusListener() {
         return;
     }
     
+    // Nur Admins markieren Aufträge als bezahlt; und nur die neuesten 50 beobachten,
+    // statt bei jedem Login die komplette entries-Collection zu lesen.
+    if (!window.currentUser?.isAdmin) return;
+
     // Listen for entry payment status changes
     window.db.collection('entries')
+        .orderBy('timestamp', 'desc').limit(50)
         .onSnapshot((snapshot) => {
             snapshot.docChanges().forEach(async (change) => {
                 if (change.type === 'modified') {

@@ -124,38 +124,15 @@ function setupAdminEntriesListener() {
   }
 }
 
-// Load user entries
+// Load user entries: Live-Listener (50 Einträge + "Weitere laden") statt Vollabfrage.
+// Der Listener aktualisiert sich selbst, ein erneuter Aufruf ist dann nicht nötig.
 async function loadUserEntries() {
-    try {
-        if (!window.currentUser || !window.currentUser.username) {
-            console.error('❌ Kein Benutzer angemeldet oder kein Username verfügbar');
-            return;
-        }
-
-        console.log('📊 Loading entries for user:', window.currentUser.username);
-
-        const snapshot = await window.db.collection('entries')
-            .where("username", "==", window.currentUser.username)
-            .orderBy("timestamp", "desc")
-            .get();
-
-        const entries = [];
-        snapshot.forEach(doc => {
-            entries.push({
-                id: doc.id,
-                ...doc.data()
-            });
-        });
-
-        console.log(`✅ Loaded ${entries.length} entries for user`);
-        renderUserEntries(entries);
-
-    } catch (error) {
-        console.error('❌ Error loading user entries:', error);
-        if (window.toast && typeof window.toast.error === 'function') {
-            window.toast.error('Fehler beim Laden der Einträge');
-        }
+    if (!window.currentUser || !window.currentUser.name || !window.currentUser.kennung) {
+        console.error('❌ Kein Benutzer angemeldet');
+        return;
     }
+    if (userEntriesListener) return;
+    setupUserEntriesListener();
 }
 
 // Benutzer-Statistik in den Dashboard-Kacheln anzeigen
@@ -176,15 +153,17 @@ function updateUserStatsDisplay(stats) {
 // Load user statistics
 async function loadUserStats() {
     try {
-        if (!window.currentUser || !window.currentUser.username) {
-            console.error('❌ Kein Benutzer angemeldet oder kein Username verfügbar');
+        if (!window.currentUser || !window.currentUser.name || !window.currentUser.kennung) {
+            console.error('❌ Kein Benutzer angemeldet');
             return;
         }
 
-        console.log('📊 Loading stats for user:', window.currentUser.username);
+        console.log('📊 Loading stats for user:', window.currentUser.kennung);
 
+        // Gleiche Felder wie der Listener, damit der vorhandene Index (name, kennung, timestamp) passt.
         const snapshot = await window.db.collection('entries')
-            .where("username", "==", window.currentUser.username)
+            .where("name", "==", window.currentUser.name)
+            .where("kennung", "==", window.currentUser.kennung)
             .get();
 
         let totalCost = 0;
