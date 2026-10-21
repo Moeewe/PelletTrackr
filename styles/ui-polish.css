@@ -381,3 +381,48 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 .status-broken { background: #dc3545 !important; }
 .status-broken.empty { background: rgba(220, 53, 69, 0.3) !important; }
 .machine-status-grid { flex-wrap: wrap; row-gap: 8px; }
+
+/* ==================== VERWALTUNG: EINHEITLICHE LISTEN ==================== */
+/* Dialog-Köpfe: gleiche Größe, keine verschachtelten Rahmen */
+.modal-header h2, .modal-header h3 { margin: 0; font-size: 20px; font-weight: 700; line-height: 1.25; }
+.modal-body > .card, .modal-body > .card > .card-body { border: 0 !important; box-shadow: none !important; padding: 0 !important; background: transparent !important; }
+.modal-body > .card { margin: 0; }
+
+/* Werkzeugleiste: Suche, darunter Chips (auch Reiter) */
+.equipment-controls { margin-bottom: 12px; }
+.category-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; padding: 0; border: 0; background: transparent; }
+.category-tabs .tab-btn { min-height: 40px; padding: 6px 14px; margin: 0; background: #fff; color: #000; border: 2px solid #000; border-radius: 0; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: none; }
+.category-tabs .tab-btn:hover { background: #e9ecef; }
+.category-tabs .tab-btn.active { background: #000; color: #fff; }
+.category-tabs .tab-btn::after { display: none !important; }
+
+/* Eine Listenzeile für alles: Equipment, Materialien, Personen, Maschinen, Anfragen */
+.equipment-item, .printer-row, .material-card, .managed-user, .payment-request-item, .problem-report-item, .compact-list .safety-card {
+  background: #f8f9fa; border: 2px solid #000; border-radius: 0; box-shadow: none; padding: 14px 16px; margin: 0 0 10px; transition: none;
+}
+.equipment-item:hover, .payment-request-item:hover { background: #f8f9fa; }
+.equipment-name, .printer-row-name, .material-card-head h3, .managed-user-identity h3, .compact-list .safety-card h4 { font-size: 17px; font-weight: 700; margin: 0; }
+.equipment-info, .printer-row-details, .material-card-sub, .managed-user-identity p { font-size: 14px; color: #555; margin: 2px 0 0; }
+.equipment-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+.equipment-status-row { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+.equipment-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.equipment-actions .btn, .material-card-actions .btn, .printer-row-actions .btn { min-height: 40px; padding: 8px 14px; font-size: 13px; margin: 0; }
+.equipment-container, #equipmentList { display: flex; flex-direction: column; }
+/* Chips/Status einheitlich */
+.equipment-status, .equipment-deposit, .entry-status-badge, .material-chip, .user-chip { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 0; }
+/* Filter in Dialogen (Selects) wie die Suche */
+.modal-body select.form-select, .modal-body select.sort-select { min-height: 48px; }
+
+/* Einheitliche Dialogbreite und ruhige Hinweise */
+#modal .modal-content { max-width: 960px; width: calc(100% - 32px); }
+.form-hint { background: #f8f9fa; border-left: 4px solid #000; }
+
+/* Reiter überall als Chips (Bestellungen, Equipment …) */
+.order-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; border: 0 !important; }
+.order-tabs .tab-btn, .modal-body .tab-btn { min-height: 40px; padding: 6px 14px; margin: 0; background: #fff; color: #000; border: 2px solid #000 !important; border-radius: 0; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.order-tabs .tab-btn.active, .modal-body .tab-btn.active { background: #000; color: #fff; }
+.order-tabs .tab-btn::after, .modal-body .tab-btn::after { display: none !important; }
+/* Zahlungsanfragen: Betrag ruhiger, Aktionen wie überall */
+.request-amount { background: #fff !important; border: 1px solid #000; padding: 2px 10px; font-size: 16px; font-weight: 700; }
+.payment-request-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.payment-request-actions .btn { min-height: 40px; padding: 8px 14px; font-size: 13px; margin: 0; }

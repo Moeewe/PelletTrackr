@@ -451,7 +451,7 @@ function showAdminNotificationOverview() {
                     <div class="notification-item" onclick="showProblemReports()">
                         <div class="notification-icon">🔧</div>
                         <div class="notification-content">
-                            <h4>Problem-Meldungen</h4>
+                            <h4>Problemmeldungen</h4>
                             <p>${notificationCounts.problemReports} neue Meldungen</p>
                         </div>
                         <div class="notification-badge">${notificationCounts.problemReports}</div>

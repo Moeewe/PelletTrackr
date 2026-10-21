@@ -51,7 +51,7 @@ function setupProblemReportsListener() {
                 renderProblemReports();
             }, (error) => {
                 console.error('Error in problem reports listener:', error);
-                showToast('Fehler beim Live-Update der Problem-Meldungen', 'error');
+                showToast('Fehler beim Live-Update der Problemmeldungen', 'error');
             });
         
         console.log("✅ Problem reports listener registered");
@@ -133,7 +133,7 @@ function showProblemReports() {
     
     const modalContent = `
         <div class="modal-header">
-            <h3>Problem-Meldungen verwalten</h3>
+            <h3>Problemmeldungen verwalten</h3>
             <button class="close-btn" onclick="closeModal()">&times;</button>
         </div>
         <div class="modal-body">
@@ -203,7 +203,7 @@ async function loadProblemReports() {
         
     } catch (error) {
         console.error('Error loading problem reports:', error);
-        showToast('Fehler beim Laden der Problem-Meldungen', 'error');
+        showToast('Fehler beim Laden der Problemmeldungen', 'error');
     }
 }
 
@@ -230,7 +230,7 @@ function renderProblemReports(statusFilter = 'all') {
     if (filteredReports.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <p>Keine Problem-Meldungen gefunden.</p>
+                <p>Keine Problemmeldungen gefunden.</p>
             </div>
         `;
         return;
@@ -340,7 +340,7 @@ async function updateProblemStatus(reportId, newStatus) {
  */
 async function deleteProblemReport(reportId) {
     const confirmed = await window.toast.confirm(
-        'Möchten Sie diese Problem-Meldung wirklich löschen?',
+        'Möchten Sie diese Problemmeldung wirklich löschen?',
         'Ja, löschen',
         'Abbrechen'
     );
@@ -350,12 +350,12 @@ async function deleteProblemReport(reportId) {
     
     try {
         await window.db.collection('problemReports').doc(reportId).delete();
-        showToast('Problem-Meldung erfolgreich gelöscht', 'success');
+        showToast('Problemmeldung erfolgreich gelöscht', 'success');
         // Removed manual reload - real-time listener will handle the update
         
     } catch (error) {
         console.error('Error deleting problem report:', error);
-        showToast('Fehler beim Löschen der Problem-Meldung', 'error');
+        showToast('Fehler beim Löschen der Problemmeldung', 'error');
     }
 }
 

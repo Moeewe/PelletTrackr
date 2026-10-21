@@ -45,7 +45,14 @@
     } catch (error) { window.toast.error(error.message || 'Bestand konnte nicht geöffnet werden.'); }
   }
 
-  const close = () => (typeof window.showMaterialManager === 'function' ? window.showMaterialManager() : window.closeModal());
+  // Zurück zur Materialliste: den Bestand-Dialog schließen und die Liste mit dem neuen Bestand neu laden.
+  const reloadList = () => { if (typeof window.loadMaterialsForManagement === 'function') window.loadMaterialsForManagement(); };
+  const close = () => {
+    window.closeModal?.();
+    const box = document.getElementById('materialManager');
+    if (box && !box.classList.contains('active')) box.classList.add('active');
+    reloadList();
+  };
 
   async function add() {
     try {
@@ -57,6 +64,7 @@
         stockKg: Math.round((base + amount) * 1000) / 1000, stockUpdatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
       });
       window.toast.success(`${kg(amount)} gebucht.`);
+      reloadList();
       await open(material.id);
     } catch (error) { window.toast.error(error.message || 'Buchen fehlgeschlagen.'); }
   }
@@ -74,6 +82,7 @@
         stockKg: Math.round(stock * 1000) / 1000, minStockKg: min, stockUpdatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
       });
       window.toast.success('Bestand gespeichert.');
+      reloadList();
       await open(material.id);
     } catch (error) { window.toast.error(error.message || 'Speichern fehlgeschlagen.'); }
   }

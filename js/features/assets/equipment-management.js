@@ -445,6 +445,13 @@ function showEquipmentCategory(category, retryCount = 0) {
         btn.classList.remove('active');
     });
 
+    // Anzahl je Kategorie im Reiter anzeigen
+    const tabLabels = { keys: 'Schlüssel', hardware: 'Hardware', books: 'Bücher' };
+    Object.entries(tabLabels).forEach(([key, label]) => {
+        const tab = document.querySelector(`.category-tabs .tab-btn[onclick*="${key}"]`);
+        if (tab) tab.textContent = `${label} (${equipment.filter(item => item.category === key).length})`;
+    });
+
     // Set the correct tab as active based on category
     const categoryTab = document.querySelector(`.category-tabs .tab-btn[onclick*="${category}"]`);
     if (categoryTab) {

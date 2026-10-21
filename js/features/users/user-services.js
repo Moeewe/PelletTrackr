@@ -1869,7 +1869,7 @@ function renderMyProblemReports(reports) {
         html += `
             <div class="entry-card">
                 <div class="entry-card-header">
-                    <h3 class="entry-job-title">${report.device || 'Problem-Meldung'}</h3>
+                    <h3 class="entry-job-title">${report.device || 'Problemmeldung'}</h3>
                     <span class="entry-status-badge ${statusClass}">${statusText}</span>
                 </div>
 
@@ -2037,7 +2037,7 @@ async function saveProblemReportEdit(reportId) {
  */
 async function deleteUserProblemReport(reportId) {
     // Show confirmation toast instead of browser dialog
-    window.toast.info('Problem-Meldung wird gelöscht...');
+    window.toast.info('Problemmeldung wird gelöscht...');
 
     // Small delay to show the info message
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -2112,7 +2112,7 @@ async function deleteUserProblemReport(reportId) {
                     if (remainingCards.length === 0) {
                         container.innerHTML = `
                             <div class="empty-state">
-                                <p>Keine Problem-Meldungen vorhanden.</p>
+                                <p>Keine Problemmeldungen vorhanden.</p>
                                 <p>Sie können über "Problem melden" neue Meldungen erstellen.</p>
                             </div>
                         `;
@@ -2121,11 +2121,11 @@ async function deleteUserProblemReport(reportId) {
             }, 300);
         }
 
-        window.toast.success('Problem-Meldung gelöscht');
+        window.toast.success('Problemmeldung gelöscht');
 
     } catch (error) {
         console.error('Error deleting problem report:', error);
-        window.toast.error('Fehler beim Löschen der Problem-Meldung');
+        window.toast.error('Fehler beim Löschen der Problemmeldung');
 
         // Restore element if deletion failed
         if (reportElement) {
