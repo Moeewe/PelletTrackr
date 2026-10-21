@@ -158,6 +158,21 @@ async function loadUserEntries() {
     }
 }
 
+// Benutzer-Statistik in den Dashboard-Kacheln anzeigen
+function updateUserStatsDisplay(stats) {
+    const fmt = value => typeof formatCurrency === 'function'
+        ? formatCurrency(value)
+        : value.toFixed(2).replace('.', ',') + ' €';
+    const set = (id, text) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+    };
+    set('userTotalEntries', String(stats.totalEntries));
+    set('userTotalCost', fmt(stats.totalCost));
+    set('userPaidAmount', fmt(stats.paidCost));
+    set('userUnpaidAmount', fmt(stats.unpaidCost));
+}
+
 // Load user statistics
 async function loadUserStats() {
     try {
@@ -176,16 +191,21 @@ async function loadUserStats() {
         let totalEntries = 0;
         let paidEntries = 0;
         let unpaidEntries = 0;
+        let paidCost = 0;
+        let unpaidCost = 0;
 
         snapshot.forEach(doc => {
             const entry = doc.data();
-            totalCost += entry.totalCost || 0;
+            const cost = entry.totalCost || 0;
+            totalCost += cost;
             totalEntries++;
 
             if (entry.paid || entry.isPaid) {
                 paidEntries++;
+                paidCost += cost;
             } else {
                 unpaidEntries++;
+                unpaidCost += cost;
             }
         });
 
@@ -194,7 +214,9 @@ async function loadUserStats() {
             totalEntries,
             totalCost,
             paidEntries,
-            unpaidEntries
+            unpaidEntries,
+            paidCost,
+            unpaidCost
         });
 
         console.log(`✅ User stats updated: ${totalEntries} entries, €${totalCost.toFixed(2)} total`);

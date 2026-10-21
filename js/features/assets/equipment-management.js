@@ -77,7 +77,8 @@ function setupEquipmentListener() {
 
             // Load equipment requests and users after equipment is loaded
             loadEquipmentRequests();
-            loadAllUsersForEquipment();
+            // Nutzerliste und Anfragen dürfen laut Firestore-Regeln nur Admins lesen.
+            if (window.currentUser?.isAdmin) loadAllUsersForEquipment();
 
             // Only show category if modal is active and we have a valid category
             const modal = document.getElementById('modal');

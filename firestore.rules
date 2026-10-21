@@ -192,6 +192,8 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
     match /problemReports/{documentId} { allow read, write: if signedIn(); }
+    // Legacy-Ausleihanfragen: der Client liest/ändert sie nur im Admin-Bereich.
+    match /requests/{documentId} { allow read, write: if isAdmin(); }
 
     match /{document=**} { allow read, write: if false; }
   }

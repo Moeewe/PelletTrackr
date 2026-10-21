@@ -12,6 +12,18 @@ const firebaseConfig = {
     appId: "1:37190466890:web:cfb25f3c2f6bb62006d5b3"
 };
 
+// ===== FIREBASE INITIALISIERUNG =====
+// Muss vor allen Modulen laufen, die firebase.auth() / window.db nutzen.
+if (typeof firebase !== 'undefined') {
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    window.db = firebase.firestore();
+    window.firebase = firebase;
+} else {
+    console.error("❌ Firebase SDK nicht gefunden!");
+}
+
 // ===== SICHERHEITSVERBESSERUNGEN =====
 // Diese Funktionen werden später implementiert
 

@@ -87,6 +87,8 @@ function setupPrintersListener() {
  * Load printers from Firebase (fallback)
  */
 async function loadPrinters() {
+    // Drucker sind nur für angemeldete Nutzer lesbar (Firestore-Regeln).
+    if (!window.firebase?.auth?.().currentUser) return;
     try {
         const querySnapshot = await window.db.collection('printers').get();
         printers = [];
