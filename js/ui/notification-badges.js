@@ -269,6 +269,7 @@ function setupUserMaterialRequestsBadge() {
  */
 function updateBadge(badgeId, count) {
     const badge = document.querySelector(`[data-badge="${badgeId}"]`);
+    if (typeof window.updateServiceStatus === 'function') window.updateServiceStatus(badgeId, count);
 
     if (badge) {
         badge.textContent = count;

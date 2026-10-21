@@ -30,7 +30,7 @@
 
             <form class="login-form" id="loginForm">
                 <div class="form-group">
-                    <input type="email" id="loginEmail" class="form-input" placeholder="E-Mail-Adresse" autocomplete="username" inputmode="email" autocapitalize="none" autocorrect="off" spellcheck="false" oninput="updateMasterAdminAccessButton()">
+                    <input type="email" id="loginEmail" class="form-input" placeholder="E-Mail-Adresse" autocomplete="username" inputmode="email" autocapitalize="none" autocorrect="off" spellcheck="false">
                 </div>
 
                 <div class="form-group">
@@ -41,11 +41,12 @@
                     <input type="text" id="loginKennung" class="form-input" placeholder="FH-Kennung für vorhandenes Konto (optional)" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">
                 </div>
 
-                <div class="form-group remember-me">
+                <div class="form-group login-options">
                     <label class="checkbox-label">
-                        <input type="checkbox" id="rememberMe" class="checkbox-input">
-                        <span class="checkbox-text">Daten merken</span>
+                        <input type="checkbox" id="rememberMe" class="checkbox-input" checked>
+                        <span class="checkbox-text">Login merken</span>
                     </label>
+                    <button type="button" class="link-small" onclick="showPasswordResetSection()">Passwort vergessen?</button>
                 </div>
 
                 <div class="button-group">
@@ -58,13 +59,6 @@
                     <button type="button" class="btn btn-link" onclick="showRegistrationSection()">Neuen Account erstellen</button>
                 </div>
 
-                <div class="form-group">
-                    <button type="button" class="btn btn-link" onclick="showPasswordResetSection()">Passwort vergessen</button>
-                </div>
-                <div class="form-group" id="masterAdminBootstrapControl" hidden>
-                    <button type="button" class="btn btn-secondary" onclick="claimOneTimeMasterAdmin()">Einmaligen Admin-Erstzugang nutzen</button>
-                    <small>Nur für das freigegebene, bestätigte Konto; einmalig und bis 31.10.2026.</small>
-                </div>
             </form>
 
             <!-- Registrierungs-Sektion -->
@@ -159,13 +153,7 @@
             <div class="form-section">
                 <h2 class="section-title">Fertigungsauftrag erfassen</h2>
                 <form class="entry-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Job-Name</label>
-                            <input type="text" id="jobName" class="form-input" placeholder="z.B. Prototyp Gehäuse, Ersatzteil, etc. (optional)">
-                        </div>
-                    </div>
-
+                    <p id="entryPrefillHint" class="form-hint" hidden></p>
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Maschine</label>
@@ -173,46 +161,26 @@
                                 <option value="">Maschine auswählen ...</option>
                             </select>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" id="printTimeGroup">
                             <label class="form-label">Zeit (Minuten)</label>
-                            <input type="number" id="printTime" class="form-input" placeholder="0" min="0" step="any">
+                            <input type="number" id="printTime" class="form-input" placeholder="0" min="0" step="any" inputmode="decimal">
                         </div>
                     </div>
 
-                    <div class="form-row">
+                    <div class="form-row" id="materialRow">
                         <div class="form-group">
                             <label class="form-label">Material</label>
                             <select id="material" class="form-select">
                                 <option value="">Material auswählen...</option>
                             </select>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" id="materialAmountGroup" hidden>
                             <label class="form-label">Menge (kg)</label>
-                            <input type="text" id="materialMenge" class="form-input" placeholder="0,00">
+                            <input type="text" id="materialMenge" class="form-input" placeholder="0,00" inputmode="decimal">
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Masterbatch</label>
-                            <select id="masterbatch" class="form-select">
-                                <option value="">Masterbatch auswählen...</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Menge (g)</label>
-                            <input type="text" id="masterbatchMenge" class="form-input" placeholder="0,00">
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Notizen</label>
-                            <textarea id="jobNotes" class="form-textarea" placeholder="Zusätzliche Informationen, Farbe, Größe, etc. (optional)" rows="3"></textarea>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
+                    <div class="form-row" id="ownMaterialRow">
                         <div class="form-group">
                             <label class="checkbox-label">
                                 <input type="checkbox" id="ownMaterialUsed" class="checkbox-input">
@@ -220,6 +188,34 @@
                             </label>
                         </div>
                     </div>
+
+                    <details id="formMore" class="form-more">
+                        <summary>Weitere Angaben (optional)</summary>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Job-Name</label>
+                                <input type="text" id="jobName" class="form-input" placeholder="z.B. Prototyp Gehäuse, Ersatzteil, etc.">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Masterbatch (Farbzusatz)</label>
+                                <select id="masterbatch" class="form-select">
+                                    <option value="">Masterbatch auswählen...</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="masterbatchAmountGroup" hidden>
+                                <label class="form-label">Menge (g)</label>
+                                <input type="text" id="masterbatchMenge" class="form-input" placeholder="0,00" inputmode="decimal">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Notizen</label>
+                                <textarea id="jobNotes" class="form-textarea" placeholder="Zusätzliche Informationen, Farbe, Größe, etc." rows="3"></textarea>
+                            </div>
+                        </div>
+                    </details>
 
                     <div class="cost-preview">
                         <div class="cost-amount" id="costPreview">0,00 €</div>
@@ -237,6 +233,7 @@
             <div class="services-section">
                 <h2 class="section-title">Deine Services</h2>
                 <div class="services-grid">
+                    <!-- Maschinenzeit (Stoppuhr) vorerst ausgeblendet; Funktion bleibt in js/features/machine-time.js
                     <div class="service-card">
                         <div class="service-header"><h3 class="service-title">Maschinenzeit</h3></div>
                         <div class="service-content">
@@ -244,6 +241,7 @@
                             <div class="service-action"><button class="btn btn-primary btn-sm" onclick="MachineTime.open()">Stoppuhr starten / beenden</button></div>
                         </div>
                     </div>
+                    -->
                     <!-- Hilfe -->
                     <div class="service-card">
                         <div class="service-header"><h3 class="service-title">Hilfe & Anleitungen</h3></div>
@@ -259,6 +257,7 @@
                         </div>
                         <div class="service-content">
                             <div class="service-description">Equipment anfragen</div>
+                            <div class="service-status" data-status-for="user-equipment-requests">Nichts offen</div>
                             <div class="service-action">
                                 <button class="btn btn-primary btn-sm" onclick="showMyEquipmentRequests()">
                                     Meine Ausleihen
@@ -276,6 +275,7 @@
                         </div>
                         <div class="service-content">
                             <div class="service-description">Defekte melden</div>
+                            <div class="service-status" data-status-for="user-problem-reports">Nichts offen</div>
                             <div class="service-action">
                                 <button class="btn btn-primary btn-sm" onclick="showMyProblemReports()">
                                     Meine Meldungen
@@ -296,6 +296,7 @@
                         </div>
                         <div class="service-content">
                             <div class="service-description">Materialwünsche</div>
+                            <div class="service-status" data-status-for="user-material-requests">Nichts offen</div>
                             <div class="service-action">
                                 <button class="btn btn-primary btn-sm" onclick="showMyMaterialRequests()">
                                     Meine Wünsche
@@ -890,6 +891,7 @@
     <script src="js/features/payments/payment-requests.js?v=1.0.1"></script>
 
     <!-- Main App (Coordinator) -->
+    <script src="js/features/entries/entry-form-assist.js?v=20261021"></script>
     <script src="web-app-modular.js"></script>
 
     <!-- Global Footer - Always visible at bottom -->

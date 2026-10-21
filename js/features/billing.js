@@ -69,6 +69,7 @@
     const seq=++previewSequence;
     try {
       const q=await quote(); if(seq!==previewSequence)return;
+      document.dispatchEvent(new CustomEvent('billing:quote',{detail:q}));
       $('costPreview').textContent=euro(q.totalCents/100);
       $('costBreakdown').textContent=groups[q.group]+' · '+modes[q.tariff.mode]+': Maschine '+euro(q.machineCents/100)+' + Material '+euro((q.materialCents+q.additiveCents)/100)+'.';
     }catch(error){if(seq===previewSequence){$('costPreview').textContent='—';$('costBreakdown').textContent=error.message;}}

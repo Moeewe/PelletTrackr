@@ -147,3 +147,21 @@ body {
 }
 
 .machine-time-steps { margin: 0 0 12px; padding-left: 1.2rem; line-height: 1.6; }
+
+/* Login: "Login merken" und "Passwort vergessen?" als dezente Zeile */
+.login-options { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.login-options .checkbox-text, .link-small { font-size: 14px; font-weight: 500; color: #666; }
+.link-small { background: none; border: 0; padding: 0 4px; min-height: 44px; cursor: pointer; text-decoration: underline; font-family: inherit; }
+.link-small:hover { color: #000; }
+
+/* Auftragsformular: optionale Felder einklappen */
+.form-more { margin: 8px 0 16px; border: 1px solid #ddd; padding: 0 12px; }
+.form-more > summary { cursor: pointer; padding: 12px 0; min-height: 44px; font-weight: 600; box-sizing: border-box; }
+.form-more[open] > summary { border-bottom: 1px solid #eee; margin-bottom: 12px; }
+.form-hint { margin: 0 0 12px; padding: 10px 12px; background: #fff9c4; border-left: 4px solid #FFEB00; font-size: 14px; }
+[hidden] { display: none !important; }
+
+/* Services: Zustand direkt auf der Karte */
+.service-status { margin: 4px 0 10px; font-size: 14px; color: #666; }
+.service-status-active { color: #000; font-weight: 700; }
+.service-status-active::before { content: "● "; color: #d62828; }
