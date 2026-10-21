@@ -29,12 +29,7 @@
   function qr(index) {
     const machine=window.machineManagerRows?.[index];
     if(!machine?.id) return window.toast.warning('Bitte speichere die Maschine zuerst.');
-    if(typeof window.QRCode!=='function') return window.toast.error('Der QR-Code-Generator konnte nicht geladen werden. Bitte Internetverbindung prüfen.');
-    const guideUrl=new URL('index.html',window.location.href);
-    guideUrl.search=''; guideUrl.hash='';
-    guideUrl.searchParams.set('maschinenGuide',machine.collection+':'+machine.id);
-    window.showModal('<div class="modal-header"><h2>Anleitungs-QR · '+esc(machine.name)+'</h2><button class="btn btn-secondary" onclick="MachineManager.open()">Zurück</button></div><div class="modal-body"><p>Der Scan öffnet die App und startet nach der Anmeldung direkt die Anleitung für diese Maschine.</p><div id="machineGuideQr" class="machine-guide-qr"></div><label>Direktlink<input class="form-input" readonly value="'+esc(guideUrl.href)+'"></label><button class="btn btn-secondary" onclick="navigator.clipboard.writeText('+JSON.stringify(guideUrl.href)+').then(()=>window.toast.success(\'Link kopiert.\')).catch(()=>window.toast.warning(\'Link bitte aus dem Feld kopieren.\'))">Link kopieren</button><button class="btn btn-primary" onclick="window.print()">QR-Code drucken</button></div>',{clearStack:true,pushToStack:false});
-    new window.QRCode(document.getElementById('machineGuideQr'),{text:guideUrl.href,width:256,height:256,colorDark:'#111111',colorLight:'#ffffff',correctLevel:window.QRCode.CorrectLevel.M});
+    window.MachineLabels.open(['machines:'+machine.id]);
   }
   async function save(id) {
     try {

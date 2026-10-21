@@ -181,3 +181,19 @@
         max-width: 100%;
     }
 }
+
+/* Hilfe: eine Startseite mit Maschinen-Kacheln */
+.knowledge-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.knowledge-tile { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; text-align: left; min-height: 64px; padding: 12px; background: #fff; border: 2px solid #000; cursor: pointer; font: inherit; }
+.knowledge-tile:hover, .knowledge-tile:focus-visible { background: #FFEB00; }
+.knowledge-tile small { color: #555; }
+.knowledge-back { margin-bottom: 8px; }
+.knowledge-bar { height: 6px; background: #eee; margin: 6px 0 14px; }
+.knowledge-bar span { display: block; height: 100%; background: #000; }
+.knowledge-step { font-size: 18px; line-height: 1.5; }
+.knowledge-disclaimer { margin: 0 0 12px; font-size: 14px; }
+
+/* Etiketten-Auswahl */
+.label-list { max-height: 45vh; overflow-y: auto; margin: 12px 0; }
+.label-group { margin: 12px 0 4px; font-size: 14px; text-transform: uppercase; color: #555; }
+.label-row { display: flex; align-items: center; min-height: 44px; }

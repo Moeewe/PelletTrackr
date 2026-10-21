@@ -177,8 +177,9 @@ function knowledgeStatusLabel(status) {
   return map[status] || status || 'Status unbekannt';
 }
 
+let knowledgeMachinesLoaded = false;
 async function loadKnowledgeMachines() {
-  if (!window.db) return;
+  if (!window.db || knowledgeMachinesLoaded) return;
   try {
     const [printers, equipment, machines] = await Promise.all([
       window.db.collection('printers').get(), window.db.collection('equipment').get(), window.db.collection('machines').get()
@@ -189,6 +190,7 @@ async function loadKnowledgeMachines() {
       ...machines.docs.filter(doc=>doc.data().active!==false).map(doc => ({ id: doc.id, collection: 'machines', ...doc.data() }))
     ].filter(machine => machine.name).sort((a, b) => a.name.localeCompare(b.name, 'de'));
     try { const saved=await window.db.collection('knowledgeArticles').get(); knowledgeArticles=saved.docs.map(doc=>({id:doc.id,...doc.data()})); } catch (_) { knowledgeArticles=[]; }
+    knowledgeMachinesLoaded = true;
   } catch (error) {
     console.warn('Maschinen konnten für die Wissensdatenbank nicht geladen werden:', error);
     knowledgeMachines = [];
@@ -204,7 +206,10 @@ function splitKnowledgeDocument(source, markdown) {
   }).filter(section => section.text.length > 40);
 }
 
+let knowledgeTreeLoaded = false;
 async function loadKnowledgeDocuments() {
+  if (knowledgeTreeLoaded) return;
+  knowledgeTreeLoaded = true;
   const cacheKey = 'pelletTrackr_knowledge_v3';
   try {
     const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
@@ -258,45 +263,58 @@ async function loadRelevantKnowledgeDocuments(question) {
   if(knowledgeDocuments.length) try {localStorage.setItem('pelletTrackr_knowledge_v3',JSON.stringify({timestamp:Date.now(),documents:knowledgeDocuments,sources:knowledgeSources}));} catch (_) { /* cache optional */ }
 }
 
-function knowledgeMachineOptions() {
-  const dynamicOptions = knowledgeMachines.map(machine => {
+function knowledgeArticlesFor(machine) {
+  const haystack = `${machine?.name || ''} ${machine?.model || ''} ${machine?.jobTypes || ''}`.toLocaleLowerCase('de');
+  return knowledgeArticles.filter(a => a.machineName && haystack.includes(a.machineName.toLocaleLowerCase('de')));
+}
+
+// Nur Maschinen anzeigen, für die es wirklich eine Anleitung gibt.
+function knowledgeGuideTargets() {
+  const covered = new Set();
+  const targets = knowledgeMachines.filter(machine => {
     const profile = knowledgeProfileForMachine(machine);
-    return `<option value="machine:${knowledgeEscape(machine.collection)}:${knowledgeEscape(machine.id)}" ${profile ? '' : 'disabled'}>${knowledgeEscape(machine.name)} — ${knowledgeEscape(knowledgeStatusLabel(machine.status))}${profile ? '' : ' (keine Anleitung zugeordnet)'}</option>`;
-  }).join('');
-  return `${dynamicOptions}<optgroup label="Roboter-Anleitungen"><option value="profile:weber">Großroboter · Weber DXR25 / DXR-Steuerung</option><option value="profile:ur5">Kleiner Roboterarm · Universal Robots UR5 / UR5slicer</option></optgroup><optgroup label="Weitere Anleitungen"><option value="profile:ginger">Ginger</option></optgroup>`;
+    if (profile) covered.add(profile);
+    return profile || knowledgeArticlesFor(machine).length;
+  }).map(machine => ({ value: `machine:${machine.collection}:${machine.id}`, name: machine.name, status: knowledgeStatusLabel(machine.status) }));
+  const general = [['weber', 'Weber DXR25 (Großroboter)'], ['ur5', 'Universal Robots UR5'], ['ginger', 'Ginger']]
+    .filter(([profile]) => !covered.has(profile))
+    .map(([profile, name]) => ({ value: `profile:${profile}`, name, status: '' }));
+  return [...targets, ...general];
 }
 
 async function showKnowledgeBase(machineReference = null) {
-  await Promise.all([loadKnowledgeMachines(), loadKnowledgeDocuments()]);
-  showModalWithContent(`<div class="modal-header"><h2>Wissensdatenbank & Hilfe</h2><button class="close-btn" onclick="closeModal()">&times;</button></div>
+  showModalWithContent(`<div class="modal-header"><h2>Hilfe & Anleitungen</h2><button class="close-btn" onclick="closeModal()">&times;</button></div>
     <div class="modal-body knowledge-base">
-      <div class="knowledge-disclaimer"><strong>Sicherheit:</strong> Bedien- und Wiederanlaufanweisungen gelten nur für eingewiesene Personen. Bei Gefahr, unklarer Lage oder möglicher Kollision sofort stoppen und die Werkstattleitung hinzuziehen.</div>
-      <div class="knowledge-mode-buttons"><button class="btn btn-primary" onclick="showKnowledgeGuideMode()">Geführte Anleitung</button><button class="btn btn-secondary" onclick="showKnowledgeChatMode()">Wie kann ich helfen?</button></div>
-      <details class="knowledge-readme-links"><summary>READMEs &amp; technische Anleitungen öffnen (${knowledgeSources.length})</summary><div>${knowledgeSourceLinkList()}</div></details>
-      <details class="knowledge-readme-links"><summary>Werkstatt-Anleitungen (${knowledgeArticles.length})</summary><div>${knowledgeArticles.map(a=>`<article><strong>${knowledgeEscape(a.title)}</strong>${a.machineName?` · ${knowledgeEscape(a.machineName)}`:''}<p>${knowledgeEscape(a.body)}</p>${a.url?`<a href="${knowledgeEscape(a.url)}" target="_blank" rel="noopener noreferrer">Anleitung öffnen</a>`:''}</article>`).join('')||'<p>Noch keine ergänzenden Anleitungen hinterlegt.</p>'}</div></details>
-      <div id="knowledgeContent"></div>
+      <p class="knowledge-disclaimer"><strong>Sicherheit:</strong> Nur für eingewiesene Personen. Bei Gefahr sofort stoppen, im Notfall Not-Aus drücken.</p>
+      <div id="knowledgeContent"><p>Wird geladen …</p></div>
     </div>
-    <div class="modal-footer"><span class="knowledge-sync-state">${knowledgeDocuments.length ? `${knowledgeDocuments.length} Dokumentabschnitte zwischengespeichert` : `${knowledgeSources.length} README-Quellen verfügbar; Inhalte werden passend zur Frage geladen`}</span><button class="btn btn-secondary" onclick="closeModal()">Schließen</button></div>`);
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Schließen</button></div>`);
+  await loadKnowledgeMachines();
   showKnowledgeGuideMode();
   if (machineReference) {
-    const select=document.getElementById('knowledgeMachineSelect');
-    if (select) {
-      select.value=`machine:${machineReference.collection}:${machineReference.id}`;
-      if (select.value) startKnowledgeGuide();
-      else window.toast.warning('Diese Maschine ist nicht mehr verfügbar. Ich zeige die allgemeinen Anleitungen.');
-    }
+    const value = `machine:${machineReference.collection}:${machineReference.id}`;
+    if (knowledgeGuideTargets().some(target => target.value === value)) startKnowledgeGuide(value);
+    else if (window.toast) window.toast.info('Für diese Maschine gibt es noch keine Schritt-für-Schritt-Anleitung. Du kannst unten eine Frage stellen.');
   }
 }
 
+// Startseite der Hilfe: Maschine wählen oder direkt eine Frage stellen.
 function showKnowledgeGuideMode() {
   activeGuide = null; activeGuideStep = 0;
   const target = document.getElementById('knowledgeContent');
   if (!target) return;
-  target.innerHTML = `<div class="knowledge-panel"><h3>Welche Maschine willst du heute ansteuern?</h3><p>Wähle eine angelegte Maschine oder eine allgemeine Maschinenanleitung.</p><select id="knowledgeMachineSelect" class="form-select"><option value="">Maschine auswählen ...</option>${knowledgeMachineOptions()}</select><button class="btn btn-primary" onclick="startKnowledgeGuide()">Anleitung starten</button></div>`;
+  const tiles = knowledgeGuideTargets().map(item => `<button class="knowledge-tile" onclick="startKnowledgeGuide('${knowledgeEscape(item.value)}')"><strong>${knowledgeEscape(item.name)}</strong>${item.status ? `<small>${knowledgeEscape(item.status)}</small>` : ''}</button>`).join('');
+  const articles = knowledgeArticles.map(a => `<article><strong>${knowledgeEscape(a.title)}</strong>${a.machineName ? ` · ${knowledgeEscape(a.machineName)}` : ''}<p>${knowledgeEscape(a.body)}</p>${a.url ? `<a href="${knowledgeEscape(a.url)}" target="_blank" rel="noopener noreferrer">Anleitung öffnen</a>` : ''}</article>`).join('');
+  target.innerHTML = `<div class="knowledge-panel"><h3>Welche Maschine?</h3><div class="knowledge-tiles">${tiles || '<p>Noch keine Anleitungen hinterlegt.</p>'}</div></div>
+    <div class="knowledge-panel"><h3>Etwas funktioniert nicht?</h3>
+      <div class="knowledge-chat-input"><input id="knowledgeQuestion" class="form-input" placeholder="z. B. Der Roboter bewegt sich nicht" enterkeyhint="search" onkeydown="if(event.key === 'Enter'){ submitKnowledgeQuestion(); }"><button class="btn btn-primary" onclick="submitKnowledgeQuestion()">Suchen</button></div>
+      <div class="knowledge-suggestions"><button onclick="askKnowledgeQuestion('Der Roboter bewegt sich nicht')">Roboter bewegt sich nicht</button><button onclick="askKnowledgeQuestion('Sicherheitsbereich ausgelöst')">Sicherheitsstopp</button><button onclick="askKnowledgeQuestion('Die erste Schicht haftet nicht')">Erste Schicht haftet nicht</button></div>
+      <div id="knowledgeConversation" class="knowledge-conversation"></div></div>
+    <details class="knowledge-readme-links"><summary>Weitere Dokumente</summary><div>${knowledgeSourceLinkList()}${articles}</div></details>`;
 }
 
-function startKnowledgeGuide() {
-  const value = document.getElementById('knowledgeMachineSelect')?.value || '';
+function startKnowledgeGuide(valueArg) {
+  const value = typeof valueArg === 'string' ? valueArg : '';
   let profile = value.startsWith('profile:') ? value.split(':')[1] : '';
   let machine = null;
   if (value.startsWith('machine:')) {
@@ -305,12 +323,12 @@ function startKnowledgeGuide() {
     profile = knowledgeProfileForMachine(machine);
   }
   if (!profile || !KNOWLEDGE_GUIDES[profile]) {
-    const matches=knowledgeArticles.filter(a=>!machine || !a.machineName || `${machine.name} ${machine.model||''} ${machine.jobTypes||''}`.toLocaleLowerCase('de').includes(a.machineName.toLocaleLowerCase('de')));
-    if(machine && matches.length) {
-      activeGuide={title:machine.name,profile:'admin',machine,source:'overview',steps:matches.flatMap(a=>a.body.split(/\n+/).map(s=>s.trim()).filter(Boolean).map(s=>`${a.title}: ${s}`))};
-      activeGuideStep=0; renderKnowledgeGuideStep(); return;
+    const matches = machine ? knowledgeArticlesFor(machine) : [];
+    if (machine && matches.length) {
+      activeGuide = { title: machine.name, profile: 'admin', machine, source: 'overview', steps: matches.flatMap(a => a.body.split(/\n+/).map(s => s.trim()).filter(Boolean).map(s => `${a.title}: ${s}`)) };
+      activeGuideStep = 0; renderKnowledgeGuideStep(); return;
     }
-    if (window.toast) window.toast.warning('Für diese Maschine ist noch keine passende Anleitung hinterlegt. Die verfügbaren READMEs findest du oben im Abschnitt „READMEs & technische Anleitungen“.');
+    if (window.toast) window.toast.info('Für diese Maschine gibt es noch keine Schritt-für-Schritt-Anleitung. Stelle unten eine Frage.');
     return;
   }
   activeGuide = { ...KNOWLEDGE_GUIDES[profile], profile, machine };
@@ -323,17 +341,36 @@ function renderKnowledgeGuideStep() {
   if (!target || !activeGuide) return;
   const total = activeGuide.steps.length;
   const isLast = activeGuideStep === total - 1;
-  target.innerHTML = `<div class="knowledge-panel"><div class="knowledge-progress">Schritt ${activeGuideStep + 1} von ${total}</div><h3>${knowledgeEscape(activeGuide.machine?.name || activeGuide.title)}</h3><div class="knowledge-step">${knowledgeEscape(activeGuide.steps[activeGuideStep])}</div><div class="knowledge-step-actions"><button class="btn btn-secondary" onclick="knowledgeGuidePrevious()" ${activeGuideStep === 0 ? 'disabled' : ''}>Zurück</button>${isLast ? '<button class="btn btn-success" onclick="showKnowledgeGuideMode()">Abschließen</button>' : '<button class="btn btn-primary" onclick="knowledgeGuideNext()">Erledigt, weiter</button>'}</div><div class="knowledge-source">${knowledgeSourceLink(activeGuide.source)}</div></div>`;
+  const percent = Math.round((activeGuideStep + 1) / total * 100);
+  target.innerHTML = `<div class="knowledge-panel">
+    <button class="btn btn-link knowledge-back" onclick="showKnowledgeGuideMode()">← Alle Maschinen</button>
+    <h3>${knowledgeEscape(activeGuide.machine?.name || activeGuide.title)}</h3>
+    <div class="knowledge-progress">Schritt ${activeGuideStep + 1} von ${total}</div>
+    <div class="knowledge-bar"><span style="width:${percent}%"></span></div>
+    <div class="knowledge-step">${knowledgeEscape(activeGuide.steps[activeGuideStep])}</div>
+    <div class="knowledge-step-actions">
+      <button class="btn btn-secondary" onclick="knowledgeGuidePrevious()" ${activeGuideStep === 0 ? 'disabled' : ''}>Zurück</button>
+      ${isLast ? '<button class="btn btn-success" onclick="knowledgeFinishGuide()">Fertig – Auftrag erfassen</button>' : '<button class="btn btn-primary" onclick="knowledgeGuideNext()">Erledigt, weiter</button>'}
+    </div>
+    <div class="knowledge-source">${knowledgeSourceLink(activeGuide.source)}</div></div>`;
+}
+
+// Am Ende der Anleitung: Maschine im Auftragsformular vorauswählen und dorthin springen.
+function knowledgeFinishGuide() {
+  const machine = activeGuide?.machine;
+  closeModal();
+  if (machine?.collection && machine?.id) {
+    window.pendingMachineRef = { collection: machine.collection, id: machine.id };
+    document.dispatchEvent(new CustomEvent('machine:scanned'));
+  }
+  document.querySelector('.entry-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function knowledgeGuideNext() { if (activeGuide && activeGuideStep < activeGuide.steps.length - 1) { activeGuideStep++; renderKnowledgeGuideStep(); } }
 function knowledgeGuidePrevious() { if (activeGuide && activeGuideStep > 0) { activeGuideStep--; renderKnowledgeGuideStep(); } }
 
-function showKnowledgeChatMode() {
-  const target = document.getElementById('knowledgeContent');
-  if (!target) return;
-  target.innerHTML = `<div class="knowledge-panel"><h3>Wie kann ich dir helfen?</h3><div id="knowledgeConversation" class="knowledge-conversation"><div class="knowledge-message assistant">Beschreibe die Maschine und das Problem. Ich suche ausschließlich in den hinterlegten Anleitungen und verlinke die Quelle.</div></div><div class="knowledge-suggestions"><button onclick="askKnowledgeQuestion('Der Weber Roboter bewegt sich nicht mehr')">Weber bewegt sich nicht</button><button onclick="askKnowledgeQuestion('Der Roboter ist in den Sicherheitsbereich gefahren')">Sicherheitsbereich</button><button onclick="askKnowledgeQuestion('Die erste Schicht haftet bei Ginger nicht')">Ginger: Haftung</button><button onclick="askKnowledgeQuestion('Der Upload zum UR5 hängt')">UR5: Upload</button></div><div class="knowledge-chat-input"><input id="knowledgeQuestion" class="form-input" placeholder="z. B. Der Roboter bewegt sich nicht mehr" onkeydown="if(event.key === 'Enter'){ submitKnowledgeQuestion(); }"><button class="btn btn-primary" onclick="submitKnowledgeQuestion()">Fragen</button></div></div>`;
-}
+// Alte Aufrufer: der Chat ist jetzt Teil der Startseite.
+function showKnowledgeChatMode() { showKnowledgeGuideMode(); document.getElementById('knowledgeQuestion')?.focus(); }
 
 function knowledgeTokens(text) {
   return String(text).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[^a-z0-9äöüß]+/).filter(token => token.length > 2);
@@ -373,7 +410,7 @@ async function submitKnowledgeQuestion() {
   let results = searchKnowledgeDocuments(question);
   if ((!faq || faq.score===0) && (!results.length || results.every(result=>result.score<2))) {
     const pending=document.createElement('div'); pending.className='knowledge-message assistant'; pending.textContent='Ich suche in den passenden READMEs …'; conversation.appendChild(pending);
-    await loadRelevantKnowledgeDocuments(question); pending.remove(); results=searchKnowledgeDocuments(question);
+    await loadKnowledgeDocuments(); await loadRelevantKnowledgeDocuments(question); pending.remove(); results=searchKnowledgeDocuments(question);
   }
   let answer;
   if (faq && faq.score > 0) {
@@ -391,6 +428,7 @@ window.showKnowledgeBase = showKnowledgeBase;
 window.showKnowledgeGuideMode = showKnowledgeGuideMode;
 window.showKnowledgeChatMode = showKnowledgeChatMode;
 window.startKnowledgeGuide = startKnowledgeGuide;
+window.knowledgeFinishGuide = knowledgeFinishGuide;
 window.knowledgeGuideNext = knowledgeGuideNext;
 window.knowledgeGuidePrevious = knowledgeGuidePrevious;
 window.askKnowledgeQuestion = askKnowledgeQuestion;

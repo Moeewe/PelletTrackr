@@ -4,6 +4,9 @@
 // Globale Variablen - Aktualisiert für Email/Passwort-System
 window.currentUser = { name: '', email: '', username: '', isAdmin: false };
 
+// Öffentliche Adresse der App (für QR-Codes auf Etiketten)
+window.APP_PUBLIC_URL = 'https://pellettrackr.netlify.app';
+
 // Globale Daten für Suche und Sortierung
 window.allUserEntries = [];
 window.allAdminEntries = [];
