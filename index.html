@@ -149,84 +149,26 @@
                 </div>
                 </div>
 
-            <!-- Entry Form -->
-            <div class="form-section">
-                <h2 class="section-title">Fertigungsauftrag erfassen</h2>
-                <form class="entry-form">
-                    <p id="entryPrefillHint" class="form-hint" hidden></p>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label" for="jobName">Job-Name *</label>
-                            <input type="text" id="jobName" class="form-input" maxlength="140" required autocomplete="off" placeholder="z.B. Prototyp Gehäuse, Ersatzteil">
-                        </div>
+            <!-- User Stats -->
+            <div class="stats-section">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="userTotalEntries">0</div>
+                        <div class="stat-label" id="userPrintsLabel">Aufträge</div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Maschine</label>
-                            <select id="printer" class="form-select">
-                                <option value="">Maschine auswählen ...</option>
-                            </select>
-                        </div>
-                        <div class="form-group" id="printTimeGroup">
-                            <label class="form-label">Zeit (Minuten)</label>
-                            <input type="number" id="printTime" class="form-input" placeholder="0" min="0" step="any" inputmode="decimal">
-                        </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="userTotalCost">0,00 €</div>
+                        <div class="stat-label">Gesamtkosten</div>
                     </div>
-
-                    <div class="form-row" id="materialRow">
-                        <div class="form-group">
-                            <label class="form-label">Material</label>
-                            <select id="material" class="form-select">
-                                <option value="">Material auswählen...</option>
-                            </select>
-                        </div>
-                        <div class="form-group" id="materialAmountGroup" hidden>
-                            <label class="form-label">Menge (kg)</label>
-                            <input type="text" id="materialMenge" class="form-input" placeholder="0,00" inputmode="decimal">
-                        </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="userPaidAmount">0,00 €</div>
+                        <div class="stat-label">Bezahlt</div>
                     </div>
-
-                    <div class="form-row" id="ownMaterialRow">
-                        <div class="form-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="ownMaterialUsed" class="checkbox-input">
-                                <span class="checkbox-text">Eigenes Material verwendet</span>
-                            </label>
-                        </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="userUnpaidAmount">0,00 €</div>
+                        <div class="stat-label">Offen</div>
                     </div>
-
-                    <details id="formMore" class="form-more">
-                        <summary>Weitere Angaben (optional)</summary>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">Masterbatch (Farbzusatz)</label>
-                                <select id="masterbatch" class="form-select">
-                                    <option value="">Masterbatch auswählen...</option>
-                                </select>
-                            </div>
-                            <div class="form-group" id="masterbatchAmountGroup" hidden>
-                                <label class="form-label">Menge (g)</label>
-                                <input type="text" id="masterbatchMenge" class="form-input" placeholder="0,00" inputmode="decimal">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">Notizen</label>
-                                <textarea id="jobNotes" class="form-textarea" placeholder="Zusätzliche Informationen, Farbe, Größe, etc." rows="3"></textarea>
-                            </div>
-                        </div>
-                    </details>
-
-                    <div class="cost-preview">
-                        <div class="cost-amount" id="costPreview">0,00 €</div>
-                        <p id="costBreakdown" class="billing-breakdown" aria-live="polite">Tarif wird nach Maschinen- und Materialauswahl angezeigt.</p>
-                        <div class="cost-label">Voraussichtliche Kosten</div>
-                    </div>
-
-                    <button type="button" class="btn btn-primary" onclick="addEntry()">
-                        Auftrag erfassen
-                    </button>
-                </form>
+                </div>
             </div>
 
             <!-- User Services -->
@@ -309,26 +251,84 @@
                 </div>
             </div>
 
-            <!-- User Stats -->
-            <div class="stats-section">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-number" id="userTotalEntries">0</div>
-                        <div class="stat-label" id="userPrintsLabel">Aufträge</div>
+            <!-- Entry Form -->
+            <div class="form-section">
+                <h2 class="section-title">Fertigungsauftrag erfassen</h2>
+                <form class="entry-form">
+                    <p id="entryPrefillHint" class="form-hint" hidden></p>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="jobName">Job-Name *</label>
+                            <input type="text" id="jobName" class="form-input" maxlength="140" required autocomplete="off" placeholder="z.B. Prototyp Gehäuse, Ersatzteil">
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="userTotalCost">0,00 €</div>
-                        <div class="stat-label">Gesamtkosten</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Maschine</label>
+                            <select id="printer" class="form-select">
+                                <option value="">Maschine auswählen ...</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="printTimeGroup">
+                            <label class="form-label">Zeit (Minuten)</label>
+                            <input type="number" id="printTime" class="form-input" placeholder="0" min="0" step="any" inputmode="decimal">
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="userPaidAmount">0,00 €</div>
-                        <div class="stat-label">Bezahlt</div>
+
+                    <div class="form-row" id="materialRow">
+                        <div class="form-group">
+                            <label class="form-label">Material</label>
+                            <select id="material" class="form-select">
+                                <option value="">Material auswählen...</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="materialAmountGroup" hidden>
+                            <label class="form-label">Menge (kg)</label>
+                            <input type="text" id="materialMenge" class="form-input" placeholder="0,00" inputmode="decimal">
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="userUnpaidAmount">0,00 €</div>
-                        <div class="stat-label">Offen</div>
+
+                    <div class="form-row" id="ownMaterialRow">
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="ownMaterialUsed" class="checkbox-input">
+                                <span class="checkbox-text">Eigenes Material verwendet</span>
+                            </label>
+                        </div>
                     </div>
-                </div>
+
+                    <details id="formMore" class="form-more">
+                        <summary>Weitere Angaben (optional)</summary>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Masterbatch (Farbzusatz)</label>
+                                <select id="masterbatch" class="form-select">
+                                    <option value="">Masterbatch auswählen...</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="masterbatchAmountGroup" hidden>
+                                <label class="form-label">Menge (g)</label>
+                                <input type="text" id="masterbatchMenge" class="form-input" placeholder="0,00" inputmode="decimal">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Notizen</label>
+                                <textarea id="jobNotes" class="form-textarea" placeholder="Zusätzliche Informationen, Farbe, Größe, etc." rows="3"></textarea>
+                            </div>
+                        </div>
+                    </details>
+
+                    <div class="cost-preview">
+                        <div class="cost-amount" id="costPreview">0,00 €</div>
+                        <p id="costBreakdown" class="billing-breakdown" aria-live="polite">Tarif wird nach Maschinen- und Materialauswahl angezeigt.</p>
+                        <div class="cost-label">Voraussichtliche Kosten</div>
+                    </div>
+
+                    <button type="button" class="btn btn-primary" onclick="addEntry()">
+                        Auftrag erfassen
+                    </button>
+                </form>
             </div>
 
             <!-- User Entries -->
