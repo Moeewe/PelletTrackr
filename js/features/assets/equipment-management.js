@@ -4,6 +4,14 @@
  * Version 1.9 - Optimized to store only FH-Kennung, fetch user details on demand
  */
 
+// Profile liegen unter der UID; ältere Dokumente unter der Kennung. Beides unterstützen.
+async function fetchUserByKennung(kennung) {
+    const direct = await window.db.collection('users').doc(kennung).get();
+    if (direct.exists) return direct;
+    const match = await window.db.collection('users').where('kennung', '==', kennung).limit(1).get();
+    return match.empty ? direct : match.docs[0];
+}
+
 // Equipment Management Module - Extended with Requests Support
 let equipment = [];
 let equipmentListener = null;
@@ -353,7 +361,7 @@ async function loadUserDataForEquipment() {
             }
 
             try {
-                const userDoc = await window.db.collection('users').doc(kennung).get();
+                const userDoc = await fetchUserByKennung(kennung);
                 if (userDoc.exists) {
                     const userData = userDoc.data();
                     const user = {
@@ -680,7 +688,7 @@ async function getBorrowerInfoDisplayAsync(item) {
     if (!user && window.db) {
         try {
             console.log(`🔍 Loading user data for kennung: ${kennung}`);
-            const userDoc = await window.db.collection('users').doc(kennung).get();
+            const userDoc = await fetchUserByKennung(kennung);
             if (userDoc.exists) {
                 const userData = userDoc.data();
                 user = {

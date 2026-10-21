@@ -140,7 +140,16 @@ service cloud.firestore {
     match /entries/{entryId} {
       allow read: if signedIn();
       allow create: if signedIn() && validBilledEntry();
-      allow update, delete: if isAdmin();
+      // Eigene, noch offene Aufträge: nur Job-Name und Notiz dürfen angepasst werden (nie Preise).
+      allow update: if isAdmin() || (signedIn()
+        && resource.data.get('userId', '') == request.auth.uid
+        && resource.data.get('paid', false) == false
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['jobName', 'jobNotes', 'updatedAt'])
+        && request.resource.data.jobName is string && request.resource.data.jobName.size() > 0
+        && request.resource.data.jobName.size() <= 140
+        && request.resource.data.get('jobNotes', '') is string
+        && request.resource.data.get('jobNotes', '').size() <= 2000);
+      allow delete: if isAdmin();
     }
 
     // Zeitsitzungen und Maschinen-Sperren werden ausschließlich über
@@ -164,7 +173,12 @@ service cloud.firestore {
     }
     match /printers/{documentId} {
       allow read: if signedIn();
-      allow write: if isAdmin();
+      allow create, delete: if isAdmin();
+      // Alle Nutzer dürfen den Status melden (z. B. "defekt" bei einer Problemmeldung); sonst nur Admins.
+      allow update: if isAdmin() || (signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['status', 'updatedAt', 'lastStatusChangeBy', 'lastStatusChangeAt'])
+        && request.resource.data.status in ['available', 'in_use', 'printing', 'maintenance', 'broken']);
     }
     match /machines/{documentId} {
       allow read: if signedIn();

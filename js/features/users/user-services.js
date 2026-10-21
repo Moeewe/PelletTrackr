@@ -4,6 +4,11 @@
  * Version 1.3 - Added ability to delete rejected equipment requests
  */
 
+// Nutzerprofile liegen unter der Firebase-UID (nicht unter der FH-Kennung).
+function currentUserDocId() {
+    return window.currentUser?.uid || window.firebase?.auth?.().currentUser?.uid || null;
+}
+
 // Global state for user services
 let userPrinters = [];
 let userPrinterListener = null;
@@ -554,7 +559,8 @@ async function autoFillPhoneNumber() {
 
         // If no phone found, try to fetch from database
         try {
-            const userDoc = await window.db.collection('users').doc(window.currentUser.kennung).get();
+            const uid = currentUserDocId();
+            const userDoc = uid ? await window.db.collection('users').doc(uid).get() : { exists: false };
             if (userDoc.exists) {
                 const userData = userDoc.data();
                 if (userData.phone) {
@@ -583,7 +589,7 @@ async function autoFillPhoneNumber() {
  */
 async function savePhoneNumberToProfile(phoneNumber) {
     try {
-        if (!window.currentUser || !window.currentUser.kennung) {
+        if (!window.currentUser || !currentUserDocId()) {
             console.log('⚠️ No current user found for phone save');
             return;
         }
@@ -595,7 +601,7 @@ async function savePhoneNumberToProfile(phoneNumber) {
         }
 
         // Update user document with phone number
-        await window.db.collection('users').doc(window.currentUser.kennung).update({
+        await window.db.collection('users').doc(currentUserDocId()).update({
             phone: phoneNumber,
             updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
         });
@@ -769,85 +775,14 @@ async function submitEquipmentRequest() {
 
     try {
         // Update user data with phone number if not already set
-        if (window.currentUser?.kennung && phoneNumber) {
+        if (currentUserDocId() && phoneNumber) {
             try {
-                // First check if user exists by kennung
-                const userDoc = await window.db.collection('users').doc(window.currentUser.kennung).get();
-
-                if (userDoc.exists) {
-                    // User exists - just update phone number
-                    await window.db.collection('users').doc(window.currentUser.kennung).update({
-                        phone: phoneNumber,
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    console.log('✅ Updated existing user phone number:', window.currentUser.kennung);
-
-                    // Update window.allUsers if function exists
-                    if (typeof updateUserInList === 'function') {
-                        updateUserInList(window.currentUser.kennung, { phone: phoneNumber });
-                    }
-                } else {
-                    // User doesn't exist by kennung - search for existing user by name or email
-                    console.log('🔍 User not found by kennung, searching for existing user...');
-
-                    const existingUserQuery = await window.db.collection('users')
-                        .where('name', '==', window.currentUser.name)
-                        .limit(1)
-                        .get();
-
-                    if (!existingUserQuery.empty) {
-                        // Found existing user by name - update with kennung and phone
-                        const existingUserDoc = existingUserQuery.docs[0];
-                        const existingUserData = existingUserDoc.data();
-
-                        console.log('✅ Found existing user by name, updating with kennung:', existingUserDoc.id);
-
-                        await window.db.collection('users').doc(existingUserDoc.id).update({
-                            kennung: window.currentUser.kennung,
-                            phone: phoneNumber,
-                            email: window.currentUser.email || existingUserData.email || `${window.currentUser.kennung}@fh-muenster.de`,
-                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-
-                        // Update window.allUsers if function exists
-                        if (typeof updateUserInList === 'function') {
-                            updateUserInList(existingUserDoc.id, {
-                                kennung: window.currentUser.kennung,
-                                phone: phoneNumber,
-                                email: window.currentUser.email || existingUserData.email || `${window.currentUser.kennung}@fh-muenster.de`
-                            });
-                        }
-                    } else {
-                        // No existing user found - create new user
-                        console.log('📝 Creating new user:', window.currentUser.kennung);
-
-                        await window.db.collection('users').doc(window.currentUser.kennung).set({
-                            name: window.currentUser.name,
-                            kennung: window.currentUser.kennung,
-                            email: window.currentUser.email || `${window.currentUser.kennung}@fh-muenster.de`,
-                            phone: phoneNumber,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-
-                        // Update window.allUsers if function exists
-                        if (typeof updateUserInList === 'function') {
-                            updateUserInList(window.currentUser.kennung, {
-                                docId: window.currentUser.kennung,
-                                name: window.currentUser.name,
-                                kennung: window.currentUser.kennung,
-                                email: window.currentUser.email || `${window.currentUser.kennung}@fh-muenster.de`,
-                                phone: phoneNumber,
-                                isAdmin: false,
-                                entries: [],
-                                totalCost: 0,
-                                paidAmount: 0,
-                                unpaidAmount: 0
-                            });
-                        }
-                    }
-                }
+                // Das eigene Profil darf nur die Telefonnummer ändern (Firestore-Regeln); es wird nichts neu angelegt.
+                await window.db.collection('users').doc(currentUserDocId()).update({
+                    phone: phoneNumber,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                window.currentUser.phone = phoneNumber;
             } catch (error) {
                 console.error('Error updating user phone number:', error);
                 // Don't throw error - continue with equipment request

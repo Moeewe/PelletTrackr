@@ -183,3 +183,6 @@ body {
 .login-container .button-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; width: 100%; }
 .login-container .login-options { flex-direction: row; align-items: center; }
 .login-container .login-options .checkbox-label { width: auto; }
+
+/* Listen: "Mehr anzeigen" */
+.entry-show-more { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; padding: 20px; color: #444; font-size: 14px; }
