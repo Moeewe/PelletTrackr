@@ -24,6 +24,7 @@
       modal('<p>Hier legst du Laser, CNC-Fräsen, Roboter und weitere Fertigungsmaschinen an. Zu jeder Maschine gehören eine Anleitung und ein QR-Code. Drucker und Equipment verwaltest du in ihren eigenen Bereichen; alle Anleitungen findest du gesammelt unter „Maschinen &amp; Anleitungen“. Deaktivierte Maschinen bleiben für alte Aufträge und Unterweisungen erhalten.</p>'+
         '<button class="btn btn-primary" onclick="MachineManager.edit(-1)">Maschine hinzufügen</button>'+
         (rows.length ? '<div class="safety-grid">'+rows.map((m,i)=>'<article class="safety-card"><h3>'+esc(m.name)+'</h3><p>'+esc(window.machineKindLabel(m))+(m.model?' · '+esc(m.model):'')+' · '+(m.active===false?'Deaktiviert':'Aktiv')+'</p>'+
+          window.MachineStatus.buttons('machines',m.id,m.status)+
           '<p>'+(Array.isArray(m.guideSteps)&&m.guideSteps.length?'Anleitung: '+m.guideSteps.length+' Schritte':'Noch keine eigene Anleitung')+'</p>'+
           '<div class="safety-actions"><button class="btn btn-secondary" onclick="MachineManager.edit('+i+')">Bearbeiten</button>'+
           '<button class="btn btn-secondary" onclick="MachineManager.guide('+i+')">Anleitung</button>'+

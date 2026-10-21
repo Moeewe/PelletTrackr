@@ -261,3 +261,10 @@
 .kdone { display: flex; flex-direction: column; gap: 12px; align-items: stretch; padding: 24px 0; text-align: center; }
 .kdone-icon { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; margin: 0 auto; background: #000; color: #fff; border: 0; border-radius: 0; font-size: 30px; font-weight: 700; }
 .kdone h3 { margin: 0; font-size: 22px; }
+
+/* Videos & Dokumente zur Maschine */
+.kguide-links { margin: 16px 0 0; padding: 16px 20px; background: #f8f9fa; border: 2px solid #000; }
+.kguide-links h4 { margin: 0 0 8px; font-size: 16px; }
+.kguide-links ul { margin: 0 0 8px; padding-left: 20px; }
+.kguide-links li { margin: 6px 0; overflow-wrap: anywhere; }
+.kguide-links p { margin: 0 0 8px; color: #555; }

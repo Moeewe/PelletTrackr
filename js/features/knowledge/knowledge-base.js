@@ -279,6 +279,22 @@ async function loadRelevantKnowledgeDocuments(question) {
 function knowledgeHasGuide(machine) {
   return Array.isArray(machine?.guideSteps) && machine.guideSteps.length > 0;
 }
+function knowledgeLinksFor(machine) {
+  return (Array.isArray(machine?.guideLinks) ? machine.guideLinks : []).filter(link => /^https:\/\//.test(link?.url || ''));
+}
+
+// Videos, Dokumente und die passende README aus GitHub zur Maschine
+function knowledgeLinksBlock(machine, profile) {
+  const links = knowledgeLinksFor(machine);
+  const readme = profile && KNOWLEDGE_GUIDES[profile]?.source ? KNOWLEDGE_SOURCES.find(item => item.id === KNOWLEDGE_GUIDES[profile].source) : null;
+  const items = [
+    ...links.map(link => `<li><a href="${knowledgeEscape(link.url)}" target="_blank" rel="noopener noreferrer">${knowledgeEscape(link.title || link.url)}</a></li>`),
+    ...(readme ? [`<li><a href="${readme.url}" target="_blank" rel="noopener noreferrer">${knowledgeEscape(readme.label)} (GitHub)</a></li>`] : [])
+  ];
+  const suggest = machine?.id ? `<button class="link-small" onclick="knowledgeSuggestTutorial()">Tutorial vorschlagen</button>` : '';
+  if (!items.length && !suggest) return '';
+  return `<div class="kguide-links"><h4>Videos & Dokumente</h4>${items.length ? `<ul>${items.join('')}</ul>` : '<p>Noch keine Links hinterlegt.</p>'}${suggest}</div>`;
+}
 
 function knowledgeArticlesFor(machine) {
   const haystack = `${machine?.name || ''} ${machine?.model || ''} ${machine?.jobTypes || ''}`.toLocaleLowerCase('de');
@@ -298,7 +314,7 @@ function knowledgeGuideTargets() {
   const targets = knowledgeMachines.filter(machine => {
     const profile = knowledgeProfileForMachine(machine);
     if (profile) covered.add(profile);
-    return profile || knowledgeArticlesFor(machine).length || knowledgeHasGuide(machine);
+    return profile || knowledgeArticlesFor(machine).length || knowledgeHasGuide(machine) || knowledgeLinksFor(machine).length;
   }).map(machine => ({ value: `machine:${machine.collection}:${machine.id}`, name: machine.name, status: knowledgeStatusLabel(machine.status), statusKey: machine.status || '', profile: knowledgeProfileForMachine(machine) }));
   const general = [['weber', 'Weber DXR25 (Großroboter)'], ['ur5', 'Universal Robots UR5'], ['ginger', 'Ginger']]
     .filter(([profile]) => !covered.has(profile))
@@ -350,6 +366,11 @@ function startKnowledgeGuide(valueArg) {
     machine = knowledgeMachines.find(item => item.collection === collection && item.id === id);
     profile = knowledgeProfileForMachine(machine);
   }
+  // Nur Links hinterlegt (z. B. Video-Tutorials ohne eigene Schritte): Linkseite zeigen.
+  if (machine && !knowledgeHasGuide(machine) && knowledgeLinksFor(machine).length && !KNOWLEDGE_GUIDES[profile]) {
+    activeGuide = { title: machine.name, profile: profile || 'custom', machine, source: null, steps: [], linksOnly: true };
+    renderKnowledgeLinksPage(); return;
+  }
   // Die an der Maschine hinterlegte Anleitung hat immer Vorrang vor allgemeinen Anleitungen.
   if (machine && knowledgeHasGuide(machine)) {
     activeGuide = { title: machine.name, profile: profile || 'custom', machine, source: null, steps: machine.guideSteps };
@@ -395,7 +416,52 @@ function renderKnowledgeGuideStep() {
       <button class="btn btn-primary kstep-next" onclick="${isLast ? 'knowledgeGuideDone()' : 'knowledgeGuideNext()'}">✓ ${isLast ? 'Alles erledigt' : 'Erledigt – weiter'}</button>
       <button class="btn btn-secondary" onclick="knowledgeGuidePrevious()" ${activeGuideStep === 0 ? 'disabled' : ''}>Zurück</button>
     </div>
+    ${knowledgeLinksBlock(activeGuide.machine, activeGuide.profile)}
     <div class="kstep-foot"><button class="link-small" onclick="showKnowledgeChatMode()">Etwas klappt nicht? Frage stellen</button><span class="knowledge-source">${activeGuide.source ? knowledgeSourceLink(activeGuide.source) : ''}</span></div>`;
+}
+
+function renderKnowledgeLinksPage() {
+  const target = document.getElementById('knowledgeContent');
+  if (!target || !activeGuide) return;
+  target.innerHTML = `<div class="kguide-top"><button class="btn btn-link knowledge-back" onclick="showKnowledgeGuideMode()">← Alle Maschinen</button><span class="kguide-machine">${knowledgeEscape(activeGuide.title)}</span></div>
+    <div class="kstep-card"><h3 class="kstep-title">Tutorials &amp; Dokumente</h3><p class="kstep-body">Für diese Maschine gibt es noch keine Schritt-für-Schritt-Anleitung, aber hilfreiche Links.</p></div>
+    ${knowledgeLinksBlock(activeGuide.machine, activeGuide.profile)}`;
+}
+
+// Tutorial vorschlagen (Nutzer): Admins prüfen und übernehmen den Link
+function knowledgeSuggestTutorial() {
+  const machine = activeGuide?.machine;
+  const target = document.getElementById('knowledgeContent');
+  if (!machine?.id || !target) return;
+  const back = activeGuide.linksOnly ? 'renderKnowledgeLinksPage()' : 'renderKnowledgeGuideStep()';
+  target.innerHTML = `<div class="kstep-card"><h3 class="kstep-title">Tutorial vorschlagen</h3>
+      <p class="kstep-body">Kennst du ein gutes Video oder Dokument zu <strong>${knowledgeEscape(machine.name)}</strong>? Die Werkstatt prüft den Link und nimmt ihn auf.</p>
+      <label class="form-label" for="suggestUrl">Link (https://…)</label><input id="suggestUrl" class="form-input" type="url" inputmode="url" autocapitalize="none" placeholder="https://www.youtube.com/watch?v=…">
+      <label class="form-label" for="suggestTitle">Titel (optional)</label><input id="suggestTitle" class="form-input" maxlength="160" placeholder="z. B. Einführung in die Bedienung">
+      <label class="form-label" for="suggestNote">Hinweis (optional)</label><input id="suggestNote" class="form-input" maxlength="500" placeholder="Wofür ist das hilfreich?"></div>
+    <div class="kstep-actions"><button class="btn btn-primary kstep-next" onclick="knowledgeSubmitSuggestion()">Vorschlag senden</button><button class="btn btn-secondary" onclick="${back}">Abbrechen</button></div>`;
+}
+
+async function knowledgeSubmitSuggestion() {
+  const machine = activeGuide?.machine;
+  const url = document.getElementById('suggestUrl')?.value.trim();
+  if (!machine?.id) return;
+  if (!/^https:\/\/[^\s]{4,500}$/.test(url || '')) { window.toast?.warning('Bitte einen Link angeben, der mit https:// beginnt.'); return; }
+  const uid = window.firebase?.auth?.().currentUser?.uid;
+  if (!uid) { window.toast?.error('Bitte melde dich an.'); return; }
+  try {
+    await window.db.collection('tutorialSuggestions').add({
+      machineCollection: machine.collection, machineId: machine.id, machineName: machine.name || '',
+      title: document.getElementById('suggestTitle').value.trim().slice(0, 160),
+      url, note: document.getElementById('suggestNote').value.trim().slice(0, 500),
+      userId: uid, userName: window.currentUser?.name || '', status: 'pending',
+      createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
+    });
+    window.toast?.success('Danke! Die Werkstatt prüft deinen Vorschlag.');
+    if (activeGuide.linksOnly) renderKnowledgeLinksPage(); else renderKnowledgeGuideStep();
+  } catch (error) {
+    window.toast?.error('Vorschlag konnte nicht gesendet werden: ' + (error.message || error));
+  }
 }
 
 function knowledgeGuideDone() {
@@ -486,6 +552,10 @@ window.showKnowledgeGuideMode = showKnowledgeGuideMode;
 window.showKnowledgeChatMode = showKnowledgeChatMode;
 window.startKnowledgeGuide = startKnowledgeGuide;
 window.knowledgeFinishGuide = knowledgeFinishGuide;
+window.knowledgeSuggestTutorial = knowledgeSuggestTutorial;
+window.knowledgeSubmitSuggestion = knowledgeSubmitSuggestion;
+window.renderKnowledgeLinksPage = renderKnowledgeLinksPage;
+window.renderKnowledgeGuideStep = renderKnowledgeGuideStep;
 window.knowledgeGuideDone = knowledgeGuideDone;
 window.knowledgeGuideGo = knowledgeGuideGo;
 window.knowledgeGuideNext = knowledgeGuideNext;

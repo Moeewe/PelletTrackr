@@ -110,27 +110,22 @@ async function loadPrinters() {
 /**
  * Show printer manager modal
  */
+let printerStatusFilter = 'all';
+
 function showPrinterManager() {
+    printerStatusFilter = 'all';
     const modalContent = `
         <div class="modal-header">
             <h3>Drucker verwalten</h3>
             <button class="close-btn" onclick="closeModal()">&times;</button>
         </div>
         <div class="modal-body">
-            <div class="card">
-                <div class="card-body">
-                    <div class="printer-controls">
-                        <div class="control-row">
-                            <div class="search-container">
-                                <input type="text" id="printerSearchInput" placeholder="Drucker suchen..." class="search-input" onkeyup="searchPrinters()">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div id="printerGrid" class="printer-grid">
-                        <div class="loading">Drucker werden geladen...</div>
-                    </div>
-                </div>
+            <div class="printer-toolbar">
+                <input type="text" id="printerSearchInput" placeholder="Drucker suchen …" class="search-input" oninput="renderPrinterGrid()" autocomplete="off">
+                <div id="printerFilters" class="printer-filters" role="group" aria-label="Nach Status filtern"></div>
+            </div>
+            <div id="printerGrid" class="printer-list-compact">
+                <p class="printer-empty">Drucker werden geladen …</p>
             </div>
         </div>
         <div class="modal-footer">
@@ -138,9 +133,9 @@ function showPrinterManager() {
             <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
         </div>
     `;
-    
+
     showModalWithContent(modalContent);
-    
+
     // Setup real-time listener
     setupPrintersListener();
 }
@@ -168,72 +163,68 @@ function closePrinterManager() {
 }
 
 /**
- * Render printer grid
+ * Render printer list: kompakte Zeilen, Status per Klick, weitere Aktionen unter "Mehr"
  */
+function setPrinterFilter(filter) {
+    printerStatusFilter = filter;
+    renderPrinterGrid();
+}
+
 function renderPrinterGrid() {
     const grid = document.getElementById('printerGrid');
-    
+    if (!grid) return;
+
+    const normalize = status => window.MachineStatus ? window.MachineStatus.normalize(status) : (status || 'available');
+    const term = (document.getElementById('printerSearchInput')?.value || '').trim().toLowerCase();
+    const sorted = [...printers].sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'de'));
+    const matchesSearch = printer => !term || [printer.name, printer.model, printer.materials, printer.buildVolume]
+        .some(value => String(value || '').toLowerCase().includes(term));
+    const searched = sorted.filter(matchesSearch);
+    const count = key => searched.filter(printer => key === 'all' || normalize(printer.status) === key).length;
+
+    const filters = document.getElementById('printerFilters');
+    if (filters) {
+        filters.innerHTML = [['all', 'Alle'], ['available', 'Verfügbar'], ['in_use', 'In Betrieb'], ['maintenance', 'Wartung'], ['broken', 'Defekt']]
+            .map(([key, label]) => `<button type="button" class="filter-chip ${printerStatusFilter === key ? 'active' : ''}" onclick="setPrinterFilter('${key}')">${label} (${count(key)})</button>`).join('');
+    }
+
     if (printers.length === 0) {
-        grid.innerHTML = `
-            <div class="empty-state">
-                <p>Noch keine Drucker hinzugefügt.</p>
-                <p>Verwenden Sie den Button unten, um Ihren ersten Drucker hinzuzufügen.</p>
-            </div>
-        `;
+        grid.innerHTML = '<p class="printer-empty">Noch keine Drucker angelegt. Mit „Drucker hinzufügen“ legst du den ersten an.</p>';
         return;
     }
-    
-    grid.innerHTML = printers.map(printer => `
-        <div class="printer-card">
-            <div class="printer-header">
-                <div>
-                    <h4 class="printer-name">${printer.name}</h4>
-                    <p class="printer-model">${printer.model || 'Unbekanntes Modell'}</p>
-                </div>
-                <span class="printer-status ${printer.status}">${getStatusText(printer.status)}</span>
+
+    const shown = searched.filter(printer => printerStatusFilter === 'all' || normalize(printer.status) === printerStatusFilter);
+    if (!shown.length) {
+        grid.innerHTML = '<p class="printer-empty">Keine passenden Drucker.</p>';
+        return;
+    }
+
+    const kind = printer => printer.type === 'pellet' ? 'Pellet-Drucker' : printer.type === 'filament' ? 'Filament-Drucker' : '3D-Drucker';
+    grid.innerHTML = shown.map(printer => {
+        const details = [printer.model, kind(printer), printer.pricePerHour ? printer.pricePerHour.toFixed(2).replace('.', ',') + ' € / Std.' : ''].filter(Boolean).join(' · ');
+        return `
+        <article class="printer-row">
+            <div class="printer-row-main">
+                <h4 class="printer-row-name">${escapePrinterHtml(printer.name)}</h4>
+                <p class="printer-row-details">${escapePrinterHtml(details)}</p>
             </div>
-            
-            <div class="printer-details">
-                <div class="printer-detail">
-                    <span class="printer-detail-label">Typ:</span>
-                    <span class="printer-detail-value">${printer.type === 'pellet' ? 'Pellet Drucker' : printer.type === 'filament' ? 'Filament Drucker' : 'Nicht angegeben'}</span>
+            ${window.MachineStatus ? window.MachineStatus.buttons('printers', printer.id, printer.status) : ''}
+            <details class="printer-row-more">
+                <summary>Mehr</summary>
+                <div class="printer-row-actions">
+                    <button class="btn btn-secondary btn-small" onclick="editPrinter('${printer.id}')">Bearbeiten</button>
+                    <button class="btn btn-secondary btn-small" onclick="KnowledgeAdmin.editGuide('printers','${printer.id}','showPrinterManager()')">Anleitung</button>
+                    <button class="btn btn-secondary btn-small" onclick="MachineLabels.open(['printers:${printer.id}'])">QR / Etikett</button>
+                    <button class="btn btn-secondary btn-small" onclick="duplicatePrinter('${printer.id}')">Duplizieren</button>
+                    <button class="btn btn-danger btn-small" onclick="deletePrinter('${printer.id}')">Löschen</button>
                 </div>
-                <div class="printer-detail">
-                    <span class="printer-detail-label">Bauraum:</span>
-                    <span class="printer-detail-value">${printer.buildVolume || 'Nicht angegeben'}</span>
-                </div>
-                <div class="printer-detail">
-                    <span class="printer-detail-label">Materialien:</span>
-                    <span class="printer-detail-value">${printer.materials || 'Nicht angegeben'}</span>
-                </div>
-                <div class="printer-detail">
-                    <span class="printer-detail-label">Preis pro Stunde:</span>
-                    <span class="printer-detail-value">${printer.pricePerHour ? printer.pricePerHour.toFixed(2) + ' €' : 'Nicht gesetzt'}</span>
-                </div>
-                ${printer.notes ? `
-                <div class="printer-detail">
-                    <span class="printer-detail-label">Notizen:</span>
-                    <span class="printer-detail-value">${printer.notes}</span>
-                </div>
-                ` : ''}
-            </div>
-            
-            <div class="printer-actions">
-                <button class="btn btn-secondary btn-small" onclick="changePrinterStatus('${printer.id}')">
-                    Status ändern
-                </button>
-                <button class="btn btn-secondary btn-small" onclick="editPrinter('${printer.id}')">
-                    Bearbeiten
-                </button>
-                <button class="btn btn-info btn-small" onclick="duplicatePrinter('${printer.id}')">
-                    Duplizieren
-                </button>
-                <button class="btn btn-danger btn-small" onclick="deletePrinter('${printer.id}')">
-                    Löschen
-                </button>
-            </div>
-        </div>
-    `).join('');
+            </details>
+        </article>`;
+    }).join('');
+}
+
+function escapePrinterHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 /**
@@ -250,95 +241,9 @@ function getStatusText(status) {
 }
 
 /**
- * Search printers by name, model, or materials
+ * Search printers (Kompatibilität)
  */
-function searchPrinters() {
-    const searchInput = document.getElementById('printerSearchInput');
-    if (!searchInput) return;
-    
-    const searchTerm = searchInput.value.toLowerCase();
-    const filteredPrinters = printers.filter(printer => {
-        return (
-            (printer.name && printer.name.toLowerCase().includes(searchTerm)) ||
-            (printer.model && printer.model.toLowerCase().includes(searchTerm)) ||
-            (printer.materials && printer.materials.toLowerCase().includes(searchTerm)) ||
-            (printer.buildVolume && printer.buildVolume.toLowerCase().includes(searchTerm))
-        );
-    });
-    
-    renderFilteredPrinterGrid(filteredPrinters);
-}
-
-/**
- * Render filtered printer grid
- */
-function renderFilteredPrinterGrid(filteredPrinters) {
-    const grid = document.getElementById('printerGrid');
-    
-    if (filteredPrinters.length === 0) {
-        grid.innerHTML = `
-            <div class="empty-state">
-                <p>Keine Drucker gefunden.</p>
-                <button class="btn btn-secondary" onclick="document.getElementById('printerSearchInput').value = ''; searchPrinters();">
-                    Suche zurücksetzen
-                </button>
-            </div>
-        `;
-        return;
-    }
-    
-    grid.innerHTML = filteredPrinters.map(printer => `
-        <div class="printer-card">
-            <div class="printer-header">
-                <div>
-                    <h4 class="printer-name">${printer.name}</h4>
-                    <p class="printer-model">${printer.model || 'Unbekanntes Modell'}</p>
-                </div>
-                <span class="printer-status ${printer.status}">${getStatusText(printer.status)}</span>
-            </div>
-            
-            <div class="printer-details">
-                <div class="printer-detail">
-                    <span class="printer-detail-label">Typ:</span>
-                    <span class="printer-detail-value">${printer.type === 'pellet' ? 'Pellet Drucker' : printer.type === 'filament' ? 'Filament Drucker' : 'Nicht angegeben'}</span>
-                </div>
-                <div class="printer-detail">
-                    <span class="printer-detail-label">Bauraum:</span>
-                    <span class="printer-detail-value">${printer.buildVolume || 'Nicht angegeben'}</span>
-                </div>
-                <div class="printer-detail">
-                    <span class="printer-detail-label">Materialien:</span>
-                    <span class="printer-detail-value">${printer.materials || 'Nicht angegeben'}</span>
-                </div>
-                <div class="printer-detail">
-                    <span class="printer-detail-label">Preis pro Stunde:</span>
-                    <span class="printer-detail-value">${printer.pricePerHour ? printer.pricePerHour.toFixed(2) + ' €' : 'Nicht gesetzt'}</span>
-                </div>
-                ${printer.notes ? `
-                <div class="printer-detail">
-                    <span class="printer-detail-label">Notizen:</span>
-                    <span class="printer-detail-value">${printer.notes}</span>
-                </div>
-                ` : ''}
-            </div>
-            
-            <div class="printer-actions">
-                <button class="btn btn-secondary btn-small" onclick="changePrinterStatus('${printer.id}')">
-                    Status ändern
-                </button>
-                <button class="btn btn-secondary btn-small" onclick="editPrinter('${printer.id}')">
-                    Bearbeiten
-                </button>
-                <button class="btn btn-info btn-small" onclick="duplicatePrinter('${printer.id}')">
-                    Duplizieren
-                </button>
-                <button class="btn btn-danger btn-small" onclick="deletePrinter('${printer.id}')">
-                    Löschen
-                </button>
-            </div>
-        </div>
-    `).join('');
-}
+function searchPrinters() { renderPrinterGrid(); }
 
 /**
  * Duplicate a printer

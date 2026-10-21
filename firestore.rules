@@ -184,6 +184,22 @@ service cloud.firestore {
       allow read: if signedIn();
       allow create, update, delete: if isAdmin();
     }
+    // Vorschläge für Tutorials (Videos, Links): jede angemeldete Person darf eines pro Eintrag vorschlagen,
+    // gelesen und freigegeben werden sie nur von Admins; Absender sehen ihre eigenen.
+    match /tutorialSuggestions/{suggestionId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['machineCollection', 'machineId', 'machineName', 'title', 'url', 'note', 'userId', 'userName', 'status', 'createdAt'])
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.machineCollection in ['printers', 'machines', 'equipment']
+        && request.resource.data.machineId is string && request.resource.data.machineId.size() > 0 && request.resource.data.machineId.size() <= 128
+        && request.resource.data.url is string && request.resource.data.url.matches('^https://[^ ]{4,500}$')
+        && request.resource.data.title is string && request.resource.data.title.size() <= 160
+        && request.resource.data.note is string && request.resource.data.note.size() <= 1000
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if isAdmin();
+    }
     match /knowledgeArticles/{articleId} {
       allow read: if signedIn();
       allow create, update: if isAdmin()
