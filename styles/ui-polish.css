@@ -272,3 +272,66 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 .maint-badge.maint-soon { background: #ffc107; }
 .material-stock { display: block; margin-top: 2px; font-size: 12px; color: #555; }
 .material-stock.is-low { color: #b02a37; font-weight: 700; }
+
+/* Admin-Dashboard: Bereiche nach Aufgaben */
+.admin-controls { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+.control-section { padding: 20px; }
+.control-section-todo { border-top: 6px solid #FFEB00; }
+.control-title { margin: 0 0 14px; font-size: 18px; }
+.control-buttons { display: flex; flex-direction: column; gap: 10px; }
+.control-buttons .btn { width: 100%; justify-content: space-between; text-align: left; min-height: 44px; }
+
+/* Material-/Masterbatch-Verwaltung: Karten statt breiter Tabelle */
+.add-box { margin: 0 0 16px; border: 2px solid #000; background: #f8f9fa; }
+.add-box > summary { cursor: pointer; padding: 12px 16px; min-height: 44px; font-weight: 700; display: flex; align-items: center; }
+.add-box[open] > summary { border-bottom: 1px solid #ccc; }
+.add-box .form-group { padding: 12px 16px; margin: 0; }
+.add-box .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px; }
+#materialsTable .data-table, #masterbatchesTable .data-table > table { display: none; }
+.material-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.material-card { display: flex; flex-direction: column; gap: 4px; padding: 16px; background: #f8f9fa; border: 2px solid #000; }
+.material-card[hidden] { display: none !important; }
+.material-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.material-card-head h3 { margin: 0; font-size: 17px; overflow-wrap: anywhere; }
+.material-chip { flex: none; padding: 2px 8px; border: 1px solid #000; background: #fff; font-size: 12px; font-weight: 700; }
+.material-card-sub { margin: 0; color: #555; font-size: 14px; }
+.material-card-price { display: flex; flex-direction: column; margin: 6px 0; }
+.material-card-price strong { font-size: 18px; }
+.material-card-price small { color: #555; }
+.material-card-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 10px; }
+/* Masterbatch-Karten auch am Desktop */
+#masterbatchesTable .entry-cards { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+#masterbatchesTable .entry-card { margin: 0; }
+
+/* Nutzerliste: kompakter, mit Hinweisen */
+.managed-user-identity h3 { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0; font-size: 17px; }
+.user-chip { padding: 1px 8px; border: 1px solid #000; background: #fff; font-size: 12px; font-weight: 700; }
+.user-chip-admin { background: #000; color: #fff; }
+.user-chip-warn { background: #fff3cd; border-color: #b58900; }
+.managed-user-balance strong.is-open { color: #b02a37; }
+.managed-user-balance small { color: #777; }
+.managed-user-list .managed-user { margin-bottom: 10px; }
+.user-list-count { margin: 12px 0 8px; }
+
+/* Kompakte Listen in Dialogen (Tarife, Maschinen & Anleitungen) */
+.safety-grid.compact-list { grid-template-columns: 1fr; gap: 10px; }
+.compact-list .safety-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 16px; align-items: center; padding: 12px 16px; background: #f8f9fa; }
+.compact-list .safety-card h3, .compact-list .safety-card h4 { grid-column: 1; margin: 0; font-size: 16px; }
+.compact-list .safety-card p { grid-column: 1; margin: 0; font-size: 14px; color: #555; }
+.compact-list .safety-card .safety-actions, .compact-list .safety-card > button { grid-column: 2; grid-row: 1 / span 3; margin: 0; justify-self: end; flex-wrap: wrap; justify-content: flex-end; }
+@media (max-width: 640px) {
+  .compact-list .safety-card { grid-template-columns: 1fr; }
+  .compact-list .safety-card .safety-actions, .compact-list .safety-card > button { grid-column: 1; grid-row: auto; justify-self: start; margin-top: 8px; justify-content: flex-start; }
+}
+/* Admin-Aufträge: Werkzeugleiste */
+.admin-entry-controls { display: flex; flex-direction: column; gap: 12px; }
+.admin-entry-controls .search-field, .admin-entry-controls .search-input { width: 100%; }
+.admin-entry-controls .sort-select { max-width: 320px; }
+.admin-archive-body { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; align-items: flex-start; }
+.admin-archive-box { margin: 0; }
+.filter-chip.chip-attention:not(.active) { border-color: #b02a37; color: #b02a37; }
+.admin-entry-controls .sort-select { height: 48px; min-height: 48px; align-self: flex-start; width: 100%; }
+.admin-entry-controls select.sort-select { height: 48px !important; min-height: 48px !important; max-height: 48px; }
+.materials-container, #materialsTable, #materialsTable .entries-container { border: 0 !important; box-shadow: none !important; padding: 0 !important; background: transparent !important; }
+.material-card-actions .btn { min-height: 40px; padding: 8px 14px; font-size: 13px; }
+.compact-list .safety-card h3, .compact-list .safety-card h4 { margin-bottom: 4px; }

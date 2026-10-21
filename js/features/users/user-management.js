@@ -173,30 +173,54 @@ function managedUserAction(index, action, checked) {
 const USER_GROUPS = { standard: 'Studierende (Standard)', staff: 'Mitarbeitende', external: 'Externe' };
 function userGroupLabel(group) { return USER_GROUPS[group === 'students' ? 'standard' : group] || USER_GROUPS.standard; }
 
+// Filter für die Personenliste (Chips): alle, offener Betrag, Admins, ohne Aufträge
+let userListFilter = 'all';
+let lastUsersSource = [];
+const USER_LIST_FILTERS = [
+  ['all', 'Alle', () => true],
+  ['open', 'Offener Betrag', u => (u.unpaidAmount || 0) > 0],
+  ['admin', 'Admins', u => u.isAdmin],
+  ['none', 'Ohne Aufträge', u => !(u.entries?.length)]
+];
+function setUserListFilter(key) { userListFilter = key; renderUsersTable(lastUsersSource); }
+window.setUserListFilter = setUserListFilter;
+
 function renderUsersTable(users) {
   const tableDiv = document.getElementById('usersTable');
-  visibleManagedUsers = users || window.allUsers || [];
+  const source = users || window.allUsers || [];
+  lastUsersSource = source;
+  const test = (USER_LIST_FILTERS.find(f => f[0] === userListFilter) || USER_LIST_FILTERS[0])[2];
+  visibleManagedUsers = source.filter(test);
   const money = value => window.formatCurrency ? window.formatCurrency(Number(value)||0) : (Number(value)||0).toFixed(2)+' €';
+  const chips = '<div class="printer-filters" role="group" aria-label="Personen filtern">'+USER_LIST_FILTERS.map(([key,label,fn]) =>
+    '<button type="button" class="filter-chip '+(userListFilter===key?'active':'')+'" onclick="setUserListFilter(\''+key+'\')">'+label+' ('+source.filter(fn).length+')</button>').join('')+'</div>';
   if (!visibleManagedUsers.length) {
-    tableDiv.innerHTML='<div class="entry-empty-state"><h3>Keine Personen gefunden</h3><p>Bitte die Suche anpassen oder eine Person hinzufügen.</p></div>';
+    tableDiv.innerHTML=chips+'<div class="entry-empty-state"><h3>Keine Personen gefunden</h3><p>Bitte Suche oder Filter anpassen oder eine Person hinzufügen.</p></div>';
     return;
   }
-  tableDiv.innerHTML='<p class="user-list-count">'+visibleManagedUsers.length+' Personen</p><div class="managed-user-list">'+visibleManagedUsers.map((u,i)=>{
+  // Gleicher Name mehrfach: wahrscheinlich ein doppeltes Profil (z. B. alte Kennung + neues Konto)
+  const nameCount = new Map();
+  source.forEach(u => { const k = String(u.name||'').trim().toLowerCase(); if (k) nameCount.set(k, (nameCount.get(k)||0)+1); });
+  tableDiv.innerHTML=chips+'<p class="user-list-count">'+visibleManagedUsers.length+' Personen</p><div class="managed-user-list">'+visibleManagedUsers.map((u,i)=>{
     const count=u.entries?.length||0;
-    const button=(label,action,kind='secondary')=>'<button type="button" class="btn btn-'+kind+'" onclick="managedUserAction('+i+',\''+action+'\')">'+label+'</button>';
-    return '<article class="managed-user"><div class="managed-user-overview"><div class="managed-user-identity"><h3>'+userEscape(u.name||'Name nicht hinterlegt')+'</h3><p>'+userEscape(u.email||u.kennung||'Kontaktdaten fehlen')+'</p><span class="user-role">'+(u.isAdmin?'Administrator':'Nutzer')+'</span></div>'+
-      '<div class="managed-user-balance"><span>'+count+' Aufträge</span><strong>'+money(u.unpaidAmount)+' offen</strong></div>'+
+    const button=(label,action,kind='secondary')=>'<button type="button" class="btn btn-'+kind+' btn-small" onclick="managedUserAction('+i+',\''+action+'\')">'+label+'</button>';
+    const dup = (nameCount.get(String(u.name||'').trim().toLowerCase())||0) > 1;
+    const badges = (u.isAdmin?'<span class="user-chip user-chip-admin">Admin</span>':'')+
+      (u.billingGroup && u.billingGroup !== 'standard' && u.billingGroup !== 'students' ? '<span class="user-chip">'+userEscape(userGroupLabel(u.billingGroup))+'</span>' : '')+
+      (dup ? '<span class="user-chip user-chip-warn" title="Gleicher Name kommt mehrfach vor">Doppelt?</span>' : '');
+    return '<article class="managed-user"><div class="managed-user-overview"><div class="managed-user-identity"><h3>'+userEscape(u.name||'Name nicht hinterlegt')+badges+'</h3><p>'+userEscape(u.email||u.kennung||'Kontaktdaten fehlen')+'</p></div>'+
+      '<div class="managed-user-balance"><span>'+count+(count===1?' Auftrag':' Aufträge')+'</span>'+((u.unpaidAmount||0)>0?'<strong class="is-open">'+money(u.unpaidAmount)+' offen</strong>':'<small>nichts offen</small>')+'</div>'+
       '<div>'+button('Bearbeiten','edit')+'</div></div>'+
-      '<details class="managed-user-details"><summary>Kontaktdaten, Abrechnung & Aktionen</summary><dl>'+
+      '<details class="managed-user-details"><summary>Details & Aktionen</summary><dl>'+
       '<div><dt>FH-Kennung</dt><dd>'+userEscape(u.kennung||'Nicht zugeordnet')+'</dd></div>'+
       '<div><dt>E-Mail</dt><dd>'+userEscape(u.email||'Nicht hinterlegt')+'</dd></div>'+
       '<div><dt>Telefon</dt><dd>'+userEscape(u.phone||'Nicht hinterlegt')+'</dd></div>'+
       '<div><dt>Nutzergruppe</dt><dd>'+userEscape(userGroupLabel(u.billingGroup))+'</dd></div>'+
       '<div><dt>Gesamtkosten</dt><dd>'+money(u.totalCost)+'</dd></div>'+
       '<div><dt>Bezahlt</dt><dd>'+money(u.paidAmount)+'</dd></div>'+
-      '<div><dt>Letzter Druck</dt><dd>'+userEscape(u.lastEntry?.toLocaleDateString('de-DE')||'Noch kein Druck')+'</dd></div></dl>'+
+      '<div><dt>Letzter Auftrag</dt><dd>'+userEscape(u.lastEntry?.toLocaleDateString('de-DE')||'Noch kein Auftrag')+'</dd></div></dl>'+
       '<label class="managed-user-admin"><input type="checkbox" '+(u.isAdmin?'checked':'')+' onchange="managedUserAction('+i+',\'admin\',this.checked)"> Administratorrechte</label>'+
-      '<div class="safety-actions">'+button('Unterweisungen','safety')+(u.unpaidAmount>0?button('Zahlungserinnerung','reminder')+button('Dringende Erinnerung','urgent'):'')+button('Nutzer löschen','remove','danger')+'</div></details></article>';
+      '<div class="safety-actions">'+button('Einweisungen','safety')+(u.unpaidAmount>0?button('Zahlungserinnerung','reminder')+button('Dringende Erinnerung','urgent'):'')+button('Nutzer löschen','remove','danger')+'</div></details></article>';
   }).join('')+'</div>';
 }
 

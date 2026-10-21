@@ -70,14 +70,14 @@
         const links = Array.isArray(row.guideLinks) ? row.guideLinks.length : 0;
         return `<article class="safety-card"><h3>${esc(row.name)}</h3><p>${esc(window.machineKindLabel(row))}</p>
           <p>${steps ? `Anleitung: ${steps} Schritt${steps === 1 ? '' : 'e'}` : 'Noch keine eigene Anleitung'}${links ? ` · ${links} Link${links === 1 ? '' : 's'}` : ''}${row.safetyText || (row.safetyLinks || []).length ? ' · Betriebsanweisung vorhanden' : ' · Keine Betriebsanweisung'}</p>
-          <div class="safety-actions"><button class="btn btn-primary" onclick="KnowledgeAdmin.editGuide(${i})">Anleitung</button>
-          <button class="btn btn-secondary" onclick="MachineLabels.open(['${esc(row.collection)}:${esc(row.id)}'])">QR / Etikett</button>
-          <button class="btn btn-secondary" onclick="KnowledgeAdmin.copyLink(${i})">Link kopieren</button></div></article>`;
+          <div class="safety-actions"><button class="btn btn-primary btn-small" onclick="KnowledgeAdmin.editGuide(${i})">Bearbeiten</button>
+          <button class="btn btn-secondary btn-small" onclick="MachineLabels.open(['${esc(row.collection)}:${esc(row.id)}'])">QR / Etikett</button>
+          <button class="btn btn-secondary btn-small" onclick="KnowledgeAdmin.copyLink(${i})">Link kopieren</button></div></article>`;
       }).join('');
       shell('Maschinen & Anleitungen',
         (suggestionCards ? `<h3>Vorschläge von Nutzern (${suggestions.length})</h3><div class="safety-grid">${suggestionCards}</div><h3>Alle Maschinen</h3>` : '') +
         '<p>Jede Maschine hat eine eigene Schritt-für-Schritt-Anleitung, Links zu Videos und Dokumenten, einen QR-Code und einen festen Link. Der Link führt nach der Anmeldung direkt zur Maschine: Anleitung öffnen und Maschine für Aufträge vorauswählen.</p>' +
-        (cards ? `<div class="safety-grid">${cards}</div>` : '<p>Noch keine Maschinen angelegt.</p>') +
+        (cards ? `<div class="safety-grid compact-list">${cards}</div>` : '<p>Noch keine Maschinen angelegt.</p>') +
         '<p><small>Neue Maschinen legst du unter „Maschinen verwalten“ an, ausleihbares Equipment unter „Equipment verwalten“.</small></p>');
     } catch (error) { window.toast.error(error.message); }
   }

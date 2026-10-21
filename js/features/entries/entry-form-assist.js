@@ -63,7 +63,12 @@
     if (option.dataset.training === '1') {
       const [collection, id] = option.value.split('/');
       const trainings = await ownTrainings();
-      if (!trainings.some(t => t.status === 'active' && t.machineCollection === collection && t.machineId === id)) {
+      let peers = [];
+      try { peers = JSON.parse(option.dataset.trainingPeers || '[]'); } catch (_) { peers = []; }
+      const group = option.dataset.trainingGroup;
+      // Gilt auch, wenn der Nachweis auf eine Maschine derselben Einweisungsgruppe ausgestellt wurde.
+      if (!trainings.some(t => t.status === 'active' && ((t.machineCollection === collection && t.machineId === id)
+          || (group && t.trainingGroup === group) || peers.includes(`${t.machineCollection}/${t.machineId}`)))) {
         messages.push('Für diese Maschine ist eine Einweisung nötig – bei dir ist noch keine eingetragen. Frag bitte in der Werkstatt.');
       }
     }

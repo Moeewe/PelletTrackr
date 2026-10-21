@@ -27,6 +27,8 @@
     };
   }
 
+  window.resetEntryLimit = kind => { limits[kind] = PAGE; };
+
   window.showMoreEntries = function (kind) {
     limits[kind] += PAGE;
     if (kind === 'admin') window.filterAdminEntries?.();

@@ -605,7 +605,7 @@ function renderEquipmentList(equipmentList, retryCount = 0) {
                             <button class="btn btn-success" onclick="approveEquipmentRequest('${pendingRequest.id}', '${item.id}')">Anfrage von ${userName} genehmigen</button>
                             <button class="btn btn-danger" onclick="rejectEquipmentRequest('${pendingRequest.id}', '${item.id}')">Anfrage von ${userName} ablehnen</button>
                             <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
-                            <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
+                            <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Duplizieren</button>
                         `;
                     } else if (item.status === 'available' || (!item.borrowedByKennung && item.status !== 'borrowed')) {
                         console.log('🔍 Showing available equipment buttons');
@@ -623,13 +623,13 @@ function renderEquipmentList(equipmentList, retryCount = 0) {
                             return `
                                 <button class="btn btn-primary" disabled title="Equipment hat ausstehende Anfragen von ${userName}">Ausleihen (Blockiert)</button>
                                 <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
-                                <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
+                                <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Duplizieren</button>
                             `;
                         } else {
                             return `
                                 <button class="btn btn-primary" onclick="borrowEquipment('${item.id}')">Ausleihen</button>
                                 <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
-                                <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
+                                <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Duplizieren</button>
                             `;
                         }
                     } else if (item.status === 'borrowed' || item.borrowedByKennung) {
@@ -639,13 +639,13 @@ function renderEquipmentList(equipmentList, retryCount = 0) {
                             return `
                                 <button class="btn btn-success" onclick="confirmEquipmentReturn('${item.id}')">Rückgabe von ${userName} bestätigen</button>
                                 <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
-                                <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
+                                <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Duplizieren</button>
                             `;
                         } else {
                             return `
                                 <button class="btn btn-success" onclick="returnEquipment('${item.id}')">Zurückgeben</button>
                                 <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
-                                <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
+                                <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Duplizieren</button>
                                 ${item.requiresDeposit && !item.depositPaid ? `
                                     <button class="btn btn-warning" onclick="markDepositAsPaid('${item.id}')">Pfand als bezahlt markieren</button>
                                 ` : ''}
@@ -655,7 +655,7 @@ function renderEquipmentList(equipmentList, retryCount = 0) {
                         console.log('🔍 Showing default buttons');
                         return `
                             <button class="btn btn-secondary" onclick="editEquipment('${item.id}')">Bearbeiten</button>
-                            <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Dublizieren</button>
+                            <button class="btn btn-tertiary" onclick="duplicateEquipment('${item.id}')">Duplizieren</button>
                         `;
                     }
                 })()}

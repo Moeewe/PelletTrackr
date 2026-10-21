@@ -58,12 +58,12 @@
   const LASER_SAFETY = 'CO₂-Laser zum Schneiden und Gravieren. Nicht lasern: PVC (setzt Chlor frei, ätzend, schädigt die Optik), ABS, Polycarbonat, Teflon sowie Schaum aus Polystyrol oder Polypropylen (Brand- bzw. Gesundheitsgefahr). Laser nie unbeaufsichtigt laufen lassen, Feuerlöscher griffbereit halten, Absaugung nach Herstellerangabe nutzen. Allgemeine Hinweise – bitte mit Herstellerunterlagen und Werkstattleitung abgleichen.';
   const STARTER = [
     { starterKey: 'zuend-cnc', match: /z(ü|ue|u)nd/i, name: 'Zünd CNC Cutter', model: 'Zünd G3', machineType: 'cnc', jobTypes: ['CNC-Fräsen', 'Schneiden', 'Gravieren'],
-      buildVolume: 'ca. 1800 × 2500 mm (bitte prüfen)', trainingTypeName: 'Einweisung Zünd CNC Cutter',
+      buildVolume: 'ca. 1800 × 2500 mm (bitte prüfen)', trainingGroup: 'Einweisung Zünd CNC Cutter', trainingTypeName: 'Einweisung Zünd CNC Cutter',
       notes: 'Zum Schneiden, Fräsen und Gravieren. Verbraucht kein Werkstattmaterial. Werkzeuge bitte eintragen.' },
     { starterKey: 'trotec-speedy-500-1', match: /trotec/i, name: 'Trotec Speedy 500 (Laser 1)', model: 'Trotec Speedy 500', machineType: 'laser', jobTypes: ['Lasern', 'Schneiden', 'Gravieren'],
-      buildVolume: 'ca. 1200 × 700 mm (bitte prüfen)', trainingTypeName: 'Laserschein · Trotec Speedy 500', safetyText: LASER_SAFETY },
+      buildVolume: 'ca. 1200 × 700 mm (bitte prüfen)', trainingGroup: 'Laserschein · Trotec Speedy 500', trainingTypeName: 'Laserschein · Trotec Speedy 500', safetyText: LASER_SAFETY },
     { starterKey: 'trotec-speedy-500-2', match: /trotec/i, name: 'Trotec Speedy 500 (Laser 2)', model: 'Trotec Speedy 500', machineType: 'laser', jobTypes: ['Lasern', 'Schneiden', 'Gravieren'],
-      buildVolume: 'ca. 1200 × 700 mm (bitte prüfen)', trainingTypeName: 'Laserschein · Trotec Speedy 500', safetyText: LASER_SAFETY }
+      buildVolume: 'ca. 1200 × 700 mm (bitte prüfen)', trainingGroup: 'Laserschein · Trotec Speedy 500', trainingTypeName: 'Laserschein · Trotec Speedy 500', safetyText: LASER_SAFETY }
   ];
   // Was fehlt noch? Vorhandene Maschinen (auch von Hand angelegte) werden nicht doppelt angelegt.
   const starterPending = () => {
@@ -127,7 +127,7 @@
       const maint = window.maintenanceState(item);
       const badge = maint && maint.level !== 'ok' ? `<span class="maint-badge maint-${maint.level}">${esc(maint.label)}</span>` : '';
       const equipment = Array.isArray(item.requiredEquipment) && item.requiredEquipment.length ? 'Equipment: ' + item.requiredEquipment.map(e => e.name).join(', ') : '';
-      const details = [item.model, item.usesMaterial === false ? 'Ohne Werkstattmaterial' : linkSummary(item), item.requiresSafetyTraining ? 'Einweisung nötig' : '', equipment, item.active === false ? 'Deaktiviert' : '', guide].filter(Boolean).join(' · ');
+      const details = [item.model, item.usesMaterial === false ? 'Ohne Werkstattmaterial' : linkSummary(item), item.requiresSafetyTraining ? (item.trainingGroup ? 'Einweisung: ' + item.trainingGroup : 'Einweisung nötig') : '', equipment, item.active === false ? 'Deaktiviert' : '', guide].filter(Boolean).join(' · ');
       const index = state.items.indexOf(item);
       return `${heading}<article class="printer-row ${item.active === false ? 'is-inactive' : ''}">
         <div class="printer-row-main"><h4 class="printer-row-name">${esc(item.name)}</h4><p class="printer-row-details">${esc(details)}${badge}</p></div>
@@ -259,7 +259,10 @@
          </fieldset>` : ''}
          <fieldset class="hub-fieldset"><legend>Einweisung</legend>
            <label class="checkbox-label"><input type="checkbox" class="checkbox-input" id="hubTraining" ${item?.requiresSafetyTraining ? 'checked' : ''}> Einweisung erforderlich</label>
-           <input id="hubTrainingName" class="form-input" maxlength="160" placeholder="Einweisungsart (optional), z. B. Laserschein" value="${esc(item?.trainingTypeName || '')}">
+           <label class="form-label" for="hubTrainingName">Gemeinsame Einweisung (optional)</label>
+           <input id="hubTrainingName" class="form-input" maxlength="160" list="hubTrainingGroups" placeholder="z. B. Laserschein Trotec Speedy 500" value="${esc(item?.trainingGroup ?? item?.trainingTypeName ?? '')}">
+           <datalist id="hubTrainingGroups">${Array.from(new Set(state.items.map(m => m.trainingGroup).filter(Boolean))).map(g => `<option value="${esc(g)}"></option>`).join('')}</datalist>
+           <p class="hub-hint">Maschinen mit demselben Namen teilen sich die Einweisung: Wer für eine eingewiesen ist, ist für alle dieser Gruppe eingewiesen (z. B. beide Trotec-Laser).</p>
          </fieldset>
          <div class="form-group"><label class="form-label" for="hubNotes">Notizen</label><textarea id="hubNotes" class="form-textarea" rows="3" maxlength="1000">${esc(item?.notes || '')}</textarea></div>
          <label class="checkbox-label"><input type="checkbox" class="checkbox-input" id="hubActive" ${item?.active === false ? '' : 'checked'}> Aktiv und für neue Aufträge auswählbar</label>
@@ -285,7 +288,7 @@
       if (uses && materialRestrict && !ids.length) throw Error('Bitte mindestens ein Material auswählen oder „Nur bestimmte Materialien erlauben“ ausschalten.');
       const data = {
         name, model: $('hubModel').value.trim(), location: $('hubLocation').value.trim(), notes: $('hubNotes').value.trim(),
-        active: $('hubActive').checked, requiresSafetyTraining: $('hubTraining').checked, trainingTypeName: $('hubTrainingName').value.trim(),
+        active: $('hubActive').checked, requiresSafetyTraining: $('hubTraining').checked, trainingGroup: $('hubTrainingName').value.trim(), trainingTypeName: $('hubTrainingName').value.trim(),
         requiredEquipment: Array.from(equipmentPicked, ([id, name]) => ({ id, name })),
         usesMaterial: uses, materialTypes: forms, materialIds: ids, supportsMasterbatch: uses && $('hubMasterbatch').checked,
         updatedBy: user.uid, updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()

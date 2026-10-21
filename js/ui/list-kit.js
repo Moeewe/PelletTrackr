@@ -20,6 +20,12 @@
       ] },
     { selector: '#safetyRows .safety-grid', item: ':scope > article', search: false, page: 12, noun: 'Einträge' },
     { selector: '.managed-user-list', item: ':scope > article', search: false, page: 20, noun: 'Personen' },
+    { selector: '.material-grid', item: '.material-card', search: true, page: 12, noun: 'Materialien', placeholder: 'Material suchen …', minItems: 6,
+      filters: [
+        { label: 'Alle' },
+        { label: 'Pellets', test: el => el.dataset.type === 'pellet' },
+        { label: 'Filament', test: el => el.dataset.type === 'filament' }
+      ] },
     { selector: '#printerGrid', item: '.printer-row', search: false, page: 20, noun: 'Drucker' },
     { selector: '.knowledge-tiles', item: ':scope > button', search: true, page: 12, noun: 'Maschinen', placeholder: 'Maschine suchen …' },
     { selector: '.label-list', item: 'label.label-row', search: true, page: 30, noun: 'Maschinen', placeholder: 'Maschine suchen …' },

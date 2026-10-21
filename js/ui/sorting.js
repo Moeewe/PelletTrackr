@@ -232,6 +232,21 @@ function searchAdminEntries() {
   filterAdminEntries();
 }
 
+// Zahlungsstatus-Filter (Chips über der Auftragsliste): alle, offen, bezahlt
+let adminStatusFilter = 'all';
+function setAdminStatusFilter(key) { adminStatusFilter = key; window.resetEntryLimit?.('admin'); filterAdminEntries(true); }
+window.setAdminStatusFilter = setAdminStatusFilter;
+const isEntryPaid = entry => Boolean(entry.paid || entry.isPaid);
+
+function renderAdminStatusChips(entries) {
+  const target = document.getElementById('adminStatusChips');
+  if (!target) return;
+  const open = entries.filter(e => !isEntryPaid(e));
+  const openSum = open.reduce((sum, e) => sum + (Number(e.totalCost) || 0), 0);
+  const chips = [['all', `Alle (${entries.length})`], ['open', `Offen (${open.length}${open.length ? ' · ' + openSum.toFixed(2).replace('.', ',') + ' €' : ''})`], ['paid', `Bezahlt (${entries.length - open.length})`]];
+  target.innerHTML = chips.map(([key, label]) => `<button type="button" class="filter-chip ${adminStatusFilter === key ? 'active' : ''} ${key === 'open' && open.length ? 'chip-attention' : ''}" onclick="setAdminStatusFilter('${key}')">${label}</button>`).join('');
+}
+
 function filterAdminEntries() {
   const entries = window.allAdminEntries || [];
   const term = (document.getElementById('adminSearchInput')?.value || '').trim().toLocaleLowerCase('de');
@@ -247,6 +262,9 @@ function filterAdminEntries() {
       entry.material, entry.masterbatch, entry.jobNotes, entry.paid || entry.isPaid ? 'bezahlt' : 'offen'];
     return fields.some(value => String(value || '').toLocaleLowerCase('de').includes(term));
   });
+  renderAdminStatusChips(filtered);
+  if (adminStatusFilter === 'open') filtered = filtered.filter(e => !isEntryPaid(e));
+  else if (adminStatusFilter === 'paid') filtered = filtered.filter(isEntryPaid);
   const date = entry => entry.timestamp?.toDate ? entry.timestamp.toDate().getTime() : new Date(entry.timestamp || 0).getTime();
   if (sortValue === 'date-asc') filtered.sort((a, b) => date(a) - date(b));
   else if (sortValue === 'name-asc') filtered.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'de'));

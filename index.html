@@ -422,60 +422,56 @@
                 </div>
             </div>
 
-            <!-- Admin Controls -->
+            <!-- Admin Controls: nach Aufgaben gruppiert -->
             <div class="admin-controls">
-                <div class="control-section">
-                    <h3 class="control-title">Material-Verwaltung</h3>
+                <div class="control-section control-section-todo">
+                    <h3 class="control-title">Offene Aufgaben</h3>
                     <div class="control-buttons">
-                        <button class="btn btn-secondary" onclick="showMaterialManager()">
-                            Materialien verwalten
-                        </button>
-                        <button class="btn btn-secondary" onclick="showMasterbatchManager()">
-                            Masterbatches verwalten
-                        </button>
-                    </div>
-                </div>
-
-                <div class="control-section">
-                    <h3 class="control-title">Nutzer-Verwaltung</h3>
-                    <div class="control-buttons">
-                        <button class="btn btn-secondary" onclick="showUserManager()">
-                            Nutzer verwalten
-                        </button>
-                    </div>
-                </div>
-
-
-
-                <div class="control-section">
-                    <h3 class="control-title">Asset-Verwaltung</h3>
-                    <div class="control-buttons">
-                        <button class="btn btn-secondary" id="equipmentManagerBtn" onclick="if(typeof triggerEquipmentManager === 'function') { triggerEquipmentManager(); } else if(typeof showEquipmentManager === 'function') { showEquipmentManager(); } else { console.error('Equipment manager functions not available'); }">
-                            Equipment verwalten
-                            <span class="notification-badge" data-badge="equipment-requests" style="display: none;">0</span>
-                        </button>
-                        <button class="btn btn-secondary" onclick="showPrinterManager()">
-                            Maschinen verwalten
-                            <span class="notification-badge" data-badge="printer-issues" style="display: none;">0</span>
-                        </button>
-                        <button class="btn btn-secondary" onclick="Billing.open()">Tarife &amp; Nutzergruppen</button>
-                        <button class="btn btn-secondary" onclick="KnowledgeAdmin.open()">Maschinen &amp; Anleitungen</button>
-                        <button class="btn btn-secondary" onclick="MachineLabels.open()">Maschinen-Etiketten drucken</button>
-                        <button class="btn btn-secondary" onclick="showMaterialOrders()">
-                            Bestellungen
-                            <span class="notification-badge" data-badge="material-orders" style="display: none;">0</span>
+                        <button class="btn btn-secondary" onclick="showPaymentRequestsModal()">
+                            Zahlungsanfragen
+                            <span class="notification-badge" data-badge="payment-requests" style="display: none;">0</span>
                         </button>
                         <button class="btn btn-secondary" onclick="showProblemReports()">
                             Problem-Reports
                             <span class="notification-badge" data-badge="problem-reports" style="display: none;">0</span>
                         </button>
-                        <button class="btn btn-secondary" onclick="showPaymentRequestsModal()">
-                            Zahlungsanfragen
-                            <span class="notification-badge" data-badge="payment-requests" style="display: none;">0</span>
+                        <button class="btn btn-secondary" onclick="showMaterialOrders()">
+                            Bestellungen
+                            <span class="notification-badge" data-badge="material-orders" style="display: none;">0</span>
                         </button>
-                        <button class="btn btn-secondary" onclick="showKnowledgeBase()">
-                            Wissensdatenbank & Hilfe
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3 class="control-title">Maschinen &amp; Equipment</h3>
+                    <div class="control-buttons">
+                        <button class="btn btn-secondary" onclick="showPrinterManager()">
+                            Maschinen verwalten
+                            <span class="notification-badge" data-badge="printer-issues" style="display: none;">0</span>
                         </button>
+                        <button class="btn btn-secondary" id="equipmentManagerBtn" onclick="if(typeof triggerEquipmentManager === 'function') { triggerEquipmentManager(); } else if(typeof showEquipmentManager === 'function') { showEquipmentManager(); } else { console.error('Equipment manager functions not available'); }">
+                        Equipment verwalten
+                        <span class="notification-badge" data-badge="equipment-requests" style="display: none;">0</span>
+                        </button>
+                        <button class="btn btn-secondary" onclick="KnowledgeAdmin.open()">Anleitungen &amp; Betriebsanweisungen</button>
+                        <button class="btn btn-secondary" onclick="MachineLabels.open()">QR-Etiketten drucken</button>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3 class="control-title">Material &amp; Preise</h3>
+                    <div class="control-buttons">
+                        <button class="btn btn-secondary" onclick="showMaterialManager()">Materialien</button>
+                        <button class="btn btn-secondary" onclick="showMasterbatchManager()">Masterbatches</button>
+                        <button class="btn btn-secondary" onclick="Billing.open()">Tarife &amp; Nutzergruppen</button>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3 class="control-title">Nutzer</h3>
+                    <div class="control-buttons">
+                        <button class="btn btn-secondary" onclick="showUserManager()">Nutzer verwalten</button>
+                        <button class="btn btn-secondary" onclick="showKnowledgeBase()">Hilfe &amp; Anleitungen ansehen</button>
                     </div>
                 </div>
             </div>
@@ -483,27 +479,31 @@
             <!-- All Entries Table -->
             <div class="entries-section">
                 <h2 class="section-title">Alle Fertigungsaufträge</h2>
-                <div class="table-controls">
-                    <label class="admin-archive-cutoff">Ältere Aufträge archivieren ab
-                        <input type="date" id="adminArchiveBefore" aria-label="Stichtag zum Archivieren alter Aufträge">
-                    </label>
-                    <button class="btn btn-secondary" type="button" onclick="archiveOlderEntries()">Alte Aufträge archivieren</button>
-                    <input type="text" id="adminSearchInput" placeholder="Geladene Aufträge durchsuchen …" aria-label="Geladene Aufträge durchsuchen" title="Durchsucht die bereits geladenen Aufträge. Lade weitere Aufträge, um den Suchbereich zu erweitern." class="search-input" onkeyup="searchAdminEntries()">
-                    <select id="adminArchiveSelect" class="sort-select" aria-label="Auftragsbereich" onchange="filterAdminEntries()">
-                        <option value="active">Aktuelle Aufträge</option>
-                        <option value="archived">Archivierte Aufträge</option>
-                        <option value="all">Alle Aufträge</option>
-                    </select>
-                    <select id="adminSortSelect" class="sort-select" onchange="sortAdminEntries()">
+                <div class="table-controls admin-entry-controls">
+                    <input type="text" id="adminSearchInput" placeholder="Aufträge durchsuchen: Name, Job, Maschine, Material …" aria-label="Geladene Aufträge durchsuchen" title="Durchsucht die bereits geladenen Aufträge. Lade weitere Aufträge, um den Suchbereich zu erweitern." class="search-input" onkeyup="searchAdminEntries()">
+                    <div id="adminStatusChips" class="printer-filters" role="group" aria-label="Nach Zahlungsstatus filtern"></div>
+                    <select id="adminSortSelect" class="sort-select" aria-label="Sortierung" onchange="sortAdminEntries()">
                         <option value="date-desc">Datum (neueste zuerst)</option>
                         <option value="date-asc">Datum (älteste zuerst)</option>
                         <option value="name-asc">Name (A-Z)</option>
                         <option value="name-desc">Name (Z-A)</option>
                         <option value="cost-desc">Kosten (höchste zuerst)</option>
                         <option value="cost-asc">Kosten (niedrigste zuerst)</option>
-                        <option value="status-paid">Nur bezahlt</option>
-                        <option value="status-unpaid">Nur unbezahlt</option>
                     </select>
+                    <details class="add-box admin-archive-box">
+                        <summary>Archiv &amp; Aufräumen</summary>
+                        <div class="admin-archive-body">
+                            <label class="form-label" for="adminArchiveSelect">Anzeigen</label>
+                            <select id="adminArchiveSelect" class="sort-select" aria-label="Auftragsbereich" onchange="filterAdminEntries(true)">
+                                <option value="active">Aktuelle Aufträge</option>
+                                <option value="archived">Archivierte Aufträge</option>
+                                <option value="all">Alle Aufträge</option>
+                            </select>
+                            <label class="form-label" for="adminArchiveBefore">Ältere Aufträge archivieren ab</label>
+                            <input type="date" id="adminArchiveBefore" class="form-input" aria-label="Stichtag zum Archivieren alter Aufträge">
+                            <button class="btn btn-secondary" type="button" onclick="archiveOlderEntries()">Alte Aufträge archivieren</button>
+                        </div>
+                    </details>
                 </div>
                 <div class="admin-entries-container">
                     <div id="adminEntriesTable" class="data-table data-table-responsive"></div>
@@ -520,8 +520,9 @@
                 <button class="close-btn" onclick="closeMaterialManager()">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">Neues Material hinzufügen</label>
+                <details id="materialAddBox" class="add-box">
+                    <summary>+ Neues Material hinzufügen</summary>
+                    <div class="form-group">
                     <div class="form-row">
                         <input type="text" id="newMaterialName" class="form-input" placeholder="Material Name">
                         <select id="newMaterialType" class="form-select">
@@ -538,13 +539,14 @@
                         <input type="number" id="newMaterialTaxRate" class="form-input" placeholder="Mehrwertsteuer %" value="19" step="0.01">
                         <input type="number" id="newMaterialMarkup" class="form-input" placeholder="Gemeinkosten % (Strom, Versand, etc.)" value="30" step="0.01">
                     </div>
-                </div>
+                    </div>
+                </details>
                 <div class="materials-container">
                     <div id="materialsTable" class="data-table data-table-responsive"></div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-primary" onclick="addMaterial()">Material hinzufügen</button>
+                <button class="btn btn-primary" onclick="submitOrOpenAddForm('materialAddBox','newMaterialName',addMaterial)">Material hinzufügen</button>
                 <button class="btn btn-secondary" onclick="closeMaterialManager()">Schließen</button>
             </div>
         </div>
@@ -558,8 +560,9 @@
                 <button class="close-btn" onclick="closeMasterbatchManager()">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">Neuen Masterbatch hinzufügen</label>
+                <details id="masterbatchAddBox" class="add-box">
+                    <summary>+ Neuen Masterbatch hinzufügen</summary>
+                    <div class="form-group">
                     <div class="form-row">
                         <input type="text" id="newMasterbatchName" class="form-input" placeholder="Masterbatch Name">
                         <input type="text" id="newMasterbatchManufacturer" class="form-input" placeholder="Hersteller">
@@ -569,13 +572,14 @@
                         <input type="number" id="newMasterbatchTaxRate" class="form-input" placeholder="Mehrwertsteuer %" value="19" step="0.01">
                         <input type="number" id="newMasterbatchMarkup" class="form-input" placeholder="Gemeinkosten % (Strom, Versand, etc.)" value="30" step="0.01">
                     </div>
-                </div>
+                    </div>
+                </details>
                 <div class="masterbatches-container">
                     <div id="masterbatchesTable" class="data-table data-table-responsive"></div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-primary" onclick="addMasterbatch()">Masterbatch hinzufügen</button>
+                <button class="btn btn-primary" onclick="submitOrOpenAddForm('masterbatchAddBox','newMasterbatchName',addMasterbatch)">Masterbatch hinzufügen</button>
                 <button class="btn btn-secondary" onclick="closeMasterbatchManager()">Schließen</button>
             </div>
         </div>

@@ -50,14 +50,20 @@
   function badge(r) {
     return '<span class="safety-badge safety-' + (r?.status === 'active' ? 'active' : r?.status === 'revoked' ? 'revoked' : 'missing') + '">' + statusLabel(r?.status || 'missing') + '</span>';
   }
+  // Gemeinsame Einweisung: Maschinen mit gleichem "trainingGroup" (z. B. zwei gleiche Laser) teilen sich einen Nachweis.
+  const groupOf = m => String(m?.trainingGroup || '').trim();
+  // Ältere Nachweise haben noch keine Gruppe gespeichert: dann gilt die Gruppe der Maschine, auf die sie ausgestellt wurden.
+  const recordGroup = r => r.trainingGroup || groupOf(state.machines.find(x => key(x) === recordKey(r)));
+  const covers = (r, m) => recordKey(r) === key(m) || Boolean(groupOf(m) && recordGroup(r) === groupOf(m));
+  const groupPeers = m => groupOf(m) ? state.machines.filter(o => o !== m && groupOf(o) === groupOf(m)) : [];
   function isRequired(m) { return m.collection === typesCollection || m.requiresSafetyTraining === true; }
   function renderOwn() {
     const el = $('userSafetyTrainingList');
     if (!el) return;
-    const shown = state.machines.filter(m => isRequired(m) || state.own.some(r => recordKey(r) === key(m)));
-    const unmatched = state.own.filter(r => !state.machines.some(m => key(m) === recordKey(r)));
+    const shown = state.machines.filter(m => isRequired(m) || state.own.some(r => covers(r, m)));
+    const unmatched = state.own.filter(r => !state.machines.some(m => covers(r, m)));
     const rows = shown.map(m => {
-      const r = state.own.find(r => recordKey(r) === key(m));
+      const r = state.own.find(r => covers(r, m));
       return '<article class="safety-card"><h3>' + esc(m.name) + '</h3><p>' + esc(m.collection === typesCollection ? 'Unterweisungsart' : machineStatus(m.status)) + '</p>' + badge(r) +
         '<p>Unterweisung: ' + date(r?.trainingDate) + '</p>' + (r?.instructor ? '<p>Durchgeführt von: '+esc(r.instructor)+'</p>' : '') + (r?.status === 'revoked' ? '<p>Entzogen: '+date(r.revokedAt)+'</p>' : '') +
         (r?.note ? '<p>'+esc(r.note)+'</p>' : '') + '</article>';
@@ -119,7 +125,7 @@
     const rows = [...state.records];
     // Missing records are explicit in the overall overview, without creating database documents.
     state.users.forEach(u => state.machines.filter(isRequired).forEach(m => {
-      if (!rows.some(r => r.userId === u.id && recordKey(r) === key(m))) rows.push({userId:u.id,userName:u.name,userEmail:u.email,machineId:m.id,machineCollection:m.collection,machineName:m.name,status:'missing'});
+      if (!rows.some(r => r.userId === u.id && covers(r, m))) rows.push({userId:u.id,userName:u.name,userEmail:u.email,machineId:m.id,machineCollection:m.collection,machineName:m.name,status:'missing'});
     }));
     const filtered = rows.filter(r => {
       const u = state.users.find(u => u.id === r.userId) || {};
@@ -136,7 +142,7 @@
       const m = state.machines[mid];
       return '<article class="safety-card"><h3>'+esc(r.userName || r.userEmail || r.userId)+'</h3><p>'+esc(r.userEmail || '')+'</p><h4>'+esc(machineName(r))+'</h4>'+
         '<p>'+esc(m ? m.collection === typesCollection ? 'Unterweisungsart' : window.machineKindLabel(m)+' · '+machineStatus(m.status) : 'Zuordnung fehlt / Maschine entfernt')+'</p>'+badge(r)+
-        '<p>Unterweisung: '+date(r.trainingDate)+'</p>'+(r.status === 'revoked' ? '<p>Entzogen: '+date(r.revokedAt)+'</p>' : '')+
+        '<p>Unterweisung: '+date(r.trainingDate)+'</p>'+(groupPeers(state.machines[mid]).length ? '<p>Gilt auch für: '+esc(groupPeers(state.machines[mid]).map(o=>o.name).join(', '))+'</p>' : '')+(r.status === 'revoked' ? '<p>Entzogen: '+date(r.revokedAt)+'</p>' : '')+
         '<div class="safety-actions">'+(idx < 0 ? button('Hinterlegen','SafetyTraining.edit(-1,'+uid+','+mid+')','primary') :
         button('Historie','SafetyTraining.history('+idx+')')+
         (mid >= 0 ? button(r.status === 'active' ? 'Bearbeiten / erneuern' : 'Erneut einweisen','SafetyTraining.edit('+idx+')') : '')+
@@ -204,7 +210,7 @@
       if (!machineDoc.exists) throw new Error('Die Maschine wurde inzwischen entfernt.');
       await change(ref,{
         userId:user.id,userName:user.name || '',userEmail:user.email || '',
-        machineCollection:m.collection,machineId:m.id,machineName:m.name,
+        machineCollection:m.collection,machineId:m.id,machineName:m.name,trainingGroup:groupOf(m),
         status:'active',trainingDate,instructor,note:$('safetyNote').value.trim(),
         revokedAt:null,revokedBy:null
       },existing?.revision || 0, existing ? existing.status === 'revoked' ? 'renew' : 'update' : 'create');
@@ -269,7 +275,10 @@
   // ---------- Einweisung für mehrere Personen auf einmal ----------
   const bulkState = { selected: new Set() };
   const personLabel = u => u.name || u.email || u.kennung || u.id;
-  const hasActive = (userId, machineKey) => state.records.some(r => r.userId === userId && r.status === 'active' && recordKey(r) === machineKey);
+  const hasActive = (userId, machineKey) => {
+    const machine = state.machines.find(m => key(m) === machineKey);
+    return state.records.some(r => r.userId === userId && r.status === 'active' && (recordKey(r) === machineKey || (machine && covers(r, machine))));
+  };
 
   function bulk(machineIndex = -1, userIndex = -1) {
     bulkState.selected = new Set(userIndex >= 0 && state.users[userIndex] ? [state.users[userIndex].id] : []);
@@ -344,7 +353,7 @@
           const ref = window.db.collection(recordsCollection).doc(existing?.id || await documentId(user.id, key(machine)));
           await change(ref, {
             userId:user.id,userName:user.name || '',userEmail:user.email || '',
-            machineCollection:machine.collection,machineId:machine.id,machineName:machine.name,
+            machineCollection:machine.collection,machineId:machine.id,machineName:machine.name,trainingGroup:groupOf(machine),
             status:'active',trainingDate,instructor,note:$('safetyNote').value.trim(),revokedAt:null,revokedBy:null
           }, existing?.revision || 0, existing ? (existing.status === 'revoked' ? 'renew' : 'update') : 'create');
           done++;
@@ -369,5 +378,5 @@
   window.initializeSafetyTrainingsForUser=loadOwn;
   window.loadUserSafetyTrainings=loadOwn;
   // Pure helpers exposed only in the isolated test harness.
-  if (window.__SAFETY_TEST__) window.__safetyTest={validDate,recordKey,key,documentId,change,state,renderOwn};
+  if (window.__SAFETY_TEST__) window.__safetyTest={validDate,recordKey,key,documentId,change,state,renderOwn,covers};
 })();

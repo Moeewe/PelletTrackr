@@ -38,6 +38,18 @@ async function loadMaterials(machineRule = null) {
   }
 }
 
+// Formular zum Hinzufügen ist eingeklappt: erster Klick öffnet es, zweiter Klick speichert.
+function submitOrOpenAddForm(boxId, firstFieldId, submit) {
+  const box = document.getElementById(boxId);
+  if (box && !box.open) {
+    box.open = true;
+    document.getElementById(firstFieldId)?.focus();
+    return;
+  }
+  submit();
+}
+window.submitOrOpenAddForm = submitOrOpenAddForm;
+
 // Zeigt je Material, auf welchen Maschinen es verwendet werden kann (aus den Maschinen-Verknüpfungen).
 async function fillMaterialMachines(materialSnapshot) {
   try {
@@ -214,6 +226,9 @@ async function loadFormPrinters() {
       // Verknüpfungen der Maschine: passende Materialien, Masterbatch, Einweisung
       option.dataset.rule = JSON.stringify(window.machineMaterialRule ? window.machineMaterialRule(printer) : null);
       option.dataset.training = printer.requiresSafetyTraining ? '1' : '';
+      option.dataset.trainingGroup = printer.trainingGroup || '';
+      option.dataset.trainingPeers = JSON.stringify(printer.trainingGroup
+        ? availableMachines.filter(other => other.doc.id !== doc.id && other.doc.data().trainingGroup === printer.trainingGroup).map(other => other.collection + '/' + other.doc.id) : []);
       option.dataset.status = printer.status || 'available';
       const hasGuide = (Array.isArray(printer.guideSteps) && printer.guideSteps.length) || (Array.isArray(printer.guideLinks) && printer.guideLinks.length)
         || (typeof knowledgeProfileForMachine === 'function' && knowledgeProfileForMachine({ ...printer, collection }));
@@ -540,8 +555,9 @@ async function loadMaterialsForManagement() {
     `;
 
     const materialData = [];
+    const sortedDocs = [...snapshot.docs].sort((x, y) => String(x.data().name || '').localeCompare(String(y.data().name || ''), 'de'));
 
-    snapshot.forEach(doc => {
+    sortedDocs.forEach(doc => {
       const material = doc.data();
 
       // Berechne Brutto und VK (falls alte Daten)
@@ -554,6 +570,7 @@ async function loadMaterialsForManagement() {
       const stock = window.MaterialStock ? window.MaterialStock.summary(material) : { text: '', low: false };
       materialData.push({
         id: doc.id,
+        type: material.type || '',
         stock,
         name: material.name,
         manufacturer: material.manufacturer || 'Unbekannt',
@@ -589,52 +606,27 @@ async function loadMaterialsForManagement() {
           </table>
         </div>
 
-        <!-- Mobile Cards -->
-        <div class="entry-cards">
+        <!-- Karten -->
+        <div class="material-grid">
     `;
 
-    // Card-Struktur für Mobile
+    // Karten (auch am Desktop): wichtigste Angaben auf einen Blick
     materialData.forEach(material => {
+      const typeLabel = material.type === 'pellet' ? 'Pellets' : material.type === 'filament' ? 'Filament' : 'Material';
       containerHtml += `
-        <div class="entry-card">
-          <!-- Card Header mit Material-Name -->
-          <div class="entry-card-header">
-            <h3 class="entry-job-title">${material.name}</h3>
-            <span class="entry-detail-value">${material.manufacturer}</span>
-            <small class="material-stock ${material.stock.low ? 'is-low' : ''}">${material.stock.text}</small>
-            <small class="material-machines" data-material="${material.id}"></small>
-          </div>
-
-          <!-- Card Body mit Detail-Zeilen -->
-          <div class="entry-card-body">
-            <div class="entry-detail-row">
-              <span class="entry-detail-label">EK Netto</span>
-              <span class="entry-detail-value">${window.formatCurrency(material.netPrice)}/kg</span>
-            </div>
-
-            <div class="entry-detail-row">
-              <span class="entry-detail-label">EK Brutto</span>
-              <span class="entry-detail-value">${window.formatCurrency(material.grossPrice)}/kg</span>
-            </div>
-
-            <div class="entry-detail-row">
-              <span class="entry-detail-label">Gemeinkosten</span>
-              <span class="entry-detail-value">${material.markup}%</span>
-            </div>
-
-            <div class="entry-detail-row">
-              <span class="entry-detail-label">Verkaufspreis</span>
-              <span class="entry-detail-value cost-value">${window.formatCurrency(material.sellingPrice)}/kg</span>
-            </div>
-          </div>
-
-          <!-- Card Footer mit Buttons -->
-          <div class="entry-card-footer">
+        <article class="material-card" data-type="${material.type}">
+          <div class="material-card-head"><h3>${material.name}</h3><span class="material-chip">${typeLabel}</span></div>
+          <p class="material-card-sub">${material.manufacturer}</p>
+          <div class="material-card-price"><strong>${window.formatCurrency(material.sellingPrice)}/kg</strong>
+            <small>EK netto ${window.formatCurrency(material.netPrice)} · Gemeinkosten ${material.markup}%</small></div>
+          <small class="material-stock ${material.stock.low ? 'is-low' : ''}">${material.stock.text}</small>
+          <small class="material-machines" data-material="${material.id}"></small>
+          <div class="material-card-actions">
             <button class="btn btn-secondary btn-small" onclick="MaterialStock.open('${material.id}')">Bestand</button>
             ${ButtonFactory.editMaterial(material.id)}
             ${ButtonFactory.deleteMaterial(material.id)}
           </div>
-        </div>
+        </article>
       `;
     });
 
