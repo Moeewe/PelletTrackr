@@ -51,6 +51,46 @@
     `<div class="modal-header"><h3>${esc(title)}</h3><button class="close-btn" onclick="closeModal()">&times;</button></div>
      <div class="modal-body">${body}</div><div class="modal-footer">${footer}</div>`, { clearStack: true, pushToStack: false });
 
+  // ---------- Startset: Maschinen der Werkstatt ----------
+  // Nur gesicherte Angaben. Technische Daten (Arbeitsbereich, Werkzeuge) trägt die Werkstatt selbst ein.
+  const LASER_NOTE = 'CO₂-Laser zum Schneiden und Gravieren. Nicht lasern: PVC (setzt Chlor frei, ätzend, schädigt die Optik), ABS, Polycarbonat, Teflon sowie Schaum aus Polystyrol oder Polypropylen (Brand- bzw. Gesundheitsgefahr). Laser nie unbeaufsichtigt laufen lassen, Feuerlöscher griffbereit halten, Absaugung nach Herstellerangabe nutzen. Allgemeine Hinweise – bitte mit Herstellerunterlagen und Werkstattleitung abgleichen. Arbeitsbereich bitte eintragen.';
+  const STARTER = [
+    { starterKey: 'zuend-cnc', match: /z(ü|ue|u)nd/i, name: 'Zünd CNC Cutter', model: 'Zünd Digital Cutter', machineType: 'cnc', jobTypes: ['CNC-Fräsen', 'Schneiden', 'Gravieren'],
+      trainingTypeName: 'Einweisung Zünd CNC Cutter', notes: 'Zum Schneiden, Fräsen und Gravieren. Verbraucht kein Werkstattmaterial. Modell, Arbeitsbereich und Werkzeuge bitte eintragen.' },
+    { starterKey: 'trotec-speedy-500-1', match: /trotec/i, name: 'Trotec Speedy 500 (Laser 1)', model: 'Trotec Speedy 500', machineType: 'laser', jobTypes: ['Lasern', 'Schneiden', 'Gravieren'],
+      trainingTypeName: 'Laserschein · Trotec Speedy 500', notes: LASER_NOTE },
+    { starterKey: 'trotec-speedy-500-2', match: /trotec/i, name: 'Trotec Speedy 500 (Laser 2)', model: 'Trotec Speedy 500', machineType: 'laser', jobTypes: ['Lasern', 'Schneiden', 'Gravieren'],
+      trainingTypeName: 'Laserschein · Trotec Speedy 500', notes: LASER_NOTE }
+  ];
+  // Was fehlt noch? Vorhandene Maschinen (auch von Hand angelegte) werden nicht doppelt angelegt.
+  const starterPending = () => {
+    const zuend = STARTER[0];
+    const trotecs = STARTER.slice(1);
+    const existingTrotec = state.items.filter(item => /trotec/i.test(item.name) || /trotec/i.test(item.model || '')).length;
+    const missingZuend = !state.items.some(item => item.starterKey === zuend.starterKey || zuend.match.test(item.name));
+    return [...(missingZuend ? [zuend] : []), ...trotecs.slice(Math.min(existingTrotec, trotecs.length))];
+  };
+
+  async function addStarter() {
+    try {
+      const user = await requireAdmin();
+      const pending = starterPending();
+      if (!pending.length) return;
+      const batch = window.db.batch();
+      pending.forEach(entry => {
+        const { match, ...data } = entry;
+        batch.set(window.db.collection('machines').doc(), {
+          ...data, category: entry.machineType, status: 'available', active: true,
+          requiresSafetyTraining: true, usesMaterial: false, materialTypes: [], materialIds: [], supportsMasterbatch: false,
+          createdBy: user.uid, createdAt: window.firebase.firestore.FieldValue.serverTimestamp(), updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+        });
+      });
+      await batch.commit();
+      window.toast.success(`${pending.length} Maschine${pending.length === 1 ? '' : 'n'} angelegt. Bitte Arbeitsbereich und Details ergänzen.`);
+      await open();
+    } catch (error) { window.toast.error(error.message || 'Anlegen fehlgeschlagen.'); }
+  }
+
   // ---------- Liste ----------
   function linkSummary(item) {
     const rule = window.machineMaterialRule(item);
@@ -62,6 +102,8 @@
   function renderList() {
     const list = $('hubList');
     if (!list) return;
+    const banner = $('hubStarter');
+    if (banner) banner.hidden = !starterPending().length;
     const term = state.term.trim().toLowerCase();
     const normalize = status => window.MachineStatus.normalize(status);
     state.items.sort((a, b) => typeOf(a).label.localeCompare(typeOf(b).label, 'de') || a.name.localeCompare(b.name, 'de'));
@@ -105,6 +147,8 @@
       shell('Maschinen verwalten',
         `<div class="printer-toolbar"><input type="text" id="hubSearch" class="search-input" placeholder="Maschine suchen …" autocomplete="off" oninput="MachineHub.search(this.value)">
          <div id="hubFilters" class="printer-filters" role="group" aria-label="Nach Status filtern"></div></div>
+         <div id="hubStarter" class="form-hint" hidden><strong>Vorschlag:</strong> Zünd CNC Cutter und 2× Trotec Speedy 500 anlegen (ohne Werkstattmaterial, mit Einweisungspflicht). Du kannst alles danach bearbeiten.
+           <div class="safety-actions"><button class="btn btn-primary btn-small" onclick="MachineHub.addStarter()">Jetzt anlegen</button></div></div>
          <div id="hubList" class="printer-list-compact"></div>`,
         '<button class="btn btn-primary" onclick="MachineHub.edit(-1)">Maschine hinzufügen</button><button class="btn btn-secondary" onclick="closeModal()">Schließen</button>');
       renderList();
@@ -184,7 +228,7 @@
          <div class="form-group"><label class="form-label" for="hubName">Name *</label><input id="hubName" class="form-input" maxlength="140" placeholder="z. B. Ginger One, Trotec Speedy 500" value="${esc(item?.name || '')}"></div>
          <div class="form-group"><label class="form-label" for="hubModel">Modell</label><input id="hubModel" class="form-input" maxlength="140" value="${esc(item?.model || '')}"></div>
          <div class="form-group"><label class="form-label" for="hubLocation">Standort</label><input id="hubLocation" class="form-input" maxlength="140" placeholder="z. B. Werkstatt Raum 1" value="${esc(item?.location || '')}"></div>
-         <div class="form-group" data-hub-printer-only><label class="form-label" for="hubVolume">Bauraum</label><input id="hubVolume" class="form-input" maxlength="80" placeholder="z. B. 300 × 300 × 400 mm" value="${esc(item?.buildVolume || '')}"></div>
+         <div class="form-group"><label class="form-label" for="hubVolume">Bauraum / Arbeitsbereich</label><input id="hubVolume" class="form-input" maxlength="80" placeholder="z. B. 300 × 300 × 400 mm" value="${esc(item?.buildVolume || '')}"></div>
          <div class="form-group" data-hub-printer-only><label class="form-label" for="hubPrice">Preis pro Stunde (alte Abrechnung)</label><input id="hubPrice" class="form-input" type="number" min="0" step="0.01" value="${esc(item?.pricePerHour ?? '')}"><small>Nur für die bisherige Regel. Aktuelle Preise legst du unter „Tarife &amp; Nutzergruppen“ fest.</small></div>
          <fieldset class="hub-fieldset"><legend>Material</legend>
            <label class="checkbox-label"><input type="checkbox" class="checkbox-input" id="hubUses" ${item?.usesMaterial === false ? '' : 'checked'} onchange="MachineHub.usesChanged()"> Verbraucht Werkstattmaterial (Filament, Pellets)</label>
@@ -227,10 +271,11 @@
         updatedBy: user.uid, updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
       };
       if (type.collection === 'printers') {
-        Object.assign(data, { type: type.key, buildVolume: $('hubVolume').value.trim(), pricePerHour: priceText ? Number(priceText) : 0 });
+        Object.assign(data, { type: type.key, pricePerHour: priceText ? Number(priceText) : 0 });
       } else {
-        Object.assign(data, { machineType: type.key, category: type.key, jobTypes: type.jobTypes });
+        Object.assign(data, { machineType: type.key, category: type.key, jobTypes: item?.jobTypes?.length && item.machineType === type.key ? item.jobTypes : type.jobTypes });
       }
+      data.buildVolume = $('hubVolume').value.trim();
       const col = window.db.collection(type.collection);
       if (item) await col.doc(item.id).update(data);
       else await col.add({ ...data, status: 'available', createdBy: user.uid, createdAt: window.firebase.firestore.FieldValue.serverTimestamp() });
@@ -271,7 +316,7 @@
   }
 
   window.MachineHub = {
-    open, edit, save, duplicate, remove,
+    open, edit, save, duplicate, remove, addStarter,
     tariff: index => { const m = state.items[index]; if (m) window.Billing.openFor(m.collection, m.id); },
     train: index => { const m = state.items[index]; if (m) window.SafetyTraining.bulkForMachine(m.collection, m.id); },
     usesChanged: () => { toggleMaterialFields(); autoUses = 'locked'; },
