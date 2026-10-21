@@ -291,6 +291,7 @@ async function handleUserStatusChange(printerId, newStatus) {
 
         // Show problem report dialog immediately
         setTimeout(() => {
+            window.__problemCollection = 'printers';
             reportPrinterProblem(printerId, printer.name);
         }, 100);
 
@@ -982,6 +983,7 @@ async function submitPrinterProblemReport(printerId, printerName) {
         const reportData = {
             printerId: printerId,
             printerName: printerName,
+            machineCollection: window.__problemCollection || 'printers',
             problemType: problemType,
             severity: problemSeverity,
             description: problemDescription,
@@ -997,7 +999,7 @@ async function submitPrinterProblemReport(printerId, printerName) {
 
         // Automatically set printer status to "broken" when problem is reported
         try {
-            await window.db.collection('printers').doc(printerId).update({
+            await window.db.collection(window.__problemCollection || 'printers').doc(printerId).update({
                 status: 'broken',
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                 lastStatusChangeBy: window.currentUser?.name || 'Unbekannt',

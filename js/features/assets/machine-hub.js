@@ -1,0 +1,275 @@
+// ==================== MASCHINEN (EINE VERWALTUNG) ====================
+// Drucker und Produktionsmaschinen (Laser, CNC, Roboter …) sind im Alltag dasselbe: Fertigungsmaschinen.
+// Diese Verwaltung zeigt und bearbeitet beide in einer Liste. Gespeichert wird weiterhin in den bisherigen
+// Sammlungen ("printers" und "machines"), damit Aufträge, Tarife, Einweisungen und gedruckte QR-Codes unverändert
+// funktionieren. Neu: Verknüpfung mit Materialien (Filament/Pellet, einzelne Materialien, Masterbatch).
+(() => {
+  'use strict';
+  const COLLECTIONS = ['printers', 'machines'];
+  // Art → Sammlung. Drucker bleiben in "printers", alles andere in "machines".
+  const TYPES = [
+    { key: 'filament', label: '3D-Drucker (Filament)', collection: 'printers', forms: ['filament'] },
+    { key: 'pellet', label: '3D-Drucker (Pellet)', collection: 'printers', forms: ['pellet'] },
+    { key: 'laser', label: 'Laser', collection: 'machines', jobTypes: ['Lasern'], forms: [] },
+    { key: 'cnc', label: 'CNC-Fräse', collection: 'machines', jobTypes: ['CNC-Fräsen'], forms: [] },
+    { key: 'weber_dxr', label: 'Großroboter (Weber DXR25)', collection: 'machines', jobTypes: ['Roboter', 'Weber DXR25'], forms: ['pellet'] },
+    { key: 'ur5', label: 'Roboterarm (Universal Robots UR5)', collection: 'machines', jobTypes: ['Roboter', 'Universal Robots UR5'], forms: [] },
+    { key: 'other', label: 'Sonstige Maschine', collection: 'machines', jobTypes: ['Weitere Fertigung'], forms: [] }
+  ];
+  const FORMS = { filament: 'Filament', pellet: 'Pellet' };
+  const PAGE = 15;
+  const state = { items: [], term: '', filter: 'all', limit: PAGE };
+  let materials = [];
+  let materialRestrict = false;
+  let materialPicked = new Set();
+  let autoForms = null; // zuletzt automatisch vorgewählte Formen (nur solange der Nutzer sie nicht geändert hat)
+
+  const $ = id => document.getElementById(id);
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const typeOf = item => {
+    if (item.collection === 'printers') return TYPES.find(t => t.key === (item.type === 'pellet' ? 'pellet' : 'filament'));
+    return TYPES.find(t => t.key === (item.machineType || item.category)) || TYPES.find(t => t.key === 'other');
+  };
+
+  async function requireAdmin() {
+    const user = window.firebase?.auth?.().currentUser;
+    if (!user) throw Error('Bitte anmelden.');
+    const profile = await window.db.collection('users').doc(user.uid).get();
+    if (profile.data()?.isAdmin !== true) throw Error('Nur Admins können Maschinen verwalten.');
+    return user;
+  }
+
+  async function load() {
+    const snaps = await Promise.all(COLLECTIONS.map(name => window.db.collection(name).get()));
+    state.items = snaps.flatMap((snap, i) => snap.docs.map(doc => ({ ...doc.data(), id: doc.id, collection: COLLECTIONS[i] })))
+      .filter(item => item.name)
+      .sort((a, b) => a.name.localeCompare(b.name, 'de'));
+  }
+
+  const shell = (title, body, footer) => window.showModal(
+    `<div class="modal-header"><h3>${esc(title)}</h3><button class="close-btn" onclick="closeModal()">&times;</button></div>
+     <div class="modal-body">${body}</div><div class="modal-footer">${footer}</div>`, { clearStack: true, pushToStack: false });
+
+  // ---------- Liste ----------
+  function linkSummary(item) {
+    const rule = window.machineMaterialRule(item);
+    const forms = rule.types.map(t => FORMS[t] || t).join(' · ');
+    const own = rule.ids.length ? `${rule.ids.length} ausgewählte Materialien` : '';
+    return [forms, own].filter(Boolean).join(' · ');
+  }
+
+  function renderList() {
+    const list = $('hubList');
+    if (!list) return;
+    const term = state.term.trim().toLowerCase();
+    const normalize = status => window.MachineStatus.normalize(status);
+    state.items.sort((a, b) => typeOf(a).label.localeCompare(typeOf(b).label, 'de') || a.name.localeCompare(b.name, 'de'));
+    const searched = state.items.filter(item => !term || [item.name, item.model, item.location, typeOf(item)?.label].some(v => String(v || '').toLowerCase().includes(term)));
+    const count = key => searched.filter(item => key === 'all' || normalize(item.status) === key).length;
+    $('hubFilters').innerHTML = [['all', 'Alle'], ['available', 'Verfügbar'], ['in_use', 'In Betrieb'], ['maintenance', 'Wartung'], ['broken', 'Defekt']]
+      .map(([key, label]) => `<button type="button" class="filter-chip ${state.filter === key ? 'active' : ''}" onclick="MachineHub.setFilter('${key}')">${label} (${count(key)})</button>`).join('');
+    const shown = searched.filter(item => state.filter === 'all' || normalize(item.status) === state.filter);
+    if (!state.items.length) { list.innerHTML = '<p class="printer-empty">Noch keine Maschinen angelegt. Mit „Maschine hinzufügen“ legst du die erste an.</p>'; return; }
+    if (!shown.length) { list.innerHTML = '<p class="printer-empty">Keine passenden Maschinen.</p>'; return; }
+    const visible = shown.slice(0, state.limit);
+    let lastKind = '';
+    list.innerHTML = visible.map(item => {
+      const kind = typeOf(item).label;
+      const heading = kind !== lastKind ? `<h4 class="printer-group">${esc(kind)}</h4>` : '';
+      lastKind = kind;
+      const guide = Array.isArray(item.guideSteps) && item.guideSteps.length ? 'Anleitung vorhanden' : 'Keine Anleitung';
+      const details = [item.model, linkSummary(item), item.requiresSafetyTraining ? 'Einweisung nötig' : '', item.active === false ? 'Deaktiviert' : '', guide].filter(Boolean).join(' · ');
+      const index = state.items.indexOf(item);
+      return `${heading}<article class="printer-row ${item.active === false ? 'is-inactive' : ''}">
+        <div class="printer-row-main"><h4 class="printer-row-name">${esc(item.name)}</h4><p class="printer-row-details">${esc(details)}</p></div>
+        ${window.MachineStatus.buttons(item.collection, item.id, item.status)}
+        <details class="printer-row-more"><summary>Mehr</summary><div class="printer-row-actions">
+          <button class="btn btn-secondary btn-small" onclick="MachineHub.edit(${index})">Bearbeiten</button>
+          <button class="btn btn-secondary btn-small" onclick="MachineHub.guide(${index})">Anleitung</button>
+          <button class="btn btn-secondary btn-small" onclick="MachineHub.qr(${index})">QR / Etikett</button>
+          <button class="btn btn-secondary btn-small" onclick="MachineHub.duplicate(${index})">Duplizieren</button>
+          <button class="btn btn-danger btn-small" onclick="MachineHub.remove(${index})">Löschen</button>
+        </div></details></article>`;
+    }).join('') + (visible.length < shown.length
+      ? `<div class="entry-show-more"><span>${visible.length} von ${shown.length} angezeigt</span><button type="button" class="btn btn-secondary" onclick="MachineHub.more()">${Math.min(PAGE, shown.length - visible.length)} weitere anzeigen</button></div>` : '');
+  }
+
+  async function open() {
+    try {
+      await requireAdmin();
+      await load();
+      Object.assign(state, { term: '', filter: 'all', limit: PAGE });
+      shell('Maschinen verwalten',
+        `<div class="printer-toolbar"><input type="text" id="hubSearch" class="search-input" placeholder="Maschine suchen …" autocomplete="off" oninput="MachineHub.search(this.value)">
+         <div id="hubFilters" class="printer-filters" role="group" aria-label="Nach Status filtern"></div></div>
+         <div id="hubList" class="printer-list-compact"></div>`,
+        '<button class="btn btn-primary" onclick="MachineHub.edit(-1)">Maschine hinzufügen</button><button class="btn btn-secondary" onclick="closeModal()">Schließen</button>');
+      renderList();
+    } catch (error) { window.toast.error(error.message || 'Maschinen konnten nicht geladen werden.'); }
+  }
+
+  // Status per Klick: Liste und Zähler aktuell halten
+  document.addEventListener('machine:status', event => {
+    const item = state.items.find(i => i.collection === event.detail.collection && i.id === event.detail.id);
+    if (item) { item.status = event.detail.status; if ($('hubList')) renderList(); }
+  });
+
+  // ---------- Bearbeiten ----------
+  async function fetchMaterials() {
+    if (materials.length) return;
+    try {
+      const snap = await window.db.collection('materials').get();
+      materials = snap.docs.map(doc => ({ id: doc.id, name: doc.data().name || doc.id, type: doc.data().type || '' }))
+        .sort((a, b) => a.name.localeCompare(b.name, 'de'));
+    } catch (_) { materials = []; }
+  }
+
+  function selectedForms() {
+    return Object.keys(FORMS).filter(key => $('hubForm_' + key)?.checked);
+  }
+
+  function renderMaterialPicker() {
+    const box = $('hubMaterialList');
+    if (!box) return;
+    $('hubRestrictBox').hidden = !materialRestrict;
+    if (!materialRestrict) { box.innerHTML = ''; return; }
+    const forms = selectedForms();
+    const fitting = materials.filter(m => !forms.length || forms.includes(m.type));
+    box.innerHTML = fitting.length ? fitting.map(m => `<label class="checkbox-label hub-material"><input type="checkbox" class="checkbox-input" data-material="${esc(m.id)}" ${materialPicked.has(m.id) ? 'checked' : ''} onchange="MachineHub.pickMaterial(this.dataset.material,this.checked)"><span>${esc(m.name)} <small>(${esc(FORMS[m.type] || m.type || '—')})</small></span></label>`).join('')
+      : '<p class="printer-empty">Keine passenden Materialien angelegt.</p>';
+  }
+
+  function onTypeChange() {
+    const type = TYPES.find(t => t.key === $('hubType').value);
+    document.querySelectorAll('[data-hub-printer-only]').forEach(el => { el.hidden = type.collection !== 'printers'; });
+    // Passende Materialform vorwählen, solange sie nicht von Hand geändert wurde
+    const current = selectedForms().sort().join(',');
+    if (!current || (autoForms !== null && current === autoForms)) {
+      Object.keys(FORMS).forEach(form => { if ($('hubForm_' + form)) $('hubForm_' + form).checked = type.forms.includes(form); });
+      autoForms = [...type.forms].sort().join(',');
+    }
+    renderMaterialPicker();
+  }
+
+  async function edit(index) {
+    try {
+      await requireAdmin();
+      await fetchMaterials();
+      const item = index >= 0 ? state.items[index] : null;
+      const current = item ? typeOf(item) : TYPES[0];
+      const rule = window.machineMaterialRule(item || {});
+      materialRestrict = rule.ids.length > 0;
+      autoForms = item ? null : TYPES[0].forms.join(',');
+      materialPicked = new Set(rule.ids);
+      // Beim Bearbeiten nur Arten derselben Sammlung anbieten (Drucker bleiben Drucker).
+      const typeOptions = TYPES.filter(t => !item || t.collection === item.collection)
+        .map(t => `<option value="${t.key}" ${t.key === current.key ? 'selected' : ''}>${esc(t.label)}</option>`).join('');
+      const forms = Object.entries(FORMS).map(([key, label]) =>
+        `<label class="checkbox-label"><input type="checkbox" class="checkbox-input" id="hubForm_${key}" ${rule.types.includes(key) ? 'checked' : ''} onchange="MachineHub.formsChanged()"> ${label}</label>`).join('');
+      shell(item ? 'Maschine bearbeiten' : 'Neue Maschine',
+        `<div class="form-group"><label class="form-label" for="hubType">Art der Maschine</label><select id="hubType" class="form-select" onchange="MachineHub.typeChanged()">${typeOptions}</select>
+           ${item ? '<small>Drucker lassen sich nicht in Laser, Fräsen oder Roboter umwandeln. Lege dafür eine neue Maschine an.</small>' : ''}</div>
+         <div class="form-group"><label class="form-label" for="hubName">Name *</label><input id="hubName" class="form-input" maxlength="140" placeholder="z. B. Ginger One, Trotec Speedy 500" value="${esc(item?.name || '')}"></div>
+         <div class="form-group"><label class="form-label" for="hubModel">Modell</label><input id="hubModel" class="form-input" maxlength="140" value="${esc(item?.model || '')}"></div>
+         <div class="form-group"><label class="form-label" for="hubLocation">Standort</label><input id="hubLocation" class="form-input" maxlength="140" placeholder="z. B. Werkstatt Raum 1" value="${esc(item?.location || '')}"></div>
+         <div class="form-group" data-hub-printer-only><label class="form-label" for="hubVolume">Bauraum</label><input id="hubVolume" class="form-input" maxlength="80" placeholder="z. B. 300 × 300 × 400 mm" value="${esc(item?.buildVolume || '')}"></div>
+         <div class="form-group" data-hub-printer-only><label class="form-label" for="hubPrice">Preis pro Stunde (alte Abrechnung)</label><input id="hubPrice" class="form-input" type="number" min="0" step="0.01" value="${esc(item?.pricePerHour ?? '')}"><small>Nur für die bisherige Regel. Aktuelle Preise legst du unter „Tarife &amp; Nutzergruppen“ fest.</small></div>
+         <fieldset class="hub-fieldset"><legend>Material</legend>
+           <p class="hub-hint">Welche Materialformen kann die Maschine verarbeiten? Im Auftragsformular erscheinen dann nur passende Materialien.</p>
+           <div class="hub-checks">${forms}</div>
+           <label class="checkbox-label"><input type="checkbox" class="checkbox-input" id="hubRestrict" ${materialRestrict ? 'checked' : ''} onchange="MachineHub.restrictChanged(this.checked)"> Nur bestimmte Materialien erlauben</label>
+           <div id="hubRestrictBox" ${materialRestrict ? '' : 'hidden'}><div id="hubMaterialList" class="hub-material-list"></div></div>
+           <label class="checkbox-label"><input type="checkbox" class="checkbox-input" id="hubMasterbatch" ${rule.masterbatch ? 'checked' : ''}> Masterbatch (Farbzusatz) möglich</label>
+         </fieldset>
+         <fieldset class="hub-fieldset"><legend>Einweisung</legend>
+           <label class="checkbox-label"><input type="checkbox" class="checkbox-input" id="hubTraining" ${item?.requiresSafetyTraining ? 'checked' : ''}> Einweisung erforderlich</label>
+           <input id="hubTrainingName" class="form-input" maxlength="160" placeholder="Einweisungsart (optional), z. B. Laserschein" value="${esc(item?.trainingTypeName || '')}">
+         </fieldset>
+         <div class="form-group"><label class="form-label" for="hubNotes">Notizen</label><textarea id="hubNotes" class="form-textarea" rows="3" maxlength="1000">${esc(item?.notes || '')}</textarea></div>
+         <label class="checkbox-label"><input type="checkbox" class="checkbox-input" id="hubActive" ${item?.active === false ? '' : 'checked'}> Aktiv und für neue Aufträge auswählbar</label>
+         <p class="hub-hint">Den Status (Verfügbar, In Betrieb, Wartung, Defekt) stellst du direkt in der Liste per Klick um.</p>`,
+        `<button class="btn btn-primary" onclick="MachineHub.save(${index})">Speichern</button><button class="btn btn-secondary" onclick="MachineHub.open()">Zurück</button>`);
+      onTypeChange();
+    } catch (error) { window.toast.error(error.message || 'Maschine konnte nicht geöffnet werden.'); }
+  }
+
+  async function save(index) {
+    try {
+      const user = await requireAdmin();
+      const item = index >= 0 ? state.items[index] : null;
+      const type = TYPES.find(t => t.key === $('hubType').value);
+      const name = $('hubName').value.trim();
+      if (!name) throw Error('Bitte einen Namen eingeben.');
+      if (item && type.collection !== item.collection) throw Error('Die Art passt nicht zur bestehenden Maschine.');
+      const priceText = $('hubPrice')?.value;
+      if (type.collection === 'printers' && priceText && !(Number(priceText) >= 0)) throw Error('Bitte einen gültigen Preis eingeben.');
+      const forms = selectedForms();
+      const ids = materialRestrict ? Array.from(materialPicked).filter(id => materials.some(m => m.id === id && (!forms.length || forms.includes(m.type)))) : [];
+      if (materialRestrict && !ids.length) throw Error('Bitte mindestens ein Material auswählen oder „Nur bestimmte Materialien erlauben“ ausschalten.');
+      const data = {
+        name, model: $('hubModel').value.trim(), location: $('hubLocation').value.trim(), notes: $('hubNotes').value.trim(),
+        active: $('hubActive').checked, requiresSafetyTraining: $('hubTraining').checked, trainingTypeName: $('hubTrainingName').value.trim(),
+        materialTypes: forms, materialIds: ids, supportsMasterbatch: $('hubMasterbatch').checked,
+        updatedBy: user.uid, updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+      };
+      if (type.collection === 'printers') {
+        Object.assign(data, { type: type.key, buildVolume: $('hubVolume').value.trim(), pricePerHour: priceText ? Number(priceText) : 0 });
+      } else {
+        Object.assign(data, { machineType: type.key, category: type.key, jobTypes: type.jobTypes });
+      }
+      const col = window.db.collection(type.collection);
+      if (item) await col.doc(item.id).update(data);
+      else await col.add({ ...data, status: 'available', createdBy: user.uid, createdAt: window.firebase.firestore.FieldValue.serverTimestamp() });
+      window.toast.success('Maschine gespeichert.');
+      window.loadPrinters?.(); // Auswahl im Auftragsformular aktualisieren
+      await open();
+    } catch (error) { window.toast.error(error.message || 'Speichern fehlgeschlagen.'); }
+  }
+
+  async function duplicate(index) {
+    try {
+      const user = await requireAdmin();
+      const item = state.items[index];
+      if (!item) return;
+      const { id, collection, guideSteps, guideLinks, ...copy } = item;
+      const ref = await window.db.collection(collection).add({
+        ...copy, name: item.name + ' (Kopie)', status: 'available', createdBy: user.uid,
+        createdAt: window.firebase.firestore.FieldValue.serverTimestamp(), updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+      });
+      await load();
+      window.toast.success('Maschine dupliziert. Bitte Namen anpassen.');
+      edit(state.items.findIndex(i => i.id === ref.id && i.collection === collection));
+    } catch (error) { window.toast.error(error.message || 'Duplizieren fehlgeschlagen.'); }
+  }
+
+  async function remove(index) {
+    try {
+      await requireAdmin();
+      const item = state.items[index];
+      if (!item) return;
+      const ok = await window.toast.confirm(`„${item.name}“ wirklich löschen?\n\nBereits erfasste Aufträge, Einweisungen und Tarife bleiben erhalten, die Maschine ist dann aber nicht mehr auswählbar. Zum Ausblenden reicht „Bearbeiten → Aktiv“ ausschalten.`, 'Endgültig löschen', 'Abbrechen');
+      if (!ok) return;
+      await window.db.collection(item.collection).doc(item.id).delete();
+      window.toast.success('Maschine gelöscht.');
+      window.loadPrinters?.();
+      await open();
+    } catch (error) { window.toast.error(error.message || 'Löschen fehlgeschlagen.'); }
+  }
+
+  window.MachineHub = {
+    open, edit, save, duplicate, remove,
+    guide: index => { const m = state.items[index]; if (m) window.KnowledgeAdmin.editGuide(m.collection, m.id, 'MachineHub.open()'); },
+    qr: index => { const m = state.items[index]; if (m) window.MachineLabels.open([`${m.collection}:${m.id}`]); },
+    search: term => { state.term = term; state.limit = PAGE; renderList(); },
+    setFilter: key => { state.filter = key; state.limit = PAGE; renderList(); },
+    more: () => { state.limit += PAGE; renderList(); },
+    typeChanged: onTypeChange,
+    formsChanged: renderMaterialPicker,
+    restrictChanged: checked => { materialRestrict = checked; if (checked && !materialPicked.size) materials.filter(m => !selectedForms().length || selectedForms().includes(m.type)).forEach(m => materialPicked.add(m.id)); renderMaterialPicker(); },
+    pickMaterial: (id, checked) => { checked ? materialPicked.add(id) : materialPicked.delete(id); }
+  };
+
+  // Die bisherigen Einstiege führen jetzt alle in diese Verwaltung.
+  window.showPrinterManager = open;
+  window.MachineManager = { ...(window.MachineManager || {}), open, edit, qr: window.MachineHub.qr, guide: window.MachineHub.guide };
+})();

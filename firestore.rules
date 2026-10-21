@@ -182,7 +182,12 @@ service cloud.firestore {
     }
     match /machines/{documentId} {
       allow read: if signedIn();
-      allow create, update, delete: if isAdmin();
+      allow create, delete: if isAdmin();
+      // Wie bei Druckern: Nutzer dürfen den Status melden (z. B. "defekt" bei einer Problemmeldung).
+      allow update: if isAdmin() || (signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['status', 'updatedAt', 'lastStatusChangeBy', 'lastStatusChangeAt'])
+        && request.resource.data.status in ['available', 'in_use', 'printing', 'maintenance', 'broken']);
     }
     // Vorschläge für Tutorials (Videos, Links): jede angemeldete Person darf eines pro Eintrag vorschlagen,
     // gelesen und freigegeben werden sie nur von Admins; Absender sehen ihre eigenen.

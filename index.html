@@ -275,6 +275,8 @@
                         </div>
                     </div>
 
+                    <p id="machineHint" class="form-hint" role="status" hidden></p>
+
                     <div class="form-row" id="materialRow">
                         <div class="form-group">
                             <label class="form-label">Material</label>
@@ -453,11 +455,10 @@
                             <span class="notification-badge" data-badge="equipment-requests" style="display: none;">0</span>
                         </button>
                         <button class="btn btn-secondary" onclick="showPrinterManager()">
-                            Drucker verwalten
+                            Maschinen verwalten
                             <span class="notification-badge" data-badge="printer-issues" style="display: none;">0</span>
                         </button>
                         <button class="btn btn-secondary" onclick="Billing.open()">Tarife &amp; Nutzergruppen</button>
-                        <button class="btn btn-secondary" onclick="MachineManager.open()">Produktionsmaschinen verwalten</button>
                         <button class="btn btn-secondary" onclick="KnowledgeAdmin.open()">Maschinen &amp; Anleitungen</button>
                         <button class="btn btn-secondary" onclick="MachineLabels.open()">Maschinen-Etiketten drucken</button>
                         <button class="btn btn-secondary" onclick="showMaterialOrders()">
@@ -891,6 +892,7 @@
     <script src="js/features/assets/equipment-management.js?v=1.0.1"></script>
     <script src="js/features/assets/material-orders.js?v=1.0.1"></script>
     <script src="js/features/assets/printer-management.js"></script>
+    <script src="js/features/assets/machine-hub.js?v=20261021"></script>
     <script src="js/features/assets/admin-problem-reports.js?v=1.0.1"></script>
     <script src="js/features/payments/payment-requests.js?v=1.0.1"></script>
 

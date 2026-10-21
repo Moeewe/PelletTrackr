@@ -80,7 +80,7 @@
       const canSet = admin || item.collection === 'printers';
       const control = canSet ? buttons(item.collection, item.id, item.status, admin ? null : ['available', 'in_use'])
         : `<span class="mstatus-pill mstatus-btn-${normalize(item.status)}">${LABELS[normalize(item.status)]}</span>`;
-      const problem = !admin && item.collection === 'printers' ? `<button class="link-small" onclick="reportPrinterProblem('${esc(item.id)}','${esc(String(item.name).replace(/'/g, ''))}')">Problem melden</button>` : '';
+      const problem = !admin ? `<button class="link-small" onclick="MachineStatus.report('${esc(item.collection)}','${esc(item.id)}','${esc(String(item.name).replace(/'/g, ''))}')">Problem melden</button>` : '';
       return `${heading}<article class="printer-row"><div class="printer-row-main"><h4 class="printer-row-name">${esc(item.name)}</h4><p class="printer-row-details">${esc([item.model, item.location].filter(Boolean).join(' · '))}</p></div>${control}${problem}</article>`;
     }).join('') + (visible.length < shown.length
       ? `<div class="entry-show-more"><span>${visible.length} von ${shown.length} angezeigt</span><button type="button" class="btn btn-secondary" onclick="MachineStatus.more()">${Math.min(PAGE, shown.length - visible.length)} weitere anzeigen</button></div>` : '');
@@ -94,7 +94,7 @@
         <div class="printer-toolbar"><input type="text" id="machinePanelSearch" class="search-input" placeholder="Maschine suchen …" autocomplete="off" oninput="MachineStatus.search(this.value)"><div id="machinePanelFilters" class="printer-filters" role="group" aria-label="Nach Status filtern"></div></div>
         <div id="machinePanelList" class="printer-list-compact"></div>
       </div>
-      <div class="modal-footer">${admin ? '<button class="btn btn-secondary" onclick="showPrinterManager()">Drucker verwalten</button><button class="btn btn-secondary" onclick="MachineManager.open()">Produktionsmaschinen</button>' : ''}<button class="btn btn-secondary" onclick="closeModal()">Schließen</button></div>`);
+      <div class="modal-footer">${admin ? '<button class="btn btn-secondary" onclick="MachineHub.open()">Maschinen verwalten</button>' : ''}<button class="btn btn-secondary" onclick="closeModal()">Schließen</button></div>`);
     renderPanel();
   }
 
@@ -111,6 +111,8 @@
     buttons, set, normalize, label: status => LABELS[normalize(status)] || status, panel,
     search: term => { panelState.term = term; panelState.limit = PAGE; renderPanel(); },
     filter: key => { panelState.filter = key; panelState.limit = PAGE; renderPanel(); },
-    more: () => { panelState.limit += PAGE; renderPanel(); }
+    more: () => { panelState.limit += PAGE; renderPanel(); },
+    // Problem zu einer Maschine melden (setzt sie nach der Meldung auf "Defekt")
+    report: (collection, id, name) => { window.__problemCollection = collection; window.reportPrinterProblem?.(id, name); }
   };
 })();

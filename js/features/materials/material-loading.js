@@ -2,50 +2,75 @@
 // Laden von Materialien, Masterbatches und Druckern aus Firestore
 
 // Materialien laden (direkt aus Firestore)
-async function loadMaterials(printerType = null) {
+// Materialien laden. Der Filter kommt aus der gewählten Maschine (Materialformen und ausgewählte Materialien);
+// ein einfacher Text ("pellet"/"filament") wird weiterhin akzeptiert.
+async function loadMaterials(machineRule = null) {
   const select = document.getElementById("material");
   if (!select) return;
+  const rule = machineRule && typeof machineRule === 'object' ? machineRule
+    : machineRule ? { types: [machineRule], ids: [], masterbatch: true } : null;
 
   select.innerHTML = '<option value="">Lade Materialien...</option>';
 
-  console.log("🔄 Lade Materialien...", printerType ? `(Filter: ${printerType})` : "(alle)");
-
   try {
-    let query = window.db.collection("materials");
-
-    // Filtere nach Material-Typ wenn Drucker ausgewählt ist
-    if (printerType) {
-      query = query.where("type", "==", printerType);
-      console.log(`🔍 Filtere Materialien für ${printerType === 'pellet' ? 'Pellet' : 'Filament'}-Drucker`);
-    }
-
-    const snapshot = await query.get();
-    console.log("📊 Materials-Snapshot:", snapshot.size, "Dokumente");
+    const snapshot = await window.db.collection("materials").get();
+    const fitting = snapshot.docs.filter(doc => window.materialFitsMachine({ id: doc.id, ...doc.data() }, rule));
 
     select.innerHTML = '<option value="">Material auswählen... (optional)</option>';
 
-    if (snapshot.empty) {
-      console.log("⚠️ Keine passenden Materialien gefunden");
-      select.innerHTML = printerType ?
-        `<option value="">Keine ${printerType === 'pellet' ? 'Pellet' : 'Filament'}-Materialien verfügbar</option>` :
-        '<option value="">Keine Materialien verfügbar</option>';
+    if (!fitting.length) {
+      select.innerHTML = rule && (rule.types.length || rule.ids.length)
+        ? '<option value="">Keine passenden Materialien für diese Maschine</option>'
+        : '<option value="">Keine Materialien verfügbar</option>';
       return;
     }
 
-    snapshot.forEach(doc => {
+    fitting.forEach(doc => {
       const material = doc.data();
-      console.log("➕ Material:", material.name, "Typ:", material.type, "Preis:", material.price);
       const option = document.createElement("option");
       option.value = material.name;
       option.textContent = `${material.name} (${material.price.toFixed(2)} ${(material.currency || '€')}/kg)`;
       select.appendChild(option);
     });
-
-    console.log("✅ Materialien erfolgreich geladen!");
-
   } catch (e) {
     console.error("❌ Fehler beim Laden der Materialien:", e);
     select.innerHTML = '<option value="">Fehler beim Laden</option>';
+  }
+}
+
+// Zeigt je Material, auf welchen Maschinen es verwendet werden kann (aus den Maschinen-Verknüpfungen).
+async function fillMaterialMachines(materialSnapshot) {
+  try {
+    const snaps = await Promise.all(['printers', 'machines'].map(name => window.db.collection(name).get()));
+    const machines = snaps.flatMap(snap => snap.docs.map(doc => ({ id: doc.id, ...doc.data() })))
+      .filter(machine => machine.name && machine.active !== false);
+    const byId = new Map(materialSnapshot.docs.map(doc => [doc.id, { id: doc.id, ...doc.data() }]));
+    document.querySelectorAll('.material-machines[data-material]').forEach(node => {
+      const material = byId.get(node.dataset.material);
+      if (!material) return;
+      const names = machines.filter(machine => {
+        const rule = window.machineMaterialRule(machine);
+        return (rule.types.length || rule.ids.length) && window.materialFitsMachine(material, rule);
+      }).map(machine => machine.name);
+      node.textContent = names.length ? 'Geeignet für: ' + names.join(', ') : 'Noch keiner Maschine zugeordnet';
+    });
+  } catch (error) {
+    console.warn('Maschinen-Zuordnung konnte nicht geladen werden:', error);
+  }
+}
+
+// Masterbatch nur anbieten, wenn die gewählte Maschine ihn unterstützt (Feld "Masterbatch möglich").
+function applyMachineMasterbatch(rule) {
+  const select = document.getElementById('masterbatch');
+  const row = select?.closest('.form-row');
+  if (!select || !row) return;
+  const supported = !rule || rule.masterbatch !== false;
+  row.hidden = !supported;
+  if (!supported) {
+    select.value = '';
+    const amount = document.getElementById('masterbatchMenge');
+    if (amount) amount.value = '';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
   }
 }
 
@@ -138,7 +163,7 @@ async function loadFormPrinters() {
     ]);
     const configured = new Set(billingSnapshot.docs.map(d => d.id));
     const availableMachines = [
-      ...snapshot.docs.map(doc => ({doc,collection:'printers'})),
+      ...snapshot.docs.filter(doc => doc.data().active !== false).map(doc => ({doc,collection:'printers'})),
       ...equipmentSnapshot.docs.filter(doc => configured.has('equipment__'+doc.id)).map(doc => ({doc,collection:'equipment'})),
       ...machinesSnapshot.docs.filter(doc => doc.data().active !== false).map(doc => ({doc,collection:'machines'}))
     ];
@@ -170,7 +195,12 @@ async function loadFormPrinters() {
       option.dataset.collection = collection;
       option.dataset.pricePerHour = printer.pricePerHour || 0;
       option.dataset.type = printer.type || '';
-      option.textContent = printer.name;
+      // Verknüpfungen der Maschine: passende Materialien, Masterbatch, Einweisung
+      option.dataset.rule = JSON.stringify(window.machineMaterialRule ? window.machineMaterialRule(printer) : null);
+      option.dataset.training = printer.requiresSafetyTraining ? '1' : '';
+      option.dataset.status = printer.status || 'available';
+      const statusNote = { maintenance: ' (Wartung)', broken: ' (Defekt)' }[window.MachineStatus ? (printer.status === 'printing' ? 'in_use' : printer.status) : ''] || '';
+      option.textContent = printer.name + statusNote;
 
       console.log(`📝 Erstelle Option: "${option.textContent}" (value: "${option.value}", pricePerHour: ${option.dataset.pricePerHour})`);
 
@@ -286,18 +316,15 @@ function setupFormEventListeners() {
         this.dataset.pricePerHour = pricePerHour || 0;
         this.dataset.type = printerType || '';
 
-        // Filter materials based on printer type
-        if (printerType) {
-          console.log(`🔄 Filtere Materialien für ${printerType === 'pellet' ? 'Pellet' : 'Filament'}-Drucker`);
-          loadMaterials(printerType);
-        } else {
-          console.log("🔄 Lade alle Materialien (kein Drucker-Typ)");
-          loadMaterials();
-        }
+        // Materialien und Masterbatch passend zur Maschine
+        let rule = null;
+        try { rule = JSON.parse(selectedOption.dataset.rule || 'null'); } catch (_) { rule = null; }
+        loadMaterials(rule);
+        applyMachineMasterbatch(rule);
       } else {
-        // No printer selected, load all materials
-        console.log("🔄 Lade alle Materialien (kein Drucker ausgewählt)");
+        // Keine Maschine gewählt: alle Materialien
         loadMaterials();
+        applyMachineMasterbatch(null);
       }
       if (typeof window.updateCostPreview === 'function') {
         window.updateCostPreview();
@@ -514,7 +541,7 @@ async function loadMaterialsForManagement() {
       // Tabellen-Zeile für Desktop
       containerHtml += `
         <tr id="material-row-${doc.id}">
-          <td><span class="cell-value">${material.name}</span></td>
+          <td><span class="cell-value">${material.name}</span><small class="material-machines" data-material="${doc.id}"></small></td>
           <td><span class="cell-value">${material.type === 'pellet' ? 'Pellets' : material.type === 'filament' ? 'Filament' : 'Unbekannt'}</span></td>
           <td><span class="cell-value">${material.manufacturer || 'Unbekannt'}</span></td>
           <td><span class="cell-value">${window.formatCurrency(netPrice)}</span></td>
@@ -548,6 +575,7 @@ async function loadMaterialsForManagement() {
           <div class="entry-card-header">
             <h3 class="entry-job-title">${material.name}</h3>
             <span class="entry-detail-value">${material.manufacturer}</span>
+            <small class="material-machines" data-material="${material.id}"></small>
           </div>
 
           <!-- Card Body mit Detail-Zeilen -->
@@ -588,6 +616,7 @@ async function loadMaterialsForManagement() {
     `;
 
     tableDiv.innerHTML = containerHtml;
+    fillMaterialMachines(snapshot);
 
   } catch (error) {
     console.error("Fehler beim Laden der Materialien:", error);

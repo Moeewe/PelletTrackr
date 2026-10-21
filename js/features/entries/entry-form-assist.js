@@ -39,6 +39,39 @@
     if (pickedFields.includes(event.target?.id) || typedFields.includes(event.target?.id)) livePreview(0);
   });
 
+  // Hinweis zur gewählten Maschine: Wartung/Defekt und fehlende Einweisung (nur Hinweis, kein Sperren).
+  let trainingCache = { uid: null, list: [] };
+  async function ownTrainings() {
+    const uid = window.firebase?.auth?.().currentUser?.uid;
+    if (!uid) return [];
+    if (trainingCache.uid !== uid) {
+      try {
+        const snap = await window.db.collection('safetyTrainings').where('userId', '==', uid).get();
+        trainingCache = { uid, list: snap.docs.map(doc => doc.data()) };
+      } catch (_) { trainingCache = { uid, list: [] }; }
+    }
+    return trainingCache.list;
+  }
+  async function updateMachineHint() {
+    const hint = $('machineHint');
+    const option = $('printer')?.selectedOptions?.[0];
+    if (!hint) return;
+    if (!option?.value) { hint.hidden = true; return; }
+    const messages = [];
+    if (option.dataset.status === 'maintenance') messages.push('Diese Maschine ist gerade in Wartung.');
+    if (option.dataset.status === 'broken') messages.push('Diese Maschine ist als defekt gemeldet.');
+    if (option.dataset.training === '1') {
+      const [collection, id] = option.value.split('/');
+      const trainings = await ownTrainings();
+      if (!trainings.some(t => t.status === 'active' && t.machineCollection === collection && t.machineId === id)) {
+        messages.push('Für diese Maschine ist eine Einweisung nötig – bei dir ist noch keine eingetragen. Frag bitte in der Werkstatt.');
+      }
+    }
+    hint.textContent = messages.join(' ');
+    hint.hidden = !messages.length;
+  }
+  document.addEventListener('change', event => { if (event.target?.id === 'printer') updateMachineHint(); });
+
   // Tarif der gewählten Maschine: ohne Materialabrechnung / ohne Zeitabrechnung entfallen Felder.
   document.addEventListener('billing:quote', event => {
     const tariff = event.detail?.tariff || {};

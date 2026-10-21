@@ -78,7 +78,7 @@
         (suggestionCards ? `<h3>Vorschläge von Nutzern (${suggestions.length})</h3><div class="safety-grid">${suggestionCards}</div><h3>Alle Maschinen</h3>` : '') +
         '<p>Jede Maschine hat eine eigene Schritt-für-Schritt-Anleitung, Links zu Videos und Dokumenten, einen QR-Code und einen festen Link. Der Link führt nach der Anmeldung direkt zur Maschine: Anleitung öffnen und Maschine für Aufträge vorauswählen.</p>' +
         (cards ? `<div class="safety-grid">${cards}</div>` : '<p>Noch keine Maschinen angelegt.</p>') +
-        '<p><small>Neue Maschinen legst du unter „Drucker verwalten“, „Produktionsmaschinen verwalten“ oder „Equipment verwalten“ an.</small></p>');
+        '<p><small>Neue Maschinen legst du unter „Maschinen verwalten“ an, ausleihbares Equipment unter „Equipment verwalten“.</small></p>');
     } catch (error) { window.toast.error(error.message); }
   }
 

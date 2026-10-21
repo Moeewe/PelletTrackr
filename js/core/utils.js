@@ -23,6 +23,25 @@ function machineKindLabel(machine) {
 }
 window.machineKindLabel = machineKindLabel;
 
+// Verknüpfung Maschine ↔ Material: welche Materialformen (Filament/Pellet) und welche Materialien
+// eine Maschine verarbeitet und ob Masterbatch (Farbzusatz) möglich ist. Ältere Drucker haben nur "type".
+function machineMaterialRule(machine) {
+  const types = Array.isArray(machine?.materialTypes) && machine.materialTypes.length
+    ? machine.materialTypes : (machine?.type ? [machine.type] : []);
+  return {
+    types,
+    ids: Array.isArray(machine?.materialIds) ? machine.materialIds : [],
+    masterbatch: machine?.supportsMasterbatch !== false
+  };
+}
+window.machineMaterialRule = machineMaterialRule;
+// Passt ein Material zur Maschine? (keine Einschränkung = alle Materialien)
+window.materialFitsMachine = function (material, rule) {
+  if (!rule) return true;
+  if (rule.ids.length) return rule.ids.includes(material.id);
+  return !rule.types.length || rule.types.includes(material.type);
+};
+
 // Admin-Zugriff prüfen
 function checkAdminAccess() {
   if (!window.currentUser || !window.currentUser.isAdmin) {
