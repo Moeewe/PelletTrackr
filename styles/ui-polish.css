@@ -186,3 +186,6 @@ body {
 
 /* Listen: "Mehr anzeigen" */
 .entry-show-more { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; padding: 20px; color: #444; font-size: 14px; }
+
+/* Nutzer bearbeiten: Löschen abgesetzt */
+.user-danger-zone { margin-top: 24px; padding-top: 16px; border-top: 1px solid #ddd; }

@@ -183,7 +183,6 @@ async function showEquipmentManager() {
         </div>
         <div class="modal-footer">
             <button class="btn btn-primary" onclick="showAddEquipmentForm()">Equipment hinzufügen</button>
-            <button class="btn btn-warning" onclick="cleanupEquipmentPendingRequests()" title="Doppelte Anfragen bereinigen">Cleanup</button>
             <button class="btn btn-secondary" onclick="closeModal()">Schließen</button>
         </div>
     `;

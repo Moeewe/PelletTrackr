@@ -1,35 +1,105 @@
-// Admin-maintained local guides and links, shown alongside repository READMEs.
+// Maschinen & Anleitungen (Admin): jede Maschine hat ihre eigene Anleitung, einen QR-Code und einen festen Link.
+// Die Anleitung liegt direkt am Maschinen-Dokument (Feld "guideSteps"), damit Maschine und Tutorial nie auseinanderlaufen.
 (() => {
   'use strict';
-  let articles=[];
-  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const COLLECTIONS = ['printers', 'machines', 'equipment'];
+  let rows = [];
+  let back = null;
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
   async function checkAdmin() {
-    const user=window.firebase?.auth?.().currentUser;
-    if(!user) throw Error('Bitte anmelden.');
-    if((await window.db.collection('users').doc(user.uid).get()).data()?.isAdmin!==true) throw Error('Nur Admins können Anleitungen pflegen.');
+    const user = window.firebase?.auth?.().currentUser;
+    if (!user) throw Error('Bitte anmelden.');
+    if ((await window.db.collection('users').doc(user.uid).get()).data()?.isAdmin !== true) throw Error('Nur Admins können Anleitungen pflegen.');
     return user;
   }
-  function show() {
-    window.showModal('<div class="modal-header"><h2>Technische Anleitungen</h2><button class="btn btn-secondary" onclick="closeModal()">Schließen</button></div><div class="modal-body">'+
-      '<p>Pflege ergänzende, geprüfte Werkstatt-Anleitungen hier. GitHub-READMEs bleiben direkt verlinkt und werden nicht kopiert. Diese Inhalte erscheinen im Hilfe-Assistenten und sind für angemeldete Nutzer lesbar.</p>'+articles.map((a,i)=>'<article class="safety-card"><h3>'+esc(a.title)+'</h3><p>'+esc(a.machineName||'Allgemein')+'</p><button class="btn btn-secondary" onclick="KnowledgeAdmin.edit('+i+')">Bearbeiten</button></article>').join('')+
-      '<button class="btn btn-primary" onclick="KnowledgeAdmin.edit(-1)">Anleitung hinzufügen</button></div>',{clearStack:true,pushToStack:false});
+
+  // Fester Link zur Maschine: öffnet nach der Anmeldung die Anleitung und wählt die Maschine für Aufträge vor.
+  const machineLink = row => window.MachineLabels?.machineUrl(row)
+    || `${(window.APP_PUBLIC_URL || window.location.origin).replace(/\/$/, '')}/?maschinenGuide=${row.collection}:${row.id}`;
+
+  function shell(title, body, backAction) {
+    window.showModal(`<div class="modal-header safety-header"><h2>${esc(title)}</h2>${backAction
+      ? `<button class="btn btn-secondary" onclick="${backAction}">Zurück</button>`
+      : '<button class="btn btn-secondary" onclick="closeModal()">Schließen</button>'}</div><div class="modal-body safety-manager">${body}</div>`,
+      { clearStack: true, pushToStack: false });
   }
+
+  async function load() {
+    const snaps = await Promise.all(COLLECTIONS.map(name => window.db.collection(name).get()));
+    rows = snaps.flatMap((snap, i) => snap.docs
+      .filter(doc => doc.data().name && doc.data().active !== false)
+      .map(doc => ({ ...doc.data(), id: doc.id, collection: COLLECTIONS[i] })))
+      .sort((a, b) => a.name.localeCompare(b.name, 'de'));
+  }
+
   async function open() {
-    try {await checkAdmin(); const s=await window.db.collection('knowledgeArticles').get();articles=s.docs.map(d=>({id:d.id,...d.data()}));show();}
-    catch(e){window.toast.error(e.message);}
+    try {
+      await checkAdmin();
+      await load();
+      const cards = rows.map((row, i) => {
+        const steps = Array.isArray(row.guideSteps) ? row.guideSteps.length : 0;
+        return `<article class="safety-card"><h3>${esc(row.name)}</h3><p>${esc(window.machineKindLabel(row))}</p>
+          <p>${steps ? `Anleitung: ${steps} Schritt${steps === 1 ? '' : 'e'}` : 'Noch keine eigene Anleitung'}</p>
+          <div class="safety-actions"><button class="btn btn-primary" onclick="KnowledgeAdmin.editGuide(${i})">Anleitung</button>
+          <button class="btn btn-secondary" onclick="MachineLabels.open(['${esc(row.collection)}:${esc(row.id)}'])">QR / Etikett</button>
+          <button class="btn btn-secondary" onclick="KnowledgeAdmin.copyLink(${i})">Link kopieren</button></div></article>`;
+      }).join('');
+      shell('Maschinen & Anleitungen',
+        '<p>Jede Maschine hat eine eigene Schritt-für-Schritt-Anleitung, einen QR-Code und einen festen Link. Der Link führt nach der Anmeldung direkt zur Maschine: Anleitung öffnen und Maschine für Aufträge vorauswählen.</p>' +
+        (cards ? `<div class="safety-grid">${cards}</div>` : '<p>Noch keine Maschinen angelegt.</p>') +
+        '<p><small>Neue Maschinen legst du unter „Drucker verwalten“, „Produktionsmaschinen verwalten“ oder „Equipment verwalten“ an.</small></p>');
+    } catch (error) { window.toast.error(error.message); }
   }
-  function edit(i=-1) {
-    const a=articles[i]||{};
-    window.showModal('<div class="modal-header"><h2>'+(a.id?'Anleitung bearbeiten':'Anleitung hinzufügen')+'</h2><button class="btn btn-secondary" onclick="KnowledgeAdmin.open()">Zurück</button></div><div class="modal-body"><label>Titel<input id="knowledgeTitle" class="form-input" maxlength="180" value="'+esc(a.title||'')+'"></label><label>Maschine / Bereich<input id="knowledgeMachine" class="form-input" maxlength="140" placeholder="z. B. Trotec Speedy 500" value="'+esc(a.machineName||'')+'"></label><label>Anleitung<textarea id="knowledgeBody" class="form-input" rows="12" maxlength="20000">'+esc(a.body||'')+'</textarea></label><label>Weiterführender Link (optional)<input id="knowledgeUrl" class="form-input" type="url" maxlength="1000" value="'+esc(a.url||'')+'"></label><button class="btn btn-primary" onclick="KnowledgeAdmin.save('+JSON.stringify(a.id||null)+')">Speichern</button>'+(a.id?'<button class="btn btn-danger" onclick="KnowledgeAdmin.remove('+JSON.stringify(a.id)+')">Entfernen</button>':'')+'</div>',{clearStack:true,pushToStack:false});
+
+  // collectionOrIndex: Zeilennummer in der Liste oder (bei Aufruf aus anderen Verwaltungen) Sammlung + id
+  async function editGuide(collectionOrIndex, id, backAction) {
+    try {
+      await checkAdmin();
+      let row;
+      if (typeof collectionOrIndex === 'number') { row = rows[collectionOrIndex]; back = null; }
+      else {
+        const doc = await window.db.collection(collectionOrIndex).doc(id).get();
+        if (!doc.exists) throw Error('Maschine nicht gefunden.');
+        row = { ...doc.data(), id, collection: collectionOrIndex };
+        rows = [row]; back = backAction || null;
+      }
+      const steps = (row.guideSteps || []).join('\n');
+      shell('Anleitung · ' + row.name,
+        `<p>Ein Schritt pro Zeile. Beginne am besten mit einem kurzen Titel, danach ein Punkt und die Details, zum Beispiel:<br><em>Tür schließen. Prüfe, dass niemand im Sicherheitsbereich ist und die Tür verriegelt.</em></p>
+         <label>Schritte<textarea id="guideSteps" class="form-input" rows="12" placeholder="Maschine einschalten. Hauptschalter auf I stellen …">${esc(steps)}</textarea></label>
+         <p><small>Ohne eigene Schritte zeigt die Hilfe für bekannte Maschinen (Weber, UR5, Ginger) die allgemeine Anleitung.</small></p>
+         <div class="safety-actions"><button class="btn btn-primary" onclick="KnowledgeAdmin.saveGuide(0)">Speichern</button>
+         <button class="btn btn-secondary" onclick="MachineLabels.open(['${esc(row.collection)}:${esc(row.id)}'])">QR / Etikett</button></div>`,
+        back || 'KnowledgeAdmin.open()');
+    } catch (error) { window.toast.error(error.message); }
   }
-  async function save(id) {
-    try {const user=await checkAdmin(),title=document.getElementById('knowledgeTitle').value.trim(),body=document.getElementById('knowledgeBody').value.trim(),url=document.getElementById('knowledgeUrl').value.trim();
-      if(!title||!body)throw Error('Titel und Anleitungstext sind erforderlich.'); if(url&&!/^https:\/\//i.test(url))throw Error('Links müssen mit https:// beginnen.');
-      const data={title,body,machineName:document.getElementById('knowledgeMachine').value.trim(),url,updatedBy:user.uid,updatedAt:window.firebase.firestore.FieldValue.serverTimestamp()};
-      if(id)await window.db.collection('knowledgeArticles').doc(id).update(data);else await window.db.collection('knowledgeArticles').add({...data,createdBy:user.uid,createdAt:window.firebase.firestore.FieldValue.serverTimestamp()});
-      window.toast.success('Anleitung gespeichert.');await open();
-    }catch(e){window.toast.error(e.message);}
+
+  async function saveGuide(index) {
+    try {
+      const user = await checkAdmin();
+      const row = rows[index];
+      const steps = document.getElementById('guideSteps').value.split(/\n+/).map(line => line.trim()).filter(Boolean);
+      if (steps.length > 40) throw Error('Bitte höchstens 40 Schritte anlegen.');
+      if (steps.some(step => step.length > 600)) throw Error('Ein Schritt ist zu lang (höchstens 600 Zeichen).');
+      await window.db.collection(row.collection).doc(row.id).update({
+        guideSteps: steps,
+        guideUpdatedBy: user.uid,
+        guideUpdatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+      });
+      window.toast.success(steps.length ? 'Anleitung gespeichert.' : 'Anleitung entfernt.');
+      const target = back; back = null;
+      const match = /^([A-Za-z]+)\.([A-Za-z]+)\(\)$/.exec(target || '');
+      if (match && typeof window[match[1]]?.[match[2]] === 'function') return window[match[1]][match[2]]();
+      await open();
+    } catch (error) { window.toast.error(error.message); }
   }
-  async function remove(id){try{await checkAdmin();await window.db.collection('knowledgeArticles').doc(id).delete();window.toast.success('Anleitung entfernt.');await open();}catch(e){window.toast.error(e.message);}}
-  window.KnowledgeAdmin={open,edit,save,remove};
+
+  async function copyLink(index) {
+    const link = machineLink(rows[index]);
+    try { await navigator.clipboard.writeText(link); window.toast.success('Link kopiert.'); }
+    catch (_) { window.prompt('Link zur Maschine:', link); }
+  }
+
+  window.KnowledgeAdmin = { open, editGuide, saveGuide, copyLink };
 })();

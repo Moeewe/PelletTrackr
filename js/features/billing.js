@@ -1,7 +1,8 @@
 // Shared pricing engine: preview and new entries use the same calculation.
 (() => {
   'use strict';
-  const groups = {standard:'Standard / nicht zugeordnet', students:'Studierende', staff:'Mitarbeitende', external:'Externe'};
+  const groups = {standard:'Studierende (Standard)', staff:'Mitarbeitende', external:'Externe'};
+  const legacyGroups = ['students']; // frühere Gruppe, wird wie Standard behandelt
   const modes = {legacy:'Bisherige Regel',free:'Keine Maschinenkosten',flat:'Pauschale pro Auftrag',minute:'Pro Minute',hour:'Pro Stunde'};
   const $ = id => document.getElementById(id);
   const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -36,7 +37,7 @@
     const profile=(await window.db.collection('users').doc(uid).get()).data();
     if(!profile)throw Error('Benutzerprofil fehlt.');
     const group=profile.billingGroup || 'standard';
-    if(!Object.hasOwn(groups,group))throw Error('Unbekannte Abrechnungsgruppe. Bitte die Verwaltung kontaktieren.');
+    if(!Object.hasOwn(groups,group)&&!legacyGroups.includes(group))throw Error('Unbekannte Abrechnungsgruppe. Bitte die Verwaltung kontaktieren.');
     const option=$('printer').selectedOptions[0];
     const selected=Boolean($('printer').value);
     const collection=option?.dataset.collection || 'printers';
@@ -71,7 +72,7 @@
       const q=await quote(); if(seq!==previewSequence)return;
       document.dispatchEvent(new CustomEvent('billing:quote',{detail:q}));
       $('costPreview').textContent=euro(q.totalCents/100);
-      $('costBreakdown').textContent=groups[q.group]+' · '+modes[q.tariff.mode]+': Maschine '+euro(q.machineCents/100)+' + Material '+euro((q.materialCents+q.additiveCents)/100)+'.';
+      $('costBreakdown').textContent=(groups[q.group]||groups.standard)+' · '+modes[q.tariff.mode]+': Maschine '+euro(q.machineCents/100)+' + Material '+euro((q.materialCents+q.additiveCents)/100)+'.';
     }catch(error){if(seq===previewSequence){$('costPreview').textContent='—';$('costBreakdown').textContent=error.message;}}
   }
   async function addEntry() {
@@ -103,10 +104,7 @@
       users=u.docs.map(d=>({...d.data(),id:d.id})); policies=Object.fromEntries(r.docs.map(d=>[d.id,d.data()]));
       modal('<p>Tarife gelten je Maschine und Nutzergruppe. Ohne neuen Tarif bleibt die bisherige Abrechnung bestehen. Eine Pauschale gilt pro Auftrag, Zeitpreise werden anteilig berechnet. Bestehende Aufträge bleiben unverändert.</p>'+
         '<h3>Maschinentarife</h3><div class="safety-grid">'+machines.map((m,i)=>'<article class="safety-card"><h4>'+esc(m.name)+'</h4><p>'+esc(m.jobTypes?.join(' · ')||(m.collection==='printers'?'3D-Druck':m.collection==='equipment'?'Equipment':'Maschine'))+' · '+(policies[policyId(m.collection,m.id)]?'Tarif hinterlegt':'Bisherige Regel')+'</p><button class="btn btn-secondary" onclick="Billing.edit('+i+')">Tarif bearbeiten</button></article>').join('')+'</div>'+('<button class="btn btn-secondary" onclick="MachineManager.open()">Produktionsmaschinen verwalten</button>')+
-        '<h3>Nutzergruppen zuweisen</h3><p>Nutzer können ihre Abrechnungsgruppe nicht selbst ändern. Nicht zugeordnete Personen verwenden den Standardtarif.</p>'+
-        '<label>Person<select id="billingUser" class="form-select" onchange="Billing.showGroup()">'+users.map((u,i)=>'<option value="'+i+'">'+esc(u.name||u.email||u.id)+'</option>').join('')+'</select></label>'+
-        '<label>Abrechnungsgruppe<select id="billingGroup" class="form-select">'+Object.entries(groups).map(([k,v])=>'<option value="'+k+'">'+v+'</option>').join('')+'</select></label><button class="btn btn-primary" onclick="Billing.saveGroup()">Gruppenzuordnung speichern</button>');
-      showGroup();
+        '<h3>Nutzergruppen</h3><p>Standard für alle sind Studierende. Eine andere Gruppe (Mitarbeitende, Externe) weist du im Nutzerprofil zu: Nutzerverwaltung → Person → Bearbeiten → Nutzergruppe.</p>');
     }catch(error){window.toast.error(error.message);}
   }
   function showGroup() {const u=users[Number($('billingUser').value)];$('billingGroup').value=u?.billingGroup||'standard';}
@@ -117,10 +115,10 @@
   }
   function edit(index) {
     selection=machines[index];const policy=policies[policyId(selection.collection,selection.id)];revision=policy?.revision||0;
-    modal('<h3>'+esc(selection.name)+'</h3><p>„Standard übernehmen“ gilt nur, wenn für die Gruppe kein eigener Tarif hinterlegt ist. Eigenes Material wird nicht berechnet; separat ausgewählter Werkstatt-Masterbatch wird bei neuen Tarifen zusätzlich berechnet. Für Laser „Kein Material berechnen“ wählen.</p>'+
+    modal('<h3>'+esc(selection.name)+'</h3><p>„Wie Studierende“ gilt nur, wenn für die Gruppe kein eigener Tarif hinterlegt ist. Eigenes Material wird nicht berechnet; separat ausgewählter Werkstatt-Masterbatch wird bei neuen Tarifen zusätzlich berechnet. Für Laser „Kein Material berechnen“ wählen.</p>'+
       Object.entries(groups).map(([g,label])=>{
         const r=policy?.rates[g] || (g==='standard'?{mode:'legacy',rateCents:cents(number(selection.pricePerHour)),materialRule:'workshop'}:{mode:'inherit',rateCents:0,materialRule:'workshop'});
-        return '<fieldset class="billing-rate"><legend>'+label+'</legend><label>Abrechnung<select id="mode-'+g+'" class="form-select">'+Object.entries(g==='standard'?modes:{inherit:'Standard übernehmen',...modes}).map(([k,v])=>'<option value="'+k+'" '+(k===r.mode?'selected':'')+'>'+v+'</option>').join('')+'</select></label>'+
+        return '<fieldset class="billing-rate"><legend>'+label+'</legend><label>Abrechnung<select id="mode-'+g+'" class="form-select">'+Object.entries(g==='standard'?modes:{inherit:'Wie Studierende (Standard)',...modes}).map(([k,v])=>'<option value="'+k+'" '+(k===r.mode?'selected':'')+'>'+v+'</option>').join('')+'</select></label>'+
           '<label>Betrag (€ je Auftrag / Minute / Stunde)<input id="rate-'+g+'" class="form-input" type="number" min="0" max="100000" step="0.01" value="'+r.rateCents/100+'"></label>'+
           '<label>Material<select id="material-'+g+'" class="form-select"><option value="workshop">Werkstattmaterial nach Menge berechnen</option><option value="none" '+(r.materialRule==='none'?'selected':'')+'>Kein Material berechnen</option></select></label></fieldset>';
       }).join('')+'<p>Bei „Keine Maschinenkosten“ wird der Betrag ignoriert. „Bisherige Regel“: Stundenkosten nur bei eigenem Material, sonst ausschließlich Materialkosten.</p><div class="safety-actions"><button class="btn btn-primary" onclick="Billing.savePolicy()">Tarife speichern</button><button class="btn btn-secondary" onclick="Billing.open()">Zurück</button></div>');
@@ -141,5 +139,5 @@
       window.toast.success('Tarife gespeichert. Sie gelten für neue Aufträge.');await open();
     }catch(error){window.toast.error(error.message);}
   }
-  window.Billing={calculate,quote,preview,addEntry,open,edit,savePolicy,showGroup,saveGroup};
+  window.Billing={groups,calculate,quote,preview,addEntry,open,edit,savePolicy,showGroup,saveGroup};
 })();

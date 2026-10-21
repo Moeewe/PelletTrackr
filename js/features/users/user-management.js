@@ -110,6 +110,7 @@ async function loadUsersForManagement() {
         email: userData.email || (userData.kennung ? `${userData.kennung}@fh-muenster.de` : ''),
         phone: userData.phone || '',
         isAdmin: userData.isAdmin || false,
+        billingGroup: userData.billingGroup === 'students' ? 'standard' : (userData.billingGroup || 'standard'),
         createdAt: userData.createdAt,
         lastLogin: userData.lastLogin,
         entries: entries, // Add entries array
@@ -168,6 +169,10 @@ function managedUserAction(index, action, checked) {
   const actions = {edit:editUser, remove:deleteUser, reminder:sendPaymentReminder, urgent:sendUrgentReminder, admin:toggleAdminStatus};
   if (actions[action]) actions[action](user.kennung, checked);
 }
+// Nutzergruppen (bestimmen den Tarif). Standard sind Studierende.
+const USER_GROUPS = { standard: 'Studierende (Standard)', staff: 'Mitarbeitende', external: 'Externe' };
+function userGroupLabel(group) { return USER_GROUPS[group === 'students' ? 'standard' : group] || USER_GROUPS.standard; }
+
 function renderUsersTable(users) {
   const tableDiv = document.getElementById('usersTable');
   visibleManagedUsers = users || window.allUsers || [];
@@ -186,6 +191,7 @@ function renderUsersTable(users) {
       '<div><dt>FH-Kennung</dt><dd>'+userEscape(u.kennung||'Nicht zugeordnet')+'</dd></div>'+
       '<div><dt>E-Mail</dt><dd>'+userEscape(u.email||'Nicht hinterlegt')+'</dd></div>'+
       '<div><dt>Telefon</dt><dd>'+userEscape(u.phone||'Nicht hinterlegt')+'</dd></div>'+
+      '<div><dt>Nutzergruppe</dt><dd>'+userEscape(userGroupLabel(u.billingGroup))+'</dd></div>'+
       '<div><dt>Gesamtkosten</dt><dd>'+money(u.totalCost)+'</dd></div>'+
       '<div><dt>Bezahlt</dt><dd>'+money(u.paidAmount)+'</dd></div>'+
       '<div><dt>Letzter Druck</dt><dd>'+userEscape(u.lastEntry?.toLocaleDateString('de-DE')||'Noch kein Druck')+'</dd></div></dl>'+
@@ -574,12 +580,6 @@ DRINGENDE MAHNUNG - Generiert am: ${currentDate}
 async function deleteUser(userId) {
   if (!window.checkAdminAccess()) return;
 
-  // Show confirmation toast instead of browser dialog
-  window.toast.info('Benutzer wird gelöscht...');
-
-  // Small delay to show the info message
-  await new Promise(resolve => setTimeout(resolve, 500));
-
   try {
     console.log(`🗑️ Lösche Benutzer mit ID: ${userId}`);
     console.log('🔍 Verfügbare Benutzer:', window.allUsers ? window.allUsers.length : 'undefined');
@@ -635,6 +635,11 @@ async function deleteUser(userId) {
       window.toast.error('Benutzer-ID nicht gefunden!');
       return;
     }
+
+    const confirmed = await window.toast.confirm(
+      `„${user.name || userIdentifier}“ wirklich löschen?\n\nDas Profil und alle Aufträge dieser Person werden endgültig gelöscht. Das kann nicht rückgängig gemacht werden.`,
+      'Endgültig löschen', 'Abbrechen');
+    if (!confirmed) return false;
 
     console.log(`🗑️ Lösche Benutzer: ${userIdentifier} (DocID: ${user.docId})`);
 
@@ -723,12 +728,20 @@ async function deleteUser(userId) {
     if (typeof window.loadAllEntries === 'function') {
       window.loadAllEntries();
     }
+    return true;
 
   } catch (error) {
     console.error('Fehler beim Löschen des Benutzers:', error);
     window.toast.error('Fehler beim Löschen: ' + error.message);
+    return false;
   }
 }
+
+// Löschen direkt aus dem Bearbeiten-Dialog (mit Rückfrage in deleteUser)
+async function deleteUserFromEdit(kennung) {
+  if (await deleteUser(kennung)) closeEditUserModal();
+}
+window.deleteUserFromEdit = deleteUserFromEdit;
 
 // ==================== USER EDITING ====================
 
@@ -784,11 +797,21 @@ async function showEditUserForm(kennung) {
             <input type="tel" id="editUserPhone" class="form-input" value="${currentPhone}" placeholder="z.B. 0176 12345678">
             <small>Handynummer wird für Equipment-Ausleihen benötigt</small>
           </div>
+          <div class="form-group">
+            <label class="form-label">Nutzergruppe</label>
+            <select id="editUserGroup" class="form-select">
+              ${Object.entries(USER_GROUPS).map(([key, label]) => `<option value="${key}" ${(user.billingGroup === 'students' ? 'standard' : (user.billingGroup || 'standard')) === key ? 'selected' : ''}>${label}</option>`).join('')}
+            </select>
+            <small>Bestimmt den Tarif für neue Aufträge. Ohne Auswahl gelten Studierende.</small>
+          </div>
         </div>
         <div class="card-footer">
           <div class="button-group">
             ${ButtonFactory.primary ? ButtonFactory.primary('ÄNDERUNGEN SPEICHERN', `updateUser('${kennung}')`) : '<button class="btn btn-primary" onclick="updateUser(\'' + kennung + '\')">ÄNDERUNGEN SPEICHERN</button>'}
             <button class="btn btn-secondary" onclick="closeEditUserModal()">Abbrechen</button>
+          </div>
+          <div class="button-group user-danger-zone">
+            <button class="btn btn-danger" onclick="deleteUserFromEdit('${kennung}')">Nutzer löschen</button>
           </div>
         </div>
       </div>
@@ -803,6 +826,7 @@ async function updateUser(oldKennung) {
   const newKennung = document.getElementById('editUserKennung').value.trim().toLowerCase();
   const newEmail = document.getElementById('editUserEmail').value.trim();
   const newPhone = document.getElementById('editUserPhone').value.trim();
+  const newGroup = document.getElementById('editUserGroup')?.value || 'standard';
 
   if (!newName || !newKennung) {
     window.toast.warning('Name und FH-Kennung sind erforderlich!');
@@ -839,6 +863,7 @@ async function updateUser(oldKennung) {
           kennung: newKennung,
           email: newEmail,
           phone: newPhone,
+          billingGroup: newGroup,
           updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
         });
       });
@@ -850,6 +875,7 @@ async function updateUser(oldKennung) {
         kennung: newKennung,
         email: newEmail,
         phone: newPhone,
+        billingGroup: newGroup,
         createdAt: window.firebase.firestore.FieldValue.serverTimestamp(),
         updatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
       });

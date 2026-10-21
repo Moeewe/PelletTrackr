@@ -275,6 +275,11 @@ async function loadRelevantKnowledgeDocuments(question) {
   if(knowledgeDocuments.length) try {localStorage.setItem('pelletTrackr_knowledge_v3',JSON.stringify({timestamp:Date.now(),documents:knowledgeDocuments,sources:knowledgeSources}));} catch (_) { /* cache optional */ }
 }
 
+// Eigene Anleitung, die im Maschinen-Dokument gepflegt wird (Admin: Maschinen & Anleitungen).
+function knowledgeHasGuide(machine) {
+  return Array.isArray(machine?.guideSteps) && machine.guideSteps.length > 0;
+}
+
 function knowledgeArticlesFor(machine) {
   const haystack = `${machine?.name || ''} ${machine?.model || ''} ${machine?.jobTypes || ''}`.toLocaleLowerCase('de');
   return knowledgeArticles.filter(a => a.machineName && haystack.includes(a.machineName.toLocaleLowerCase('de')));
@@ -293,7 +298,7 @@ function knowledgeGuideTargets() {
   const targets = knowledgeMachines.filter(machine => {
     const profile = knowledgeProfileForMachine(machine);
     if (profile) covered.add(profile);
-    return profile || knowledgeArticlesFor(machine).length;
+    return profile || knowledgeArticlesFor(machine).length || knowledgeHasGuide(machine);
   }).map(machine => ({ value: `machine:${machine.collection}:${machine.id}`, name: machine.name, status: knowledgeStatusLabel(machine.status), statusKey: machine.status || '', profile: knowledgeProfileForMachine(machine) }));
   const general = [['weber', 'Weber DXR25 (Großroboter)'], ['ur5', 'Universal Robots UR5'], ['ginger', 'Ginger']]
     .filter(([profile]) => !covered.has(profile))
@@ -345,6 +350,11 @@ function startKnowledgeGuide(valueArg) {
     machine = knowledgeMachines.find(item => item.collection === collection && item.id === id);
     profile = knowledgeProfileForMachine(machine);
   }
+  // Die an der Maschine hinterlegte Anleitung hat immer Vorrang vor allgemeinen Anleitungen.
+  if (machine && knowledgeHasGuide(machine)) {
+    activeGuide = { title: machine.name, profile: profile || 'custom', machine, source: null, steps: machine.guideSteps };
+    activeGuideStep = 0; renderKnowledgeGuideStep(); return;
+  }
   if (!profile || !KNOWLEDGE_GUIDES[profile]) {
     const matches = machine ? knowledgeArticlesFor(machine) : [];
     if (machine && matches.length) {
@@ -361,7 +371,9 @@ function startKnowledgeGuide(valueArg) {
 
 function knowledgeGuideHeader() {
   const total = activeGuide.steps.length;
-  const segments = activeGuide.steps.map((_, i) => `<button class="kstep-seg ${i < activeGuideStep ? 'done' : ''} ${i === activeGuideStep ? 'current' : ''}" ${i < activeGuideStep ? `onclick="knowledgeGuideGo(${i})" aria-label="Zu Schritt ${i + 1}"` : 'tabindex="-1" aria-hidden="true"'}></button>`).join('');
+  const segments = activeGuide.steps.map((_, i) => i < activeGuideStep
+    ? `<button class="kstep-seg done" onclick="knowledgeGuideGo(${i})" aria-label="Zu Schritt ${i + 1}"></button>`
+    : `<span class="kstep-seg ${i === activeGuideStep ? 'current' : ''}"></span>`).join('');
   return `<div class="kguide-top"><button class="btn btn-link knowledge-back" onclick="showKnowledgeGuideMode()">← Alle Maschinen</button><span class="kguide-machine">${knowledgeEscape(activeGuide.machine?.name || activeGuide.title)}</span></div>
     <div class="kstep-bar" role="progressbar" aria-valuemin="1" aria-valuemax="${total}" aria-valuenow="${activeGuideStep + 1}">${segments}</div>`;
 }
