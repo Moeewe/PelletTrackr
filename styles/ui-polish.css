@@ -426,3 +426,29 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 .request-amount { background: #fff !important; border: 1px solid #000; padding: 2px 10px; font-size: 16px; font-weight: 700; }
 .payment-request-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .payment-request-actions .btn { min-height: 40px; padding: 8px 14px; font-size: 13px; margin: 0; }
+
+/* ==================== OFFENE AUFGABEN + ROTE PUNKTE ==================== */
+.task-list { gap: 8px; }
+.task-row { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 48px; padding: 10px 14px; background: #fff; color: #000; border: 2px solid #000; border-radius: 0; font: inherit; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer; }
+.task-row:hover { background: #e9ecef; }
+.task-label { min-width: 0; overflow-wrap: anywhere; }
+.task-count { flex: none; min-width: 30px; height: 30px; padding: 0 9px; display: inline-flex; align-items: center; justify-content: center; border: 2px solid #ccc; border-radius: 15px; background: #fff; color: #777; font-size: 14px; font-weight: 700; }
+.task-row.has-tasks .task-count { background: #dc3545; border-color: #dc3545; color: #fff; }
+.task-row.has-tasks::after { content: ""; position: absolute; top: -7px; right: -7px; width: 16px; height: 16px; background: #dc3545; border: 2px solid #fff; border-radius: 50%; }
+.task-total { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; margin-left: 8px; padding: 0 9px; background: #dc3545; color: #fff; border-radius: 13px; font-size: 14px; font-weight: 700; vertical-align: middle; }
+.task-total[hidden] { display: none !important; }
+/* Zähler an normalen Buttons: roter Punkt mit Zahl in der Ecke */
+.control-buttons .btn, .service-action .btn { position: relative; }
+.notification-badge { align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 6px; border: 2px solid #fff; border-radius: 11px; box-sizing: border-box; }
+
+/* Zahlungsanfragen: kompakte Zeilen */
+.list-summary { margin: 0 0 12px; font-size: 15px; }
+.payment-requests-list { display: flex; flex-direction: column; }
+.payment-request-item { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.request-main { flex: 1 1 260px; min-width: 0; }
+.request-main h4 { margin: 0; font-size: 17px; }
+.request-meta { margin: 2px 0 0; font-size: 14px; color: #555; overflow-wrap: anywhere; }
+.request-side { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.payment-request-actions { margin: 0; }
+.order-card, .equipment-request-item, .problem-report-item { background: #f8f9fa; border: 2px solid #000; border-radius: 0; box-shadow: none; padding: 14px 16px; margin: 0 0 10px; }
+.request-main, .request-meta { text-align: left; }

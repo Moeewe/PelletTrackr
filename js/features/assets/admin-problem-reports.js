@@ -139,7 +139,8 @@ function showProblemReports() {
         <div class="modal-body">
             <div class="card">
                 <div class="card-body">
-                    <div class="form-group">
+                    <div class="printer-filters" id="problemStatusChips" role="group" aria-label="Nach Status filtern"></div>
+                    <div class="form-group" hidden>
                         <label class="form-label">Filter nach Status</label>
                         <select id="problemStatusFilter" class="form-input" onchange="filterProblemReports()">
                             <option value="all">Alle anzeigen</option>
@@ -160,6 +161,7 @@ function showProblemReports() {
     `;
     
     showModalWithContent(modalContent);
+    renderProblemStatusChips();
     setupProblemReportsListener();
     
     // Force initial render with current data
@@ -1033,3 +1035,19 @@ window.selectEquipmentGiveUser = selectEquipmentGiveUser;
 /* REMOVED: Admin Equipment Loan global exports */
 
 console.log('🚨 Admin Problem Reports Module loaded'); 
+
+// Status-Filter als Chips (wie in den anderen Verwaltungen); das versteckte Select bleibt die Quelle für filterProblemReports()
+function renderProblemStatusChips() {
+    const target = document.getElementById('problemStatusChips');
+    const select = document.getElementById('problemStatusFilter');
+    if (!target || !select) return;
+    const options = [['all', 'Alle'], ['open', 'Offen'], ['in_progress', 'In Bearbeitung'], ['resolved', 'Gelöst']];
+    target.innerHTML = options.map(([value, label]) => `<button type="button" class="filter-chip ${select.value === value ? 'active' : ''}" onclick="setProblemStatus('${value}')">${label}</button>`).join('');
+}
+function setProblemStatus(value) {
+    const select = document.getElementById('problemStatusFilter');
+    if (select) select.value = value;
+    if (typeof filterProblemReports === 'function') filterProblemReports();
+    renderProblemStatusChips();
+}
+window.setProblemStatus = setProblemStatus;

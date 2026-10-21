@@ -55,7 +55,10 @@
       const shown = lastPaymentRequests.slice(0, limits.payments);
       const more = shown.length < lastPaymentRequests.length
         ? moreButton('payments', shown.length, lastPaymentRequests.length, 10) : '';
-      return originalPayments.call(this, shown) + more;
+      const sum = lastPaymentRequests.reduce((total, request) => total + (Number(request.amount) || 0), 0);
+      const summary = lastPaymentRequests.length
+        ? `<p class="list-summary"><strong>${lastPaymentRequests.length}</strong> offene Anfrage${lastPaymentRequests.length === 1 ? '' : 'n'} · zusammen <strong>${(window.formatCurrency ? window.formatCurrency(sum) : sum.toFixed(2) + ' €')}</strong></p>` : '';
+      return summary + originalPayments.call(this, shown) + more;
     };
   }
   const baseShowMore = window.showMoreEntries;

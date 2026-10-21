@@ -620,26 +620,26 @@ function renderPaymentRequestsList(requests) {
                 const amount = request.amount || 0;
                 const amountText = window.formatCurrency ? window.formatCurrency(amount) : `€${amount.toFixed(2)}`;
                 
+                const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+                const meta = [
+                    request.userName || 'Unbekannt',
+                    request.material ? `${request.material}${request.materialMenge ? ' (' + Number(request.materialMenge).toFixed(2).replace('.', ',') + ' kg)' : ''}` : '',
+                    `angefragt ${requestedAtText}`
+                ].filter(Boolean).join(' · ');
                 return `
-                    <div class="payment-request-item" id="request-${request.id}">
-                        <div class="request-header">
-                            <h4>${request.jobName || '3D-Druck Auftrag'}</h4>
+                    <article class="payment-request-item" id="request-${request.id}">
+                        <div class="request-main">
+                            <h4>${esc(request.jobName || 'Auftrag')}</h4>
+                            <p class="request-meta">${esc(meta)}</p>
+                        </div>
+                        <div class="request-side">
                             <span class="request-amount">${amountText}</span>
+                            <div class="payment-request-actions">
+                                <button class="btn btn-success btn-small" onclick="approvePaymentRequest('${request.id}')">Genehmigen</button>
+                                <button class="btn btn-secondary btn-small" onclick="deletePaymentRequest('${request.id}')">Ablehnen</button>
+                            </div>
                         </div>
-                        <div class="request-details">
-                            <p><strong>Nutzer:</strong> ${request.userName || 'Unbekannt'} ${request.userId ? `(${request.userId})` : ''}</p>
-                            <p><strong>Material:</strong> ${request.material || 'Unbekannt'} ${request.materialMenge ? `(${request.materialMenge.toFixed(2)} kg)` : ''}</p>
-                            <p><strong>Angefragt:</strong> ${requestedAtText}</p>
-                        </div>
-                        <div class="payment-request-actions">
-                            <button class="btn btn-success btn-small" onclick="approvePaymentRequest('${request.id}')">
-                                ✓ Genehmigen
-                            </button>
-                            <button class="btn btn-danger btn-small" onclick="deletePaymentRequest('${request.id}')">
-                                Löschen
-                            </button>
-                        </div>
-                    </div>
+                    </article>
                 `;
             }).join('')}
         </div>
